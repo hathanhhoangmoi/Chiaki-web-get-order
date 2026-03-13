@@ -69,6 +69,7 @@ def get_orders(
                 "shop_name":  o.shop_name,
                 "shop_id":    o.shop_id,
                 "buyer_name": o.buyer_name,
+                "customer_name": o.customer_name,
                 "phone":      o.phone,
                 "address":    o.address,
                 "product":    o.product,
