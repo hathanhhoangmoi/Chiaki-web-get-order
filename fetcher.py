@@ -29,48 +29,65 @@ async def fetch_shop_name(shop_url: str) -> str:
     except:
         return shop_url
 
-def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
-    """Đọc Excel, chuẩn hoá cột, trả về list dict"""
-    try:
-        df = pd.read_excel(io.BytesIO(content), engine="openpyxl")
-        df.columns = [str(c).strip() for c in df.columns]
+from openpyxl import load_workbook
 
-        # Map cột linh hoạt — tìm theo từ khoá trong tên cột
-        def find_col(keywords: list) -> str | None:
+def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
+    try:
+        wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        if len(rows) < 2:
+            return []
+
+        headers = [str(c).strip() if c else "" for c in rows[0]]
+
+        def find_col(keywords):
             for kw in keywords:
-                for col in df.columns:
-                    if kw.lower() in col.lower():
-                        return col
+                for i, h in enumerate(headers):
+                    if kw.lower() in h.lower():
+                        return i
             return None
 
         col_code    = find_col(["mã đơn", "order_id", "order id", "mã"])
         col_buyer   = find_col(["tên", "buyer", "khách", "người mua"])
-        col_phone   = find_col(["điện thoại", "phone", "sdt", "số đt"])
-        col_address = find_col(["địa chỉ", "address", "địa chi"])
-        col_product = find_col(["sản phẩm", "product", "tên sp", "hàng"])
+        col_phone   = find_col(["điện thoại", "phone", "sdt"])
+        col_address = find_col(["địa chỉ", "address"])
+        col_product = find_col(["sản phẩm", "product", "hàng"])
         col_qty     = find_col(["số lượng", "quantity", "qty", "sl"])
         col_total   = find_col(["tổng", "total", "tiền", "amount"])
-        col_status  = find_col(["trạng thái", "status", "tình trạng"])
-        col_date    = find_col(["ngày", "date", "thời gian", "tạo"])
+        col_status  = find_col(["trạng thái", "status"])
+        col_date    = find_col(["ngày", "date", "thời gian"])
+
+        def val(row, idx):
+            if idx is None or idx >= len(row): return ""
+            v = row[idx]
+            return str(v).strip() if v is not None else ""
 
         orders = []
-        for _, row in df.iterrows():
-            code = str(row[col_code]).strip() if col_code else f"{shop_id}_{_}"
-            if not code or code == "nan":
-                continue
+        for i, row in enumerate(rows[1:]):
+            code = val(row, col_code) or f"{shop_id}_{i}"
+            if not code or code == "None": continue
+            try:
+                qty   = int(float(val(row, col_qty)))   if val(row, col_qty)   else 0
+                total = float(val(row, col_total))       if val(row, col_total) else 0.0
+            except:
+                qty, total = 0, 0.0
             orders.append({
                 "order_code": code,
                 "shop_id":    shop_id,
                 "shop_name":  shop_name,
-                "buyer_name": str(row[col_buyer]).strip()   if col_buyer   else "",
-                "phone":      str(row[col_phone]).strip()   if col_phone   else "",
-                "address":    str(row[col_address]).strip() if col_address else "",
-                "product":    str(row[col_product]).strip() if col_product else "",
-                "quantity":   int(row[col_qty])   if col_qty and str(row[col_qty]) != "nan" else 0,
-                "total":      float(row[col_total]) if col_total and str(row[col_total]) != "nan" else 0,
-                "status":     str(row[col_status]).strip() if col_status else "",
-                "order_date": str(row[col_date]).strip()   if col_date   else "",
-                "raw_data":   json.dumps(row.to_dict(), ensure_ascii=False, default=str),
+                "buyer_name": val(row, col_buyer),
+                "phone":      val(row, col_phone),
+                "address":    val(row, col_address),
+                "product":    val(row, col_product),
+                "quantity":   qty,
+                "total":      total,
+                "status":     val(row, col_status),
+                "order_date": val(row, col_date),
+                "raw_data":   json.dumps(
+                    dict(zip(headers, [str(c) for c in row])),
+                    ensure_ascii=False
+                ),
             })
         return orders
     except Exception as e:
