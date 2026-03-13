@@ -232,7 +232,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
         THÔNG BÁO MIỄN TRỪ TRÁCH NHIỆM
       </div>
       <div style="font-size:11px;color:#78350f;line-height:1.6">
-        Mọi dữ liệu bạn thu thập sẽ được lưu lại (dấu vết). Vui lòng tự chịu trách nhiệm với mọi dữ liệu bạn thu thập được. Chúng tôi có quyền cung cấp mọi thông tin cho cơ quan chức năng khi có yêu cầu. Bằng việc sử dụng tool này, bạn đã chấp nhận mọi điều khoản.
+        Mọi dữ liệu đều được khai thác từ API Public (Cổng dữ liệu công khai) của Chiaki.vn. Vui lòng tự chịu trách nhiệm với mọi dữ liệu bạn thu thập được. Chúng tôi có quyền cung cấp mọi thông tin cho cơ quan chức năng khi có yêu cầu. Bằng việc có tài khoản sử dụng website này, bạn đã chấp nhận mọi điều khoản từ chúng tôi!
       </div>
     </div>
   </div>
@@ -278,6 +278,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <th>Gian hàng</th>
     <th>Tên khách hàng</th>
     <th>SĐT</th>
+    <th>Địa chỉ</th>
     <th>Sản phẩm</th>
     <th>Mã sản phẩm</th>
     <th>SL</th>
@@ -421,6 +422,8 @@ async function loadOrders() {
         <td style="text-align:center">${o.quantity || '—'}</td>
         <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
         <td>${statusTag(o.status)}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+    title="${o.address || ''}">${o.address || '—'}</td>
         <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
       </tr>
     `).join('');
