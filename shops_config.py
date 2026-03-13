@@ -11,7 +11,7 @@ SHOPS = [
     ("https://chiaki.vn/stioaqzbw3-st1489", "Beauty & Healthy"),
     ("https://chiaki.vn/stioaqzbw3-st4036", "Kitty House"),
     ("https://chiaki.vn/stioaqzbw3-st635", "Trang Perfume"),
-    ("https://chiaki.vn/stioaqzbw3-st4917", "Moss Skincare"),
+    ("https://chiaki.vn/gian-hang-st4917", "Moss Skincare"),
 ]
 
 # Credentials từ extension của bạn
