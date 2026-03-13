@@ -1,5 +1,4 @@
 import httpx
-import pandas as pd
 import io
 import json
 import re
