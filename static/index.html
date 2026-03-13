@@ -169,7 +169,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- Header -->
 <div class="header">
   <div class="header-left">
     <div class="logo">☁️</div>
@@ -186,7 +185,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 
 <div class="container">
 
-  <!-- Disclaimer -->
   <div style="
     background:rgba(255,200,100,.18);
     border:1px solid rgba(255,180,60,.35);
@@ -205,7 +203,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
   </div>
 
-  <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">Tổng đơn hàng</div>
@@ -224,14 +221,12 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
   </div>
 
-  <!-- Shop tabs -->
   <div class="shop-tabs" id="shopTabs">
     <div class="tab active" data-id="" onclick="selectShop('')">
       Tất cả <span class="badge" id="tabAll">0</span>
     </div>
   </div>
 
-  <!-- Table -->
   <div class="table-wrap glass">
     <div class="table-header">
       <div class="table-title">📦 Danh sách đơn hàng</div>
@@ -245,11 +240,11 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
             <th>Gian hàng</th>
             <th>Tên khách hàng</th>
             <th>SĐT</th>
-            <th>Địa chỉ</th>
             <th>Sản phẩm</th>
             <th>Mã sản phẩm</th>
             <th>SL</th>
             <th>Tổng tiền</th>
+            <th>Địa chỉ</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
           </tr>
@@ -267,40 +262,19 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 </div>
 
 <script>
+// ─── State ───────────────────────────────────────────
 let currentShop = '';
 let currentPage = 1;
 const limit = 50;
 
-// Fetch tên shop từ browser (không bị Chiaki chặn), chỉ chạy 1 lần
-async function fetchAndUpdateShopNames(shops) {
-  for (const shop of shops) {
-    if (!shop.shop_url) continue;
-    if (!shop.shop_name.startsWith('http') && !shop.shop_name.startsWith('Shop #')) continue;
-    try {
-      const res  = await fetch(shop.shop_url, { cache: 'no-store' });
-      const html = await res.text();
-      const doc  = new DOMParser().parseFromString(html, 'text/html');
-      const el   = doc.querySelector('span.store-title');
-      if (!el) continue;
-      const name = el.textContent.trim();
-      if (!name) continue;
-      await fetch('/api/update-shopname', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop_id: shop.shop_id, shop_name: name })
-      });
-      console.log(`[shopname] ${shop.shop_id} → ${name}`);
-    } catch(e) {
-      console.warn(`[shopname] Lỗi:`, e);
-    }
-  }
-}
-
+// ─── Boot ────────────────────────────────────────────
 async function init() {
   try {
-    // loadSummary tự trả về data để dùng lại
+    // Gọi song song, loadSummary trả về data để dùng lại — KHÔNG fetch lần 2
     const [summaryData] = await Promise.all([loadSummary(), loadOrders()]);
-    if (summaryData) fetchAndUpdateShopNames(summaryData.shops);
+    if (summaryData && summaryData.shops) {
+      fetchAndUpdateShopNames(summaryData.shops); // chạy ngầm, không await
+    }
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
@@ -308,10 +282,11 @@ async function init() {
   setInterval(() => { loadSummary(); loadOrders(); }, 300_000);
 }
 
-
+// ─── Summary ─────────────────────────────────────────
 async function loadSummary() {
   try {
     const data = await fetch('/api/summary').then(r => r.json());
+
     document.getElementById('totalOrders').textContent = data.total_orders.toLocaleString('vi');
     document.getElementById('totalShops').textContent  = data.total_shops;
     document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
@@ -335,18 +310,20 @@ async function loadSummary() {
     fetch('/api/stats')
       .then(r => r.json())
       .then(statsRes => {
-        const waitItem = statsRes.by_status.find(s =>
+        const waitItem = statsRes.by_status?.find(s =>
           s.status && s.status.toLowerCase().includes('wait'));
         document.getElementById('waitCount').textContent =
           waitItem ? waitItem.count.toLocaleString('vi') : '0';
       })
       .catch(e => console.error('stats error:', e));
-   return data;
+
+    return data; // ← quan trọng: trả data về init, không fetch lần 2
   } catch(e) {
     console.error('Summary error:', e);
   }
 }
 
+// ─── Orders ──────────────────────────────────────────
 async function loadOrders() {
   showLoading(true);
   try {
@@ -375,9 +352,9 @@ async function loadOrders() {
         <td>${o.customer_name || o.buyer_name || '—'}</td>
         <td style="font-family:monospace">${o.phone || '—'}</td>
         <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-            title="${o.buyer_name || ''}">${o.buyer_name || '—'}</td>
-        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
             title="${o.product || ''}">${o.product || '—'}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+            title="${o.sku || ''}">${o.sku || '—'}</td>
         <td style="text-align:center">${o.quantity || '—'}</td>
         <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
@@ -399,6 +376,31 @@ async function loadOrders() {
   }
 }
 
+// ─── Shop name updater (chạy ngầm) ───────────────────
+async function fetchAndUpdateShopNames(shops) {
+  for (const shop of shops) {
+    if (!shop.shop_url) continue;
+    if (!shop.shop_name.startsWith('http') && !shop.shop_name.startsWith('Shop #')) continue;
+    try {
+      const res  = await fetch(shop.shop_url, { cache: 'no-store' });
+      const html = await res.text();
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+      const el   = doc.querySelector('span.store-title');
+      if (!el) continue;
+      const name = el.textContent.trim();
+      if (!name) continue;
+      await fetch('/api/update-shopname', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop_id: shop.shop_id, shop_name: name })
+      });
+    } catch(e) {
+      console.warn(`[shopname] Lỗi ${shop.shop_id}:`, e);
+    }
+  }
+}
+
+// ─── Helpers ─────────────────────────────────────────
 function statusTag(s) {
   if (!s || s === 'nan') return '—';
   const sl = s.toLowerCase();
@@ -431,9 +433,8 @@ function renderPagination(total) {
   document.getElementById('pagination').innerHTML = html;
 }
 
-function goPage(p) { currentPage = p; loadOrders(); }
-
-function selectShop(id) {
+function goPage(p)        { currentPage = p; loadOrders(); }
+function selectShop(id)   {
   currentShop = id; currentPage = 1;
   document.querySelectorAll('.tab').forEach(t =>
     t.classList.toggle('active', t.dataset.id === id));
@@ -452,7 +453,6 @@ async function manualSync() {
 function showLoading(v) {
   document.getElementById('loadingOverlay').classList.toggle('show', v);
 }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
