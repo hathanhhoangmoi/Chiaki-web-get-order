@@ -588,6 +588,7 @@ const VALID_IDS = {
 };
 const ID_KEY = 'chiaki_id';
 const ID_EXP = 'chiaki_id_exp';
+const ID_FIRST_ENTRY = 'chiaki_id_first';
 
 function maskId(id) {
   return id.split('-').map(seg => {
@@ -648,21 +649,10 @@ function startExpireCountdown() {
 
 
 function submitId() {
-  const input  = document.getElementById('idInput');
-  const id     = input.value.trim();
-  const stored = localStorage.getItem(ID_KEY);
-  const expiry = localStorage.getItem(ID_EXP);
+  const input   = document.getElementById('idInput');
+  const id      = input.value.trim();
 
   if (!id) { showIdError('Vui lòng nhập ID truy cập'); return; }
-
-  // Kiểm tra key đã hết hạn chưa
-  if (stored === id && expiry && Date.now() > parseInt(expiry)) {
-    showIdError('⏰ ID này đã hết hạn. Vui lòng liên hệ admin để gia hạn.');
-    input.value = '';
-    localStorage.removeItem(ID_KEY);
-    localStorage.removeItem(ID_EXP);
-    return;
-  }
 
   const keyInfo = VALID_IDS[id];
   if (!keyInfo) {
@@ -671,7 +661,26 @@ function submitId() {
     return;
   }
 
-  const expMs = Date.now() + keyInfo.hours * 60 * 60 * 1000;
+  // Lấy thời điểm nhập đầu tiên — nếu chưa có thì ghi lại ngay bây giờ
+  let firstEntry = parseInt(localStorage.getItem(ID_FIRST_ENTRY) || '0');
+  if (!firstEntry) {
+    firstEntry = Date.now();
+    localStorage.setItem(ID_FIRST_ENTRY, String(firstEntry));
+  }
+
+  // Hết hạn = thời điểm nhập đầu tiên + hours của key
+  const expMs = firstEntry + keyInfo.hours * 60 * 60 * 1000;
+
+  // Kiểm tra đã hết hạn chưa
+  if (Date.now() > expMs) {
+    showIdError('⏰ ID đã hết hạn. Vui lòng liên hệ.');
+    input.value = '';
+    localStorage.removeItem(ID_KEY);
+    localStorage.removeItem(ID_EXP);
+    localStorage.removeItem(ID_FIRST_ENTRY); // reset hẳn nếu muốn cấp key mới
+    return;
+  }
+
   localStorage.setItem(ID_KEY, id);
   localStorage.setItem(ID_EXP, String(expMs));
 
@@ -683,6 +692,7 @@ function submitId() {
 }
 
 
+
 function showIdError(msg) {
   const err = document.getElementById('idError');
   err.textContent = msg;
@@ -690,11 +700,13 @@ function showIdError(msg) {
 }
 
 function changeId() {
-  if (!confirm('Bạn có chắc muốn đổi ID? Bạn sẽ cần nhập lại ID để tiếp tục.')) return;
+  if (!confirm('Bạn có chắc muốn đổi ID? Thời gian còn lại sẽ được tính theo lần nhập đầu tiên.')) return;
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
+  // ❌ KHÔNG xóa ID_FIRST_ENTRY → thời gian giữ nguyên
   location.reload();
 }
+
 
 // ── Khởi động ─────────────────────────────────────────
 if (checkIdGate()) {
