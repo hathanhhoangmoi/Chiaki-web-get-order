@@ -12,6 +12,11 @@ SHOPS = [
     ("https://chiaki.vn/stioaqzbw3-st4036", "Kitty House"),
     ("https://chiaki.vn/stioaqzbw3-st635", "Trang Perfume"),
     ("https://chiaki.vn/stioaqzbw3-st1498", "Kho Dược TPCN"),
+    ("https://chiaki.vn/gian-hang-st5090", "Mason House Store"),
+    ("https://chiaki.vn/gian-hang-st5091", "Gia Phương Shop"),
+    ("https://chiaki.vn/gian-hang-st4339", "PINASAGO Pin Sài Gòn"),
+    ("https://chiaki.vn/gian-hang-st4961", "Kalos Việt Nam"),
+    ("https://chiaki.vn/gian-hang-st4872", "Green House"),
 ]
 
 # Credentials từ extension của bạn
