@@ -6,7 +6,7 @@ class Order(Base):
     __tablename__ = "orders"
 
     id          = Column(Integer, primary_key=True, index=True)
-    order_code  = Column(String, unique=True, index=True)   # Mã đơn — unique để tránh trùng
+    order_code = Column(String, index=True)
     shop_id     = Column(String, index=True)
     shop_name   = Column(String)
     buyer_name  = Column(String)
