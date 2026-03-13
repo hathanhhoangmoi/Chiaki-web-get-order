@@ -24,8 +24,6 @@ body{
   border:1px solid rgba(255,255,255,.75);
   box-shadow:0 8px 32px rgba(160,130,200,.15),inset 0 1.5px 0 rgba(255,255,255,.9);
 }
-
-/* Header */
 .header{
   padding:16px 32px;display:flex;align-items:center;
   justify-content:space-between;
@@ -40,7 +38,6 @@ body{
   display:flex;align-items:center;justify-content:center;font-size:22px;
   box-shadow:0 4px 14px rgba(180,150,240,.35);
 }
-.header h1{font-size:18px;font-weight:700;color:#3b3551}
 .header-sub{font-size:12px;color:#9b8bb4;margin-top:2px}
 .sync-info{font-size:12px;color:#9b8bb4;text-align:right}
 .btn{
@@ -55,11 +52,7 @@ body{
 }
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(167,139,250,.45)}
 .btn-primary:disabled{background:rgba(200,190,220,.4);color:rgba(100,80,140,.4);box-shadow:none;cursor:not-allowed;transform:none}
-
-/* Layout */
 .container{max-width:1400px;margin:0 auto;padding:24px 32px}
-
-/* Stats row */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
 .stat-card{
   border-radius:18px;padding:18px 20px;
@@ -71,11 +64,7 @@ body{
 .stat-label{font-size:12px;color:#9b8bb4;margin-bottom:6px;font-weight:500}
 .stat-value{font-size:28px;font-weight:700;color:#3b3551;line-height:1}
 .stat-sub{font-size:11px;color:#b0a0c8;margin-top:4px}
-
-/* Shop tabs */
-.shop-tabs{
-  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;
-}
+.shop-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .tab{
   padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;
   cursor:pointer;border:1px solid rgba(198,181,255,.4);
@@ -94,8 +83,6 @@ body{
   border-radius:10px;padding:1px 7px;font-size:10px;
 }
 .tab.active .badge{background:rgba(255,255,255,.25)}
-
-/* Table */
 .table-wrap{
   border-radius:18px;overflow:hidden;
   border:1px solid rgba(255,255,255,.75);
@@ -119,10 +106,7 @@ thead th{
 tbody tr{border-bottom:1px solid rgba(198,181,255,.15);transition:background .15s}
 tbody tr:hover{background:rgba(255,255,255,.35)}
 tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
-.tag{
-  display:inline-block;padding:3px 10px;border-radius:20px;
-  font-size:10px;font-weight:700;
-}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
 .tag-wait{background:rgba(253,230,138,.5);color:#92400e;border:1px solid rgba(252,211,77,.4)}
 .tag-done{background:rgba(167,243,208,.5);color:#065f46;border:1px solid rgba(110,231,183,.4)}
 .tag-cancel{background:rgba(254,202,202,.5);color:#991b1b;border:1px solid rgba(252,165,165,.4)}
@@ -132,13 +116,8 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   background:rgba(216,180,254,.35);color:#6b21a8;
   border:1px solid rgba(216,180,254,.5);
 }
-.empty{
-  padding:48px;text-align:center;color:#b0a0c8;
-  background:rgba(255,255,255,.25);
-}
+.empty{padding:48px;text-align:center;color:#b0a0c8;background:rgba(255,255,255,.25)}
 .empty-icon{font-size:40px;margin-bottom:10px}
-
-/* Pagination */
 .pagination{
   display:flex;justify-content:center;align-items:center;
   gap:8px;padding:16px;
@@ -153,8 +132,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 .page-btn:hover{background:rgba(255,255,255,.7);color:#5b4b8a}
 .page-btn.active{background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;border-color:transparent}
 .page-info{font-size:12px;color:#9b8bb4;padding:0 8px}
-
-/* Loading */
 .loading-overlay{
   display:none;position:fixed;inset:0;
   background:rgba(255,255,255,.4);
@@ -185,7 +162,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 </style>
 </head>
 <body>
-  
+
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
   <div style="font-size:14px;color:#7c6fa0;font-weight:600">Đang tải dữ liệu...</div>
@@ -198,32 +175,23 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div class="logo">☁️</div>
     <div>
       <div style="font-size:17px;font-weight:700;color:#3b3551">Get Order by Chang ✨</div>
-
       <div class="header-sub">Tổng hợp đơn hàng theo gian hàng · Tự động cập nhật sau 30 phút</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
-    <div class="sync-info">
-      Lần sync:<br><b id="lastSyncTime">—</b>
-    </div>
+    <div class="sync-info">Lần sync:<br><b id="lastSyncTime">—</b></div>
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Sync ngay</button>
   </div>
 </div>
 
 <div class="container">
-  <!-- Stats -->
-  <div class="container">
 
   <!-- Disclaimer -->
   <div style="
     background:rgba(255,200,100,.18);
     border:1px solid rgba(255,180,60,.35);
-    border-radius:14px;
-    padding:11px 16px;
-    margin-bottom:18px;
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
+    border-radius:14px;padding:11px 16px;margin-bottom:18px;
+    display:flex;align-items:flex-start;gap:10px;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
   ">
     <span style="font-size:16px;margin-top:1px">⚠️</span>
@@ -232,14 +200,13 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
         THÔNG BÁO MIỄN TRỪ TRÁCH NHIỆM
       </div>
       <div style="font-size:11px;color:#78350f;line-height:1.6">
-        Mọi dữ liệu đều được khai thác từ API Public (Cổng dữ liệu công khai) của Chiaki.vn. Vui lòng tự chịu trách nhiệm với mọi dữ liệu bạn thu thập được. Chúng tôi có quyền cung cấp mọi thông tin cho cơ quan chức năng khi có yêu cầu. Bằng việc có tài khoản sử dụng website này, bạn đã chấp nhận mọi điều khoản từ chúng tôi!
+        Mọi dữ liệu bạn thu thập sẽ được lưu lại (dấu vết). Vui lòng tự chịu trách nhiệm với mọi dữ liệu bạn thu thập được. Chúng tôi có quyền cung cấp mọi thông tin cho cơ quan chức năng khi có yêu cầu. Bằng việc sử dụng tool này, bạn đã chấp nhận mọi điều khoản.
       </div>
     </div>
   </div>
 
   <!-- Stats -->
-
-  <div class="stats-row" id="statsRow">
+  <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">Tổng đơn hàng</div>
       <div class="stat-value" id="totalOrders">—</div>
@@ -253,7 +220,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div class="stat-card">
       <div class="stat-label">Đơn chờ xử lý</div>
       <div class="stat-value" id="waitCount">—</div>
-      <div class="stat-sub" id="waitLabel">receive_wating</div>
+      <div class="stat-sub">receive_wating</div>
     </div>
   </div>
 
@@ -272,24 +239,23 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
     <div style="overflow-x:auto">
       <table>
-       <thead>
-  <tr>
-    <th>Mã đơn</th>
-    <th>Gian hàng</th>
-    <th>Tên khách hàng</th>
-    <th>SĐT</th>
-    <th>Địa chỉ</th>
-    <th>Sản phẩm</th>
-    <th>Mã sản phẩm</th>
-    <th>SL</th>
-    <th>Tổng tiền</th>
-    <th>Trạng thái</th>
-    <th>Ngày tạo</th>
-  </tr>
-</thead>
-
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Gian hàng</th>
+            <th>Tên khách hàng</th>
+            <th>SĐT</th>
+            <th>Sản phẩm</th>
+            <th>Mã sản phẩm</th>
+            <th>SL</th>
+            <th>Tổng tiền</th>
+            <th>Địa chỉ</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+          </tr>
+        </thead>
         <tbody id="tableBody">
-          <tr><td colspan="9" class="empty">
+          <tr><td colspan="11" class="empty">
             <div class="empty-icon">📭</div>
             <div>Đang tải dữ liệu...</div>
           </td></tr>
@@ -304,49 +270,44 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 let currentShop = '';
 let currentPage = 1;
 const limit = 50;
-// Browser fetch tên shop từ Chiaki (không bị chặn)
+
+// Fetch tên shop từ browser (không bị Chiaki chặn), chỉ chạy 1 lần
 async function fetchAndUpdateShopNames(shops) {
   for (const shop of shops) {
-    if (!shop.shop_url || shop.shop_name === shop.shop_id) continue;
-    // Bỏ qua nếu tên đã là tên thật (không phải link hay Shop #id)
+    if (!shop.shop_url) continue;
     if (!shop.shop_name.startsWith('http') && !shop.shop_name.startsWith('Shop #')) continue;
-
     try {
       const res  = await fetch(shop.shop_url, { cache: 'no-store' });
       const html = await res.text();
       const doc  = new DOMParser().parseFromString(html, 'text/html');
       const el   = doc.querySelector('span.store-title');
       if (!el) continue;
-
       const name = el.textContent.trim();
       if (!name) continue;
-
-      // Gửi tên lên server lưu
       await fetch('/api/update-shopname', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shop_id: shop.shop_id, shop_name: name })
       });
       console.log(`[shopname] ${shop.shop_id} → ${name}`);
-      // Tự động fetch tên shop từ browser
-          // Fetch tên shop từ browser
-    fetchAndUpdateShopNames(data.shops);
-  } catch(e) {
-    console.error('Summary error:', e);
+    } catch(e) {
+      console.warn(`[shopname] Lỗi:`, e);
+    }
   }
-  }
-  // Reload lại sau khi cập nhật tên
-  loadOrders();
 }
 
 async function init() {
   try {
     await Promise.all([loadSummary(), loadOrders()]);
+    // Chạy 1 lần duy nhất để cập nhật tên shop
+    const summaryData = await fetch('/api/summary').then(r => r.json());
+    fetchAndUpdateShopNames(summaryData.shops);
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); }, 120_000);
+  // Auto reload mỗi 5 phút
+  setInterval(() => { loadSummary(); loadOrders(); }, 300_000);
 }
 
 async function loadSummary() {
@@ -400,7 +361,7 @@ async function loadOrders() {
 
     const tbody = document.getElementById('tableBody');
     if (!data.data || data.data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" class="empty">
+      tbody.innerHTML = `<tr><td colspan="11" class="empty">
         <div class="empty-icon">📭</div>
         <div>Chưa có đơn hàng nào</div>
       </td></tr>`;
@@ -420,9 +381,9 @@ async function loadOrders() {
             title="${o.product || ''}">${o.product || '—'}</td>
         <td style="text-align:center">${o.quantity || '—'}</td>
         <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-        <td>${statusTag(o.status)}</td>
         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-    title="${o.address || ''}">${o.address || '—'}</td>
+            title="${o.address || ''}">${o.address || '—'}</td>
+        <td>${statusTag(o.status)}</td>
         <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
       </tr>
     `).join('');
@@ -432,7 +393,7 @@ async function loadOrders() {
     showLoading(false);
     console.error('loadOrders error:', e);
     document.getElementById('tableBody').innerHTML = `
-      <tr><td colspan="10" class="empty">
+      <tr><td colspan="11" class="empty">
         <div class="empty-icon">⚠️</div>
         <div>Lỗi: ${e.message}</div>
       </td></tr>`;
