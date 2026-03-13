@@ -10,6 +10,7 @@ class Order(Base):
     shop_id     = Column(String, index=True)
     shop_name   = Column(String)
     buyer_name  = Column(String)
+    customer_name = Column(String)
     phone       = Column(String)
     address     = Column(Text)
     product     = Column(Text)
