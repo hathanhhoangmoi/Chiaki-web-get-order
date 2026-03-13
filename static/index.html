@@ -244,19 +244,21 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
     <div style="overflow-x:auto">
       <table>
-        <thead>
-          <tr>
-            <th>Mã đơn</th>
-            <th>Gian hàng</th>
-            <th>Khách hàng</th>
-            <th>SĐT</th>
-            <th>Sản phẩm</th>
-            <th>SL</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-            <th>Ngày tạo</th>
-          </tr>
-        </thead>
+       <thead>
+  <tr>
+    <th>Mã đơn</th>
+    <th>Gian hàng</th>
+    <th>Tên khách hàng</th>
+    <th>SĐT</th>
+    <th>Sản phẩm</th>
+    <th>Mã sản phẩm</th>
+    <th>SL</th>
+    <th>Tổng tiền</th>
+    <th>Trạng thái</th>
+    <th>Ngày tạo</th>
+  </tr>
+</thead>
+
         <tbody id="tableBody">
           <tr><td colspan="9" class="empty">
             <div class="empty-icon">📭</div>
@@ -337,19 +339,22 @@ async function loadOrders() {
   }
 
   tbody.innerHTML = res.data.map(o => `
-    <tr>
-      <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
-      <td><span class="shop-chip">${o.shop_name || o.shop_id}</span></td>
-      <td>${o.buyer_name || '—'}</td>
-      <td style="font-family:monospace">${o.phone || '—'}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-          title="${o.product}">${o.product || '—'}</td>
-      <td style="text-align:center">${o.quantity || '—'}</td>
-      <td><b>${o.total ? o.total.toLocaleString('vi') + '₫' : '—'}</b></td>
-      <td>${statusTag(o.status)}</td>
-      <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
-    </tr>
-  `).join('');
+  <tr>
+    <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
+    <td><span class="shop-chip">${o.shop_name || o.shop_id}</span></td>
+    <td>${o.customer_name || o.buyer_name || '—'}</td>
+    <td style="font-family:monospace">${o.phone || '—'}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+        title="${o.buyer_name}">${o.buyer_name || '—'}</td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+        title="${o.product}">${o.product || '—'}</td>
+    <td style="text-align:center">${o.quantity || '—'}</td>
+    <td><b>${o.total ? o.total.toLocaleString('vi') + '₫' : '—'}</b></td>
+    <td>${statusTag(o.status)}</td>
+    <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
+  </tr>
+`).join('');
+
 
   renderPagination(res.total);
 }
