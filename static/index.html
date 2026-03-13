@@ -240,6 +240,28 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 </style>
 </head>
 <body>
+<!-- ID Gate -->
+<div class="id-gate" id="idGate">
+  <div class="id-box">
+    <div class="id-logo">🔐</div>
+    <div class="id-title">Get Order by Chang ✨</div>
+    <div class="id-sub">Nhập ID truy cập để tiếp tục</div>
+
+    <div class="id-disclaimer">
+      <div class="id-disclaimer-title">⚠️ THÔNG BÁO MIỄN TRỪ TRÁCH NHIỆM</div>
+      <p>Công cụ này được xây dựng và cung cấp dựa trên các nguồn dữ liệu và mã nguồn mở công khai từ Chiaki.vn. Chúng tôi không sở hữu cũng như không chịu trách nhiệm về nội dung gốc của các nguồn dữ liệu đó.</p>
+      <p>Người sử dụng có trách nhiệm đảm bảo việc khai thác và sử dụng dữ liệu tuân thủ đầy đủ các quy định của pháp luật hiện hành. Nghiêm cấm mọi hành vi sử dụng dữ liệu cho các mục đích gian lận, trái phép hoặc vi phạm quyền riêng tư, quyền sở hữu trí tuệ và các quy định pháp luật liên quan.</p>
+      <p>Mọi hoạt động truy xuất, thu thập hoặc trích xuất dữ liệu thông qua công cụ này đều có thể được ghi nhận và lưu lại dưới dạng nhật ký hệ thống. Trong trường hợp phát hiện dấu hiệu sử dụng trái phép, gian lận hoặc vi phạm pháp luật, chúng tôi có quyền cung cấp toàn bộ thông tin truy vết, nhật ký hoạt động và dữ liệu liên quan cho cơ quan chức năng theo yêu cầu.</p>
+      <p>Bằng việc nhập ID và tiếp tục sử dụng, bạn xác nhận đã đọc, hiểu và đồng ý với các điều khoản nêu trên.</p>
+    </div>
+
+    <input class="id-input" id="idInput" type="password"
+           placeholder="Nhập ID truy cập..."
+           onkeydown="if(event.key==='Enter') submitId()"/>
+    <div class="id-error" id="idError"></div>
+    <button class="btn-id" id="idBtn" onclick="submitId()">🔓 Xác nhận & Truy cập</button>
+  </div>
+</div>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
@@ -256,6 +278,12 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
+    <div id="idDisplay" style="display:none">
+    <div class="id-badge">
+      🔑 <span id="maskedId">—</span>
+      <button class="btn-change-id" onclick="changeId()">Đổi ID</button>
+    </div>
+  </div>
     <div class="sync-info">Lần sync:<br><b id="lastSyncTime">—</b></div>
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Sync ngay</button>
   </div>
@@ -545,7 +573,82 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 4000);
 }
 
-init();
+// ── ID Auth ───────────────────────────────────────────
+const VALID_IDS = [
+  '3824-1540-3659-6526-3681-KEYAUTH-BYCHANG-Phuong',
+  '3824-1540-3659-3642-5464-KEYAUTH-BYCHANG-Phuong',
+  '3824-1540-3659-8615-3912-KEYAUTH-BYCHANG-Phuong',
+  '3824-1540-3659-3691-9512-KEYAUTH-BYCHANG-Phuong',
+  '3824-1540-3216-6526-3361-KEYAUTH-BYCHANG-Phuong',
+  '3824-1540-3636-3636-3636-KEYAUTH-BYCHANG-Phuong',
+  '0711-2000-2018-3824-1540-KEYADMIN-Hoang'
+];
+const ID_KEY = 'chiaki_id';
+const ID_EXP = 'chiaki_id_exp';
+
+function maskId(id) {
+  return id.split('-').map(seg => {
+    if (seg.length <= 2) return seg;
+    return seg.slice(0, -2) + 'xx';
+  }).join('-');
+}
+
+function checkIdGate() {
+  const id     = localStorage.getItem(ID_KEY);
+  const expiry = localStorage.getItem(ID_EXP);
+  if (id && expiry && Date.now() < parseInt(expiry)) {
+    document.getElementById('idGate').style.display    = 'none';
+    document.getElementById('idDisplay').style.display = 'block';
+    document.getElementById('maskedId').textContent    = maskId(id);
+    return true;
+  }
+  localStorage.removeItem(ID_KEY);
+  localStorage.removeItem(ID_EXP);
+  document.getElementById('idGate').style.display = 'flex';
+  return false;
+}
+
+function submitId() {
+  const input = document.getElementById('idInput');
+  const btn   = document.getElementById('idBtn');
+  const err   = document.getElementById('idError');
+  const id    = input.value.trim();
+
+  if (!id) { showIdError('Vui lòng nhập ID truy cập'); return; }
+
+  if (!VALID_IDS.includes(id)) {
+    showIdError('ID không hợp lệ. Vui lòng kiểm tra lại.');
+    input.value = '';
+    return;
+  }
+
+  // Lưu 24h
+  localStorage.setItem(ID_KEY, id);
+  localStorage.setItem(ID_EXP, String(Date.now() + 24 * 60 * 60 * 1000));
+
+  document.getElementById('idGate').style.display    = 'none';
+  document.getElementById('idDisplay').style.display = 'block';
+  document.getElementById('maskedId').textContent    = maskId(id);
+  init();
+}
+
+function showIdError(msg) {
+  const err = document.getElementById('idError');
+  err.textContent = msg;
+  err.classList.add('show');
+}
+
+function changeId() {
+  if (!confirm('Bạn có chắc muốn đổi ID? Bạn sẽ cần nhập lại ID để tiếp tục.')) return;
+  localStorage.removeItem(ID_KEY);
+  localStorage.removeItem(ID_EXP);
+  location.reload();
+}
+
+// ── Khởi động ─────────────────────────────────────────
+if (checkIdGate()) {
+  init();
+}
 </script>
 </body>
 </html>
