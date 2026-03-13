@@ -97,44 +97,54 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         return []
 
 async def sync_shop(shop_id: str, shop_url: str, db: Session) -> int:
-    """Fetch + parse + upsert orders cho 1 shop. Trả về số đơn mới."""
+    """
+    Xoá toàn bộ đơn cũ của shop này, 
+    insert lại toàn bộ từ Excel mới tải về
+    """
     shop_name = await fetch_shop_name(shop_url)
     url = build_api_url(shop_id)
+    print(f"[fetch] {shop_id} → {url}")
 
     try:
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
             res = await client.get(url)
+            print(f"[fetch] {shop_id} status={res.status_code} size={len(res.content)} bytes")
             if res.status_code != 200:
-                print(f"[sync_shop] {shop_id} HTTP {res.status_code}")
+                print(f"[fetch] {shop_id} FAILED: {res.text[:200]}")
                 return 0
             content = res.content
     except Exception as e:
-        print(f"[sync_shop] {shop_id} fetch error: {e}")
+        print(f"[fetch] {shop_id} exception: {e}")
         return 0
 
     orders = parse_excel(content, shop_id, shop_name)
-    new_count = 0
+    print(f"[parse] {shop_id} → {len(orders)} đơn đọc được từ Excel")
 
+    # ── XOÁ toàn bộ đơn cũ của shop này ──
+    deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
+    print(f"[delete] {shop_id} → đã xoá {deleted} đơn cũ")
+
+    # ── INSERT toàn bộ đơn mới ──
     for o in orders:
-        exists = db.query(Order).filter(Order.order_code == o["order_code"]).first()
-        if not exists:
-            db.add(Order(**o))
-            new_count += 1
+        db.add(Order(**o))
+    
+    db.commit()
+    new_count = len(orders)
 
-    # Cập nhật ShopMeta
+    # ── Cập nhật ShopMeta ──
     meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
-    total_count = db.query(Order).filter(Order.shop_id == shop_id).count() + new_count
     if meta:
         meta.shop_name   = shop_name
         meta.last_sync   = datetime.now()
-        meta.order_count = total_count
+        meta.order_count = new_count
     else:
         db.add(ShopMeta(
             shop_id=shop_id, shop_name=shop_name,
             shop_url=shop_url, last_sync=datetime.now(),
-            order_count=total_count
+            order_count=new_count
         ))
-
     db.commit()
-    print(f"[sync] {shop_name} ({shop_id}): +{new_count} đơn mới")
+
+    print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {new_count} đơn")
     return new_count
+
