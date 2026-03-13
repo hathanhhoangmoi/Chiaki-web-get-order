@@ -295,8 +295,15 @@ async function loadSummary() {
 
     const latestSync = data.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
     if (latestSync)
-      document.getElementById('lastSyncTime').textContent =
-        new Date(latestSync).toLocaleString('vi-VN');
+      // ✅ Mới — múi giờ HCM, định dạng 24h
+document.getElementById('lastSyncTime').textContent =
+  new Date(latestSync).toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour12: false,
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
 
     const tabs = document.getElementById('shopTabs');
     while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
