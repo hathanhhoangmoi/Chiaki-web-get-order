@@ -245,11 +245,11 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
             <th>Gian hàng</th>
             <th>Tên khách hàng</th>
             <th>SĐT</th>
+            <th>Địa chỉ</th>
             <th>Sản phẩm</th>
             <th>Mã sản phẩm</th>
             <th>SL</th>
             <th>Tổng tiền</th>
-            <th>Địa chỉ</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
           </tr>
@@ -298,17 +298,16 @@ async function fetchAndUpdateShopNames(shops) {
 
 async function init() {
   try {
-    await Promise.all([loadSummary(), loadOrders()]);
-    // Chạy 1 lần duy nhất để cập nhật tên shop
-    const summaryData = await fetch('/api/summary').then(r => r.json());
-    fetchAndUpdateShopNames(summaryData.shops);
+    // loadSummary tự trả về data để dùng lại
+    const [summaryData] = await Promise.all([loadSummary(), loadOrders()]);
+    if (summaryData) fetchAndUpdateShopNames(summaryData.shops);
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
   }
-  // Auto reload mỗi 5 phút
   setInterval(() => { loadSummary(); loadOrders(); }, 300_000);
 }
+
 
 async function loadSummary() {
   try {
@@ -342,7 +341,7 @@ async function loadSummary() {
           waitItem ? waitItem.count.toLocaleString('vi') : '0';
       })
       .catch(e => console.error('stats error:', e));
-
+   return data;
   } catch(e) {
     console.error('Summary error:', e);
   }
