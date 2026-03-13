@@ -1,10 +1,9 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./chiaki.db")
 
-# Render PostgreSQL dùng postgres://, SQLAlchemy cần postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -22,3 +21,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def migrate():
+    """Tự thêm cột mới nếu chưa tồn tại"""
+    with engine.connect() as conn:
+        # Danh sách cột cần đảm bảo tồn tại
+        new_columns = [
+            ("customer_name", "VARCHAR"),
+        ]
+        for col_name, col_type in new_columns:
+            try:
+                conn.execute(text(f"ALTER TABLE orders ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+                print(f"[migrate] Đã thêm cột: {col_name}")
+            except Exception:
+                pass  # Cột đã tồn tại → bỏ qua
