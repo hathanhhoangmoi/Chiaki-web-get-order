@@ -22,11 +22,33 @@ def build_api_url(shop_id: str) -> str:
 
 async def fetch_shop_name(shop_url: str) -> str:
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(
+            timeout=10,
+            follow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0"}
+        ) as client:
             res = await client.get(shop_url)
-            match = re.search(r'<span[^>]*class="store-title"[^>]*>(.*?)</span>', res.text)
-            return match.group(1).strip() if match else shop_url
-    except:
+            if not res.ok:
+                return shop_url
+
+            # Thử nhiều pattern để chắc chắn match được
+            patterns = [
+                r'<span[^>]*class=["\']store-title["\'][^>]*>(.*?)</span>',
+                r'class=["\']store-title["\'][^>]*>(.*?)<',
+                r'store-title["\']>(.*?)<',
+            ]
+            for pattern in patterns:
+                m = re.search(pattern, res.text, re.IGNORECASE | re.DOTALL)
+                if m:
+                    name = m.group(1).strip()
+                    if name:
+                        print(f"[fetch_name] {shop_url} → {name}")
+                        return name
+
+            print(f"[fetch_name] Không tìm thấy tên: {shop_url}")
+            return shop_url
+    except Exception as e:
+        print(f"[fetch_name] Error {shop_url}: {e}")
         return shop_url
 
 from openpyxl import load_workbook
