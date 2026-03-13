@@ -276,7 +276,6 @@ let currentShop = '';
 let currentPage = 1;
 const limit = 50;
 
-// ── Init ─────────────────────────────────────────────────
 async function init() {
   try {
     await Promise.all([loadSummary(), loadOrders()]);
@@ -287,13 +286,50 @@ async function init() {
   setInterval(() => { loadSummary(); loadOrders(); }, 120_000);
 }
 
+async function loadSummary() {
+  try {
+    const data = await fetch('/api/summary').then(r => r.json());
+    document.getElementById('totalOrders').textContent = data.total_orders.toLocaleString('vi');
+    document.getElementById('totalShops').textContent  = data.total_shops;
+    document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
+
+    const latestSync = data.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
+    if (latestSync)
+      document.getElementById('lastSyncTime').textContent =
+        new Date(latestSync).toLocaleString('vi-VN');
+
+    const tabs = document.getElementById('shopTabs');
+    while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
+    data.shops.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'tab' + (currentShop === s.shop_id ? ' active' : '');
+      div.dataset.id = s.shop_id;
+      div.onclick = () => selectShop(s.shop_id);
+      div.innerHTML = `${s.shop_name || s.shop_id} <span class="badge">${s.order_count}</span>`;
+      tabs.appendChild(div);
+    });
+
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(statsRes => {
+        const waitItem = statsRes.by_status.find(s =>
+          s.status && s.status.toLowerCase().includes('wait'));
+        document.getElementById('waitCount').textContent =
+          waitItem ? waitItem.count.toLocaleString('vi') : '0';
+      })
+      .catch(e => console.error('stats error:', e));
+
+  } catch(e) {
+    console.error('Summary error:', e);
+  }
+}
+
 async function loadOrders() {
   showLoading(true);
   try {
     let url = `/api/orders?page=${currentPage}&limit=${limit}`;
     if (currentShop) url += `&shop_id=${currentShop}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await fetch(url).then(r => r.json());
     showLoading(false);
 
     document.getElementById('tableCount').textContent =
@@ -333,108 +369,9 @@ async function loadOrders() {
     document.getElementById('tableBody').innerHTML = `
       <tr><td colspan="10" class="empty">
         <div class="empty-icon">⚠️</div>
-        <div>Lỗi JS: ${e.message}</div>
+        <div>Lỗi: ${e.message}</div>
       </td></tr>`;
   }
-}
-
-
-async function loadSummary() {
-  try {
-    const res = await fetch('/api/summary').then(r => r.json());
-    document.getElementById('totalOrders').textContent = res.total_orders.toLocaleString('vi');
-    document.getElementById('totalShops').textContent  = res.total_shops;
-    document.getElementById('tabAll').textContent      = res.total_orders.toLocaleString('vi');
-
-    const latestSync = res.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
-    if (latestSync)
-      document.getElementById('lastSyncTime').textContent =
-        new Date(latestSync).toLocaleString('vi-VN');
-
-    const tabs = document.getElementById('shopTabs');
-    while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
-    res.shops.forEach(s => {
-      const div = document.createElement('div');
-      div.className = 'tab' + (currentShop === s.shop_id ? ' active' : '');
-      div.dataset.id = s.shop_id;
-      div.onclick = () => selectShop(s.shop_id);
-      div.innerHTML = `${s.shop_name || s.shop_id} <span class="badge">${s.order_count}</span>`;
-      tabs.appendChild(div);
-    });
-
-    const statsRes = await fetch('/api/stats').then(r => r.json());
-    const waitItem = statsRes.by_status.find(s => s.status && s.status.toLowerCase().includes('wait'));
-    document.getElementById('waitCount').textContent =
-      waitItem ? waitItem.count.toLocaleString('vi') : '0';
-  } catch(e) {
-    console.error('Summary error:', e);
-  }
-}
-
-
-  // Render shop tabs
-  const tabs = document.getElementById('shopTabs');
-  // Giữ tab "Tất cả", xoá tabs cũ
-  while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
-
-  res.shops.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'tab' + (currentShop === s.shop_id ? ' active' : '');
-    div.dataset.id = s.shop_id;
-    div.onclick = () => selectShop(s.shop_id);
-    div.innerHTML = `${s.shop_name || s.shop_id} <span class="badge">${s.order_count}</span>`;
-    tabs.appendChild(div);
-  });
-
-  // Stats
-  fetch('/api/stats')
-  .then(r => r.json())
-  .then(statsRes => {
-    const waitItem = statsRes.by_status.find(s =>
-      s.status && s.status.toLowerCase().includes('wait'));
-    document.getElementById('waitCount').textContent =
-      waitItem ? waitItem.count.toLocaleString('vi') : '0';
-  })
-  .catch(e => console.error('stats error:', e));
-
-// ── Orders ────────────────────────────────────────────────
-async function loadOrders() {
-  showLoading(true);
-  let url = `/api/orders?page=${currentPage}&limit=${limit}`;
-  if (currentShop) url += `&shop_id=${currentShop}`;
-  const res = await fetch(url).then(r => r.json());
-  showLoading(false);
-
-  document.getElementById('tableCount').textContent =
-    `${res.total.toLocaleString('vi')} đơn hàng`;
-
-  const tbody = document.getElementById('tableBody');
-  if (!res.data.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty">
-      <div class="empty-icon">📭</div><div>Không có đơn hàng nào</div></td></tr>`;
-    document.getElementById('pagination').innerHTML = '';
-    return;
-  }
-
-  tbody.innerHTML = res.data.map(o => `
-  <tr>
-    <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
-    <td><span class="shop-chip">${o.shop_name || o.shop_id}</span></td>
-    <td>${o.customer_name || o.buyer_name || '—'}</td>
-    <td style="font-family:monospace">${o.phone || '—'}</td>
-    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-        title="${o.buyer_name}">${o.buyer_name || '—'}</td>
-    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-        title="${o.product}">${o.product || '—'}</td>
-    <td style="text-align:center">${o.quantity || '—'}</td>
-    <td><b>${o.total ? o.total.toLocaleString('vi') + '₫' : '—'}</b></td>
-    <td>${statusTag(o.status)}</td>
-    <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
-  </tr>
-`).join('');
-
-
-  renderPagination(res.total);
 }
 
 function statusTag(s) {
@@ -457,10 +394,12 @@ function renderPagination(total) {
   const end   = Math.min(totalPages, currentPage + 2);
   if (currentPage > 1)
     html += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
-  if (start > 1) html += `<button class="page-btn" onclick="goPage(1)">1</button><span class="page-info">...</span>`;
+  if (start > 1)
+    html += `<button class="page-btn" onclick="goPage(1)">1</button><span class="page-info">...</span>`;
   for (let i = start; i <= end; i++)
     html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
-  if (end < totalPages) html += `<span class="page-info">...</span><button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  if (end < totalPages)
+    html += `<span class="page-info">...</span><button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
   if (currentPage < totalPages)
     html += `<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
   html += `<span class="page-info">${currentPage}/${totalPages}</span>`;
@@ -488,6 +427,7 @@ async function manualSync() {
 function showLoading(v) {
   document.getElementById('loadingOverlay').classList.toggle('show', v);
 }
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
