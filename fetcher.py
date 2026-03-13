@@ -91,7 +91,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
 
         orders = []
         for i, row in enumerate(rows[1:]):
-            code = val(row, col_code) or f"{shop_id}_{i}"
+            code = f"{shop_id}_{val(row, col_code)}" if val(row, col_code) else f"{shop_id}_{i}"
             if not code or code == "None": continue
             try:
                 qty   = int(float(val(row, col_qty)))  if val(row, col_qty)   else 0
