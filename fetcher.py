@@ -164,3 +164,9 @@ async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) ->
 
     print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {len(orders)} đơn")
     return len(orders)
+results = await asyncio.gather(*tasks, return_exceptions=True)
+for sid, result in zip(shops.keys(), results):
+    if isinstance(result, Exception):
+        print(f"[scheduler] ❌ {sid} LỖI: {type(result).__name__}: {result}")
+    else:
+        print(f"[scheduler] ✅ {sid} → {result} đơn")
