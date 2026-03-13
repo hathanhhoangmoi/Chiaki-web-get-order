@@ -105,3 +105,15 @@ async def test_shopname(url: str = Query(...)):
     from fetcher import fetch_shop_name
     name = await fetch_shop_name(url)
     return {"url": url, "name": name}
+@app.post("/api/update-shopname")
+def update_shopname(body: dict, db: Session = Depends(get_db)):
+    shop_id   = body.get("shop_id")
+    shop_name = body.get("shop_name")
+    if not shop_id or not shop_name:
+        return {"ok": False}
+    meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+    if meta:
+        meta.shop_name = shop_name
+        db.query(Order).filter(Order.shop_id == shop_id).update({"shop_name": shop_name})
+        db.commit()
+    return {"ok": True, "shop_id": shop_id, "shop_name": shop_name}
