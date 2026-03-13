@@ -11,7 +11,10 @@ from scheduler import start_scheduler, sync_all_shops
 from shops_config import get_shops_map
 from fetcher import sync_shop
 
+from database import engine, get_db, migrate
 Base.metadata.create_all(bind=engine)
+migrate()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
