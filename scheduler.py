@@ -19,6 +19,11 @@ async def sync_all_shops():
 
     tasks = [sync_one(sid, url, name) for sid, (url, name) in shops.items()]
     results = await asyncio.gather(*tasks, return_exceptions=True)
+    for sid, result in zip(shops.keys(), results):
+        if isinstance(result, Exception):
+            print(f"[scheduler] ❌ {sid} LỖI: {type(result).__name__}: {result}")
+        else:
+            print(f"[scheduler] ✅ {sid} → {result} đơn")
     total_new = sum(r for r in results if isinstance(r, int))
     print(f"[scheduler] Hoàn tất: +{total_new} đơn mới từ {len(shops)} gian hàng")
 
