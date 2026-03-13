@@ -76,16 +76,16 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         col_phone    = find_col(["sđt", "điện thoại", "phone", "số điện thoại"])
         col_address  = find_col(["địa chỉ", "address"])
         col_product = find_col([
-    "tên sản phẩm",
+    "Tên sản phẩm",
     "ten san pham",
     "tên hàng",
     "product name",
     "product",
 ])
-        col_qty      = find_col(["số lượng", "quantity", "qty", "sl"])
-        col_total    = find_col(["tổng tiền", "tổng", "total", "amount"])
-        col_status   = find_col(["trạng thái", "status"])
-        col_date     = find_col(["thời gian đặt hàng"])
+        col_qty      = find_col(["Số lượng", "quantity", "qty", "sl"])
+        col_total    = find_col(["Tổng tiền", "tổng", "total", "amount"])
+        col_status   = find_col(["Trạng thái", "status"])
+        col_date     = find_col(["Thời gian đặt hàng"])
 
         def val(row, idx):
             if idx is None or idx >= len(row): return ""
