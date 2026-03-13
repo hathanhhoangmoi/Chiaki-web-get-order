@@ -100,3 +100,8 @@ def get_stats(db: Session = Depends(get_db)):
         "by_status": [{"status": s, "count": c} for s, c in by_status],
         "by_shop":   [{"shop": s, "count": c} for s, c in by_shop],
     }
+@app.get("/api/test-shopname")
+async def test_shopname(url: str = Query(...)):
+    from fetcher import fetch_shop_name
+    name = await fetch_shop_name(url)
+    return {"url": url, "name": name}
