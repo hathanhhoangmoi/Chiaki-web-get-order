@@ -117,3 +117,10 @@ def update_shopname(body: dict, db: Session = Depends(get_db)):
         db.query(Order).filter(Order.shop_id == shop_id).update({"shop_name": shop_name})
         db.commit()
     return {"ok": True, "shop_id": shop_id, "shop_name": shop_name}
+@app.post("/api/admin/clear-orders")
+def clear_orders(body: dict, db: Session = Depends(get_db)):
+    if body.get("admin_secret") != ADMIN_SECRET:
+        return {"ok": False}
+    count = db.query(Order).delete()
+    db.commit()
+    return {"ok": True, "deleted": count}
