@@ -275,6 +275,41 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 let currentShop = '';
 let currentPage = 1;
 const limit = 50;
+// Browser fetch tên shop từ Chiaki (không bị chặn)
+async function fetchAndUpdateShopNames(shops) {
+  for (const shop of shops) {
+    if (!shop.shop_url || shop.shop_name === shop.shop_id) continue;
+    // Bỏ qua nếu tên đã là tên thật (không phải link hay Shop #id)
+    if (!shop.shop_name.startsWith('http') && !shop.shop_name.startsWith('Shop #')) continue;
+
+    try {
+      const res  = await fetch(shop.shop_url, { cache: 'no-store' });
+      const html = await res.text();
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+      const el   = doc.querySelector('span.store-title');
+      if (!el) continue;
+
+      const name = el.textContent.trim();
+      if (!name) continue;
+
+      // Gửi tên lên server lưu
+      await fetch('/api/update-shopname', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop_id: shop.shop_id, shop_name: name })
+      });
+      console.log(`[shopname] ${shop.shop_id} → ${name}`);
+      // Tự động fetch tên shop từ browser
+fetchAndUpdateShopNames(data.shops);
+
+    } catch(e) {
+      console.warn(`[shopname] Lỗi ${shop.shop_url}:`, e);
+    }
+  }
+  // Reload lại sau khi cập nhật tên
+  loadSummary();
+  loadOrders();
+}
 
 async function init() {
   try {
