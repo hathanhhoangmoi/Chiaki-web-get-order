@@ -28,3 +28,5 @@ class ShopMeta(Base):
     shop_url    = Column(String)
     last_sync   = Column(DateTime)
     order_count = Column(Integer, default=0)
+buyer_name    = Column(String)
+customer_name = Column(String)   # ← thêm dòng này (Người đặt hàng)
