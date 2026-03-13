@@ -50,6 +50,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
 
         col_code    = find_col(["mã đơn", "order_id", "order id", "mã"])
         col_buyer   = find_col(["tên", "buyer", "khách", "người mua"])
+        col_customer = find_col(["người đặt", "người đặt hàng", "đặt hàng"])
         col_phone   = find_col(["điện thoại", "phone", "sdt"])
         col_address = find_col(["địa chỉ", "address"])
         col_product = find_col(["sản phẩm", "product", "hàng"])
@@ -77,6 +78,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
                 "shop_id":    shop_id,
                 "shop_name":  shop_name,
                 "buyer_name": val(row, col_buyer),
+                "customer_name": val(row, col_customer), 
                 "phone":      val(row, col_phone),
                 "address":    val(row, col_address),
                 "product":    val(row, col_product),
