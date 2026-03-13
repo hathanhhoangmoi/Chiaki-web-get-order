@@ -70,16 +70,16 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
                         return i
             return None
 
-        col_code    = find_col(["mã đơn", "order_id", "order id", "mã"])
-        col_buyer   = find_col(["tên", "buyer", "khách", "người mua"])
-        col_customer = find_col(["người đặt", "người đặt hàng", "đặt hàng"])
-        col_phone   = find_col(["điện thoại", "phone", "sdt"])
-        col_address = find_col(["địa chỉ", "address"])
-        col_product = find_col(["sản phẩm", "product", "hàng"])
-        col_qty     = find_col(["số lượng", "quantity", "qty", "sl"])
-        col_total   = find_col(["tổng", "total", "tiền", "amount"])
-        col_status  = find_col(["trạng thái", "status"])
-        col_date    = find_col(["ngày", "date", "thời gian"])
+        col_code     = find_col(["mã đơn hàng", "mã đơn", "order_id"])
+        col_customer = find_col(["người đặt hàng", "người đặt", "đặt hàng", "khách"])
+        col_buyer    = find_col(["tên người nhận", "người nhận", "buyer"])
+        col_phone    = find_col(["sđt", "điện thoại", "phone", "số điện thoại"])
+        col_address  = find_col(["địa chỉ", "address"])
+        col_product  = find_col(["tên sản phẩm", "sản phẩm", "product"])
+        col_qty      = find_col(["số lượng", "quantity", "qty", "sl"])
+        col_total    = find_col(["tổng tiền", "tổng", "total", "amount"])
+        col_status   = find_col(["trạng thái", "status"])
+        col_date     = find_col(["thời gian đặt hàng", "thời gian", "ngày", "date"])
 
         def val(row, idx):
             if idx is None or idx >= len(row): return ""
@@ -123,7 +123,6 @@ async def sync_shop(shop_id: str, shop_url: str, db: Session) -> int:
     Xoá toàn bộ đơn cũ của shop này, 
     insert lại toàn bộ từ Excel mới tải về
     """
-    shop_name = await fetch_shop_name(shop_url)
     url = build_api_url(shop_id)
     print(f"[fetch] {shop_id} → {url}")
 
