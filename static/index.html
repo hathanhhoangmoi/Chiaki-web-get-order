@@ -361,10 +361,10 @@ tbody.innerHTML = data.data.map(o => `
     <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
     <td>${o.customer_name || o.buyer_name || '—'}</td>
     <td style="font-family:monospace">${o.phone || '—'}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-        title="${o.address || ''}">${o.address || '—'}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-        title="${o.product || ''}">${o.product || '—'}</td>
+    <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">
+    ${o.address || '—'}</td>
+    <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">
+    ${o.product || '—'}</td>
     <td style="text-align:center">${o.quantity || '—'}</td>
     <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
     <td>${statusTag(o.status)}</td>
