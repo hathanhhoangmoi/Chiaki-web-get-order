@@ -387,11 +387,16 @@ async function loadSummary() {
   });
 
   // Stats
-  const statsRes = await fetch('/api/stats').then(r => r.json());
-  const waitItem = statsRes.by_status.find(s =>
-    s.status && s.status.toLowerCase().includes('wait'));
-  document.getElementById('waitCount').textContent =
-    waitItem ? waitItem.count.toLocaleString('vi') : '0';
+  fetch('/api/stats')
+  .then(r => r.json())
+  .then(statsRes => {
+    const waitItem = statsRes.by_status.find(s =>
+      s.status && s.status.toLowerCase().includes('wait'));
+    document.getElementById('waitCount').textContent =
+      waitItem ? waitItem.count.toLocaleString('vi') : '0';
+  })
+  .catch(e => console.error('stats error:', e));
+
 }
 
 // ── Orders ────────────────────────────────────────────────
