@@ -292,49 +292,52 @@ async function loadOrders() {
   try {
     let url = `/api/orders?page=${currentPage}&limit=${limit}`;
     if (currentShop) url += `&shop_id=${currentShop}`;
-    const res = await fetch(url).then(r => r.json());
+    const res = await fetch(url);
+    const data = await res.json();
     showLoading(false);
 
     document.getElementById('tableCount').textContent =
-      `${res.total.toLocaleString('vi')} đơn hàng`;
+      `${(data.total || 0).toLocaleString('vi')} đơn hàng`;
 
     const tbody = document.getElementById('tableBody');
-    if (!res.data || !res.data.length) {
+    if (!data.data || data.data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="10" class="empty">
         <div class="empty-icon">📭</div>
-        <div>Chưa có đơn hàng nào — Đang chờ sync lần đầu...</div>
+        <div>Chưa có đơn hàng nào</div>
       </td></tr>`;
       document.getElementById('pagination').innerHTML = '';
       return;
     }
 
-    tbody.innerHTML = res.data.map(o => `
+    tbody.innerHTML = data.data.map(o => `
       <tr>
-        <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
-        <td><span class="shop-chip">${o.shop_name || o.shop_id}</span></td>
+        <td><b style="font-family:monospace;font-size:11px">${o.order_code || '—'}</b></td>
+        <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
         <td>${o.customer_name || o.buyer_name || '—'}</td>
         <td style="font-family:monospace">${o.phone || '—'}</td>
         <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-            title="${o.buyer_name}">${o.buyer_name || '—'}</td>
+            title="${o.buyer_name || ''}">${o.buyer_name || '—'}</td>
         <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-            title="${o.product}">${o.product || '—'}</td>
+            title="${o.product || ''}">${o.product || '—'}</td>
         <td style="text-align:center">${o.quantity || '—'}</td>
-        <td><b>${o.total ? o.total.toLocaleString('vi') + '₫' : '—'}</b></td>
+        <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
         <td>${statusTag(o.status)}</td>
         <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
       </tr>
     `).join('');
-    renderPagination(res.total);
 
+    renderPagination(data.total);
   } catch(e) {
     showLoading(false);
+    console.error('loadOrders error:', e);
     document.getElementById('tableBody').innerHTML = `
       <tr><td colspan="10" class="empty">
         <div class="empty-icon">⚠️</div>
-        <div>Lỗi kết nối server: ${e.message}</div>
+        <div>Lỗi JS: ${e.message}</div>
       </td></tr>`;
   }
 }
+
 
 async function loadSummary() {
   try {
