@@ -1,11 +1,10 @@
 import re
 
 SHOPS = [
-    "https://chiaki.vn/stz88clwvl-st2732",  # Shop 1
-    "https://chiaki.vn/gian-hang-st4299",  # Shop 2
-    "https://chiaki.vn/st8rbd8n7p-st3522",  # Shop 3
-    "https://chiaki.vn/stk635opng-st4337",  # Shop 3
-
+    ("https://chiaki.vn/stz88clwvl-st2732", "Min Duty"),
+    ("https://chiaki.vn/gian-hang-st4299",  "HADES Shop"),
+    ("https://chiaki.vn/st8rbd8n7p-st3522", "ShipnhanhStore"),
+    ("https://chiaki.vn/stk635opng-st4337", "TH Cosmetic"),
 ]
 
 # Credentials từ extension của bạn
@@ -17,10 +16,9 @@ def extract_id(url: str) -> str | None:
     return m.group(1) if m else None
 
 def get_shops_map() -> dict:
-    """Trả về {shop_id: shop_url}"""
     result = {}
-    for url in SHOPS:
+    for url, name in SHOPS:
         sid = extract_id(url)
         if sid:
-            result[sid] = url
+            result[sid] = (url, name)
     return result
