@@ -4,6 +4,7 @@ SHOPS = [
     "https://chiaki.vn/stz88clwvl-st2732",  # Shop 1
     "https://chiaki.vn/gian-hang-st4299",  # Shop 2
     "https://chiaki.vn/st8rbd8n7p-st3522",  # Shop 3
+    "https://chiaki.vn/stk635opng-st4337",  # Shop 3
 
 ]
 
