@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from models import Order, ShopMeta
 from shops_config import SELLER_ID, SELLER_TOKEN
+from openpyxl import load_workbook
+
 
 def build_api_url(shop_id: str) -> str:
     today = datetime.now()
@@ -20,7 +22,9 @@ def build_api_url(shop_id: str) -> str:
         f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
     )
 
+
 async def fetch_shop_name(shop_url: str) -> str:
+    """Giữ lại cho /api/test-shopname, không dùng trong sync nữa"""
     try:
         async with httpx.AsyncClient(
             timeout=10,
@@ -28,10 +32,9 @@ async def fetch_shop_name(shop_url: str) -> str:
             headers={"User-Agent": "Mozilla/5.0"}
         ) as client:
             res = await client.get(shop_url)
-            if not res.ok:
+            if not res.is_success:  # fix: res.ok → res.is_success
                 return shop_url
 
-            # Thử nhiều pattern để chắc chắn match được
             patterns = [
                 r'<span[^>]*class=["\']store-title["\'][^>]*>(.*?)</span>',
                 r'class=["\']store-title["\'][^>]*>(.*?)<',
@@ -51,7 +54,6 @@ async def fetch_shop_name(shop_url: str) -> str:
         print(f"[fetch_name] Error {shop_url}: {e}")
         return shop_url
 
-from openpyxl import load_workbook
 
 def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
     try:
@@ -62,6 +64,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
             return []
 
         headers = [str(c).strip() if c else "" for c in rows[0]]
+        print(f"[parse] headers: {headers}")  # debug header
 
         def find_col(keywords):
             for kw in keywords:
@@ -75,17 +78,11 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         col_buyer    = find_col(["tên người nhận", "người nhận", "buyer"])
         col_phone    = find_col(["sđt", "điện thoại", "phone", "số điện thoại"])
         col_address  = find_col(["địa chỉ", "address"])
-        col_product = find_col([
-    "Tên sản phẩm",
-    "ten san pham",
-    "tên hàng",
-    "product name",
-    "product",
-])
-        col_qty      = find_col(["Số lượng", "quantity", "qty", "sl"])
-        col_total    = find_col(["Tổng tiền", "tổng", "total", "amount"])
-        col_status   = find_col(["Trạng thái", "status"])
-        col_date     = find_col(["Thời gian đặt hàng"])
+        col_product  = find_col(["tên sản phẩm", "ten san pham", "tên hàng", "product name", "product"])
+        col_qty      = find_col(["số lượng", "quantity", "qty", "sl"])
+        col_total    = find_col(["tổng tiền", "tổng", "total", "amount"])
+        col_status   = find_col(["trạng thái", "status"])
+        col_date     = find_col(["thời gian đặt hàng", "thời gian đặt", "thời gian", "ngày đặt", "ngày tạo", "ngày", "date", "time"])
 
         def val(row, idx):
             if idx is None or idx >= len(row): return ""
@@ -97,24 +94,24 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
             code = val(row, col_code) or f"{shop_id}_{i}"
             if not code or code == "None": continue
             try:
-                qty   = int(float(val(row, col_qty)))   if val(row, col_qty)   else 0
-                total = float(val(row, col_total))       if val(row, col_total) else 0.0
+                qty   = int(float(val(row, col_qty)))  if val(row, col_qty)   else 0
+                total = float(val(row, col_total))      if val(row, col_total) else 0.0
             except:
                 qty, total = 0, 0.0
             orders.append({
-                "order_code": code,
-                "shop_id":    shop_id,
-                "shop_name":  shop_name,
-                "buyer_name": val(row, col_buyer),
-                "customer_name": val(row, col_customer), 
-                "phone":      val(row, col_phone),
-                "address":    val(row, col_address),
-                "product":    val(row, col_product),
-                "quantity":   qty,
-                "total":      total,
-                "status":     val(row, col_status),
-                "order_date": val(row, col_date),
-                "raw_data":   json.dumps(
+                "order_code":    code,
+                "shop_id":       shop_id,
+                "shop_name":     shop_name,
+                "buyer_name":    val(row, col_buyer),
+                "customer_name": val(row, col_customer),
+                "phone":         val(row, col_phone),
+                "address":       val(row, col_address),
+                "product":       val(row, col_product),
+                "quantity":      qty,
+                "total":         total,
+                "status":        val(row, col_status),
+                "order_date":    val(row, col_date),
+                "raw_data":      json.dumps(
                     dict(zip(headers, [str(c) for c in row])),
                     ensure_ascii=False
                 ),
@@ -124,11 +121,9 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         print(f"[parse_excel] Error shop {shop_id}: {e}")
         return []
 
-async def sync_shop(shop_id: str, shop_url: str, db: Session) -> int:
-    """
-    Xoá toàn bộ đơn cũ của shop này, 
-    insert lại toàn bộ từ Excel mới tải về
-    """
+
+async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) -> int:
+    # fix: thêm shop_name vào signature, bỏ fetch_shop_name()
     url = build_api_url(shop_id)
     print(f"[fetch] {shop_id} → {url}")
 
@@ -147,31 +142,25 @@ async def sync_shop(shop_id: str, shop_url: str, db: Session) -> int:
     orders = parse_excel(content, shop_id, shop_name)
     print(f"[parse] {shop_id} → {len(orders)} đơn đọc được từ Excel")
 
-    # ── XOÁ toàn bộ đơn cũ của shop này ──
     deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
     print(f"[delete] {shop_id} → đã xoá {deleted} đơn cũ")
 
-    # ── INSERT toàn bộ đơn mới ──
     for o in orders:
         db.add(Order(**o))
-    
     db.commit()
-    new_count = len(orders)
 
-    # ── Cập nhật ShopMeta ──
     meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
     if meta:
         meta.shop_name   = shop_name
         meta.last_sync   = datetime.now()
-        meta.order_count = new_count
+        meta.order_count = len(orders)
     else:
         db.add(ShopMeta(
             shop_id=shop_id, shop_name=shop_name,
             shop_url=shop_url, last_sync=datetime.now(),
-            order_count=new_count
+            order_count=len(orders)
         ))
     db.commit()
 
-    print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {new_count} đơn")
-    return new_count
-
+    print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {len(orders)} đơn")
+    return len(orders)
