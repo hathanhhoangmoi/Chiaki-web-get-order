@@ -2,7 +2,7 @@ import re
 
 SHOPS = [
     ("https://chiaki.vn/stz88clwvl-st2732", "Min Duty"),
-    ("https://chiaki.vn/gian-hang-st4299",  "HADES Shop"),
+    ("https://chiaki.vn/gian-hang-st4299", "HADES Shop"),
     ("https://chiaki.vn/st8rbd8n7p-st3522", "ShipnhanhStore"),
     ("https://chiaki.vn/stk635opng-st4337", "TH Cosmetic"),
 ]
