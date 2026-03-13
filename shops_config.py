@@ -5,6 +5,13 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st4299", "HADES Shop"),
     ("https://chiaki.vn/st8rbd8n7p-st3522", "ShipnhanhStore"),
     ("https://chiaki.vn/stk635opng-st4337", "TH Cosmetic"),
+    ("https://chiaki.vn/stf4cahsa3-st3684", "Hoya Life"),
+    ("https://chiaki.vn/stioaqzbw3-st3540", "Rongcon"),
+    ("https://chiaki.vn/stioaqzbw3-st3783", "Đẹp & Khoẻ 365"),
+    ("https://chiaki.vn/stioaqzbw3-st1489", "Beauty & Healthy"),
+    ("https://chiaki.vn/stioaqzbw3-st4036", "Kitty House"),
+    ("https://chiaki.vn/stioaqzbw3-st635", "Trang Perfume"),
+    ("https://chiaki.vn/stioaqzbw3-st4917", "Moss Skincare"),
 ]
 
 # Credentials từ extension của bạn
