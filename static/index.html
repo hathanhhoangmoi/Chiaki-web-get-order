@@ -445,7 +445,9 @@ document.getElementById('lastSyncTime').textContent =
 
 
     const tabs = document.getElementById('shopTabs');
-    while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
+// Giữ lại 3 phần tử đầu: Tất cả + Hà Nội + Divider
+while (tabs.children.length > 3) tabs.removeChild(tabs.lastChild);
+
     data.shops.forEach(s => {
       const div = document.createElement('div');
       div.className = 'tab' + (currentShop === s.shop_id ? ' active' : '');
