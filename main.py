@@ -10,6 +10,8 @@ from models import Base, Order, ShopMeta
 from scheduler import start_scheduler, sync_all_shops
 from shops_config import get_shops_map
 from fetcher import sync_shop
+from sqlalchemy import func, or_
+
 
 from database import engine, get_db, migrate
 Base.metadata.create_all(bind=engine)
@@ -124,3 +126,13 @@ def clear_orders(body: dict, db: Session = Depends(get_db)):
     count = db.query(Order).delete()
     db.commit()
     return {"ok": True, "deleted": count}
+@app.get("/api/orders/hanoi")
+async def get_hanoi_orders(db: Session = Depends(get_db)):
+    keywords = ["hà nội", "ha noi", "hn", "hanoi"]
+    filters = [
+        func.lower(Order.shipping_address).contains(kw)
+        for kw in keywords
+    ]
+    orders = db.query(Order).filter(or_(*filters))\
+               .order_by(Order.created_at.desc()).all()
+    return [o.__dict__ for o in orders]
