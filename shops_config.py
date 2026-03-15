@@ -17,6 +17,10 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st4339", "PINASAGO Pin Sài Gòn"),
     ("https://chiaki.vn/gian-hang-st4961", "Kalos Việt Nam"),
     ("https://chiaki.vn/gian-hang-st4872", "Green House"),
+    ("https://chiaki.vn/gian-hang-st4917", "Moss Skincare"),
+    ("https://chiaki.vn/gian-hang-st4647", "XXIV Store"),
+    ("https://chiaki.vn/gian-hang-st4732", "Ken Perfume"),
+    ("https://chiaki.vn/gian-hang-st5112", "MoiThom - Mèo bán nước hoa"),
 ]
 
 # Credentials từ extension của bạn
