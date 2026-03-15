@@ -800,6 +800,134 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 </div>
 
 </div><!-- end .container -->
+  <!-- Modal nhập mật khẩu shop restricted -->
+<div class="pass-modal-bg" id="passModalBg">
+  <div class="pass-modal">
+    <div class="pass-modal-icon">🔒</div>
+    <div class="pass-modal-title" id="passModalTitle">Xem đơn hàng riêng tư</div>
+    <div class="pass-modal-sub">Nhập mật khẩu để xem chi tiết đơn hàng của shop này</div>
+    <input class="pass-input" id="passInput" type="password"
+           placeholder="••••••••"
+           onkeydown="if(event.key==='Enter') confirmPass()"/>
+    <div class="pass-error" id="passError">Mật khẩu không đúng. Vui lòng thử lại.</div>
+    <div class="pass-btns">
+      <button class="btn-pass-cancel" onclick="cancelPass()">Huỷ</button>
+      <button class="btn-pass-ok" onclick="confirmPass()">🔓 Xác nhận</button>
+    </div>
+  </div>
+</div>
+<!-- ── Modal 1: Xác nhận lấy đơn ── -->
+<div class="order-modal-bg" id="orderConfirmBg">
+  <div class="order-modal">
+    <div class="order-modal-icon">📦</div>
+    <div class="order-modal-title">Bạn thật sự muốn lấy đơn này?</div>
+    <div class="order-modal-sub">Xem lại thông tin trước khi xác nhận</div>
+
+    <div class="order-info-row">
+      <div class="order-info-label">🔖 Mã đơn</div>
+      <div class="order-info-value" id="confirmCode">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">👤 Tên khách hàng</div>
+      <div class="order-info-value" id="confirmName">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">📞 SĐT</div>
+      <div class="order-info-value">
+        <span class="blur-val">Sẽ hiển thị khi xác nhận</span>
+      </div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">📍 Địa chỉ</div>
+      <div class="order-info-value" id="confirmAddress">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">🛍 Sản phẩm</div>
+      <div class="order-info-value" id="confirmProduct">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">💰 Tổng tiền</div>
+      <div class="order-info-value" id="confirmTotal">—</div>
+    </div>
+
+    <div class="order-modal-btns">
+      <button class="btn-modal-cancel" onclick="closeConfirmModal()">✕ Huỷ</button>
+      <button class="btn-modal-confirm" onclick="acceptOrder()">✅ Xác nhận lấy đơn</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal 2: Nhận đơn thành công ── -->
+<div class="success-modal-bg" id="orderSuccessBg">
+  <div class="success-modal">
+    <div class="success-banner">
+      <div class="success-banner-icon">🎉</div>
+      <div class="success-banner-title">Chúc mừng bạn đã nhận được đơn hàng!</div>
+      <div class="success-banner-sub">Hãy đóng hàng và gửi đi sớm nhé 🚀</div>
+      <div class="success-amount" id="successAmount">—</div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">
+      THÔNG TIN ĐƠN HÀNG
+    </div>
+
+    <div class="copy-row">
+      <div class="copy-label">🔖 Mã đơn hàng</div>
+      <div class="copy-value" id="successCode">—</div>
+      <button class="btn-copy" onclick="copyField('successCode', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">👤 Tên khách hàng</div>
+      <div class="copy-value" id="successName">—</div>
+      <button class="btn-copy" onclick="copyField('successName', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">📞 SĐT</div>
+      <div class="copy-value" id="successPhone">—</div>
+      <button class="btn-copy" onclick="copyField('successPhone', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">📍 Địa chỉ</div>
+      <div class="copy-value" id="successAddress">—</div>
+      <button class="btn-copy" onclick="copyField('successAddress', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">🛍 Sản phẩm</div>
+      <div class="copy-value" id="successProduct">—</div>
+      <button class="btn-copy" onclick="copyField('successProduct', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">💰 Tổng tiền</div>
+      <div class="copy-value" id="successTotal">—</div>
+      <button class="btn-copy" onclick="copyField('successTotal', this)">📋 Copy</button>
+    </div>
+
+    <div style="font-size:11px;color:#9b8bb4;text-align:center;margin-top:14px">
+      Hãy sao chép thông tin rồi ấn đóng cửa sổ này bạn nhé 💜
+    </div>
+    <button class="btn-close-success" onclick="closeSuccessModal()">✕ Đóng cửa sổ</button>
+  </div>
+</div>
+<!-- ── Panel Đơn đã lấy ── -->
+<div class="taken-panel" id="takenPanel">
+  <div class="taken-panel-header">
+    <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
+    </div>
+  </div>
+  <div class="taken-panel-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px 18px 4px;border-bottom:1px solid rgba(198,181,255,.15)">
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px">MÃ ĐƠN</div>
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:center">KEY LẤY ĐƠN</div>
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:right">THỜI GIAN</div>
+    </div>
+    <div id="takenList">
+      <div class="taken-empty">📭 Chưa có đơn nào được lấy</div>
+    </div>
+  </div>
+</div>
+<canvas id="fireworksCanvas"></canvas>
 
 <script>
 let currentShop = '';
@@ -1838,134 +1966,6 @@ function clearTakenOrders() {
   
 if (checkIdGate()) { init(); }
 </script>
-  <!-- Modal nhập mật khẩu shop restricted -->
-<div class="pass-modal-bg" id="passModalBg">
-  <div class="pass-modal">
-    <div class="pass-modal-icon">🔒</div>
-    <div class="pass-modal-title" id="passModalTitle">Xem đơn hàng riêng tư</div>
-    <div class="pass-modal-sub">Nhập mật khẩu để xem chi tiết đơn hàng của shop này</div>
-    <input class="pass-input" id="passInput" type="password"
-           placeholder="••••••••"
-           onkeydown="if(event.key==='Enter') confirmPass()"/>
-    <div class="pass-error" id="passError">Mật khẩu không đúng. Vui lòng thử lại.</div>
-    <div class="pass-btns">
-      <button class="btn-pass-cancel" onclick="cancelPass()">Huỷ</button>
-      <button class="btn-pass-ok" onclick="confirmPass()">🔓 Xác nhận</button>
-    </div>
-  </div>
-</div>
-<!-- ── Modal 1: Xác nhận lấy đơn ── -->
-<div class="order-modal-bg" id="orderConfirmBg">
-  <div class="order-modal">
-    <div class="order-modal-icon">📦</div>
-    <div class="order-modal-title">Bạn thật sự muốn lấy đơn này?</div>
-    <div class="order-modal-sub">Xem lại thông tin trước khi xác nhận</div>
-
-    <div class="order-info-row">
-      <div class="order-info-label">🔖 Mã đơn</div>
-      <div class="order-info-value" id="confirmCode">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">👤 Tên khách hàng</div>
-      <div class="order-info-value" id="confirmName">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">📞 SĐT</div>
-      <div class="order-info-value">
-        <span class="blur-val">Sẽ hiển thị khi xác nhận</span>
-      </div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">📍 Địa chỉ</div>
-      <div class="order-info-value" id="confirmAddress">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">🛍 Sản phẩm</div>
-      <div class="order-info-value" id="confirmProduct">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">💰 Tổng tiền</div>
-      <div class="order-info-value" id="confirmTotal">—</div>
-    </div>
-
-    <div class="order-modal-btns">
-      <button class="btn-modal-cancel" onclick="closeConfirmModal()">✕ Huỷ</button>
-      <button class="btn-modal-confirm" onclick="acceptOrder()">✅ Xác nhận lấy đơn</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Modal 2: Nhận đơn thành công ── -->
-<div class="success-modal-bg" id="orderSuccessBg">
-  <div class="success-modal">
-    <div class="success-banner">
-      <div class="success-banner-icon">🎉</div>
-      <div class="success-banner-title">Chúc mừng bạn đã nhận được đơn hàng!</div>
-      <div class="success-banner-sub">Hãy đóng hàng và gửi đi sớm nhé 🚀</div>
-      <div class="success-amount" id="successAmount">—</div>
-    </div>
-
-    <div style="font-size:12px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">
-      THÔNG TIN ĐƠN HÀNG
-    </div>
-
-    <div class="copy-row">
-      <div class="copy-label">🔖 Mã đơn hàng</div>
-      <div class="copy-value" id="successCode">—</div>
-      <button class="btn-copy" onclick="copyField('successCode', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">👤 Tên khách hàng</div>
-      <div class="copy-value" id="successName">—</div>
-      <button class="btn-copy" onclick="copyField('successName', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">📞 SĐT</div>
-      <div class="copy-value" id="successPhone">—</div>
-      <button class="btn-copy" onclick="copyField('successPhone', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">📍 Địa chỉ</div>
-      <div class="copy-value" id="successAddress">—</div>
-      <button class="btn-copy" onclick="copyField('successAddress', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">🛍 Sản phẩm</div>
-      <div class="copy-value" id="successProduct">—</div>
-      <button class="btn-copy" onclick="copyField('successProduct', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">💰 Tổng tiền</div>
-      <div class="copy-value" id="successTotal">—</div>
-      <button class="btn-copy" onclick="copyField('successTotal', this)">📋 Copy</button>
-    </div>
-
-    <div style="font-size:11px;color:#9b8bb4;text-align:center;margin-top:14px">
-      Hãy sao chép thông tin rồi ấn đóng cửa sổ này bạn nhé 💜
-    </div>
-    <button class="btn-close-success" onclick="closeSuccessModal()">✕ Đóng cửa sổ</button>
-  </div>
-</div>
-<!-- ── Panel Đơn đã lấy ── -->
-<div class="taken-panel" id="takenPanel">
-  <div class="taken-panel-header">
-    <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
-    </div>
-  </div>
-  <div class="taken-panel-body">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px 18px 4px;border-bottom:1px solid rgba(198,181,255,.15)">
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px">MÃ ĐƠN</div>
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:center">KEY LẤY ĐƠN</div>
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:right">THỜI GIAN</div>
-    </div>
-    <div id="takenList">
-      <div class="taken-empty">📭 Chưa có đơn nào được lấy</div>
-    </div>
-  </div>
-</div>
-<canvas id="fireworksCanvas"></canvas>
 
 </body>
 </html>
