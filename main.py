@@ -11,6 +11,7 @@ from scheduler import start_scheduler, sync_all_shops
 from shops_config import get_shops_map
 from fetcher import sync_shop
 from sqlalchemy import func, or_
+from shops_config import get_shops_map, RESTRICTED_SHOPS, RESTRICTED_PASS
 
 
 from database import engine, get_db, migrate
@@ -65,28 +66,29 @@ def get_orders(
         q = q.filter(Order.shop_id == shop_id)
     total = q.count()
     orders = q.order_by(desc(Order.fetched_at)).offset((page - 1) * limit).limit(limit).all()
-    return {
-        "total": total,
-        "page":  page,
-        "data": [
-            {
-                "order_code": o.order_code,
-                "shop_name":  o.shop_name,
-                "shop_id":    o.shop_id,
-                "buyer_name": o.buyer_name,
-                "customer_name": o.customer_name,
-                "phone":      o.phone,
-                "address":    o.address,
-                "product":    o.product,
-                "quantity":   o.quantity,
-                "total":      o.total,
-                "status":     o.status,
-                "order_date": o.order_date,
-                "fetched_at": o.fetched_at.isoformat() if o.fetched_at else None,
-            }
-            for o in orders
-        ]
-    }
+
+    def serialize(o):
+        is_restricted = o.shop_id in RESTRICTED_SHOPS
+        mask = "********"
+        return {
+            "order_code":    mask if is_restricted else o.order_code,
+            "shop_name":     o.shop_name,   # ✅ vẫn hiện tên shop
+            "shop_id":       o.shop_id,
+            "buyer_name":    mask if is_restricted else o.buyer_name,
+            "customer_name": mask if is_restricted else o.customer_name,
+            "phone":         mask if is_restricted else o.phone,
+            "address":       mask if is_restricted else o.address,
+            "product":       mask if is_restricted else o.product,
+            "quantity":      mask if is_restricted else o.quantity,
+            "total":         None if is_restricted else o.total,
+            "status":        mask if is_restricted else o.status,
+            "order_date":    mask if is_restricted else o.order_date,
+            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+            "restricted":    is_restricted,  # ✅ flag cho frontend biết
+        }
+
+    return {"total": total, "page": page, "data": [serialize(o) for o in orders]}
+
 
 @app.post("/api/sync")
 async def manual_sync(db: Session = Depends(get_db)):
@@ -200,4 +202,36 @@ def get_chart_data(db: Session = Depends(get_db)):
     return {
         "by_date": [{"date": d, "count": c} for d, c in by_date if d],
         "by_shop": [{"shop": s, "count": c} for s, c in by_shop if s],
+    }
+@app.get("/api/orders/private")
+def get_private_orders(
+    shop_id: str = Query(...),
+    password: str = Query(...),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, le=200),
+    db: Session = Depends(get_db)
+):
+    if password != RESTRICTED_PASS or shop_id not in RESTRICTED_SHOPS:
+        return JSONResponse(status_code=403, content={"error": "Sai mật khẩu hoặc không có quyền"})
+    q = db.query(Order).filter(Order.shop_id == shop_id)
+    total = q.count()
+    orders = q.order_by(desc(Order.fetched_at)).offset((page - 1) * limit).limit(limit).all()
+    return {
+        "total": total,
+        "page":  page,
+        "data": [{
+            "order_code":    o.order_code,
+            "shop_name":     o.shop_name,
+            "shop_id":       o.shop_id,
+            "buyer_name":    o.buyer_name,
+            "customer_name": o.customer_name,
+            "phone":         o.phone,
+            "address":       o.address,
+            "product":       o.product,
+            "quantity":      o.quantity,
+            "total":         o.total,
+            "status":        o.status,
+            "order_date":    o.order_date,
+            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+        } for o in orders]
     }
