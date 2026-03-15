@@ -4,28 +4,21 @@ from fastapi import FastAPI, Depends, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
-from database import engine, get_db
+from sqlalchemy import desc, func, or_
+from database import engine, get_db, migrate
 from models import Base, Order, ShopMeta
 from scheduler import start_scheduler, sync_all_shops
-from shops_config import get_shops_map
+from shops_config import get_shops_map, BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN
 from fetcher import sync_shop
-from sqlalchemy import func, or_
 from datetime import datetime, timedelta
 from io import BytesIO
 import urllib.parse
-from shops_config import get_shops_map, RESTRICTED_SHOPS, RESTRICTED_PASS, SELLER_ID, SELLER_TOKEN
-
 import httpx
 import openpyxl
-import urllib.parse
-from io import BytesIO
-from datetime import datetime, timedelta
 
-from database import engine, get_db, migrate
+# Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,14 +30,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Chiaki Order Dashboard", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ── API Endpoints ──────────────────────────────────────────
+# ── Helper functions ───────────────────────────────────────
 def serialize_order(o, mask=False):
+    """Serialize order với mask nếu cần"""
     M = "••••••••"
     return {
         "order_code":    M if mask else o.order_code,
         "order_date":    M if mask else o.order_date,
         "shop_id":       o.shop_id,
-        "shop_name":     o.shop_name,   # ✅ luôn hiện tên shop
+        "shop_name":     o.shop_name,  # ✅ luôn hiện tên shop
         "buyer_name":    M if mask else o.buyer_name,
         "customer_name": M if mask else o.customer_name,
         "phone":         M if mask else o.phone,
@@ -57,7 +51,7 @@ def serialize_order(o, mask=False):
         "restricted":    mask,
     }
 
-
+# ── API Endpoints ──────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 async def root():
     with open("static/index.html", encoding="utf-8") as f:
@@ -69,13 +63,13 @@ def get_summary(db: Session = Depends(get_db)):
     total = db.query(Order).count()
     return {
         "total_orders": total,
-        "total_shops":  len(shops),
+        "total_shops": len(shops),
         "shops": [
             {
-                "shop_id":    s.shop_id,
-                "shop_name":  s.shop_name,
+                "shop_id": s.shop_id,
+                "shop_name": s.shop_name,
                 "order_count": s.order_count,
-                "last_sync":  s.last_sync.isoformat() if s.last_sync else None,
+                "last_sync": s.last_sync.isoformat() if s.last_sync else None,
             }
             for s in shops
         ]
@@ -88,46 +82,30 @@ def get_orders(
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db)
 ):
+    # ✅ Check blocked shop trước khi query
+    if shop_id and shop_id in BLOCKED_SHOPS:
+        return {
+            "total": 0,
+            "page": page,
+            "data": [],
+            "blocked": True,
+            "message": "Shop này bị chặn trích xuất đơn hàng"
+        }
+    
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
-    total  = q.count()
+    total = q.count()
     orders = q.order_by(desc(Order.fetched_at)).offset((page-1)*limit).limit(limit).all()
-
-    def serialize_order(o):
-        blocked = shop_id and shop_id in BLOCKED_SHOPS
-        if blocked:
-            # ✅ Shop bị chặn — trả về notice thay vì data thật
-            return {"blocked": True, "message": "Shop này bị chặn trích xuất đơn hàng"}
-        M = "••••••••"
-        return {
-            "order_code":    o.order_code,
-            "shop_name":     o.shop_name,
-            "shop_id":       o.shop_id,
-            "buyer_name":    o.buyer_name,
-            "customer_name": o.customer_name,
-            "phone":         o.phone,
-            "address":       o.address,
-            "product":       o.product,
-            "quantity":      o.quantity,
-            "total":         o.total,
-            "status":        o.status,
-            "order_date":    o.order_date,
-            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-            "restricted":    False,
-        }
 
     return {
         "total": total,
-        "page":  page,
-        "data":  [serialize_order(o) for o in orders]
+        "page": page,
+        "data": [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
     }
 
-
-
-
 @app.post("/api/sync")
-async def manual_sync(db: Session = Depends(get_db)):
+async def manual_sync():
     """Kích hoạt sync thủ công"""
     asyncio.create_task(sync_all_shops())
     return {"message": "Đang sync... Vui lòng chờ 1-2 phút rồi reload."}
@@ -135,19 +113,21 @@ async def manual_sync(db: Session = Depends(get_db)):
 @app.get("/api/stats")
 def get_stats(db: Session = Depends(get_db)):
     by_status = db.query(Order.status, func.count(Order.id)).group_by(Order.status).all()
-    by_shop   = db.query(Order.shop_name, func.count(Order.id)).group_by(Order.shop_name).all()
+    by_shop = db.query(Order.shop_name, func.count(Order.id)).group_by(Order.shop_name).all()
     return {
         "by_status": [{"status": s, "count": c} for s, c in by_status],
-        "by_shop":   [{"shop": s, "count": c} for s, c in by_shop],
+        "by_shop": [{"shop": s, "count": c} for s, c in by_shop],
     }
+
 @app.get("/api/test-shopname")
 async def test_shopname(url: str = Query(...)):
     from fetcher import fetch_shop_name
     name = await fetch_shop_name(url)
     return {"url": url, "name": name}
+
 @app.post("/api/update-shopname")
 def update_shopname(body: dict, db: Session = Depends(get_db)):
-    shop_id   = body.get("shop_id")
+    shop_id = body.get("shop_id")
     shop_name = body.get("shop_name")
     if not shop_id or not shop_name:
         return {"ok": False}
@@ -157,33 +137,30 @@ def update_shopname(body: dict, db: Session = Depends(get_db)):
         db.query(Order).filter(Order.shop_id == shop_id).update({"shop_name": shop_name})
         db.commit()
     return {"ok": True, "shop_id": shop_id, "shop_name": shop_name}
+
 @app.post("/api/admin/clear-orders")
 def clear_orders(body: dict, db: Session = Depends(get_db)):
-    if body.get("admin_secret") != ADMIN_SECRET:
-        return {"ok": False}
-    count = db.query(Order).delete()
-    db.commit()
-    return {"ok": True, "deleted": count}
+    # ✅ Tạm thời disable để tránh xóa nhầm
+    return {"ok": False, "message": "Admin endpoint disabled"}
+
 @app.get("/api/orders/hanoi")
 async def get_hanoi_orders(db: Session = Depends(get_db)):
     keywords = ["hà nội", "ha noi", " hn", "hanoi", "Hà Nội"]
-    filters  = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
-    orders   = db.query(Order).filter(or_(*filters))\
-                 .order_by(Order.order_date.desc()).all()
-    return [serialize_order(o, mask=o.shop_id in RESTRICTED_SHOPS) for o in orders]
+    filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
+    orders = db.query(Order).filter(or_(*filters))\
+              .order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
 
 @app.get("/api/orders/nuochoa")
 async def get_nuochoa_orders(db: Session = Depends(get_db)):
     keywords = ["nước hoa", "nuoc hoa", "nươc hoa", "nước  hoa"]
-    filters  = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
-    orders   = db.query(Order).filter(or_(*filters))\
-                 .order_by(Order.order_date.desc()).all()
-    return [serialize_order(o, mask=o.shop_id in RESTRICTED_SHOPS) for o in orders]
-
+    filters = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
+    orders = db.query(Order).filter(or_(*filters))\
+              .order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
-    # ✅ Dùng substr để lấy đúng 10 ký tự đầu (YYYY-MM-DD)
     date_col = func.substr(Order.order_date, 1, 10)
     by_date = (
         db.query(date_col, func.count(Order.id))
@@ -203,46 +180,15 @@ def get_chart_data(db: Session = Depends(get_db)):
         "by_date": [{"date": d, "count": c} for d, c in by_date if d],
         "by_shop": [{"shop": s, "count": c} for s, c in by_shop if s],
     }
-@app.get("/api/orders/private")
-def get_private_orders(
-    shop_id: str = Query(...),
-    password: str = Query(...),
-    page: int = Query(1, ge=1),
-    limit: int = Query(50, le=200),
-    db: Session = Depends(get_db)
-):
-    if password != RESTRICTED_PASS or shop_id not in RESTRICTED_SHOPS:
-        return JSONResponse(status_code=403, content={"error": "Sai mật khẩu hoặc không có quyền"})
-    q = db.query(Order).filter(Order.shop_id == shop_id)
-    total = q.count()
-    orders = q.order_by(desc(Order.fetched_at)).offset((page - 1) * limit).limit(limit).all()
-    return {
-        "total": total,
-        "page":  page,
-        "data": [{
-            "order_code":    o.order_code,
-            "shop_name":     o.shop_name,
-            "shop_id":       o.shop_id,
-            "buyer_name":    o.buyer_name,
-            "customer_name": o.customer_name,
-            "phone":         o.phone,
-            "address":       o.address,
-            "product":       o.product,
-            "quantity":      o.quantity,
-            "total":         o.total,
-            "status":        o.status,
-            "order_date":    o.order_date,
-            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-        } for o in orders]
-    }
+
 @app.get("/api/revenue")
 async def get_revenue():
-    end_date   = datetime.now()
+    end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
     date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
     encoded_range = urllib.parse.quote(date_range)
 
-    shops   = get_shops_map()
+    shops = get_shops_map()
     results = []
 
     async with httpx.AsyncClient(timeout=30) as client:
@@ -269,19 +215,15 @@ async def get_revenue():
                 wb = openpyxl.load_workbook(BytesIO(resp.content))
                 ws = wb.active
 
-                # ✅ Parse format dọc — tìm giá trị theo key
                 def get_val(key_text):
-                    """Tìm cell chứa key_text, lấy giá trị ở cột bên phải"""
                     for row in ws.iter_rows():
                         for i, cell in enumerate(row):
                             if cell.value and key_text.lower() in str(cell.value).lower():
-                                # Giá trị ở cột tiếp theo
                                 if i + 1 < len(row) and row[i + 1].value is not None:
                                     return row[i + 1].value
                     return None
 
                 def to_float(val):
-                    """Chuyển sang float, trả về 0 nếu không parse được"""
                     if val is None:
                         return 0
                     try:
@@ -289,49 +231,41 @@ async def get_revenue():
                     except:
                         return 0
 
-                # Lấy thông tin shop
-                ten_shop    = get_val("Người Bán") or shop_name
-                chu_tk      = get_val("Tên chủ tài khoản") or "—"
-                ngan_hang   = get_val("Tên ngân hàng") or "—"
-                stk         = get_val("Tài khoản ngân hàng") or "—"
+                ten_shop = get_val("Người Bán") or shop_name
+                chu_tk = get_val("Tên chủ tài khoản") or "—"
+                ngan_hang = get_val("Tên ngân hàng") or "—"
+                stk = get_val("Tài khoản ngân hàng") or "—"
 
                 # Doanh thu gộp
-                gia_goc     = to_float(get_val("Giá gốc"))
-                hoan_lai    = to_float(get_val("Số tiền hoàn lại"))
-                tro_gia     = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
-                ma_uu_dai   = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
+                gia_goc = to_float(get_val("Giá gốc"))
+                hoan_lai = to_float(get_val("Số tiền hoàn lại"))
+                tro_gia = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
+                ma_uu_dai = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
                 doanh_thu_gop = gia_goc + hoan_lai + tro_gia + ma_uu_dai
 
-                # Phí sàn
-                phi_co_dinh  = to_float(get_val("Phí cố định"))
-                phi_dich_vu  = to_float(get_val("Phí Dịch Vụ"))
+                # Phí + thuế
+                phi_co_dinh = to_float(get_val("Phí cố định"))
+                phi_dich_vu = to_float(get_val("Phí Dịch Vụ"))
                 phi_thanh_toan = to_float(get_val("Phí thanh toán"))
                 phi_san = phi_co_dinh + phi_dich_vu + phi_thanh_toan
-
-                # Phí quảng cáo
                 phi_quang_cao = to_float(get_val("Phí quảng cáo"))
-
-                # Thuế
                 thue_gtgt = to_float(get_val("Thuế GTGT"))
                 thue_tncn = to_float(get_val("Thuế TNCN"))
                 tong_thue = thue_gtgt + thue_tncn
-
-                # Tổng khấu trừ
                 tong_khau_tru = phi_san + phi_quang_cao + tong_thue
 
-                # Doanh thu thuần
+                # Doanh thu thuần = gộp + khấu trừ (khấu trừ là số âm)
                 doanh_thu_thuan = doanh_thu_gop + tong_khau_tru
 
                 results.append({
-                    "ten_shop":          ten_shop,
-                    "chu_tk":            chu_tk,
-                    "ngan_hang":         ngan_hang,
-                    "stk":               str(stk) if stk else "—",
-                    "doanh_thu_gop":     doanh_thu_gop,
-                    "tong_khau_tru":     tong_khau_tru,
-                    "doanh_thu_thuan":   doanh_thu_thuan,
-                    "_shop_id":          shop_id,
-                    "_restricted":       shop_id in RESTRICTED_SHOPS,
+                    "ten_shop": ten_shop,
+                    "chu_tk": chu_tk,
+                    "ngan_hang": ngan_hang,
+                    "stk": str(stk) if stk else "—",
+                    "doanh_thu_gop": doanh_thu_gop,
+                    "tong_khau_tru": tong_khau_tru,
+                    "doanh_thu_thuan": doanh_thu_thuan,
+                    "_shop_id": shop_id,
                 })
 
             except Exception as e:
@@ -339,5 +273,5 @@ async def get_revenue():
 
     return {
         "date_range": date_range,
-        "data":       results,
+        "data": results,
     }
