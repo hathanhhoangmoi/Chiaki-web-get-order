@@ -220,94 +220,98 @@ def get_chart_data(db: Session = Depends(get_db)):
     }
 
 @app.get("/api/revenue")
-async def get_revenue():
+async def get_revenue(shop_id: str):
     end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
     date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
     encoded_range = urllib.parse.quote(date_range)
 
     shops = get_shops_map()
+
+    if shop_id not in shops:
+        return {"error": f"Không tìm thấy shop: {shop_id}", "data": []}
+
+    shop_url, shop_name = shops[shop_id]
+
     results = []
 
     async with httpx.AsyncClient(timeout=30) as client:
-        for shop_id, (shop_url, shop_name) in shops.items():
-            api_url = (
-                f"https://api.chiaki.vn/api/{shop_id}"
-                f"/export-excel-summary-amount-order"
-                f"?source=seller&page_index=1&page_size=500"
-                f"&status=all&range_date={encoded_range}"
-                f"&date_type=created_at&order=create-desc"
-                f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
-            )
-            try:
-                resp = await client.get(api_url)
-                if resp.status_code != 200:
-                    print(f"[revenue] {shop_id} HTTP {resp.status_code}")
-                    continue
+        api_url = (
+            f"[api.chiaki.vn](https://api.chiaki.vn/api/{shop_id})"
+            f"/export-excel-summary-amount-order"
+            f"?source=seller&page_index=1&page_size=500"
+            f"&status=all&range_date={encoded_range}"
+            f"&date_type=created_at&order=create-desc"
+            f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+        )
 
-                content_type = resp.headers.get("content-type", "")
-                if "html" in content_type or len(resp.content) < 100:
-                    print(f"[revenue] {shop_id} không phải Excel")
-                    continue
+        try:
+            resp = await client.get(api_url)
+            if resp.status_code != 200:
+                print(f"[revenue] {shop_id} HTTP {resp.status_code}")
+                return {"error": f"API trả về {resp.status_code}", "data": []}
 
-                wb = openpyxl.load_workbook(BytesIO(resp.content))
-                ws = wb.active
+            content_type = resp.headers.get("content-type", "")
+            if "html" in content_type or len(resp.content) < 100:
+                print(f"[revenue] {shop_id} không phải Excel")
+                return {"error": "Không nhận được file Excel hợp lệ", "data": []}
 
-                def get_val(key_text):
-                    for row in ws.iter_rows():
-                        for i, cell in enumerate(row):
-                            if cell.value and key_text.lower() in str(cell.value).lower():
-                                if i + 1 < len(row) and row[i + 1].value is not None:
-                                    return row[i + 1].value
-                    return None
+            wb = openpyxl.load_workbook(BytesIO(resp.content))
+            ws = wb.active
 
-                def to_float(val):
-                    if val is None:
-                        return 0
-                    try:
-                        return float(val)
-                    except:
-                        return 0
+            def get_val(key_text):
+                for row in ws.iter_rows():
+                    for i, cell in enumerate(row):
+                        if cell.value and key_text.lower() in str(cell.value).lower():
+                            if i + 1 < len(row) and row[i + 1].value is not None:
+                                return row[i + 1].value
+                return None
 
-                ten_shop = get_val("Người Bán") or shop_name
-                chu_tk = get_val("Tên chủ tài khoản") or "—"
-                ngan_hang = get_val("Tên ngân hàng") or "—"
-                stk = get_val("Tài khoản ngân hàng") or "—"
+            def to_float(val):
+                if val is None:
+                    return 0
+                try:
+                    return float(val)
+                except:
+                    return 0
 
-                # Doanh thu gộp
-                gia_goc = to_float(get_val("Giá gốc"))
-                hoan_lai = to_float(get_val("Số tiền hoàn lại"))
-                tro_gia = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
-                ma_uu_dai = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
-                doanh_thu_gop = gia_goc + hoan_lai + tro_gia + ma_uu_dai
+            ten_shop      = get_val("Người Bán") or shop_name
+            chu_tk        = get_val("Tên chủ tài khoản") or "—"
+            ngan_hang     = get_val("Tên ngân hàng") or "—"
+            stk           = get_val("Tài khoản ngân hàng") or "—"
 
-                # Phí + thuế
-                phi_co_dinh = to_float(get_val("Phí cố định"))
-                phi_dich_vu = to_float(get_val("Phí Dịch Vụ"))
-                phi_thanh_toan = to_float(get_val("Phí thanh toán"))
-                phi_san = phi_co_dinh + phi_dich_vu + phi_thanh_toan
-                phi_quang_cao = to_float(get_val("Phí quảng cáo"))
-                thue_gtgt = to_float(get_val("Thuế GTGT"))
-                thue_tncn = to_float(get_val("Thuế TNCN"))
-                tong_thue = thue_gtgt + thue_tncn
-                tong_khau_tru = phi_san + phi_quang_cao + tong_thue
+            gia_goc       = to_float(get_val("Giá gốc"))
+            hoan_lai      = to_float(get_val("Số tiền hoàn lại"))
+            tro_gia       = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
+            ma_uu_dai     = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
+            doanh_thu_gop = gia_goc + hoan_lai + tro_gia + ma_uu_dai
 
-                # Doanh thu thuần = gộp + khấu trừ (khấu trừ là số âm)
-                doanh_thu_thuan = doanh_thu_gop + tong_khau_tru
+            phi_co_dinh    = to_float(get_val("Phí cố định"))
+            phi_dich_vu    = to_float(get_val("Phí Dịch Vụ"))
+            phi_thanh_toan = to_float(get_val("Phí thanh toán"))
+            phi_san        = phi_co_dinh + phi_dich_vu + phi_thanh_toan
+            phi_quang_cao  = to_float(get_val("Phí quảng cáo"))
+            thue_gtgt      = to_float(get_val("Thuế GTGT"))
+            thue_tncn      = to_float(get_val("Thuế TNCN"))
+            tong_thue      = thue_gtgt + thue_tncn
+            tong_khau_tru  = phi_san + phi_quang_cao + tong_thue
 
-                results.append({
-                    "ten_shop": ten_shop,
-                    "chu_tk": chu_tk,
-                    "ngan_hang": ngan_hang,
-                    "stk": str(stk) if stk else "—",
-                    "doanh_thu_gop": doanh_thu_gop,
-                    "tong_khau_tru": tong_khau_tru,
-                    "doanh_thu_thuan": doanh_thu_thuan,
-                    "_shop_id": shop_id,
-                })
+            doanh_thu_thuan = doanh_thu_gop + tong_khau_tru
 
-            except Exception as e:
-                print(f"[revenue] {shop_id} lỗi: {e}")
+            results.append({
+                "ten_shop":        ten_shop,
+                "chu_tk":          chu_tk,
+                "ngan_hang":       ngan_hang,
+                "stk":             str(stk) if stk else "—",
+                "doanh_thu_gop":   doanh_thu_gop,
+                "tong_khau_tru":   tong_khau_tru,
+                "doanh_thu_thuan": doanh_thu_thuan,
+                "_shop_id":        shop_id,
+            })
+
+        except Exception as e:
+            print(f"[revenue] {shop_id} lỗi: {e}")
+            return {"error": str(e), "data": []}
 
     return {
         "date_range": date_range,
