@@ -212,7 +212,6 @@ def get_private_orders(
     }
 @app.get("/api/revenue")
 async def get_revenue():
-    # ✅ Tự động tính 30 ngày gần nhất
     end_date   = datetime.now()
     start_date = end_date - timedelta(days=30)
     date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
@@ -237,21 +236,78 @@ async def get_revenue():
                     print(f"[revenue] {shop_id} HTTP {resp.status_code}")
                     continue
 
+                content_type = resp.headers.get("content-type", "")
+                if "html" in content_type or len(resp.content) < 100:
+                    print(f"[revenue] {shop_id} không phải Excel")
+                    continue
+
                 wb = openpyxl.load_workbook(BytesIO(resp.content))
                 ws = wb.active
 
-                # Đọc header từ dòng 1
-                headers = [str(cell.value).strip() if cell.value else f"col_{i}"
-                           for i, cell in enumerate(ws[1])]
+                # ✅ Parse format dọc — tìm giá trị theo key
+                def get_val(key_text):
+                    """Tìm cell chứa key_text, lấy giá trị ở cột bên phải"""
+                    for row in ws.iter_rows():
+                        for i, cell in enumerate(row):
+                            if cell.value and key_text.lower() in str(cell.value).lower():
+                                # Giá trị ở cột tiếp theo
+                                if i + 1 < len(row) and row[i + 1].value is not None:
+                                    return row[i + 1].value
+                    return None
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    if not any(v is not None for v in row):
-                        continue
-                    row_dict = dict(zip(headers, row))
-                    row_dict["_shop_name"] = shop_name
-                    row_dict["_shop_id"]   = shop_id
-                    row_dict["_restricted"] = shop_id in RESTRICTED_SHOPS
-                    results.append(row_dict)
+                def to_float(val):
+                    """Chuyển sang float, trả về 0 nếu không parse được"""
+                    if val is None:
+                        return 0
+                    try:
+                        return float(val)
+                    except:
+                        return 0
+
+                # Lấy thông tin shop
+                ten_shop    = get_val("Người Bán") or shop_name
+                chu_tk      = get_val("Tên chủ tài khoản") or "—"
+                ngan_hang   = get_val("Tên ngân hàng") or "—"
+                stk         = get_val("Tài khoản ngân hàng") or "—"
+
+                # Doanh thu gộp
+                gia_goc     = to_float(get_val("Giá gốc"))
+                hoan_lai    = to_float(get_val("Số tiền hoàn lại"))
+                tro_gia     = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
+                ma_uu_dai   = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
+                doanh_thu_gop = gia_goc + hoan_lai + tro_gia + ma_uu_dai
+
+                # Phí sàn
+                phi_co_dinh  = to_float(get_val("Phí cố định"))
+                phi_dich_vu  = to_float(get_val("Phí Dịch Vụ"))
+                phi_thanh_toan = to_float(get_val("Phí thanh toán"))
+                phi_san = phi_co_dinh + phi_dich_vu + phi_thanh_toan
+
+                # Phí quảng cáo
+                phi_quang_cao = to_float(get_val("Phí quảng cáo"))
+
+                # Thuế
+                thue_gtgt = to_float(get_val("Thuế GTGT"))
+                thue_tncn = to_float(get_val("Thuế TNCN"))
+                tong_thue = thue_gtgt + thue_tncn
+
+                # Tổng khấu trừ
+                tong_khau_tru = phi_san + phi_quang_cao + tong_thue
+
+                # Doanh thu thuần
+                doanh_thu_thuan = to_float(get_val("3. Tổng số tiền"))
+
+                results.append({
+                    "ten_shop":          ten_shop,
+                    "chu_tk":            chu_tk,
+                    "ngan_hang":         ngan_hang,
+                    "stk":               str(stk) if stk else "—",
+                    "doanh_thu_gop":     doanh_thu_gop,
+                    "tong_khau_tru":     tong_khau_tru,
+                    "doanh_thu_thuan":   doanh_thu_thuan,
+                    "_shop_id":          shop_id,
+                    "_restricted":       shop_id in RESTRICTED_SHOPS,
+                })
 
             except Exception as e:
                 print(f"[revenue] {shop_id} lỗi: {e}")
