@@ -181,15 +181,15 @@ async def get_nuochoa_orders(db: Session = Depends(get_db)):
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
-    # Đơn theo ngày
+    # ✅ Dùng substr để lấy đúng 10 ký tự đầu (YYYY-MM-DD)
+    date_col = func.substr(Order.order_date, 1, 10)
     by_date = (
-        db.query(Order.order_date, func.count(Order.id))
+        db.query(date_col, func.count(Order.id))
         .filter(Order.order_date != None, Order.order_date != '')
-        .group_by(Order.order_date)
-        .order_by(Order.order_date)
+        .group_by(date_col)
+        .order_by(date_col)
         .all()
     )
-    # Đơn theo shop
     by_shop = (
         db.query(Order.shop_name, func.count(Order.id))
         .filter(Order.shop_name != None, Order.shop_name != '')
