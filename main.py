@@ -93,11 +93,36 @@ def get_orders(
         q = q.filter(Order.shop_id == shop_id)
     total  = q.count()
     orders = q.order_by(desc(Order.fetched_at)).offset((page-1)*limit).limit(limit).all()
+
+    def serialize_order(o):
+        blocked = shop_id and shop_id in BLOCKED_SHOPS
+        if blocked:
+            # ✅ Shop bị chặn — trả về notice thay vì data thật
+            return {"blocked": True, "message": "Shop này bị chặn trích xuất đơn hàng"}
+        M = "••••••••"
+        return {
+            "order_code":    o.order_code,
+            "shop_name":     o.shop_name,
+            "shop_id":       o.shop_id,
+            "buyer_name":    o.buyer_name,
+            "customer_name": o.customer_name,
+            "phone":         o.phone,
+            "address":       o.address,
+            "product":       o.product,
+            "quantity":      o.quantity,
+            "total":         o.total,
+            "status":        o.status,
+            "order_date":    o.order_date,
+            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+            "restricted":    False,
+        }
+
     return {
         "total": total,
         "page":  page,
-        "data":  [serialize_order(o, mask=o.shop_id in RESTRICTED_SHOPS) for o in orders]
+        "data":  [serialize_order(o) for o in orders]
     }
+
 
 
 
