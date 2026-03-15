@@ -47,6 +47,12 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st3852", "Baby Grow Shop"),
     ("https://chiaki.vn/gian-hang-st1273", "NHÀ THUỐC MINH TÂM"),
     ("https://chiaki.vn/gian-hang-st3300", "Mayya Hàng Nội Địa Nhật"),
+    ("https://chiaki.vn/gian-hang-st1258", "Shop Adam"),
+    ("https://chiaki.vn/gian-hang-st3337", "Shop Sài Gòn"),
+    ("https://chiaki.vn/gian-hang-st4342", "Sản Phẩm Hỗ Trợ"),
+    ("https://chiaki.vn/gian-hang-st1015", "Green Healthy & Beauty"),
+    ("https://chiaki.vn/gian-hang-st3218", "Bảo Lâm Anh"),
+    ("https://chiaki.vn/gian-hang-st2557", "XUAN MINH PHARMACY"),    
 ]
 
 # Credentials từ extension của bạn
