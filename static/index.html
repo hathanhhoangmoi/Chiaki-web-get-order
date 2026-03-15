@@ -1802,36 +1802,32 @@ function renderTakenList() {
 
   if (!list.length) {
     el.innerHTML = `<div class="taken-empty">📭 Chưa có đơn nào được lấy</div>`;
-  } else {
-    el.innerHTML = list.map(item => {
-      const d   = new Date(item.taken_at);
-      const fmt = d.toLocaleString('vi-VN', {
-        timeZone:'Asia/Ho_Chi_Minh', hour12:false,
-        day:'2-digit', month:'2-digit',
-        hour:'2-digit', minute:'2-digit'
-      });
-      return `<div class="taken-item">
-        <div class="taken-code">${item.order_code || '—'}</div>
-        <div><span class="taken-key">${item.key_label}</span></div>
-        <div class="taken-time">${fmt}</div>
-      </div>`;
-    }).join('');
+    return;
   }
-
-  // 🔐 Chỉ ID Chang2000 mới được thấy nút xoá
-  const headerRight = document.querySelector('.taken-panel-header > div:last-child');
-  if (!headerRight) return;
-  headerRight.innerHTML = `<span style="font-size:11px;color:#9b8bb4" id="takenPanelCount">${list.length} đơn</span>`;
 
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId === 'Chang2000') {
-    const btn = document.createElement('button');
-    btn.className = 'btn-clear-taken';
-    btn.textContent = '🗑 Xoá tất cả';
-    btn.onclick = clearTakenOrders;
-    headerRight.appendChild(btn);
-  }
+  const canDelete = currentId === 'Chang2000';
+
+  el.innerHTML = list.map((item, idx) => {
+    const d   = new Date(item.taken_at);
+    const fmt = d.toLocaleString('vi-VN', {
+      timeZone:'Asia/Ho_Chi_Minh', hour12:false,
+      day:'2-digit', month:'2-digit',
+      hour:'2-digit', minute:'2-digit'
+    });
+    return `<div class="taken-item">
+      <div class="taken-code">${item.order_code || '—'}</div>
+      <div><span class="taken-key">${item.key_label}</span></div>
+      <div class="taken-time">
+        ${fmt}
+        ${canDelete ? `
+          <button class="btn-clear-taken" style="margin-left:6px"
+                  onclick="deleteTakenOrder(${idx})">Xoá</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
+
 
 function toggleTakenPanel() {
   const panel = document.getElementById('takenPanel');
@@ -1862,7 +1858,20 @@ function clearTakenOrders() {
   localStorage.removeItem(TAKEN_KEY);
   renderTakenList();
 }
+function deleteTakenOrder(index) {
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId !== 'Chang2000') {
+    alert('Bạn không có quyền xoá đơn đã lấy.');
+    return;
+  }
+  const list = getTakenOrders();
+  if (index < 0 || index >= list.length) return;
+  list.splice(index, 1);
+  localStorage.setItem(TAKEN_KEY, JSON.stringify(list));
+  renderTakenList();
+}
 
+  
 // ── Fireworks ─────────────────────────────────────────────
 (function(){
   const canvas  = document.getElementById('fireworksCanvas');
