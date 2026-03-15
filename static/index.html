@@ -904,12 +904,19 @@ async function loadOrders() {
           <td style="font-size:11px;color:#9b8bb4">${R ? M() : (o.order_date || '—')}</td>
           <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
           <td>${R ? M() : (o.customer_name || o.buyer_name || '—')}</td>
-          <td style="font-family:monospace">${R ? M() : (o.phone || '—')}</td>
+          <td style="font-family:monospace">
+  ${R ? M() : (o.phone ? `<span class="phone-blur">${o.phone}</span>` : '—')}
+</td>
           <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.address || '—')}</td>
           <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.product || '—')}</td>
           <td style="text-align:center">${R ? M() : (o.quantity || '—')}</td>
           <td><b>${R ? M() : (o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—')}</b></td>
-          <td>${R ? M() : statusTag(o.status)}</td>
+          <td>
+  ${R
+    ? `<span class="restricted-mask">••••••••</span>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 Lấy đơn</button>`
+  }
+</td>
         </tr>`;
     }).join('');
 
@@ -1007,7 +1014,7 @@ async function loadNuocHoa() {
         <td>
   ${o.restricted
     ? `<span class="restricted-mask">••••••••</span>`
-    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o)})'>📦 Lấy đơn</button>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 Lấy đơn</button>`
   }
 </td>
       </tr>
@@ -1573,12 +1580,27 @@ function acceptOrder() {
   const o = pendingOrder;
   document.getElementById('orderConfirmBg').classList.remove('show');
 
-  // ✅ Lưu vào danh sách đã lấy
   saveTakenOrder(o.order_code);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
-  // ... phần còn lại giữ nguyên
+
+  document.getElementById('successAmount').textContent  = `💵 Bạn sẽ nhận được ${totalFmt}`;
+  document.getElementById('successCode').textContent    = o.order_code || '—';
+  document.getElementById('successName').textContent    = o.customer_name || o.buyer_name || '—';
+  document.getElementById('successPhone').textContent   = o.phone || '—';
+  document.getElementById('successAddress').textContent = o.address || '—';
+  document.getElementById('successProduct').textContent = o.product || '—';
+  document.getElementById('successTotal').textContent   = totalFmt;
+
+  document.querySelectorAll('.btn-copy').forEach(btn => {
+    btn.textContent = '📋 Copy';
+    btn.classList.remove('copied');
+  });
+
+  document.getElementById('orderSuccessBg').classList.add('show');
+  pendingOrder = null;
 }
+
 
 function closeSuccessModal() {
   document.getElementById('orderSuccessBg').classList.remove('show');
