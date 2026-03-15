@@ -21,6 +21,13 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st4647", "XXIV Store"),
     ("https://chiaki.vn/gian-hang-st4732", "Ken Perfume"),
     ("https://chiaki.vn/gian-hang-st5112", "MoiThom - Mèo bán nước hoa"),
+    ("https://chiaki.vn/gian-hang-st2292", "Thế Giới Hàng Auth 88"),
+    ("https://chiaki.vn/gian-hang-st4940", "Mint- Skin Beauty & Cosmetics"),
+    ("https://chiaki.vn/gian-hang-st5096", "The Senté Hill"),
+    ("https://chiaki.vn/gian-hang-st1164", "O2 PHARMACY"),
+    ("https://chiaki.vn/gian-hang-st3612", "NGUYENKIM"),
+    ("https://chiaki.vn/gian-hang-st5092", "Thế Giới Son"),
+    ("https://chiaki.vn/gian-hang-st5125", "Felice Beauty Garden"),
 ]
 
 # Credentials từ extension của bạn
