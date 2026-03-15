@@ -618,33 +618,12 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   <span class="taken-badge" id="takenBadge">0</span>
 </button>
 
-<div style="position:relative">
-  <button class="taken-btn" id="revenueBtn" onclick="toggleRevenueDropdown()">
-    💰 Tổng quan doanh thu 30 ngày
-    <span style="font-size:10px;background:rgba(255,255,255,.3);padding:1px 6px;border-radius:10px" id="revenueBtnArrow">▾</span>
+<button class="taken-btn" id="revenueBtn" onclick="toggleRevenuePanel()">
+    💰 Tổng quan doanh thu các gian hàng
+    <span style="font-size:10px;background:rgba(255,255,255,.3);padding:1px 6px;border-radius:10px">
+      30 ngày
+    </span>
   </button>
-
-  <!-- Dropdown danh sách shop -->
-  <div id="revenueShopDropdown" style="
-    display:none;
-    position:absolute;top:calc(100% + 8px);right:0;
-    min-width:240px;max-height:320px;overflow-y:auto;
-    background:rgba(255,255,255,.85);
-    backdrop-filter:blur(20px);
-    border:1px solid rgba(198,181,255,.5);
-    border-radius:14px;
-    box-shadow:0 8px 32px rgba(160,130,200,.2);
-    z-index:600;padding:6px;
-  ">
-    <div style="padding:8px 10px;font-size:11px;color:#9b8bb4;font-weight:600;letter-spacing:.4px">
-      CHỌN GIAN HÀNG
-    </div>
-    <div id="revenueShopList">
-      <div style="padding:10px;text-align:center;color:#b0a0c8;font-size:12px">⏳ Đang tải...</div>
-    </div>
-  </div>
-</div>
-
     <div class="sync-info">Cập nhật gần nhất:<br><b id="lastSyncTime">—</b></div>
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
@@ -806,39 +785,25 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   </div>
 </div>
 <!-- Panel Doanh thu — ẩn mặc định -->
-<!-- Panel Doanh thu — ẩn mặc định -->
 <div id="panelRevenue" style="display:none">
   <div class="table-wrap glass">
     <div class="table-header">
-      <div>
-        <div class="table-title">💰 Doanh thu 30 ngày
-          <span id="revenueShopTitle" style="font-size:12px;font-weight:500;color:#9b8bb4;margin-left:8px"></span>
-        </div>
-        <div style="font-size:11px;color:#9b8bb4;margin-top:3px" id="revenueDateRange"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="table-count" id="revenueCount"></div>
-        <button onclick="closeRevenuePanel()" style="
-          padding:5px 12px;border:1px solid rgba(198,181,255,.4);border-radius:10px;
-          background:rgba(255,255,255,.4);color:#7c6fa0;font-size:11px;font-weight:600;
-          cursor:pointer;font-family:inherit
-        ">✕ Đóng</button>
-      </div>
+      <div class="table-title">💰 Doanh thu theo shop</div>
+      <div class="table-count" id="revenueCount"></div>
     </div>
     <div style="overflow-x:auto">
       <table id="revenueTable">
         <thead id="revenueThead"></thead>
         <tbody id="tbodyRevenue">
-          <tr><td colspan="7" class="revenue-loading">
+          <tr><td colspan="6" class="revenue-loading">
             <div class="spinner"></div>
-            <div>Chọn gian hàng để xem doanh thu...</div>
+            <divDữ liệu sẽ mất nhiều thời gian để tải, vui lòng đợi và không chuyển tab...</div>
           </td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </div>
-
 
 </div><!-- end .container -->
   <!-- Modal nhập mật khẩu shop restricted -->
@@ -1659,139 +1624,28 @@ function renderChart(mode) {
 }
 // ── Revenue panel ─────────────────────────────────────────
 let revenueVisible  = false;
-let revenueDropdownOpen = false;
+let revenueLoaded   = false;
 
-function toggleRevenueDropdown() {
-  revenueDropdownOpen = !revenueDropdownOpen;
-  const dropdown = document.getElementById('revenueShopDropdown');
-  const arrow    = document.getElementById('revenueBtnArrow');
-
-  if (revenueDropdownOpen) {
-    dropdown.style.display = 'block';
-    arrow.textContent = '▴';
-    loadShopListForRevenue();
-    // Đóng khi click ngoài
-    setTimeout(() => {
-      document.addEventListener('click', closeRevenueDropdownOnOutside, { once: true });
-    }, 10);
-  } else {
-    dropdown.style.display = 'none';
-    arrow.textContent = '▾';
-  }
-}
-
-function closeRevenueDropdownOnOutside(e) {
-  const dropdown = document.getElementById('revenueShopDropdown');
-  const btn      = document.getElementById('revenueBtn');
-  if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
-    dropdown.style.display   = 'none';
-    document.getElementById('revenueBtnArrow').textContent = '▾';
-    revenueDropdownOpen = false;
-  }
-}
-
-async function loadShopListForRevenue() {
-  const listEl = document.getElementById('revenueShopList');
-  listEl.innerHTML = `<div style="padding:10px;text-align:center;color:#b0a0c8;font-size:12px">⏳ Đang tải...</div>`;
-
-  try {
-    const data = await fetch('/api/summary').then(r => r.json());
-    const shops = data.shops || [];
-
-    if (!shops.length) {
-      listEl.innerHTML = `<div style="padding:10px;text-align:center;color:#b0a0c8;font-size:12px">Không có gian hàng</div>`;
-      return;
-    }
-
-    listEl.innerHTML = shops.map(s => `
-      <div onclick="selectShopRevenue('${s.shop_id}', '${(s.shop_name || s.shop_id).replace(/'/g,"&#39;")}')"
-        style="
-          padding:9px 12px;border-radius:10px;cursor:pointer;
-          font-size:13px;font-weight:500;color:#3b3551;
-          transition:background .15s;display:flex;align-items:center;justify-content:space-between;
-        "
-        onmouseover="this.style.background='rgba(198,181,255,.2)'"
-        onmouseout="this.style.background='transparent'"
-      >
-        <span>🏪 ${s.shop_name || s.shop_id}</span>
-        <span style="font-size:11px;color:#9b8bb4;background:rgba(198,181,255,.2);padding:2px 8px;border-radius:10px">
-          ${s.order_count} đơn
-        </span>
-      </div>
-    `).join('');
-  } catch(e) {
-    listEl.innerHTML = `<div style="padding:10px;color:#dc2626;font-size:12px">⚠️ Lỗi: ${e.message}</div>`;
-  }
-}
-
-function selectShopRevenue(shopId, shopName) {
-  // Đóng dropdown
-  document.getElementById('revenueShopDropdown').style.display = 'none';
-  document.getElementById('revenueBtnArrow').textContent = '▾';
-  revenueDropdownOpen = false;
-
-  // Đóng các panel khác
-  if (hanoiVisible) {
-    hanoiVisible = false;
-    document.getElementById('hanoiCard').classList.remove('active');
-    document.getElementById('hanoiCardSub').textContent = 'Click để xem danh sách';
-    document.getElementById('panelHanoi').style.display = 'none';
-  }
-  if (nuocHoaVisible) {
-    nuocHoaVisible = false;
-    document.getElementById('nuocHoaCard').classList.remove('active');
-    document.getElementById('nuocHoaCardSub').textContent = 'Click để xem danh sách';
-    document.getElementById('panelNuocHoa').style.display = 'none';
-  }
-
-  // Hiện panel revenue, ẩn main
-  revenueVisible = true;
-  document.getElementById('revenueBtn').classList.add('active');
-  document.getElementById('panelRevenue').style.display = 'block';
-  document.getElementById('panelMain').style.display    = 'none';
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('.tab[data-id=""]').classList.add('active');
-
-  // Cập nhật tiêu đề
-  document.getElementById('revenueShopTitle').textContent = `— ${shopName}`;
-
-  // Load doanh thu cho shop đó
-  loadRevenue(shopId, shopName);
-}
-
-function closeRevenuePanel() {
-  revenueVisible = false;
-  document.getElementById('revenueBtn').classList.remove('active');
-  document.getElementById('panelRevenue').style.display = 'none';
-  document.getElementById('panelMain').style.display    = 'block';
-  document.getElementById('revenueShopTitle').textContent = '';
-}
-
-async function loadRevenue(shopId, shopName) {
+async function loadRevenue() {
   const tbody = document.getElementById('tbodyRevenue');
   const thead = document.getElementById('revenueThead');
   tbody.innerHTML = `<tr><td colspan="7" class="revenue-loading">
-    <div class="spinner"></div>
-    <div>Đang tải doanh thu của <b>${shopName}</b>...</div>
+    <div class="spinner"></div><div>Dữ liệu mất nhiều thời gian để tải, vui lòng đợi và không chuyển tab...</div>
   </td></tr>`;
-  thead.innerHTML = '';
 
   try {
-    const res  = await fetch(`/api/revenue?shop_id=${encodeURIComponent(shopId)}`);
-    const data = await res.json();
+    const data = await fetch('/api/revenue').then(r => r.json());
 
-    if (data.date_range)
-      document.getElementById('revenueDateRange').textContent = `📅 ${data.date_range}`;
+    document.getElementById('revenueDateRange').textContent = `📅 ${data.date_range}`;
 
     if (!data.data || data.data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="empty">
-        <div class="empty-icon">📭</div>
-        <div>Không có dữ liệu doanh thu cho shop này</div>
+        <div class="empty-icon">📭</div><div>Không có dữ liệu doanh thu</div>
       </td></tr>`;
-      document.getElementById('revenueCount').textContent = '0 shop';
       return;
     }
 
+    // ✅ Header cố định theo spec
     thead.innerHTML = `<tr>
       <th>Tên shop</th>
       <th>Chủ TK</th>
@@ -1802,25 +1656,29 @@ async function loadRevenue(shopId, shopName) {
       <th>Doanh thu thuần</th>
     </tr>`;
 
-    const fmt = v => typeof v === 'number' ? v.toLocaleString('vi') + '₫' : (v || '—');
+    const MASK = `<span class="restricted-mask">••••••••</span>`;
+    const fmt  = (v) => typeof v === 'number' ? v.toLocaleString('vi') + '₫' : (v || '—');
 
-    tbody.innerHTML = data.data.map(row => `<tr>
-      <td><span class="shop-chip">${row.ten_shop}</span></td>
-      <td>${row.chu_tk || '—'}</td>
-      <td>${row.ngan_hang || '—'}</td>
-      <td style="font-family:monospace">${row.stk || '—'}</td>
-      <td><b>${fmt(row.doanh_thu_gop)}</b></td>
-      <td>${fmt(row.tong_khau_tru)}</td>
-      <td><b style="color:#059669">${fmt(row.doanh_thu_thuan)}</b></td>
-    </tr>`).join('');
+    tbody.innerHTML = data.data.map(row => {
+  return `<tr>
+    <td><span class="shop-chip">${row.ten_shop}</span></td>
+    <td>${row.chu_tk || '—'}</td>
+    <td>${row.ngan_hang || '—'}</td>
+    <td style="font-family:monospace">${row.stk || '—'}</td>
+    <td><b>${fmt(row.doanh_thu_gop)}</b></td>
+    <td>${fmt(row.tong_khau_tru)}</td>
+    <td><b style="color:#059669">${fmt(row.doanh_thu_thuan)}</b></td>
+  </tr>`;
+}).join('');
 
     document.getElementById('revenueCount').textContent =
-      `${data.data.length.toLocaleString('vi')} dòng`;
+      `${data.data.length.toLocaleString('vi')} shop`;
 
+    revenueLoaded = true;
   } catch(e) {
     console.error('loadRevenue error:', e);
     tbody.innerHTML = `<tr><td colspan="7" class="empty">
-      <div class="empty-icon">⚠️</div><div>Lỗi: ${e.message}</div>
+      <div class="empty-icon">⚠️</div><div>Lỗi tải dữ liệu: ${e.message}</div>
     </td></tr>`;
   }
 }
