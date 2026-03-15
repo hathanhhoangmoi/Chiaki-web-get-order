@@ -11,11 +11,16 @@ from scheduler import start_scheduler, sync_all_shops
 from shops_config import get_shops_map
 from fetcher import sync_shop
 from sqlalchemy import func, or_
-from shops_config import get_shops_map, RESTRICTED_SHOPS, RESTRICTED_PASS
 from datetime import datetime, timedelta
 from io import BytesIO
 import urllib.parse
 from shops_config import get_shops_map, RESTRICTED_SHOPS, RESTRICTED_PASS, SELLER_ID, SELLER_TOKEN
+
+import httpx
+import openpyxl
+import urllib.parse
+from io import BytesIO
+from datetime import datetime, timedelta
 
 from database import engine, get_db, migrate
 Base.metadata.create_all(bind=engine)
