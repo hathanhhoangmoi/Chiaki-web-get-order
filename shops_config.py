@@ -45,7 +45,8 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st3047", "GREENBOX"),
     ("https://chiaki.vn/gian-hang-st3864", "Hàng ngoại giá tốt"),
     ("https://chiaki.vn/gian-hang-st3852", "Baby Grow Shop"),
-
+    ("https://chiaki.vn/gian-hang-st1273", "NHÀ THUỐC MINH TÂM"),
+    ("https://chiaki.vn/gian-hang-st3300", "Mayya Hàng Nội Địa Nhật"),
 ]
 
 # Credentials từ extension của bạn
