@@ -1014,16 +1014,16 @@ async function loadSummary() {
 async function loadOrders() {
   showLoading(true);
   try {
-    let url;
-    if (currentShop && isRestricted(currentShop) && unlockedShops.has(currentShop)) {
-      // ✅ Gọi endpoint private
-      url = `/api/orders/private?shop_id=${currentShop}&password=38241540&page=${currentPage}&limit=${limit}`;
-    } else {
-      url = `/api/orders?page=${currentPage}&limit=${limit}`;
-      if (currentShop) url += `&shop_id=${currentShop}`;
-    }
-
-    const data = await fetch(url).then(r => r.json());
+    let url = `/api/orders?page=${currentPage}&limit=${limit}`;
+    if (currentShop) url += `&shop_id=${currentShop}`;
+    
+    // ✅ Gửi ID đăng nhập qua header
+    const response = await fetch(url, {
+      headers: {
+        'X-User-ID': localStorage.getItem('chiaki_id') || ''
+      }
+    });
+    const data = await response.json();
     showLoading(false);
 
     if (data.error) {
@@ -1355,11 +1355,12 @@ function selectShop(id) {
     document.getElementById('panelMain').style.display    = 'block';
   }
 
-  // ✅ Thay modal pass bằng notice blocked
   if (isBlocked(id)) {
+    // Không block ngay, để backend quyết định theo ID
+    currentShop = id; currentPage = 1;
     document.querySelectorAll('.tab').forEach(t =>
       t.classList.toggle('active', t.dataset.id === id));
-    showBlockedNotice(id);
+    loadOrders(); // Backend sẽ return blocked nếu cần
     return;
   }
 
