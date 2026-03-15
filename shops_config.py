@@ -33,8 +33,15 @@ SHOPS = [
 # Credentials từ extension của bạn
 SELLER_ID    = "4647"
 SELLER_TOKEN = "ebf7e96d976f74aa77b2b874b7a087ef"
-RESTRICTED_SHOPS = {"4917", "4647", "4732", "5112"}
-RESTRICTED_PASS  = "38241540"
+BLOCKED_SHOPS = {
+    "4917",  # Moss Skincare
+    "4647",  # XXIV Store
+    "4732",  # Ken Perfume
+    "5112",  # MoiThom - Mèo bán nước hoa
+    "4940",  # Mint- Skin Beauty & Cosmetics
+    "5096",  # The Senté Hill
+    "5125",  # Felice Beauty Garden
+}
 
 def extract_id(url: str) -> str | None:
     m = re.search(r'-st(\d+)', url, re.IGNORECASE)
