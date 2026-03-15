@@ -295,7 +295,7 @@ async def get_revenue():
                 tong_khau_tru = phi_san + phi_quang_cao + tong_thue
 
                 # Doanh thu thuần
-                doanh_thu_thuan = to_float(get_val("3. Tổng số tiền"))
+                doanh_thu_thuan = doanh_thu_gop + tong_khau_tru
 
                 results.append({
                     "ten_shop":          ten_shop,
