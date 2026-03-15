@@ -669,11 +669,12 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
 </div>
     <!-- Nút Doanh thu — đặt cùng hàng shop tabs -->
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-  <button class="revenue-btn" id="revenueBtn" onclick="toggleRevenuePanel()">
-    💰 Doanh thu 30 ngày
-  </button>
-  <div class="revenue-date" id="revenueDateRange" style="display:none"></div>
+<div class="stats-row" style="margin-bottom:16px">
+  <div class="stat-card clickable" id="revenueBtn" onclick="toggleRevenuePanel()">
+    <div class="stat-label">💰 Doanh thu</div>
+    <div class="stat-value" style="font-size:16px">30 ngày</div>
+    <div class="stat-sub" id="revenueDateRange">Click để xem báo cáo</div>
+  </div>
 </div>
 
   </div>
@@ -1472,7 +1473,6 @@ async function loadRevenue() {
     const data = await fetch('/api/revenue').then(r => r.json());
 
     document.getElementById('revenueDateRange').textContent = `📅 ${data.date_range}`;
-    document.getElementById('revenueDateRange').style.display = 'block';
 
     if (!data.data || data.data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="empty">
@@ -1524,7 +1524,6 @@ function toggleRevenuePanel() {
   revenueVisible = !revenueVisible;
   const btn = document.getElementById('revenueBtn');
 
-  // Đóng các panel khác
   if (revenueVisible) {
     if (hanoiVisible) {
       hanoiVisible = false;
@@ -1539,23 +1538,22 @@ function toggleRevenuePanel() {
       document.getElementById('panelNuocHoa').style.display = 'none';
     }
     btn.classList.add('active');
-    btn.textContent = '💰 Ẩn doanh thu';
+    // ✅ Cập nhật sub text thay vì textContent của nút
+    document.getElementById('revenueDateRange').textContent = 'Đang hiển thị · Click để ẩn';
     document.getElementById('panelRevenue').style.display = 'block';
     document.getElementById('panelMain').style.display    = 'none';
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.tab[data-id=""]').classList.add('active');
-
-    // Chỉ load 1 lần, trừ khi muốn refresh
     if (!revenueLoaded) loadRevenue();
 
   } else {
     btn.classList.remove('active');
-    btn.textContent = '💰 Doanh thu 30 ngày';
+    document.getElementById('revenueDateRange').textContent = 'Click để xem báo cáo';
     document.getElementById('panelRevenue').style.display = 'none';
     document.getElementById('panelMain').style.display    = 'block';
-    document.getElementById('revenueDateRange').style.display = 'none';
   }
 }
+
 // ── Lấy đơn ─────────────────────────────────────────────
 let pendingOrder = null;
 
