@@ -671,10 +671,10 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <!-- Nút Doanh thu — đặt cùng hàng shop tabs -->
 <div class="stats-row" style="margin-bottom:16px">
   <div class="stat-card clickable" id="revenueBtn" onclick="toggleRevenuePanel()">
-    <div class="stat-label">💰 Doanh thu</div>
-    <div class="stat-value" style="font-size:16px">30 ngày</div>
-    <div class="stat-sub" id="revenueDateRange">Click để xem báo cáo</div>
-  </div>
+  <div class="stat-label">💰 Doanh thu</div>
+  <div class="stat-value" style="font-size:16px">30 ngày</div>
+  <div class="stat-sub" id="revenueDateRange">Click để xem báo cáo</div>
+</div>
 </div>
 
   </div>
@@ -1496,17 +1496,16 @@ async function loadRevenue() {
     const fmt  = (v) => typeof v === 'number' ? v.toLocaleString('vi') + '₫' : (v || '—');
 
     tbody.innerHTML = data.data.map(row => {
-      const isR = row._restricted;
-      return `<tr>
-        <td><span class="shop-chip">${row.ten_shop}</span></td>
-        <td>${isR ? MASK : row.chu_tk}</td>
-        <td>${isR ? MASK : row.ngan_hang}</td>
-        <td style="font-family:monospace">${isR ? MASK : row.stk}</td>
-        <td><b>${isR ? MASK : fmt(row.doanh_thu_gop)}</b></td>
-        <td>${isR ? MASK : fmt(row.tong_khau_tru)}</td>
-        <td><b style="color:#059669">${isR ? MASK : fmt(row.doanh_thu_thuan)}</b></td>
-      </tr>`;
-    }).join('');
+  return `<tr>
+    <td><span class="shop-chip">${row.ten_shop}</span></td>
+    <td>${row.chu_tk || '—'}</td>
+    <td>${row.ngan_hang || '—'}</td>
+    <td style="font-family:monospace">${row.stk || '—'}</td>
+    <td><b>${fmt(row.doanh_thu_gop)}</b></td>
+    <td>${fmt(row.tong_khau_tru)}</td>
+    <td><b style="color:#059669">${fmt(row.doanh_thu_thuan)}</b></td>
+  </tr>`;
+}).join('');
 
     document.getElementById('revenueCount').textContent =
       `${data.data.length.toLocaleString('vi')} shop`;
