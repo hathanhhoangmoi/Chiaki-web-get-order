@@ -340,6 +340,215 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   padding:48px;text-align:center;color:#b0a0c8;
   display:flex;flex-direction:column;align-items:center;gap:12px;
 }
+/* ── Lấy đơn Modal ── */
+.order-modal-bg{
+  position:fixed;inset:0;z-index:4000;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(60,40,90,.3);
+  backdrop-filter:blur(10px);
+  padding:16px;
+}
+.order-modal-bg.show{display:flex}
+.order-modal{
+  width:100%;max-width:460px;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(30px) saturate(200%);
+  border:1px solid rgba(255,255,255,.9);
+  border-radius:22px;padding:28px;
+  box-shadow:0 24px 60px rgba(160,130,200,.3);
+  max-height:90vh;overflow-y:auto;
+}
+.order-modal-icon{font-size:40px;text-align:center;margin-bottom:8px}
+.order-modal-title{
+  font-size:16px;font-weight:700;color:#3b3551;
+  text-align:center;margin-bottom:4px;
+}
+.order-modal-sub{
+  font-size:12px;color:#9b8bb4;
+  text-align:center;margin-bottom:18px;
+}
+.order-info-row{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:8px;padding:10px 0;
+  border-bottom:1px solid rgba(198,181,255,.2);
+}
+.order-info-row:last-of-type{border-bottom:none}
+.order-info-label{
+  font-size:11px;font-weight:600;color:#9b8bb4;
+  min-width:110px;margin-top:1px;
+}
+.order-info-value{
+  font-size:13px;font-weight:600;color:#3b3551;
+  flex:1;text-align:right;word-break:break-word;
+}
+.order-info-value.blur-val{
+  filter:blur(5px);user-select:none;
+  background:rgba(198,181,255,.2);border-radius:6px;
+  padding:2px 8px;font-size:12px;color:#9b8bb4;
+}
+.order-modal-btns{
+  display:flex;gap:8px;margin-top:20px;
+}
+.btn-modal-cancel{
+  flex:1;padding:11px;border:1px solid rgba(198,181,255,.4);
+  border-radius:12px;background:rgba(255,255,255,.4);
+  color:#7c6fa0;font-family:inherit;font-size:13px;
+  font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-modal-cancel:hover{background:rgba(255,255,255,.7)}
+.btn-modal-confirm{
+  flex:2;padding:11px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#c8b4fa,#a78bfa);
+  color:#fff;font-family:inherit;font-size:13px;
+  font-weight:700;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 14px rgba(167,139,250,.4);
+}
+.btn-modal-confirm:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(167,139,250,.5)}
+
+/* ── Modal thành công ── */
+.success-modal-bg{
+  position:fixed;inset:0;z-index:5000;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(60,40,90,.3);
+  backdrop-filter:blur(10px);
+  padding:16px;
+}
+.success-modal-bg.show{display:flex}
+.success-modal{
+  width:100%;max-width:480px;
+  background:rgba(255,255,255,.78);
+  backdrop-filter:blur(30px) saturate(200%);
+  border:1px solid rgba(255,255,255,.9);
+  border-radius:22px;padding:28px;
+  box-shadow:0 24px 60px rgba(100,200,150,.25);
+  max-height:90vh;overflow-y:auto;
+}
+.success-banner{
+  background:linear-gradient(135deg,rgba(167,243,208,.5),rgba(110,231,183,.4));
+  border:1px solid rgba(110,231,183,.5);
+  border-radius:14px;padding:16px;
+  text-align:center;margin-bottom:18px;
+}
+.success-banner-icon{font-size:36px;margin-bottom:6px}
+.success-banner-title{font-size:16px;font-weight:700;color:#065f46;margin-bottom:4px}
+.success-banner-sub{font-size:12px;color:#047857}
+.success-amount{
+  font-size:22px;font-weight:800;
+  color:#059669;margin-top:6px;
+}
+.copy-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:10px 0;
+  border-bottom:1px solid rgba(198,181,255,.2);
+}
+.copy-row:last-of-type{border-bottom:none}
+.copy-label{font-size:11px;font-weight:600;color:#9b8bb4;min-width:120px}
+.copy-value{font-size:13px;font-weight:600;color:#3b3551;flex:1;word-break:break-word}
+.btn-copy{
+  padding:5px 12px;border:none;border-radius:8px;
+  background:rgba(167,139,250,.15);color:#7c3aed;
+  font-family:inherit;font-size:11px;font-weight:700;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+  border:1px solid rgba(167,139,250,.25);
+}
+.btn-copy:hover{background:rgba(167,139,250,.3)}
+.btn-copy.copied{
+  background:rgba(110,231,183,.3);color:#065f46;
+  border-color:rgba(110,231,183,.4);
+}
+.btn-close-success{
+  width:100%;padding:12px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#c8b4fa,#a78bfa);
+  color:#fff;font-family:inherit;font-size:14px;
+  font-weight:700;cursor:pointer;margin-top:18px;
+  box-shadow:0 4px 14px rgba(167,139,250,.4);
+  transition:all .2s;
+}
+.btn-close-success:hover{transform:translateY(-1px)}
+.btn-take-order{
+  padding:5px 14px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#c8b4fa,#a78bfa);
+  color:#fff;font-size:11px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+  box-shadow:0 3px 10px rgba(167,139,250,.3);
+  transition:all .2s;white-space:nowrap;
+}
+.btn-take-order:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(167,139,250,.4)}
+/* ── Blur SĐT ── */
+.phone-blur{
+  filter:blur(4px);user-select:none;
+  transition:filter .2s;cursor:default;
+  display:inline-block;
+}
+
+/* ── Taken Orders Panel ── */
+.taken-btn{
+  position:relative;
+  padding:8px 16px;border:1px solid rgba(198,181,255,.4);
+  border-radius:12px;background:rgba(255,255,255,.4);
+  color:#7c6fa0;font-family:inherit;font-size:12px;
+  font-weight:600;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:6px;
+}
+.taken-btn:hover{background:rgba(255,255,255,.7)}
+.taken-badge{
+  background:linear-gradient(135deg,#d8b4fe,#a78bfa);
+  color:#fff;border-radius:20px;padding:1px 8px;
+  font-size:10px;font-weight:700;
+}
+.taken-panel{
+  position:fixed;top:70px;right:24px;
+  width:540px;max-height:70vh;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(30px) saturate(200%);
+  border:1px solid rgba(255,255,255,.85);
+  border-radius:18px;
+  box-shadow:0 16px 48px rgba(160,130,200,.25);
+  z-index:500;overflow:hidden;
+  display:none;flex-direction:column;
+}
+.taken-panel.show{display:flex}
+.taken-panel-header{
+  padding:14px 18px;
+  background:rgba(255,255,255,.5);
+  border-bottom:1px solid rgba(255,255,255,.6);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.taken-panel-title{font-size:14px;font-weight:700;color:#3b3551}
+.taken-panel-body{overflow-y:auto;flex:1}
+.taken-empty{
+  padding:36px;text-align:center;
+  color:#b0a0c8;font-size:13px;
+}
+.taken-item{
+  padding:12px 18px;
+  border-bottom:1px solid rgba(198,181,255,.15);
+  transition:background .15s;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:6px;align-items:center;
+}
+.taken-item:hover{background:rgba(255,255,255,.4)}
+.taken-item:last-child{border-bottom:none}
+.taken-code{font-family:monospace;font-size:12px;font-weight:700;color:#3b3551}
+.taken-key{
+  font-size:10px;color:#7c3aed;font-weight:600;
+  background:rgba(216,180,254,.25);
+  border:1px solid rgba(216,180,254,.4);
+  border-radius:8px;padding:2px 8px;
+  text-align:center;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;
+}
+.taken-time{font-size:10px;color:#9b8bb4;text-align:right}
+.btn-clear-taken{
+  padding:4px 12px;border:none;border-radius:8px;
+  background:rgba(254,202,202,.4);color:#991b1b;
+  font-family:inherit;font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  border:1px solid rgba(252,165,165,.3);
+}
+.btn-clear-taken:hover{background:rgba(254,202,202,.7)}
 
 </style>
 </head>
@@ -391,6 +600,12 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
         <button class="btn-change-id" onclick="changeId()">Đổi ID</button>
       </div>
     </div>
+    <!-- Nút Đơn đã lấy -->
+<button class="taken-btn" id="takenBtn" onclick="toggleTakenPanel()">
+  📋 Đơn đã lấy
+  <span class="taken-badge" id="takenBadge">0</span>
+</button>
+
     <div class="sync-info">Cập nhật gần nhất:<br><b id="lastSyncTime">—</b></div>
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
@@ -592,11 +807,12 @@ async function init() {
     loadHanoi(); // load count ngay khi init
     loadNuocHoa();
     loadChartData();
+    renderTakenList();
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); }, 300_000);
+  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); }, 300_000);
 }
 
 async function loadSummary() {
@@ -727,7 +943,14 @@ async function loadHanoi() {
         <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
         <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
         <td>${o.customer_name || o.buyer_name || '—'}</td>
-        <td style="font-family:monospace">${o.phone || '—'}</td>
+        <td style="font-family:monospace">
+  ${o.restricted
+    ? `<span class="restricted-mask">••••••••</span>`
+    : (o.phone
+        ? `<span class="phone-blur" title="Lấy đơn để xem SĐT">${o.phone}</span>`
+        : '—')
+  }
+</td>
         <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
         <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
         <td style="text-align:center">${o.quantity || '—'}</td>
@@ -764,12 +987,24 @@ async function loadNuocHoa() {
         <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
         <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
         <td>${o.customer_name || o.buyer_name || '—'}</td>
-        <td style="font-family:monospace">${o.phone || '—'}</td>
+        <td style="font-family:monospace">
+  ${o.restricted
+    ? `<span class="restricted-mask">••••••••</span>`
+    : (o.phone
+        ? `<span class="phone-blur" title="Lấy đơn để xem SĐT">${o.phone}</span>`
+        : '—')
+  }
+</td>
         <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
         <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
         <td style="text-align:center">${o.quantity || '—'}</td>
         <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-        <td>${statusTag(o.status)}</td>
+        <td>
+  ${o.restricted
+    ? `<span class="restricted-mask">••••••••</span>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o)})'>📦 Lấy đơn</button>`
+  }
+</td>
       </tr>
     `).join('');
   } catch(e) {
@@ -1309,6 +1544,146 @@ function toggleRevenuePanel() {
     document.getElementById('revenueDateRange').style.display = 'none';
   }
 }
+// ── Lấy đơn ─────────────────────────────────────────────
+let pendingOrder = null;
+
+function openTakeOrder(o) {
+  pendingOrder = o;
+  document.getElementById('confirmCode').textContent    = o.order_code || '—';
+  document.getElementById('confirmName').textContent    = o.customer_name || o.buyer_name || '—';
+  document.getElementById('confirmAddress').textContent = o.address || '—';
+  document.getElementById('confirmProduct').textContent = o.product || '—';
+  document.getElementById('confirmTotal').textContent   =
+    o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
+  document.getElementById('orderConfirmBg').classList.add('show');
+}
+
+function closeConfirmModal() {
+  document.getElementById('orderConfirmBg').classList.remove('show');
+  pendingOrder = null;
+}
+
+function acceptOrder() {
+  if (!pendingOrder) return;
+  const o = pendingOrder;
+  document.getElementById('orderConfirmBg').classList.remove('show');
+
+  // ✅ Lưu vào danh sách đã lấy
+  saveTakenOrder(o.order_code);
+
+  const totalFmt = o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
+  // ... phần còn lại giữ nguyên
+}
+
+function closeSuccessModal() {
+  document.getElementById('orderSuccessBg').classList.remove('show');
+}
+
+function copyField(elementId, btn) {
+  const text = document.getElementById(elementId).textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Đã copy';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback cho trình duyệt không hỗ trợ clipboard API
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    btn.textContent = '✅ Đã copy';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+// ── Taken Orders ──────────────────────────────────────────
+const TAKEN_KEY = 'chiaki_taken_orders';
+
+function getTakenOrders() {
+  try {
+    return JSON.parse(localStorage.getItem(TAKEN_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveTakenOrder(orderCode) {
+  const list    = getTakenOrders();
+  const keyId   = localStorage.getItem('chiaki_id') || 'Unknown';
+  // Lấy label từ VALID_IDS nếu có
+  const keyInfo = VALID_IDS[keyId];
+  const keyLabel = keyInfo ? keyInfo.label : maskId(keyId);
+
+  list.unshift({
+    order_code: orderCode,
+    key_label:  keyLabel,
+    taken_at:   new Date().toISOString(),
+  });
+
+  // Giới hạn 200 đơn gần nhất
+  localStorage.setItem(TAKEN_KEY, JSON.stringify(list.slice(0, 200)));
+  renderTakenList();
+}
+
+function renderTakenList() {
+  const list  = getTakenOrders();
+  const badge = document.getElementById('takenBadge');
+  const count = document.getElementById('takenPanelCount');
+  const el    = document.getElementById('takenList');
+
+  badge.textContent = list.length;
+  if (count) count.textContent = `${list.length} đơn`;
+
+  if (!list.length) {
+    el.innerHTML = `<div class="taken-empty">📭 Chưa có đơn nào được lấy</div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(item => {
+    const d   = new Date(item.taken_at);
+    const fmt = d.toLocaleString('vi-VN', {
+      timeZone:'Asia/Ho_Chi_Minh', hour12:false,
+      day:'2-digit', month:'2-digit',
+      hour:'2-digit', minute:'2-digit'
+    });
+    return `<div class="taken-item">
+      <div class="taken-code">${item.order_code || '—'}</div>
+      <div><span class="taken-key">${item.key_label}</span></div>
+      <div class="taken-time">${fmt}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTakenPanel() {
+  const panel = document.getElementById('takenPanel');
+  panel.classList.toggle('show');
+  // Đóng khi click ngoài
+  if (panel.classList.contains('show')) {
+    setTimeout(() => {
+      document.addEventListener('click', closeTakenOnOutside, { once: true });
+    }, 10);
+  }
+}
+
+function closeTakenOnOutside(e) {
+  const panel = document.getElementById('takenPanel');
+  const btn   = document.getElementById('takenBtn');
+  if (!panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.remove('show');
+  }
+}
+
+function clearTakenOrders() {
+  if (!confirm('Xoá toàn bộ lịch sử lấy đơn?')) return;
+  localStorage.removeItem(TAKEN_KEY);
+  renderTakenList();
+}
 
   
 if (checkIdGate()) { init(); }
@@ -1326,6 +1701,118 @@ if (checkIdGate()) { init(); }
     <div class="pass-btns">
       <button class="btn-pass-cancel" onclick="cancelPass()">Huỷ</button>
       <button class="btn-pass-ok" onclick="confirmPass()">🔓 Xác nhận</button>
+    </div>
+  </div>
+</div>
+<!-- ── Modal 1: Xác nhận lấy đơn ── -->
+<div class="order-modal-bg" id="orderConfirmBg">
+  <div class="order-modal">
+    <div class="order-modal-icon">📦</div>
+    <div class="order-modal-title">Bạn thật sự muốn lấy đơn này?</div>
+    <div class="order-modal-sub">Xem lại thông tin trước khi xác nhận</div>
+
+    <div class="order-info-row">
+      <div class="order-info-label">🔖 Mã đơn</div>
+      <div class="order-info-value" id="confirmCode">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">👤 Tên khách hàng</div>
+      <div class="order-info-value" id="confirmName">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">📞 SĐT</div>
+      <div class="order-info-value">
+        <span class="blur-val">Sẽ hiển thị khi xác nhận</span>
+      </div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">📍 Địa chỉ</div>
+      <div class="order-info-value" id="confirmAddress">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">🛍 Sản phẩm</div>
+      <div class="order-info-value" id="confirmProduct">—</div>
+    </div>
+    <div class="order-info-row">
+      <div class="order-info-label">💰 Tổng tiền</div>
+      <div class="order-info-value" id="confirmTotal">—</div>
+    </div>
+
+    <div class="order-modal-btns">
+      <button class="btn-modal-cancel" onclick="closeConfirmModal()">✕ Huỷ</button>
+      <button class="btn-modal-confirm" onclick="acceptOrder()">✅ Xác nhận lấy đơn</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal 2: Nhận đơn thành công ── -->
+<div class="success-modal-bg" id="orderSuccessBg">
+  <div class="success-modal">
+    <div class="success-banner">
+      <div class="success-banner-icon">🎉</div>
+      <div class="success-banner-title">Chúc mừng bạn đã nhận được đơn hàng!</div>
+      <div class="success-banner-sub">Hãy đóng hàng và gửi đi sớm nhé 🚀</div>
+      <div class="success-amount" id="successAmount">—</div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">
+      THÔNG TIN ĐƠN HÀNG
+    </div>
+
+    <div class="copy-row">
+      <div class="copy-label">🔖 Mã đơn hàng</div>
+      <div class="copy-value" id="successCode">—</div>
+      <button class="btn-copy" onclick="copyField('successCode', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">👤 Tên khách hàng</div>
+      <div class="copy-value" id="successName">—</div>
+      <button class="btn-copy" onclick="copyField('successName', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">📞 SĐT</div>
+      <div class="copy-value" id="successPhone">—</div>
+      <button class="btn-copy" onclick="copyField('successPhone', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">📍 Địa chỉ</div>
+      <div class="copy-value" id="successAddress">—</div>
+      <button class="btn-copy" onclick="copyField('successAddress', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">🛍 Sản phẩm</div>
+      <div class="copy-value" id="successProduct">—</div>
+      <button class="btn-copy" onclick="copyField('successProduct', this)">📋 Copy</button>
+    </div>
+    <div class="copy-row">
+      <div class="copy-label">💰 Tổng tiền</div>
+      <div class="copy-value" id="successTotal">—</div>
+      <button class="btn-copy" onclick="copyField('successTotal', this)">📋 Copy</button>
+    </div>
+
+    <div style="font-size:11px;color:#9b8bb4;text-align:center;margin-top:14px">
+      Hãy sao chép thông tin rồi ấn đóng cửa sổ này bạn nhé 💜
+    </div>
+    <button class="btn-close-success" onclick="closeSuccessModal()">✕ Đóng cửa sổ</button>
+  </div>
+</div>
+<!-- ── Panel Đơn đã lấy ── -->
+<div class="taken-panel" id="takenPanel">
+  <div class="taken-panel-header">
+    <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
+      <button class="btn-clear-taken" onclick="clearTakenOrders()">🗑 Xoá tất cả</button>
+    </div>
+  </div>
+  <div class="taken-panel-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px 18px 4px;border-bottom:1px solid rgba(198,181,255,.15)">
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px">MÃ ĐƠN</div>
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:center">KEY LẤY ĐƠN</div>
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:right">THỜI GIAN</div>
+    </div>
+    <div id="takenList">
+      <div class="taken-empty">📭 Chưa có đơn nào được lấy</div>
     </div>
   </div>
 </div>
