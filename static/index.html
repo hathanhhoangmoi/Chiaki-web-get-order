@@ -1583,8 +1583,9 @@ function closeConfirmModal() {
 function acceptOrder() {
   if (!pendingOrder) return;
   const o = pendingOrder;
+  pendingOrder = null;
   document.getElementById('orderConfirmBg').classList.remove('show');
-  launchFireworks(7000);
+  launchFireworks(5000);
   saveTakenOrder(o.order_code);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
@@ -1603,7 +1604,6 @@ function acceptOrder() {
   });
 
   document.getElementById('orderSuccessBg').classList.add('show');
-  pendingOrder = null;
 }
 
 
