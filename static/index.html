@@ -318,6 +318,28 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 .restricted-mask{
   color:#c4b5fd;font-family:monospace;font-size:12px;letter-spacing:1px;
 }
+.revenue-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 18px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid rgba(198,181,255,.4);
+  background:rgba(255,255,255,.35);color:#7c6fa0;
+  transition:all .2s;white-space:nowrap;
+}
+.revenue-btn:hover{background:rgba(255,255,255,.6);color:#5b4b8a}
+.revenue-btn.active{
+  background:linear-gradient(135deg,#d8b4fe,#a78bfa);
+  color:#fff;border-color:transparent;
+  box-shadow:0 3px 12px rgba(167,139,250,.35);
+}
+.revenue-date{
+  font-size:11px;color:#9b8bb4;padding:6px 12px;
+  background:rgba(255,255,255,.35);border-radius:10px;
+  border:1px solid rgba(198,181,255,.3);
+}
+.revenue-loading{
+  padding:48px;text-align:center;color:#b0a0c8;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
 
 </style>
 </head>
@@ -431,6 +453,14 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   <div class="stat-value" id="nuocHoaStatCount">—</div>
   <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
 </div>
+    <!-- Nút Doanh thu — đặt cùng hàng shop tabs -->
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+  <button class="revenue-btn" id="revenueBtn" onclick="toggleRevenuePanel()">
+    💰 Doanh thu 30 ngày
+  </button>
+  <div class="revenue-date" id="revenueDateRange" style="display:none"></div>
+</div>
+
   </div>
 
   <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
@@ -520,6 +550,26 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
           </tr>
         </thead>
         <tbody id="tbodyNuocHoa"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!-- Panel Doanh thu — ẩn mặc định -->
+<div id="panelRevenue" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">💰 Doanh thu theo shop</div>
+      <div class="table-count" id="revenueCount"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="revenueTable">
+        <thead id="revenueThead"></thead>
+        <tbody id="tbodyRevenue">
+          <tr><td colspan="6" class="revenue-loading">
+            <div class="spinner"></div>
+            <div>Đang tải dữ liệu doanh thu...</div>
+          </td></tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -1165,7 +1215,108 @@ function renderChart(mode) {
     });
   }
 }
+// ── Revenue panel ─────────────────────────────────────────
+let revenueVisible  = false;
+let revenueLoaded   = false;
 
+async function loadRevenue() {
+  const tbody = document.getElementById('tbodyRevenue');
+  const thead = document.getElementById('revenueThead');
+  tbody.innerHTML = `<tr><td colspan="6" class="revenue-loading">
+    <div class="spinner"></div><div>Đang tải dữ liệu doanh thu...</div>
+  </td></tr>`;
+
+  try {
+    const data = await fetch('/api/revenue').then(r => r.json());
+
+    // Cập nhật range date
+    document.getElementById('revenueDateRange').textContent = `📅 ${data.date_range}`;
+    document.getElementById('revenueDateRange').style.display = 'block';
+
+    if (!data.data || data.data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">
+        <div class="empty-icon">📭</div><div>Không có dữ liệu doanh thu</div>
+      </td></tr>`;
+      return;
+    }
+
+    // Lấy tất cả headers từ data (bỏ các key bắt đầu bằng _)
+    const allKeys = [...new Set(data.data.flatMap(r => Object.keys(r)))]
+      .filter(k => !k.startsWith('_'));
+
+    // Build thead
+    thead.innerHTML = `<tr>
+      <th>Gian hàng</th>
+      ${allKeys.map(k => `<th>${k}</th>`).join('')}
+    </tr>`;
+
+    // Build tbody
+    const MASK = `<span class="restricted-mask">••••••••</span>`;
+    tbody.innerHTML = data.data.map(row => {
+      const isR = row._restricted;
+      return `<tr>
+        <td><span class="shop-chip">${row._shop_name || row._shop_id}</span></td>
+        ${allKeys.map(k => {
+          const v = row[k];
+          if (isR) return `<td>${MASK}</td>`;
+          // Format số tiền nếu là number lớn
+          if (typeof v === 'number' && v > 1000)
+            return `<td><b>${v.toLocaleString('vi')}₫</b></td>`;
+          return `<td>${v != null ? v : '—'}</td>`;
+        }).join('')}
+      </tr>`;
+    }).join('');
+
+    document.getElementById('revenueCount').textContent =
+      `${data.data.length.toLocaleString('vi')} dòng`;
+
+    revenueLoaded = true;
+  } catch(e) {
+    console.error('loadRevenue error:', e);
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">
+      <div class="empty-icon">⚠️</div><div>Lỗi tải dữ liệu: ${e.message}</div>
+    </td></tr>`;
+  }
+}
+
+function toggleRevenuePanel() {
+  revenueVisible = !revenueVisible;
+  const btn = document.getElementById('revenueBtn');
+
+  // Đóng các panel khác
+  if (revenueVisible) {
+    if (hanoiVisible) {
+      hanoiVisible = false;
+      document.getElementById('hanoiCard').classList.remove('active');
+      document.getElementById('hanoiCardSub').textContent = 'Click để xem danh sách';
+      document.getElementById('panelHanoi').style.display = 'none';
+    }
+    if (nuocHoaVisible) {
+      nuocHoaVisible = false;
+      document.getElementById('nuocHoaCard').classList.remove('active');
+      document.getElementById('nuocHoaCardSub').textContent = 'Click để xem danh sách';
+      document.getElementById('panelNuocHoa').style.display = 'none';
+    }
+    btn.classList.add('active');
+    btn.textContent = '💰 Ẩn doanh thu';
+    document.getElementById('panelRevenue').style.display = 'block';
+    document.getElementById('panelMain').style.display    = 'none';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-id=""]').classList.add('active');
+
+    // Chỉ load 1 lần, trừ khi muốn refresh
+    if (!revenueLoaded) loadRevenue();
+
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '💰 Doanh thu 30 ngày';
+    document.getElementById('panelRevenue').style.display = 'none';
+    document.getElementById('panelMain').style.display    = 'block';
+    document.getElementById('revenueDateRange').style.display = 'none';
+  }
+}
+
+  
 if (checkIdGate()) { init(); }
 </script>
   <!-- Modal nhập mật khẩu shop restricted -->
