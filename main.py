@@ -179,3 +179,25 @@ async def get_nuochoa_orders(db: Session = Depends(get_db)):
         for o in orders
     ]
 
+@app.get("/api/chart-data")
+def get_chart_data(db: Session = Depends(get_db)):
+    # Đơn theo ngày
+    by_date = (
+        db.query(Order.order_date, func.count(Order.id))
+        .filter(Order.order_date != None, Order.order_date != '')
+        .group_by(Order.order_date)
+        .order_by(Order.order_date)
+        .all()
+    )
+    # Đơn theo shop
+    by_shop = (
+        db.query(Order.shop_name, func.count(Order.id))
+        .filter(Order.shop_name != None, Order.shop_name != '')
+        .group_by(Order.shop_name)
+        .order_by(func.count(Order.id).desc())
+        .all()
+    )
+    return {
+        "by_date": [{"date": d, "count": c} for d, c in by_date if d],
+        "by_shop": [{"shop": s, "count": c} for s, c in by_shop if s],
+    }
