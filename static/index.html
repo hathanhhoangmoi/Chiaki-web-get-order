@@ -335,6 +335,12 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       <div class="stat-sub" id="hanoiCardSub">Click để xem danh sách</div>
     </div>
   </div>
+<!-- Thêm sau div id="hanoiCard" -->
+<div class="stat-card clickable" id="nuocHoaCard" onclick="toggleNuocHoaPanel()">
+  <div class="stat-label">🌸 Đơn Nước hoa</div>
+  <div class="stat-value" id="nuocHoaStatCount">—</div>
+  <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
+</div>
 
   <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
   <div class="shop-tabs" id="shopTabs">
@@ -406,6 +412,27 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       </div>
     </div>
   </div>
+<!-- Panel Nước hoa — ẩn mặc định -->
+<div id="panelNuocHoa" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">🌸 Đơn hàng Nước hoa</div>
+      <div class="table-count" id="nuocHoaCount"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã đơn</th><th>Ngày đặt</th><th>Gian hàng</th>
+            <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+            <th>Sản phẩm</th><th>SL</th><th>Tổng tiền</th><th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyNuocHoa"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 </div><!-- end .container -->
 
@@ -422,11 +449,12 @@ async function init() {
       fetchAndUpdateShopNames(summaryData.shops);
     }
     loadHanoi(); // load count ngay khi init
+    loadNuocHoa();
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); }, 300_000);
+  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); }, 300_000);
 }
 
 async function loadSummary() {
@@ -553,6 +581,72 @@ async function loadHanoi() {
     `).join('');
   } catch(e) {
     console.error('loadHanoi error:', e);
+  }
+}
+// ── Nước hoa panel ────────────────────────────────────────
+let nuocHoaVisible = false;
+
+async function loadNuocHoa() {
+  try {
+    const res  = await fetch('/api/orders/nuochoa');
+    const data = await res.json();
+    const count = Array.isArray(data) ? data.length : 0;
+
+    document.getElementById('nuocHoaStatCount').textContent = count.toLocaleString('vi');
+    document.getElementById('nuocHoaCount').textContent = `${count.toLocaleString('vi')} đơn hàng`;
+
+    const tbody = document.getElementById('tbodyNuocHoa');
+    if (!count) {
+      tbody.innerHTML = `<tr><td colspan="10" class="empty">
+        <div class="empty-icon">📭</div><div>Không có đơn nào chứa "Nước hoa"</div>
+      </td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td><b style="font-family:monospace;font-size:11px">${o.order_code || '—'}</b></td>
+        <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
+        <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
+        <td>${o.customer_name || o.buyer_name || '—'}</td>
+        <td style="font-family:monospace">${o.phone || '—'}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
+        <td style="text-align:center">${o.quantity || '—'}</td>
+        <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
+        <td>${statusTag(o.status)}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    console.error('loadNuocHoa error:', e);
+  }
+}
+
+function toggleNuocHoaPanel() {
+  nuocHoaVisible = !nuocHoaVisible;
+  const card         = document.getElementById('nuocHoaCard');
+  const panelNuocHoa = document.getElementById('panelNuocHoa');
+  const panelMain    = document.getElementById('panelMain');
+  const panelHanoi   = document.getElementById('panelHanoi');
+
+  if (nuocHoaVisible) {
+    // Đóng panel Hà Nội nếu đang mở
+    if (hanoiVisible) {
+      hanoiVisible = false;
+      document.getElementById('hanoiCard').classList.remove('active');
+      document.getElementById('hanoiCardSub').textContent = 'Click để xem danh sách';
+      panelHanoi.style.display = 'none';
+    }
+    card.classList.add('active');
+    document.getElementById('nuocHoaCardSub').textContent = 'Đang hiển thị · Click để ẩn';
+    panelNuocHoa.style.display = 'block';
+    panelMain.style.display    = 'none';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-id=""]').classList.add('active');
+  } else {
+    card.classList.remove('active');
+    document.getElementById('nuocHoaCardSub').textContent = 'Click để xem danh sách';
+    panelNuocHoa.style.display = 'none';
+    panelMain.style.display    = 'block';
   }
 }
 
