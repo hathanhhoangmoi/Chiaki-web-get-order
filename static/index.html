@@ -955,7 +955,12 @@ async function loadHanoi() {
         <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
         <td style="text-align:center">${o.quantity || '—'}</td>
         <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-        <td>${statusTag(o.status)}</td>
+        <td>
+  ${o.restricted
+    ? `<span class="restricted-mask">••••••••</span>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>📦 Lấy đơn</button>`
+  }
+</td>
       </tr>
     `).join('');
   } catch(e) {
@@ -1802,7 +1807,6 @@ if (checkIdGate()) { init(); }
     <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
     <div style="display:flex;gap:8px;align-items:center">
       <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
-      <button class="btn-clear-taken" onclick="clearTakenOrders()">🗑 Xoá tất cả</button>
     </div>
   </div>
   <div class="taken-panel-body">
