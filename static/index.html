@@ -53,7 +53,11 @@ body{
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(167,139,250,.45)}
 .btn-primary:disabled{background:rgba(200,190,220,.4);color:rgba(100,80,140,.4);box-shadow:none;cursor:not-allowed;transform:none}
 .container{max-width:1400px;margin:0 auto;padding:24px 32px}
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;margin-bottom:24px;
+}
 .stat-card{
   border-radius:18px;padding:18px 20px;
   background:rgba(255,255,255,.45);
@@ -675,8 +679,8 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
     <!-- Thêm sau div id="hanoiCard" -->
 <div class="stat-card clickable" id="nuocHoaCard" onclick="toggleNuocHoaPanel()">
-  <div class="stat-label">🌸 Các đơn Nước hoa</div>
-  <div class="stat-value" id="nuocHoaStatCount">—</div>
+  <div class="stat-label">🌸 Đơn nước hoa</div>  <!-- ← bỏ "các" -->
+  <div class="stat-value" id="nuocHoaStatCount">16</div>
   <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
 </div>
     <!-- Nút Doanh thu — đặt cùng hàng shop tabs -->
