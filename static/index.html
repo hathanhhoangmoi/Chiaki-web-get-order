@@ -618,6 +618,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
 </div>
+<button class="btn" id="soundBtn" onclick="enableSound()" style="font-size:11px;padding:6px 10px">
+  🔈 Bật âm thanh
+</button>
 
 <div class="container">
 
@@ -1737,7 +1740,7 @@ function acceptOrder() {
 
   // 🔊 Phát âm thanh chúc mừng
   const audio = document.getElementById('successSound');
-  if (audio) {
+  if (audio && soundEnabled) { 
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }
@@ -2002,6 +2005,26 @@ function deleteTakenOrder(index) {
   window.addEventListener('resize', resize);
   resize();
 })();
+let soundEnabled = false;
+
+function enableSound() {
+  const audio = document.getElementById('successSound');
+  if (!audio) return;
+  audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+    soundEnabled = true;
+    const btn = document.getElementById('soundBtn');
+    if (btn) {
+      btn.textContent = '🔊 Âm thanh đã bật';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+    }
+    showToast('Âm thanh chúc mừng đã được bật 🎵');
+  }).catch(() => {
+    showToast('Trình duyệt đang chặn âm thanh, thử lại sau.');
+  });
+}
 
   
 if (checkIdGate()) { init(); }
