@@ -28,6 +28,24 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st3612", "NGUYENKIM"),
     ("https://chiaki.vn/gian-hang-st5092", "Thế Giới Son"),
     ("https://chiaki.vn/gian-hang-st5125", "Felice Beauty Garden"),
+    ("https://chiaki.vn/gian-hang-st1600", "ChoychoyStore"),
+    ("https://chiaki.vn/gian-hang-st2423", "Peony Cosmetics"),
+    ("https://chiaki.vn/gian-hang-st4965", "nhathuocsuckhoe2"),
+    ("https://chiaki.vn/gian-hang-st4365", "Nana Beauty & More"),
+    ("https://chiaki.vn/gian-hang-st1729", "MHDMART"),
+    ("https://chiaki.vn/gian-hang-st4360", "SnapshopVN"),
+    ("https://chiaki.vn/gian-hang-st5094", "Shop Snap TPHCM"),
+    ("https://chiaki.vn/gian-hang-st1602", "Winny Shop"),
+    ("https://chiaki.vn/gian-hang-st1105", "MjuMju"),
+    ("https://chiaki.vn/gian-hang-st4294", "Life Healthy"),
+    ("https://chiaki.vn/gian-hang-st3009", "QuangNgoc1976"),
+    ("https://chiaki.vn/gian-hang-st1414", "Dược Phẩm Tâm An"),
+    ("https://chiaki.vn/gian-hang-st2573", "MiMi Beauty"),
+    ("https://chiaki.vn/gian-hang-st2225", "T&T Japan shop"),
+    ("https://chiaki.vn/gian-hang-st3047", "GREENBOX"),
+    ("https://chiaki.vn/gian-hang-st3864", "Hàng ngoại giá tốt"),
+    ("https://chiaki.vn/gian-hang-st3852", "Baby Grow Shop"),
+
 ]
 
 # Credentials từ extension của bạn
