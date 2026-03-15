@@ -79,13 +79,15 @@ def get_summary(db: Session = Depends(get_db)):
 
 @app.get("/api/orders")
 def get_orders(
-    request: Request,  # ← thêm
+    request: Request,
     shop_id: str = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db)
 ):
     user_id = request.headers.get('X-User-ID', '')
+    
+    # ✅ Block nếu không phải Chang2000
     if shop_id and shop_id in BLOCKED_SHOPS and user_id != 'Chang2000':
         return {
             "total": 0,
@@ -101,11 +103,33 @@ def get_orders(
     total = q.count()
     orders = q.order_by(desc(Order.fetched_at)).offset((page-1)*limit).limit(limit).all()
 
+    def serialize_order(o):
+        # ✅ Chỉ mask nếu shop bị chặn VÀ user không phải Chang2000
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        M = "••••••••"
+        return {
+            "order_code":    M if mask else o.order_code,
+            "shop_name":     o.shop_name,
+            "shop_id":       o.shop_id,
+            "buyer_name":    M if mask else o.buyer_name,
+            "customer_name": M if mask else o.customer_name,
+            "phone":         M if mask else o.phone,
+            "address":       M if mask else o.address,
+            "product":       M if mask else o.product,
+            "quantity":      M if mask else o.quantity,
+            "total":         M if mask else o.total,
+            "status":        M if mask else o.status,
+            "order_date":    M if mask else o.order_date,
+            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+            "restricted":    mask,
+        }
+
     return {
         "total": total,
         "page": page,
-        "data": [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
+        "data": [serialize_order(o) for o in orders]
     }
+
 
 @app.post("/api/sync")
 async def manual_sync():
@@ -147,12 +171,19 @@ def clear_orders(body: dict, db: Session = Depends(get_db)):
     return {"ok": False, "message": "Admin endpoint disabled"}
 
 @app.get("/api/orders/hanoi")
-async def get_hanoi_orders(db: Session = Depends(get_db)):
+async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
+    user_id = request.headers.get('X-User-ID', '')
     keywords = ["hà nội", "ha noi", " hn", "hanoi", "Hà Nội"]
     filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
     orders = db.query(Order).filter(or_(*filters))\
               .order_by(Order.order_date.desc()).all()
-    return [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
+    
+    def serialize_with_user(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        return serialize_order(o, mask=mask)
+    
+    return [serialize_with_user(o) for o in orders]
+
 
 @app.get("/api/orders/nuochoa")
 async def get_nuochoa_orders(db: Session = Depends(get_db)):
@@ -160,6 +191,10 @@ async def get_nuochoa_orders(db: Session = Depends(get_db)):
     filters = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
     orders = db.query(Order).filter(or_(*filters))\
               .order_by(Order.order_date.desc()).all()
+    def serialize_with_user(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        return serialize_order(o, mask=mask)
+    
     return [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
 
 @app.get("/api/chart-data")
