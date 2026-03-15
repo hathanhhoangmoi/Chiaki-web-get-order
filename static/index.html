@@ -928,6 +928,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   </div>
 </div>
 <canvas id="fireworksCanvas"></canvas>
+<audio id="successSound" preload="auto">
+  <source src="success.mp3" type="audio/mpeg">
+</audio>
 
 <script>
 let currentShop = '';
@@ -1712,8 +1715,9 @@ function acceptOrder() {
   if (!pendingOrder) return;
   const o = pendingOrder;
   pendingOrder = null;
+
   document.getElementById('orderConfirmBg').classList.remove('show');
-  launchFireworks(10000);
+  launchFireworks(7000);
   saveTakenOrder(o.order_code);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
@@ -1731,8 +1735,16 @@ function acceptOrder() {
     btn.classList.remove('copied');
   });
 
+  // 🔊 Phát âm thanh chúc mừng
+  const audio = document.getElementById('successSound');
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
+
   document.getElementById('orderSuccessBg').classList.add('show');
 }
+
 
 
 function closeSuccessModal() {
