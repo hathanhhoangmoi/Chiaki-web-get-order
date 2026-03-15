@@ -618,6 +618,16 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   <span class="taken-badge" id="takenBadge">0</span>
 </button>
 
+<button class="taken-btn" id="revenueBtn" onclick="toggleRevenuePanel()">
+    💰 Doanh thu
+    <span style="font-size:10px;background:rgba(255,255,255,.3);padding:1px 6px;border-radius:10px">
+      30 ngày
+    </span>
+  </button>
+  
+  <div class="sync-info">...</div>
+  <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
+
     <div class="sync-info">Cập nhật gần nhất:<br><b id="lastSyncTime">—</b></div>
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
@@ -683,14 +693,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   <div class="stat-value" id="nuocHoaStatCount">16</div>
   <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
 </div>
-    <!-- Nút Doanh thu — đặt cùng hàng shop tabs -->
-<div class="stats-row" style="margin-bottom:16px">
-  <div class="stat-card clickable" id="revenueBtn" onclick="toggleRevenuePanel()">
-  <div class="stat-label">💰 Doanh thu các shop</div>
-  <div class="stat-value" style="font-size:16px">30 ngày</div>
-  <div class="stat-sub" id="revenueDateRange">Click để xem báo cáo</div>
-</div>
-</div>
+
 
   </div>
 
@@ -934,6 +937,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
   </div>
 </div>
+
 <canvas id="fireworksCanvas"></canvas>
 <audio id="successSound" preload="auto">
   <source src="success.mp3" type="audio/mpeg">
@@ -1687,6 +1691,7 @@ function toggleRevenuePanel() {
   const btn = document.getElementById('revenueBtn');
 
   if (revenueVisible) {
+    // Đóng các panel khác
     if (hanoiVisible) {
       hanoiVisible = false;
       document.getElementById('hanoiCard').classList.remove('active');
@@ -1700,21 +1705,18 @@ function toggleRevenuePanel() {
       document.getElementById('panelNuocHoa').style.display = 'none';
     }
     btn.classList.add('active');
-    // ✅ Cập nhật sub text thay vì textContent của nút
-    document.getElementById('revenueDateRange').textContent = 'Đang hiển thị · Click để ẩn';
     document.getElementById('panelRevenue').style.display = 'block';
-    document.getElementById('panelMain').style.display    = 'none';
+    document.getElementById('panelMain').style.display = 'none';
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.tab[data-id=""]').classList.add('active');
     if (!revenueLoaded) loadRevenue();
-
   } else {
     btn.classList.remove('active');
-    document.getElementById('revenueDateRange').textContent = 'Click để xem báo cáo';
     document.getElementById('panelRevenue').style.display = 'none';
-    document.getElementById('panelMain').style.display    = 'block';
+    document.getElementById('panelMain').style.display = 'block';
   }
 }
+
 
 // ── Lấy đơn ─────────────────────────────────────────────
 let pendingOrder = null;
