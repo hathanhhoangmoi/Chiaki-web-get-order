@@ -30,6 +30,25 @@ app = FastAPI(title="Chiaki Order Dashboard", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ── API Endpoints ──────────────────────────────────────────
+def serialize_order(o, mask=False):
+    M = "••••••••"
+    return {
+        "order_code":    M if mask else o.order_code,
+        "order_date":    M if mask else o.order_date,
+        "shop_id":       o.shop_id,
+        "shop_name":     o.shop_name,   # ✅ luôn hiện tên shop
+        "buyer_name":    M if mask else o.buyer_name,
+        "customer_name": M if mask else o.customer_name,
+        "phone":         M if mask else o.phone,
+        "address":       M if mask else o.address,
+        "product":       M if mask else o.product,
+        "quantity":      M if mask else o.quantity,
+        "total":         None if mask else o.total,
+        "status":        M if mask else o.status,
+        "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+        "restricted":    mask,
+    }
+
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -64,30 +83,14 @@ def get_orders(
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
-    total = q.count()
-    orders = q.order_by(desc(Order.fetched_at)).offset((page - 1) * limit).limit(limit).all()
+    total  = q.count()
+    orders = q.order_by(desc(Order.fetched_at)).offset((page-1)*limit).limit(limit).all()
+    return {
+        "total": total,
+        "page":  page,
+        "data":  [serialize_order(o, mask=o.shop_id in RESTRICTED_SHOPS) for o in orders]
+    }
 
-    def serialize(o):
-        is_restricted = o.shop_id in RESTRICTED_SHOPS
-        mask = "********"
-        return {
-            "order_code":    mask if is_restricted else o.order_code,
-            "shop_name":     o.shop_name,   # ✅ vẫn hiện tên shop
-            "shop_id":       o.shop_id,
-            "buyer_name":    mask if is_restricted else o.buyer_name,
-            "customer_name": mask if is_restricted else o.customer_name,
-            "phone":         mask if is_restricted else o.phone,
-            "address":       mask if is_restricted else o.address,
-            "product":       mask if is_restricted else o.product,
-            "quantity":      mask if is_restricted else o.quantity,
-            "total":         None if is_restricted else o.total,
-            "status":        mask if is_restricted else o.status,
-            "order_date":    mask if is_restricted else o.order_date,
-            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-            "restricted":    is_restricted,  # ✅ flag cho frontend biết
-        }
-
-    return {"total": total, "page": page, "data": [serialize(o) for o in orders]}
 
 
 @app.post("/api/sync")
@@ -131,55 +134,19 @@ def clear_orders(body: dict, db: Session = Depends(get_db)):
 @app.get("/api/orders/hanoi")
 async def get_hanoi_orders(db: Session = Depends(get_db)):
     keywords = ["hà nội", "ha noi", " hn", "hanoi", "Hà Nội"]
-    filters = [
-        func.lower(Order.address).contains(kw.lower())   # ✅ address, không phải shipping_address
-        for kw in keywords
-    ]
-    orders = db.query(Order).filter(or_(*filters))\
-               .order_by(Order.order_date.desc()).all()   # ✅ order_date, không phải created_at
-    return [
-        {
-            "order_code":    o.order_code,
-            "order_date":    o.order_date,
-            "shop_id":       o.shop_id,
-            "shop_name":     o.shop_name,
-            "customer_name": o.customer_name,
-            "buyer_name":    o.buyer_name,
-            "phone":         o.phone,
-            "address":       o.address,
-            "product":       o.product,
-            "quantity":      o.quantity,
-            "total":         o.total,
-            "status":        o.status,
-        }
-        for o in orders
-    ]
+    filters  = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
+    orders   = db.query(Order).filter(or_(*filters))\
+                 .order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=o.shop_id in RESTRICTED_SHOPS) for o in orders]
+
 @app.get("/api/orders/nuochoa")
 async def get_nuochoa_orders(db: Session = Depends(get_db)):
     keywords = ["nước hoa", "nuoc hoa", "nươc hoa", "nước  hoa"]
-    filters = [
-        func.lower(Order.product).contains(kw.lower())
-        for kw in keywords
-    ]
-    orders = db.query(Order).filter(or_(*filters))\
-               .order_by(Order.order_date.desc()).all()
-    return [
-        {
-            "order_code":    o.order_code,
-            "order_date":    o.order_date,
-            "shop_id":       o.shop_id,
-            "shop_name":     o.shop_name,
-            "customer_name": o.customer_name,
-            "buyer_name":    o.buyer_name,
-            "phone":         o.phone,
-            "address":       o.address,
-            "product":       o.product,
-            "quantity":      o.quantity,
-            "total":         o.total,
-            "status":        o.status,
-        }
-        for o in orders
-    ]
+    filters  = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
+    orders   = db.query(Order).filter(or_(*filters))\
+                 .order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=o.shop_id in RESTRICTED_SHOPS) for o in orders]
+
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
