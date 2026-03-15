@@ -1802,22 +1802,35 @@ function renderTakenList() {
 
   if (!list.length) {
     el.innerHTML = `<div class="taken-empty">📭 Chưa có đơn nào được lấy</div>`;
-    return;
+  } else {
+    el.innerHTML = list.map(item => {
+      const d   = new Date(item.taken_at);
+      const fmt = d.toLocaleString('vi-VN', {
+        timeZone:'Asia/Ho_Chi_Minh', hour12:false,
+        day:'2-digit', month:'2-digit',
+        hour:'2-digit', minute:'2-digit'
+      });
+      return `<div class="taken-item">
+        <div class="taken-code">${item.order_code || '—'}</div>
+        <div><span class="taken-key">${item.key_label}</span></div>
+        <div class="taken-time">${fmt}</div>
+      </div>`;
+    }).join('');
   }
 
-  el.innerHTML = list.map(item => {
-    const d   = new Date(item.taken_at);
-    const fmt = d.toLocaleString('vi-VN', {
-      timeZone:'Asia/Ho_Chi_Minh', hour12:false,
-      day:'2-digit', month:'2-digit',
-      hour:'2-digit', minute:'2-digit'
-    });
-    return `<div class="taken-item">
-      <div class="taken-code">${item.order_code || '—'}</div>
-      <div><span class="taken-key">${item.key_label}</span></div>
-      <div class="taken-time">${fmt}</div>
-    </div>`;
-  }).join('');
+  // 🔐 Chỉ ID Chang2000 mới được thấy nút xoá
+  const headerRight = document.querySelector('.taken-panel-header > div:last-child');
+  if (!headerRight) return;
+  headerRight.innerHTML = `<span style="font-size:11px;color:#9b8bb4" id="takenPanelCount">${list.length} đơn</span>`;
+
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId === 'Chang2000') {
+    const btn = document.createElement('button');
+    btn.className = 'btn-clear-taken';
+    btn.textContent = '🗑 Xoá tất cả';
+    btn.onclick = clearTakenOrders;
+    headerRight.appendChild(btn);
+  }
 }
 
 function toggleTakenPanel() {
@@ -1840,10 +1853,16 @@ function closeTakenOnOutside(e) {
 }
 
 function clearTakenOrders() {
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId !== 'Chang2000') {
+    alert('Bạn không có quyền xoá lịch sử đơn đã lấy.');
+    return;
+  }
   if (!confirm('Xoá toàn bộ lịch sử lấy đơn?')) return;
   localStorage.removeItem(TAKEN_KEY);
   renderTakenList();
 }
+
 // ── Fireworks ─────────────────────────────────────────────
 (function(){
   const canvas  = document.getElementById('fireworksCanvas');
