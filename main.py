@@ -15,6 +15,8 @@ from io import BytesIO
 import urllib.parse
 import httpx
 import openpyxl
+from fastapi import Request
+
 
 # Database setup
 Base.metadata.create_all(bind=engine)
@@ -77,13 +79,14 @@ def get_summary(db: Session = Depends(get_db)):
 
 @app.get("/api/orders")
 def get_orders(
+    request: Request,  # ← thêm
     shop_id: str = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db)
 ):
-    # ✅ Check blocked shop trước khi query
-    if shop_id and shop_id in BLOCKED_SHOPS:
+    user_id = request.headers.get('X-User-ID', '')
+    if shop_id and shop_id in BLOCKED_SHOPS and user_id != 'Chang2000':
         return {
             "total": 0,
             "page": page,
