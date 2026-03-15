@@ -243,8 +243,37 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   cursor:pointer;transition:all .15s;
 }
 .btn-change-id:hover{background:rgba(167,139,250,.4)}
+.chart-card{
+  border-radius:18px;padding:20px 24px;
+  background:rgba(255,255,255,.45);
+  border:1px solid rgba(255,255,255,.75);
+  backdrop-filter:blur(20px);
+  box-shadow:0 4px 20px rgba(160,130,200,.12);
+  margin-bottom:24px;
+}
+.chart-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin-bottom:16px;
+}
+.chart-title{font-size:14px;font-weight:700;color:#3b3551}
+.chart-tabs{display:flex;gap:6px}
+.chart-tab{
+  padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1px solid rgba(198,181,255,.4);
+  background:rgba(255,255,255,.35);color:#7c6fa0;transition:all .2s;
+}
+.chart-tab:hover{background:rgba(255,255,255,.6)}
+.chart-tab.active{
+  background:linear-gradient(135deg,#d8b4fe,#a78bfa);
+  color:#fff;border-color:transparent;
+  box-shadow:0 3px 10px rgba(167,139,250,.3);
+}
+.chart-wrap{position:relative;height:260px}
+
 </style>
 </head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <body>
 
 <!-- ID Gate -->
@@ -310,6 +339,19 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       </div>
     </div>
   </div>
+<!-- ── Chart Section ── -->
+<div class="chart-card">
+  <div class="chart-toolbar">
+    <div class="chart-title">📊 Thống kê đơn hàng</div>
+    <div class="chart-tabs">
+      <div class="chart-tab active" id="chartTabDate" onclick="switchChart('date')">📅 Theo ngày</div>
+      <div class="chart-tab" id="chartTabShop" onclick="switchChart('shop')">🏪 Theo shop</div>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="mainChart"></canvas>
+  </div>
+</div>
 
   <!-- Stats row — 4 cards, Hà Nội là card thứ 4 có thể click -->
   <div class="stats-row">
@@ -450,11 +492,12 @@ async function init() {
     }
     loadHanoi(); // load count ngay khi init
     loadNuocHoa();
+    loadChartData();
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); }, 300_000);
+  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); }, 300_000);
 }
 
 async function loadSummary() {
@@ -868,6 +911,133 @@ function changeId() {
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   location.reload();
+}
+// ── Chart ────────────────────────────────────────────────
+let mainChart = null;
+let chartMode = 'date';
+let chartRawData = null;
+
+const CHART_COLORS = [
+  '#a78bfa','#f9a8d4','#6ee7b7','#fcd34d','#93c5fd',
+  '#c4b5fd','#fda4af','#86efac','#fde68a','#bfdbfe'
+];
+
+async function loadChartData() {
+  try {
+    const data = await fetch('/api/chart-data').then(r => r.json());
+    chartRawData = data;
+    renderChart(chartMode);
+  } catch(e) { console.error('chart error:', e); }
+}
+
+function switchChart(mode) {
+  chartMode = mode;
+  document.getElementById('chartTabDate').classList.toggle('active', mode === 'date');
+  document.getElementById('chartTabShop').classList.toggle('active', mode === 'shop');
+  if (chartRawData) renderChart(mode);
+}
+
+function renderChart(mode) {
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (mainChart) { mainChart.destroy(); mainChart = null; }
+
+  if (mode === 'date') {
+    // Lấy 30 ngày gần nhất
+    const raw    = (chartRawData.by_date || []).slice(-30);
+    const labels = raw.map(d => {
+      const p = d.date ? d.date.split(/[-\/]/) : [];
+      return p.length >= 3 ? `${p[2]}/${p[1]}` : d.date;
+    });
+    const values = raw.map(d => d.count);
+
+    mainChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Số đơn',
+          data: values,
+          backgroundColor: 'rgba(167,139,250,.45)',
+          borderColor: '#a78bfa',
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false,
+          hoverBackgroundColor: 'rgba(167,139,250,.7)',
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(255,255,255,.9)',
+            titleColor: '#3b3551', bodyColor: '#7c6fa0',
+            borderColor: 'rgba(198,181,255,.5)', borderWidth: 1,
+            padding: 10, cornerRadius: 10,
+            callbacks: { label: ctx => ` ${ctx.parsed.y} đơn hàng` }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9b8bb4', font: { size: 10 }, maxRotation: 45 }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(198,181,255,.15)' },
+            ticks: { color: '#9b8bb4', font: { size: 10 }, precision: 0 }
+          }
+        }
+      }
+    });
+
+  } else {
+    // By shop — doughnut
+    const raw    = (chartRawData.by_shop || []).slice(0, 10);
+    const labels = raw.map(d => d.shop || 'Unknown');
+    const values = raw.map(d => d.count);
+
+    mainChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: CHART_COLORS.map(c => c + 'bb'),
+          borderColor: CHART_COLORS,
+          borderWidth: 2,
+          hoverOffset: 8,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: '#4c3f72', font: { size: 11 },
+              padding: 14, boxWidth: 12, boxHeight: 12,
+              usePointStyle: true, pointStyleWidth: 10,
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(255,255,255,.9)',
+            titleColor: '#3b3551', bodyColor: '#7c6fa0',
+            borderColor: 'rgba(198,181,255,.5)', borderWidth: 1,
+            padding: 10, cornerRadius: 10,
+            callbacks: {
+              label: ctx => {
+                const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                const pct   = ((ctx.parsed / total) * 100).toFixed(1);
+                return ` ${ctx.parsed} đơn (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 }
 
 if (checkIdGate()) { init(); }
