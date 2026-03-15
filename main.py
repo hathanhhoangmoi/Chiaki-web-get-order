@@ -12,7 +12,10 @@ from shops_config import get_shops_map
 from fetcher import sync_shop
 from sqlalchemy import func, or_
 from shops_config import get_shops_map, RESTRICTED_SHOPS, RESTRICTED_PASS
-
+from datetime import datetime, timedelta
+from io import BytesIO
+import urllib.parse
+from shops_config import get_shops_map, RESTRICTED_SHOPS, RESTRICTED_PASS, SELLER_ID, SELLER_TOKEN
 
 from database import engine, get_db, migrate
 Base.metadata.create_all(bind=engine)
@@ -201,4 +204,54 @@ def get_private_orders(
             "order_date":    o.order_date,
             "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
         } for o in orders]
+    }
+@app.get("/api/revenue")
+async def get_revenue():
+    # ✅ Tự động tính 30 ngày gần nhất
+    end_date   = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
+
+    shops   = get_shops_map()
+    results = []
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        for shop_id, (shop_url, shop_name) in shops.items():
+            api_url = (
+                f"https://api.chiaki.vn/api/{shop_id}"
+                f"/export-excel-summary-amount-order"
+                f"?source=seller&page_index=1&page_size=500"
+                f"&status=all&range_date={encoded_range}"
+                f"&date_type=created_at&order=create-desc"
+                f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+            )
+            try:
+                resp = await client.get(api_url)
+                if resp.status_code != 200:
+                    print(f"[revenue] {shop_id} HTTP {resp.status_code}")
+                    continue
+
+                wb = openpyxl.load_workbook(BytesIO(resp.content))
+                ws = wb.active
+
+                # Đọc header từ dòng 1
+                headers = [str(cell.value).strip() if cell.value else f"col_{i}"
+                           for i, cell in enumerate(ws[1])]
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not any(v is not None for v in row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_shop_name"] = shop_name
+                    row_dict["_shop_id"]   = shop_id
+                    row_dict["_restricted"] = shop_id in RESTRICTED_SHOPS
+                    results.append(row_dict)
+
+            except Exception as e:
+                print(f"[revenue] {shop_id} lỗi: {e}")
+
+    return {
+        "date_range": date_range,
+        "data":       results,
     }
