@@ -679,7 +679,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <!-- Nút Doanh thu — đặt cùng hàng shop tabs -->
 <div class="stats-row" style="margin-bottom:16px">
   <div class="stat-card clickable" id="revenueBtn" onclick="toggleRevenuePanel()">
-  <div class="stat-label">💰 Doanh thu</div>
+  <div class="stat-label">💰 Doanh thu các shop</div>
   <div class="stat-value" style="font-size:16px">30 ngày</div>
   <div class="stat-sub" id="revenueDateRange">Click để xem báo cáo</div>
 </div>
@@ -905,7 +905,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div style="font-size:11px;color:#9b8bb4;text-align:center;margin-top:14px">
       Hãy sao chép thông tin rồi ấn đóng cửa sổ này bạn nhé 💜
     </div>
-    <button class="btn-close-success" onclick="closeSuccessModal()">✕ Đóng cửa sổ</button>
+    <button class="btn-close-success" onclick="closeSuccessModal()">📦 Hoàn thành đơn hàng</button>
   </div>
 </div>
 <!-- ── Panel Đơn đã lấy ── -->
@@ -1713,7 +1713,7 @@ function acceptOrder() {
   const o = pendingOrder;
   pendingOrder = null;
   document.getElementById('orderConfirmBg').classList.remove('show');
-  launchFireworks(5000);
+  launchFireworks(10000);
   saveTakenOrder(o.order_code);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
