@@ -1023,12 +1023,22 @@ async function loadOrders() {
     showLoading(false);
 
     if (data.error) {
-      document.getElementById('tableBody').innerHTML = `
-        <tr><td colspan="10" class="empty">
-          <div class="empty-icon">🔒</div><div>${data.error}</div>
-        </td></tr>`;
-      return;
-    }
+  document.getElementById('tableBody').innerHTML = `
+    <tr><td colspan="10" class="empty">
+      <div class="empty-icon">🔒</div><div>${data.error}</div>
+    </td></tr>`;
+  return;
+} else if (data.blocked) {
+  document.getElementById('tableBody').innerHTML = `
+    <tr><td colspan="10" class="empty">
+      <div class="empty-icon">⚠️</div>
+      <div>${data.message}</div>
+    </td></tr>`;
+  document.getElementById('tableCount').textContent = '0 đơn hàng';
+  document.getElementById('pagination').innerHTML = '';
+  return;
+}
+
 
     document.getElementById('tableCount').textContent =
       `${(data.total || 0).toLocaleString('vi')} đơn hàng`;
@@ -1281,12 +1291,12 @@ function renderPagination(total) {
 function goPage(p) { currentPage = p; loadOrders(); }
 
 // ── Restricted shops ──────────────────────────────────────
-const RESTRICTED_SHOPS = new Set(['4917', '4647', '4732', '5112']);
+const BLOCKED_SHOPS = new Set(['4917','4647','4732','5112','4940','5096','5125']);
 let unlockedShops      = new Set(); // shop đã nhập đúng pass trong session
 let pendingShopId      = null;      // shop đang chờ xác nhận pass
 
-function isRestricted(shopId) {
-  return RESTRICTED_SHOPS.has(String(shopId));
+function isBlocked(shopId) {
+  return BLOCKED_SHOPS.has(String(shopId));
 }
 
 function showPassModal(shopId, shopName) {
@@ -1341,14 +1351,11 @@ function selectShop(id) {
     document.getElementById('panelMain').style.display    = 'block';
   }
 
-  // ✅ Nếu là restricted và chưa unlock → show modal
-  if (isRestricted(id) && !unlockedShops.has(id)) {
-    // Highlight tab trước khi show modal
+  // ✅ Thay modal pass bằng notice blocked
+  if (isBlocked(id)) {
     document.querySelectorAll('.tab').forEach(t =>
       t.classList.toggle('active', t.dataset.id === id));
-    const tab = document.querySelector(`.tab[data-id="${id}"]`);
-    const shopName = tab ? tab.textContent.trim() : id;
-    showPassModal(id, shopName);
+    showBlockedNotice(id);
     return;
   }
 
@@ -1356,6 +1363,16 @@ function selectShop(id) {
   document.querySelectorAll('.tab').forEach(t =>
     t.classList.toggle('active', t.dataset.id === id));
   loadOrders();
+}
+function showBlockedNotice(shopId) {
+  const tab = document.querySelector(`.tab[data-id="${shopId}"]`);
+  const shopName = tab ? tab.textContent.trim().split(' ')[0] : shopId;
+  showToast(`⚠️ SHOP ${shopName} BỊ CHẶN TRÍCH XUẤT ĐƠN HÀNG\nHiện tại không thể tải danh sách đơn hàng, vui lòng thử lại sau!`);
+  // Reset tab active về Tất cả sau 3s
+  setTimeout(() => {
+    document.querySelectorAll('.tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.id === ''));
+  }, 3000);
 }
 
 async function manualSync() {
