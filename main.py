@@ -152,4 +152,30 @@ async def get_hanoi_orders(db: Session = Depends(get_db)):
         }
         for o in orders
     ]
+@app.get("/api/orders/nuochoa")
+async def get_nuochoa_orders(db: Session = Depends(get_db)):
+    keywords = ["nước hoa", "nuoc hoa", "nươc hoa", "nước  hoa"]
+    filters = [
+        func.lower(Order.product).contains(kw.lower())
+        for kw in keywords
+    ]
+    orders = db.query(Order).filter(or_(*filters))\
+               .order_by(Order.order_date.desc()).all()
+    return [
+        {
+            "order_code":    o.order_code,
+            "order_date":    o.order_date,
+            "shop_id":       o.shop_id,
+            "shop_name":     o.shop_name,
+            "customer_name": o.customer_name,
+            "buyer_name":    o.buyer_name,
+            "phone":         o.phone,
+            "address":       o.address,
+            "product":       o.product,
+            "quantity":      o.quantity,
+            "total":         o.total,
+            "status":        o.status,
+        }
+        for o in orders
+    ]
 
