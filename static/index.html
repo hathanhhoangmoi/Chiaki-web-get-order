@@ -1419,12 +1419,19 @@ function closeOrderInfoModal() {
   document.getElementById('infoResult').classList.remove('show');
   document.getElementById('infoError').classList.remove('show');
   document.getElementById('infoOrderCode').value = '';
-  document.getElementById('infoSession').value = '';
+  document.getElementById('infoPassword').value = '';
 }
 
 async function fetchOrderInfo() {
   const code = document.getElementById('infoOrderCode').value.trim();
-  const session = document.getElementById('infoSession').value.trim();
+  const password = document.getElementById('infoPassword').value.trim();
+if (password !== '@HaThanhHoang0711!') {
+  errEl.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+  errEl.classList.add('show');
+  return;
+}
+const session = 'eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D';
+
   const errEl = document.getElementById('infoError');
   const resultEl = document.getElementById('infoResult');
   const btn = document.getElementById('infoSearchBtn');
