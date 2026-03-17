@@ -20,25 +20,63 @@ from fastapi import Request
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
     "KEYPHONE-74821-593847-12093": 0,
-    "KEYPHONE-19384-847562-66721": 0,
-    "KEYPHONE-56290-334781-90812": 0,
-    "KEYPHONE-82716-905432-11478": 0,
-    "KEYPHONE-30958-771239-65084": 0,
-    "KEYPHONE-67542-118903-47219": 0,
-    "KEYPHONE-28473-662918-53901": 0,
-    "KEYPHONE-95107-440286-78325": 0,
-    "KEYPHONE-43829-159374-82670": 0,
-    "KEYPHONE-72016-883451-29468": 0,
-    "KEYPHONE-HOANG0986969623": 0,
-    "KEYPHONE-HOANG0867727860": 0,
-    "KEYPHONE-HOANG0975232826": 0,
-    "KEYPHONE-HOANG0826689623": 0,
-    "KEYPHONE-HOANG0833969683": 0,
+    "KEYPHONE-38472-915630-74219": 0,
+    "KEYPHONE-92715-483029-61584": 0,
+    "KEYPHONE-56029-771843-20936": 0,
+    "KEYPHONE-71384-602915-88420": 0,
+    "KEYPHONE-24890-394761-53018": 0,
+    "KEYPHONE-67531-820947-16359": 0,
+    "KEYPHONE-10928-573640-82941": 0,
+    "KEYPHONE-84276-315098-47025": 0,
+    "KEYPHONE-39610-748235-92164": 0,
+    "KEYPHONE-51873-269104-65782": 0,
+    "KEYPHONE-73105-984260-31279": 0,
+    "KEYPHONE-26489-507318-94621": 0,
+    "KEYPHONE-89017-431265-70834": 0,
+    "KEYPHONE-47260-915384-62318": 0,
+    "KEYPHONE-63918-280745-15492": 0,
+    "KEYPHONE-20574-639182-87031": 0,
+    "KEYPHONE-91834-752609-44126": 0,
+    "KEYPHONE-37481-596203-78540": 0,
+    "KEYPHONE-68209-413875-26914": 0,
+    "KEYPHONE-15738-904261-83275": 0,
+    "KEYPHONE-42068-735914-50923": 0,
+    "KEYPHONE-76325-108479-64290": 0,
+    "KEYPHONE-98104-652738-31589": 0,
+    "KEYPHONE-54673-219804-77831": 0,
+    "KEYPHONE-83017-467295-19064": 0,
+    "KEYPHONE-29460-873512-65918": 0,
+    "KEYPHONE-71529-364087-92810": 0,
+    "KEYPHONE-40816-529743-17638": 0,
+    "KEYPHONE-96253-187640-83592": 0,
+    "KEYPHONE-13784-690215-47286": 0,
+    "KEYPHONE-HOANG": 0,
+    "KEYPHONE-HOANG1": 0,
+    "KEYPHONE-HOANG2": 0,
+    "KEYPHONE-HOANG3": 0,
+    "KEYPHONE-HOANG4": 0,
+    "KEYPHONE-HOANG5": 0,
+    "KEYPHONE-HOANG6": 0,
+    "KEYPHONE-HOANG7": 0,
+    "KEYPHONE-HOANG8": 0,
+    "KEYPHONE-HOANG9": 0,
+    "KEYPHONE-HOANG10": 0,
+    "KEYPHONE-HOANG11": 0,
+    "KEYPHONE-HOANG12": 0,
+    "KEYPHONE-HOANG13": 0,
+    "KEYPHONE-HOANG14": 0,
+    "KEYPHONE-HOANG15": 0,
+    "KEYPHONE-HOANG16": 0,
+    "KEYPHONE-HOANG17": 0,
+    "KEYPHONE-HOANG18": 0,
+    "KEYPHONE-HOANG19": 0,
+    "KEYPHONE-HOANG20": 0,
 }
 KEY_LIMIT = 5
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
 KEY_HISTORY: dict = {k: [] for k in VALID_KEYS}
-
+# Lưu lịch sử đăng nhập: {key: [{"event": "login/logout", "time": ...}]}
+LOGIN_HISTORY: list = []  # [{key, event, time}]
 
 # Database setup
 Base.metadata.create_all(bind=engine)
@@ -738,3 +776,24 @@ async def get_key_history(request: Request):
                 "history": logs
             })
     return {"data": result, "total_queries": sum(len(v) for v in KEY_HISTORY.values())}
+@app.post("/api/auth/login-log")
+async def login_log(body: dict, request: Request):
+    key    = body.get("key", "").strip()
+    event  = body.get("event", "login")  # "login" hoặc "logout"
+    
+    from datetime import timezone as _tz
+    now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%H:%M:%S ngày %d/%m/%Y")
+    
+    LOGIN_HISTORY.append({
+        "key":   key,
+        "event": event,
+        "time":  now_vn,
+    })
+    return {"ok": True}
+
+@app.get("/api/auth/login-history")
+async def get_login_history(request: Request):
+    user_id = request.headers.get('X-User-ID', '')
+    if user_id != 'Chang2000':
+        return JSONResponse({"error": "Không có quyền."}, status_code=403)
+    return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
