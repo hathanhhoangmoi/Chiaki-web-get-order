@@ -123,6 +123,19 @@ def get_orders(
     total = q.count()
     orders = q.order_by(desc(Order.fetched_at)).offset((page-1)*limit).limit(limit).all()
 
+    # Sắp xếp
+    if sort == "total_desc":
+        q = q.order_by(desc(Order.total))
+    elif sort == "total_asc":
+        q = q.order_by(Order.total)
+    elif sort == "date_desc":
+        q = q.order_by(desc(Order.order_date))
+    elif sort == "date_asc":
+        q = q.order_by(Order.order_date)
+    else:
+        q = q.order_by(desc(Order.fetched_at))
+
+    orders = q.offset((page-1)*limit).limit(limit).all()
     def serialize_order(o):
         # ✅ Chỉ mask nếu shop bị chặn VÀ user không phải Chang2000
         mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
