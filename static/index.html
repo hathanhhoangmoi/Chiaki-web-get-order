@@ -1298,6 +1298,7 @@ async function init() {
     loadNuocHoa();
     loadChartData();
     renderTakenList();
+    initHistoryBtn();
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
@@ -2987,8 +2988,6 @@ async function loadHistoryPanel() {
 }
 
 // Gọi khi load trang
-document.addEventListener('DOMContentLoaded', initHistoryBtn);
-
 if (checkIdGate()) { init(); }
 </script>
 <!-- Modal Thông tin đơn hàng -->
