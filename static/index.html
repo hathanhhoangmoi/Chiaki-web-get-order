@@ -1425,13 +1425,6 @@ function closeOrderInfoModal() {
 async function fetchOrderInfo() {
   const code = document.getElementById('infoOrderCode').value.trim();
   const password = document.getElementById('infoPassword').value.trim();
-if (password !== '@HaThanhHoang0711!') {
-  errEl.textContent = 'Sai session ID. Vui lòng nhập lại';
-  errEl.classList.add('show');
-  return;
-}
-const session = 'eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D';
-
   const errEl = document.getElementById('infoError');
   const resultEl = document.getElementById('infoResult');
   const btn = document.getElementById('infoSearchBtn');
@@ -1439,22 +1432,33 @@ const session = 'eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFh
   errEl.classList.remove('show');
   resultEl.classList.remove('show');
 
-  if (!code || !session) {
-    errEl.textContent = 'Vui lòng nhập đầy đủ mã đơn hàng và session cookie.';
+  if (!code) {
+    errEl.textContent = 'Vui lòng nhập mã đơn hàng.';
     errEl.classList.add('show');
     return;
   }
+
+  if (password !== '@HaThanhHoang0711!') {
+    errEl.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const session = 'eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D';
 
   btn.disabled = true;
   btn.textContent = 'Đang tra cứu...';
 
   try {
+    console.log('[fetchOrderInfo] Gửi request mã:', code);
     const res = await fetch('/api/order-info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ order_code: code, session_cookie: session })
     });
+    console.log('[fetchOrderInfo] HTTP status:', res.status);
     const data = await res.json();
+    console.log('[fetchOrderInfo] Response:', data);
 
     if (data.error) {
       errEl.textContent = data.error;
@@ -1473,13 +1477,15 @@ const session = 'eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFh
 
     resultEl.classList.add('show');
   } catch(e) {
-    errEl.textContent = 'Lỗi kết nối server. Vui lòng thử lại.';
+    console.error('[fetchOrderInfo] Lỗi:', e);
+    errEl.textContent = 'Lỗi kết nối server: ' + e.message;
     errEl.classList.add('show');
   } finally {
     btn.disabled = false;
     btn.textContent = '🔍 Tra cứu';
   }
 }
+
 
 
 function selectShop(id) {
