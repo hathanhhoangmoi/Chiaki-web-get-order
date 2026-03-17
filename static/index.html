@@ -942,7 +942,10 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
 </div>
-
+<!-- Nút mở lịch sử (chỉ hiện với Chang2000) -->
+<button class="history-toggle-btn" id="historyToggleBtn" onclick="toggleHistoryPanel()" title="Lịch sử tra cứu">
+  📋
+</button>
 
 
 <div class="container">
@@ -3216,10 +3219,7 @@ if (checkIdGate()) { init(); }
     </div>
   </div>
 </div>
-<!-- Nút mở lịch sử (chỉ hiện với Chang2000) -->
-<button class="history-toggle-btn" id="historyToggleBtn" onclick="toggleHistoryPanel()" title="Lịch sử tra cứu">
-  📋
-</button>
+
 
 <!-- Panel lịch sử -->
 <div class="history-panel" id="historyPanel">
