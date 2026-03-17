@@ -514,3 +514,58 @@ async def get_revenue_single(shop_id: str = Query(...)):
         }
     except Exception as e:
         return JSONResponse({"error": f"Lỗi xử lý: {str(e)}"}, status_code=500)
+@app.get("/api/chat-info")
+async def get_chat_info(seller_id: str = Query(...)):
+    url = f"https://chat-crm.megaads.vn/conversations/{seller_id}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(url)
+        data = res.json()
+        
+        conversations = data if isinstance(data, list) else data.get("data", [data])
+        result = []
+        
+        for c in conversations:
+            customer = c.get("customerId") or {}
+            seller = c.get("sellerId") or {}
+            last_msg = c.get("lastMessage") or {}
+            
+            # Parse nội dung tin nhắn đơn hàng
+            msg_content = last_msg.get("content", "")
+            msg_type = last_msg.get("messageType", "text")
+            order_info = None
+            if msg_type == "order":
+                try:
+                    import json as _json
+                    order_info = _json.loads(msg_content)
+                except: pass
+
+            def fmt_time(t):
+                if not t: return "—"
+                try:
+                    from datetime import timezone
+                    dt = datetime.fromisoformat(t.replace("Z", "+00:00"))
+                    dt_vn = dt.astimezone(timezone(timedelta(hours=7)))
+                    return dt_vn.strftime("%d/%m/%Y %H:%M")
+                except: return t
+
+            result.append({
+                "id":                   c.get("_id"),
+                "customer_name":        customer.get("username"),
+                "customer_online":      customer.get("isOnline", False),
+                "seller_name":          seller.get("username"),
+                "seller_online":        seller.get("isOnline", False),
+                "msg_type":             msg_type,
+                "msg_text":             msg_content if msg_type == "text" else None,
+                "order_info":           order_info,
+                "seller_unread":        c.get("sellerUnreadMessage", 0),
+                "customer_unread":      c.get("customerUnreadMessage", 0),
+                "created_at":           fmt_time(c.get("createdAt")),
+                "updated_at":           fmt_time(c.get("updatedAt")),
+                "last_seen":            fmt_time(c.get("lastSeenMessage")),
+                "has_violation":        c.get("hasViolation", False),
+            })
+        
+        return {"conversations": result, "total": len(result)}
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
