@@ -313,3 +313,54 @@ async def get_revenue():
         "date_range": date_range,
         "data": results,
     }
+    @app.post("/api/order-info")
+async def get_order_info(body: dict):
+    order_code = body.get("order_code", "").strip()
+    session_cookie = body.get("session_cookie", "").strip()
+
+    if not order_code or not session_cookie:
+        return JSONResponse({"error": "Thiếu mã đơn hàng hoặc session cookie"}, status_code=400)
+
+    # Trích xuất inoutputId: bỏ 2 ký tự đầu, lấy 7 ký tự tiếp
+    if len(order_code) < 9:
+        return JSONResponse({"error": "Mã đơn hàng không hợp lệ"}, status_code=400)
+
+    input_id = order_code[2:9]
+    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(url, headers={
+                "Accept": "application/json, text/plain, */*",
+                "platform": "ios",
+                "Cookie": f"laravel_session={session_cookie}",
+                "User-Agent": "chiakiApp/3.6.2"
+            })
+        data = res.json()
+
+        # Parse thông tin từ response
+        d = data.get("data") or {}
+        if isinstance(d, list):
+            d = d[0] if d else {}
+
+        def g(*keys):
+            for k in keys:
+                v = d.get(k)
+                if v: return str(v)
+            return "—"
+
+        return {
+            "order_code":   g("order_code", "code", "orderCode"),
+            "shop_name":    g("shop_name", "shopName", "seller_name"),
+            "order_date":   g("created_at", "order_date", "orderDate"),
+            "customer_name":g("customer_name", "customerName", "receiver_name", "receiverName"),
+            "phone":        g("phone", "receiver_phone", "receiverPhone"),
+            "email":        g("email", "customer_email"),
+            "address":      g("address", "receiver_address", "receiverAddress", "shipping_address"),
+            "source":       g("source", "order_source", "channel"),
+            "_raw":         data  # để debug nếu cần
+        }
+
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
+
