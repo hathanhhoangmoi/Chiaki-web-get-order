@@ -2318,7 +2318,6 @@ function toggleRevenuePanel() {
 let pendingOrder = null;
 
 function openTakeOrder(raw) {
-  // Nhận cả string JSON lẫn object
   const o = (typeof raw === 'string') ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
   pendingOrder = o;
   document.getElementById('confirmCode').textContent    = o.ordercode    || '—';
@@ -2328,6 +2327,7 @@ function openTakeOrder(raw) {
   document.getElementById('confirmTotal').textContent   = o.total ? Number(o.total).toLocaleString('vi') : '—';
   document.getElementById('orderConfirmBg').classList.add('show');
 }
+
 
 
 
@@ -2346,7 +2346,6 @@ function acceptOrder() {
   saveTakenOrder(o.ordercode);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') : '—';
-
   document.getElementById('successAmount').textContent  = `Bạn sẽ nhận được ${totalFmt}`;
   document.getElementById('successCode').textContent    = o.ordercode    || '—';
   document.getElementById('successName').textContent    = o.customername || o.buyername || '—';
@@ -2368,7 +2367,7 @@ function acceptOrder() {
 
   document.getElementById('orderSuccessBg').classList.add('show');
 
-  // Tải Excel — tên file = mã đơn (R...)
+  // Tải Excel
   (async () => {
     try {
       const code = o.ordercode || '';
@@ -2388,6 +2387,7 @@ function acceptOrder() {
     }
   })();
 }
+
 
 function closeSuccessModal() {
   document.getElementById('orderSuccessBg').classList.remove('show');
@@ -2446,24 +2446,24 @@ function saveTakenOrder(orderCode) {
 }
 
 function renderTakenList() {
-  const list = getTakenOrders();
-  const badge = document.getElementById('takenBadge');
+  const list  = getTakenOrders();
+  const badge = document.getElementById('takenBadge');   // có thể null
   const count = document.getElementById('takenPanelCount');
   const el    = document.getElementById('takenList');
 
-  if (badge) badge.textContent = list.length;         // ✅ chỉ set nếu tồn tại
+  if (badge) badge.textContent = list.length;            // ✅ chỉ set nếu tồn tại
   if (count) count.textContent = list.length + ' đơn';
-  if (!el) return;                                      // ✅ guard
+  if (!el) return;
 
   if (!list.length) {
     el.innerHTML = `<div class="taken-empty">Chưa có đơn nào được lấy</div>`;
     return;
   }
-  const currentId  = localStorage.getItem('chiakiid');
-  const canDelete  = currentId === 'Chang2000';
+  const currentId = localStorage.getItem('chiakiid');
+  const canDelete = currentId === 'Chang2000';
   el.innerHTML = list.map((item, idx) => {
     const d   = new Date(item.takenat);
-    const fmt = d.toLocaleString('vi-VN', { timeZone:'Asia/Ho_Chi_Minh', hour12:false, day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const fmt = d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     return `<div class="taken-item">
       <div class="taken-code">${item.ordercode}</div>
       <div><span class="taken-key">${item.keylabel}</span></div>
@@ -2471,6 +2471,7 @@ function renderTakenList() {
     </div>`;
   }).join('');
 }
+
 
 
 function toggleTakenPanel() {
