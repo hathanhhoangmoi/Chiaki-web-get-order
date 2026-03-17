@@ -1421,6 +1421,7 @@ let currentPage = 1;
 const limit = 50;
 let hanoiVisible = false;
 let currentSort = 'default';
+let currentHistoryTab = 'login';
 
 function changeSortOrder() {
   currentSort = document.getElementById('sortSelect').value;
@@ -2334,7 +2335,7 @@ function toggleRevenuePanel() {
 let pendingOrder = null;
 
 function openTakeOrder(raw) {
-  const o = (typeof raw === 'string') ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
+  const o = typeof raw === 'string' ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
   pendingOrder = o;
   document.getElementById('confirmCode').textContent    = o.ordercode    || '—';
   document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
@@ -3110,14 +3111,17 @@ async function loadNetRevShop(shopId, shopName) {
   }
 }
 function initHistoryBtn() {
-  const uid = localStorage.getItem('chiaki_id') || '';
-  if (uid === 'Chang2000') {
-    // Tự mở panel lịch sử luôn, không cần button
+  const uid = localStorage.getItem('chiakiid');
+  if (uid === 'Chang2000' || uid === 'PhuongPN2000') {
     const panel = document.getElementById('historyPanel');
     panel.classList.add('open');
     loadHistoryPanel();
+    // Hiện nút toggle lịch sử
+    const toggleBtn = document.getElementById('historyToggleBtn');
+    if (toggleBtn) toggleBtn.classList.add('visible');
   }
 }
+
 
 let historyPanelOpen = false;
 
