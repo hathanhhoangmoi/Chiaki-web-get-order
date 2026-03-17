@@ -349,12 +349,15 @@ async def get_order_info(body: dict):
 
     VALID_KEYS[key] += 1
     remaining = KEY_LIMIT - VALID_KEYS[key]
-    from datetime import timezone
-now_vn = datetime.now(timezone(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
-if key not in KEY_HISTORY:
-    KEY_HISTORY[key] = []
-KEY_HISTORY[key].append({"order_code": order_code, "time": now_vn})
+
+    from datetime import timezone as _tz
+    now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
+    if key not in KEY_HISTORY:
+        KEY_HISTORY[key] = []
+    KEY_HISTORY[key].append({"order_code": order_code, "time": now_vn})
+
     input_id = order_code[2:9]
+
     url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
     session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
 
