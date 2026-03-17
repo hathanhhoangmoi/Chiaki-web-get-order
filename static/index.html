@@ -2940,7 +2940,7 @@ async function loadNetRevShop(shopId, shopName) {
   }
 }
 function initHistoryBtn() {
-  const uid = localStorage.getItem('chiakiid') || '';
+  const uid = localStorage.getItem('chiaki_id') || '';
   if (uid === 'Chang2000') {
     document.getElementById('historyToggleBtn').classList.add('visible');
   }
@@ -2957,7 +2957,7 @@ function toggleHistoryPanel() {
 async function loadHistoryPanel() {
   const body = document.getElementById('historyBody');
   body.innerHTML = '<div class="history-empty">Đang tải...</div>';
-  const uid = localStorage.getItem('chiakiid') || '';
+  const uid = localStorage.getItem('chiaki_id') || '';
   console.log('[History] Sending X-User-ID:', uid); // debug
   try {
     const res = await fetch('/api/order-info/history', {
