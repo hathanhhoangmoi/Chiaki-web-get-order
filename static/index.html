@@ -1407,7 +1407,73 @@ function confirmPass() {
     t.classList.toggle('active', t.dataset.id === sid));
   loadOrders();
 }  
-  
+
+function toggleOrderInfoModal() {
+  document.getElementById('orderInfoBg').classList.add('show');
+  setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
+}
+
+function closeOrderInfoModal() {
+  document.getElementById('orderInfoBg').classList.remove('show');
+  document.getElementById('infoResult').classList.remove('show');
+  document.getElementById('infoError').classList.remove('show');
+  document.getElementById('infoOrderCode').value = '';
+  document.getElementById('infoSession').value = '';
+}
+
+async function fetchOrderInfo() {
+  const code = document.getElementById('infoOrderCode').value.trim();
+  const session = document.getElementById('infoSession').value.trim();
+  const errEl = document.getElementById('infoError');
+  const resultEl = document.getElementById('infoResult');
+  const btn = document.getElementById('infoSearchBtn');
+
+  errEl.classList.remove('show');
+  resultEl.classList.remove('show');
+
+  if (!code || !session) {
+    errEl.textContent = 'Vui lòng nhập đầy đủ mã đơn hàng và session cookie.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Đang tra cứu...';
+
+  try {
+    const res = await fetch('/api/order-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_code: code, session_cookie: session })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.classList.add('show');
+      return;
+    }
+
+    document.getElementById('irCode').textContent    = data.order_code    || '—';
+    document.getElementById('irShop').textContent    = data.shop_name     || '—';
+    document.getElementById('irDate').textContent    = data.order_date    || '—';
+    document.getElementById('irName').textContent    = data.customer_name || '—';
+    document.getElementById('irPhone').textContent   = data.phone         || '—';
+    document.getElementById('irEmail').textContent   = data.email         || '—';
+    document.getElementById('irAddress').textContent = data.address       || '—';
+    document.getElementById('irSource').textContent  = data.source        || '—';
+
+    resultEl.classList.add('show');
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối server. Vui lòng thử lại.';
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Tra cứu';
+  }
+}
+
+
 function selectShop(id) {
   if (hanoiVisible) {
     hanoiVisible = false;
