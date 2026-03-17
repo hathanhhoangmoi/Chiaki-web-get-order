@@ -412,3 +412,20 @@ async def get_shop_info(request: Request, shop_id: str = Query(...)):
         }
     except Exception as e:
         return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
+@app.get("/api/customer-info")
+async def get_customer_info(customer_id: str = Query(...)):
+    url = f"https://chat-crm.megaads.vn/users/{customer_id}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(url)
+        data = res.json()
+        if not data.get("_id"):
+            return JSONResponse({"error": "Không tìm thấy khách hàng."}, status_code=404)
+        return {
+            "username":   data.get("username"),
+            "phone":      data.get("phone"),
+            "api_token":  data.get("apiToken"),
+            "created_at": data.get("createdAt"),
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
