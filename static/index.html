@@ -861,6 +861,36 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 .history-toggle-btn.visible { display: flex; }
 .history-toggle-btn:hover { transform: scale(1.1); }
+.history-tabs {
+  display: flex; gap: 6px;
+  padding: 10px 12px 0;
+  border-bottom: 1px solid rgba(198,181,255,.2);
+}
+.history-tab {
+  flex: 1; padding: 7px; border: none; border-radius: 10px 10px 0 0;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; background: rgba(198,181,255,.15); color: #9b8bb4;
+  transition: all .2s;
+}
+.history-tab.active {
+  background: linear-gradient(135deg, #d8b4fe, #a78bfa);
+  color: #fff;
+}
+.login-item {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 9px 12px; border-radius: 10px; margin-bottom: 6px;
+  border: 1px solid rgba(198,181,255,.2); font-size: 11px;
+}
+.login-item.login-ev  { background: rgba(167,243,208,.2); border-color: rgba(110,231,183,.3); }
+.login-item.logout-ev { background: rgba(254,202,202,.2); border-color: rgba(252,165,165,.3); }
+.login-key   { font-weight: 700; color: #3b3551; font-size: 12px; margin-bottom: 2px; }
+.login-time  { color: #9b8bb4; font-size: 10px; }
+.login-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 20px; white-space: nowrap;
+}
+.login-badge.in  { background: rgba(167,243,208,.5); color: #065f46; }
+.login-badge.out { background: rgba(254,202,202,.5); color: #991b1b; }
 
 </style>
 </head>
@@ -1937,6 +1967,13 @@ function submitId() {
   document.getElementById('maskedId').textContent    = maskId(id);
   startExpireCountdown();
   init();
+  // Ghi log login
+  fetch('/api/auth/login-log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: inputId, event: 'login' })
+  });
+
 }
 
 function showIdError(msg) {
@@ -1950,6 +1987,16 @@ function changeId() {
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   location.reload();
+  // Ghi log logout
+const oldId = localStorage.getItem('chiaki_id') || '';
+if (oldId) {
+  fetch('/api/auth/login-log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: oldId, event: 'logout' })
+  });
+}
+
 }
 // ── Chart ────────────────────────────────────────────────
 let mainChart = null;
@@ -3026,6 +3073,90 @@ async function loadHistoryPanel() {
     body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
   }
 }
+let currentHistoryTab = 'phone';
+
+function switchHistoryTab(tab) {
+  currentHistoryTab = tab;
+  document.getElementById('htabPhone').classList.toggle('active', tab === 'phone');
+  document.getElementById('htabLogin').classList.toggle('active', tab === 'login');
+  loadHistoryPanel();
+}
+
+async function loadHistoryPanel() {
+  const body = document.getElementById('historyBody');
+  body.innerHTML = '<div class="history-empty">Đang tải...</div>';
+  const uid = localStorage.getItem('chiaki_id') || '';
+
+  if (currentHistoryTab === 'phone') {
+    // --- Tab tra SĐT (code cũ giữ nguyên) ---
+    try {
+      const res = await fetch('/api/order-info/history', {
+        headers: { 'X-User-ID': uid }
+      });
+      const data = await res.json();
+      if (data.error) { body.innerHTML = `<div class="history-empty">⛔ ${data.error}</div>`; return; }
+
+      document.getElementById('hsTotalQueries').textContent = data.total_queries;
+      document.getElementById('hsTotalKeys').textContent    = data.data.length;
+
+      if (!data.data.length) { body.innerHTML = '<div class="history-empty">Chưa có tra cứu nào</div>'; return; }
+
+      body.innerHTML = data.data.map(k => {
+        const codes = k.history.slice().reverse().map(h => `
+          <div style="display:flex;justify-content:space-between;align-items:center;
+            padding:5px 0;border-bottom:1px solid rgba(198,181,255,.15);font-size:12px;">
+            <span style="font-family:monospace;font-weight:700;color:#3b3551;">📦 ${h.order_code}</span>
+            <span style="font-size:10px;color:#b0a0c8;">${h.time}</span>
+          </div>`).join('');
+        return `
+          <div style="background:rgba(255,255,255,.5);border:1px solid rgba(198,181,255,.25);
+            border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="font-family:monospace;font-size:11px;font-weight:700;color:#5b4b8a;
+                background:rgba(216,180,254,.25);padding:3px 10px;border-radius:20px;
+                border:1px solid rgba(198,181,255,.4);max-width:190px;
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🔑 ${k.key}</div>
+              <div style="font-size:11px;font-weight:700;color:${k.used>=k.limit?'#dc2626':'#059669'}">
+                ${k.used}/${k.limit} lượt</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:#9b8bb4;margin-bottom:6px;">
+              ĐƠN ĐÃ TRA CỨU (${k.history.length})</div>
+            ${codes || '<div style="font-size:11px;color:#c4b5d4;">Chưa tra cứu</div>'}
+          </div>`;
+      }).join('');
+    } catch(e) {
+      body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
+    }
+
+  } else {
+    // --- Tab đăng nhập ---
+    try {
+      const res = await fetch('/api/auth/login-history', {
+        headers: { 'X-User-ID': uid }
+      });
+      const data = await res.json();
+      if (data.error) { body.innerHTML = `<div class="history-empty">⛔ ${data.error}</div>`; return; }
+
+      document.getElementById('hsTotalQueries').textContent = data.total;
+      document.getElementById('hsTotalKeys').textContent    = [...new Set(data.data.map(d=>d.key))].length;
+
+      if (!data.data.length) { body.innerHTML = '<div class="history-empty">Chưa có đăng nhập nào</div>'; return; }
+
+      body.innerHTML = [...data.data].reverse().map(d => `
+        <div class="login-item ${d.event === 'login' ? 'login-ev' : 'logout-ev'}">
+          <div>
+            <div class="login-key">👤 ${d.key}</div>
+            <div class="login-time">${d.time}</div>
+          </div>
+          <span class="login-badge ${d.event === 'login' ? 'in' : 'out'}">
+            ${d.event === 'login' ? '🟢 Login' : '🔴 Logout'}
+          </span>
+        </div>`).join('');
+    } catch(e) {
+      body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
+    }
+  }
+}
 
 
 // Gọi khi load trang
@@ -3259,17 +3390,20 @@ if (checkIdGate()) { init(); }
 <!-- Panel lịch sử -->
 <div class="history-panel" id="historyPanel">
   <div class="history-header">
-    <div class="history-header-title">📋 LỊCH SỬ LẤY SỐ ĐIỆN THOẠI KHÁCH HÀNG</div>
+    <div class="history-header-title">📋 Lịch sử</div>
     <button class="history-close" onclick="toggleHistoryPanel()">✕</button>
   </div>
+  <div class="history-tabs">
+    <button class="history-tab active" id="htabPhone" onclick="switchHistoryTab('phone')">📞 Tra SĐT</button>
+    <button class="history-tab" id="htabLogin" onclick="switchHistoryTab('login')">🔐 Đăng nhập</button>
+  </div>
   <div class="history-stats">
-    <div>Tổng tra cứu: <b id="hsTotalQueries">—</b></div>
-    <div>Số key dùng: <b id="hsTotalKeys">—</b></div>
+    <div>Tổng: <b id="hsTotalQueries">—</b></div>
+    <div>Keys: <b id="hsTotalKeys">—</b></div>
   </div>
-  <div class="history-body" id="historyBody">
-    <div class="history-empty">Đang tải...</div>
-  </div>
+  <div class="history-body" id="historyBody"></div>
 </div>
+
 
 </body>
 </html>
