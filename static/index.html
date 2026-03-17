@@ -1426,7 +1426,7 @@ async function fetchOrderInfo() {
   const code = document.getElementById('infoOrderCode').value.trim();
   const password = document.getElementById('infoPassword').value.trim();
 if (password !== '@HaThanhHoang0711!') {
-  errEl.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+  errEl.textContent = 'Sai session ID. Vui lòng nhập lại';
   errEl.classList.add('show');
   return;
 }
