@@ -636,6 +636,12 @@ div[style*="justify-content:center"] .btn:hover {
       30 ngày
     </span>
   </button>
+<button class="taken-btn" id="megaadsBtn" onclick="toggleMegaadsPanel()" style="display:none">
+  🔍 GET PHONE NUMBER by Order
+</button>
+<button class="taken-btn" id="jsonBtn" onclick="toggleJsonPanel()" style="display:none">
+  📋 Convert JSON
+</button>
 
 <!-- Panel JSON rút gọn -->
 <div id="panelJson" style="display:none">
@@ -751,18 +757,7 @@ div[style*="justify-content:center"] .btn:hover {
     <canvas id="mainChart"></canvas>
   </div>
 </div>
-<!-- ┌─ Buttons mới - DƯỚI CHART ──┐ -->
-<div style="display:flex;gap:12px;justify-content:center;margin:24px 0;padding:16px;background:rgba(255,255,255,.25);border-radius:20px;border:1px solid rgba(255,255,255,.5);backdrop-filter:blur(20px)">
-  
-  <!-- Button MegaAds -->
-  <button class="btn btn-primary" id="megaadsBtn" onclick="toggleMegaadsPanel()" style="display:none;padding:12px 24px;font-size:14px">
-    THÔNG TIN ĐƠN HÀNG
-  </button>
-  
-  <!-- Button JSON -->
-  <button class="btn btn-primary" id="jsonBtn" onclick="toggleJsonPanel()" style="display:none;padding:12px 24px;font-size:14px">
-    📋 Convert JSON
-  </button>
+
   
 </div>
 <!-- └──────────────────────────────┘ -->
@@ -2158,38 +2153,8 @@ let megaadsVisible = false;
 
 function toggleMegaadsPanel() {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') {
-    showToast('❌ Chỉ Chang2000 mới có quyền sử dụng tính năng này');
-    return;
-  }
-
-  megaadsVisible = !megaadsVisible;
-  const btn = document.getElementById('megaadsBtn');
-  
-  if (megaadsVisible) {
-    // Đóng các panel khác
-    if (hanoiVisible) toggleHanoiPanel();
-    if (nuocHoaVisible) toggleNuocHoaPanel();
-    if (revenueVisible) toggleRevenuePanel();
-    if (document.getElementById('takenPanel').classList.contains('show')) {
-      document.getElementById('takenPanel').classList.remove('show');
-    }
-    
-    btn.classList.add('active');
-    document.getElementById('panelMegaads').style.display = 'block';
-    document.getElementById('panelMain').style.display = 'none';
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.tab[data-id=""]').classList.add('active');
-    
-    // Clear form
-    document.getElementById('megaadsOrderCode').value = '';
-    document.getElementById('megaadsSessionId').value = '';
-    document.getElementById('megaadsResult').style.display = 'none';
-  } else {
-    btn.classList.remove('active');
-    document.getElementById('panelMegaads').style.display = 'none';
-    document.getElementById('panelMain').style.display = 'block';
-  }
+  if (currentId !== 'Chang2000') { showToast('❌ Chỉ Chang2000'); return; }
+  openToolsModal('megaads');
 }
 
 async function fetchMegaads() {
@@ -2300,30 +2265,34 @@ let jsonVisible = false;
 
 function toggleJsonPanel() {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') {
-    showToast('❌ Chỉ Chang2000 mới có quyền sử dụng');
-    return;
-  }
-  
-  jsonVisible = !jsonVisible;
-  const btn = document.getElementById('jsonBtn');
-  
-  if (jsonVisible) {
-    // Đóng panel khác
-    if (megaadsVisible) toggleMegaadsPanel();
-    // ... đóng các panel khác
-    
-    btn.classList.add('active');
-    document.getElementById('panelJson').style.display = 'block';
-    document.getElementById('panelMain').style.display = 'none';
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.tab[data-id=""]').classList.add('active');
-  } else {
-    btn.classList.remove('active');
-    document.getElementById('panelJson').style.display = 'none';
-    document.getElementById('panelMain').style.display = 'block';
-  }
+  if (currentId !== 'Chang2000') { showToast('❌ Chỉ Chang2000'); return; }
+  openToolsModal('json');
 }
+
+function openToolsModal(tab) {
+  document.getElementById('toolsModalBg').style.display = 'flex';
+  switchToolTab(tab);
+}
+
+function closeToolsModal() {
+  document.getElementById('toolsModalBg').style.display = 'none';
+}
+
+function switchToolTab(tab) {
+  document.getElementById('tabContentMegaads').style.display = tab === 'megaads' ? 'block' : 'none';
+  document.getElementById('tabContentJson').style.display = tab === 'json' ? 'block' : 'none';
+  document.getElementById('tabMegaads').classList.toggle('active', tab === 'megaads');
+  document.getElementById('tabJson').classList.toggle('active', tab === 'json');
+  document.getElementById('toolsModalTitle').textContent = tab === 'megaads' ? '🔍 Thông tin đơn hàng' : '📋 Convert JSON';
+}
+
+// Đóng khi click nền
+document.getElementById('toolsModalBg').addEventListener('click', function(e) {
+  if (e.target === this) closeToolsModal();
+});
+
+// ESC đóng modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeToolsModal(); });
 
 function clearJsonInput() {
   document.getElementById('jsonInput').value = '';
@@ -2397,11 +2366,6 @@ function renderOrderInfo(data) {
       <td><b>📍 Địa chỉ</b></td>
       <td style="max-width:250px">${data.delivery_address || '—'}</td>
       <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(7) td:nth-child(2)', this)">📋</button></td>
-    </tr>
-    <tr>
-      <td><b>🛍 Sản phẩm</b></td>
-      <td>${extractProduct(data.meta_data) || '—'}</td>
-      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(8) td:nth-child(2)', this)">📋</button></td>
     </tr>
     <tr>
       <td><b>💰 Tổng tiền</b></td>
@@ -2565,6 +2529,68 @@ document.addEventListener('DOMContentLoaded', function() {
 
 if (checkIdGate()) { init(); }
 </script>
+<!-- ═══ TOOLS MODAL CENTER ═══ -->
+<div id="toolsModalBg" style="position:fixed;inset:0;z-index:6000;display:none;align-items:center;justify-content:center;background:rgba(60,40,90,.55);backdrop-filter:blur(12px);padding:20px">
+  <div style="width:100%;max-width:680px;max-height:90vh;background:rgba(255,255,255,.88);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.9);border-radius:24px;box-shadow:0 32px 80px rgba(160,130,200,.4);overflow:hidden;display:flex;flex-direction:column">
+    
+    <!-- Header Modal -->
+    <div style="padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(198,181,255,.3);background:rgba(255,255,255,.4);flex-shrink:0">
+      <div style="font-size:15px;font-weight:700;color:#3b3551" id="toolsModalTitle">🔍 Thông tin đơn hàng</div>
+      <button onclick="closeToolsModal()" style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(254,202,202,.5);color:#dc2626;font-size:18px;cursor:pointer;font-weight:700;transition:all .2s" onmouseover="this.style.background='rgba(254,202,202,.9)'" onmouseout="this.style.background='rgba(254,202,202,.5)'">✕</button>
+    </div>
+
+    <!-- Tab buttons -->
+    <div style="display:flex;gap:8px;padding:14px 24px 0;flex-shrink:0">
+      <button id="tabMegaads" onclick="switchToolTab('megaads')" class="taken-btn active" style="flex:1">🔍 Thông tin đơn hàng</button>
+      <button id="tabJson" onclick="switchToolTab('json')" class="taken-btn" style="flex:1">📋 Convert JSON</button>
+    </div>
+
+    <!-- Nội dung scroll được -->
+    <div style="overflow-y:auto;flex:1;padding:20px 24px">
+
+      <!-- ── Tab MegaAds ── -->
+      <div id="tabContentMegaads">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <label style="display:block;font-size:11px;color:#9b8bb4;margin-bottom:4px;font-weight:600">📦 Mã đơn hàng</label>
+            <input id="megaadsOrderCode" class="id-input" placeholder="VD: R7548070493" style="font-family:monospace;margin-bottom:0"/>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;color:#9b8bb4;margin-bottom:4px;font-weight:600">🔑 Session ID</label>
+            <input id="megaadsSessionId" class="id-input" placeholder="laravel_session=..." style="font-family:monospace;margin-bottom:0"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="fetchMegaads()" style="width:100%;padding:12px;font-size:14px;margin-bottom:16px">🚀 Tra cứu ngay</button>
+        <div id="megaadsResult" style="display:none;overflow-x:auto">
+          <table id="megaadsTable" style="width:100%">
+            <thead id="megaadsThead"></thead>
+            <tbody id="megaadsTbody">
+              <tr><td colspan="2" class="empty"><div class="empty-icon">⏳</div><div>Nhập thông tin và nhấn tra cứu</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab JSON ── -->
+      <div id="tabContentJson" style="display:none">
+        <div style="position:relative;margin-bottom:12px">
+          <textarea id="jsonInput" rows="6" class="id-input" placeholder="Dán JSON response từ MegaAds..." style="width:100%;font-family:monospace;font-size:13px;padding:14px;resize:vertical;margin-bottom:0"></textarea>
+          <button class="btn-copy" onclick="clearJsonInput()" style="position:absolute;right:10px;top:10px;font-size:11px;padding:5px 10px">🗑️ Xóa</button>
+        </div>
+        <button class="btn btn-primary" onclick="parseJson()" style="width:100%;padding:12px;font-size:14px;margin-bottom:16px">✨ Trích xuất thông tin</button>
+        <div id="jsonResult" style="display:none;overflow-x:auto">
+          <table style="width:100%">
+            <thead><tr><th>Thông tin</th><th>Giá trị</th><th style="width:70px"></th></tr></thead>
+            <tbody id="jsonTbody">
+              <tr><td colspan="3" class="empty"><div class="empty-icon">📝</div><div>Dán JSON và nhấn trích xuất</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
