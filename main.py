@@ -313,7 +313,7 @@ async def get_revenue():
         "date_range": date_range,
         "data": results,
     }
-    @app.post("/api/order-info")
+@app.post("/api/order-info")
 async def get_order_info(body: dict):
     order_code = body.get("order_code", "").strip()
     session_cookie = body.get("session_cookie", "").strip()
