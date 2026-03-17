@@ -429,3 +429,88 @@ async def get_customer_info(customer_id: str = Query(...)):
         }
     except Exception as e:
         return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
+@app.get("/api/revenue/shop")
+async def get_revenue_single(shop_id: str = Query(...)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
+
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": "Không tìm thấy gian hàng."}, status_code=404)
+
+    shop_url, shop_name = shops[shop_id]
+    api_url = (
+        f"https://api.chiaki.vn/api/{shop_id}"
+        f"/export-excel-summary-amount-order"
+        f"?source=seller&page_index=1&page_size=500"
+        f"&status=all&range_date={encoded_range}"
+        f"&date_type=created_at&order=create-desc"
+        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(api_url)
+        if resp.status_code != 200:
+            return JSONResponse({"error": f"API lỗi HTTP {resp.status_code}"}, status_code=500)
+        content_type = resp.headers.get("content-type", "")
+        if "html" in content_type or len(resp.content) < 100:
+            return JSONResponse({"error": "Không nhận được file Excel từ Chiaki."}, status_code=500)
+
+        wb = openpyxl.load_workbook(BytesIO(resp.content))
+        ws = wb.active
+
+        def get_val(key_text):
+            for row in ws.iter_rows():
+                for i, cell in enumerate(row):
+                    if cell.value and key_text.lower() in str(cell.value).lower():
+                        if i + 1 < len(row) and row[i + 1].value is not None:
+                            return row[i + 1].value
+            return None
+
+        def to_float(val):
+            if val is None: return 0
+            try: return float(val)
+            except: return 0
+
+        ten_shop        = get_val("Người Bán") or shop_name
+        chu_tk          = get_val("Tên chủ tài khoản") or "—"
+        ngan_hang       = get_val("Tên ngân hàng") or "—"
+        stk             = get_val("Tài khoản ngân hàng") or "—"
+        gia_goc         = to_float(get_val("Giá gốc"))
+        hoan_lai        = to_float(get_val("Số tiền hoàn lại"))
+        tro_gia         = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
+        ma_uu_dai       = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
+        doanh_thu_gop   = gia_goc + hoan_lai + tro_gia + ma_uu_dai
+        phi_co_dinh     = to_float(get_val("Phí cố định"))
+        phi_dich_vu     = to_float(get_val("Phí Dịch Vụ"))
+        phi_thanh_toan  = to_float(get_val("Phí thanh toán"))
+        phi_san         = phi_co_dinh + phi_dich_vu + phi_thanh_toan
+        phi_quang_cao   = to_float(get_val("Phí quảng cáo"))
+        thue_gtgt       = to_float(get_val("Thuế GTGT"))
+        thue_tncn       = to_float(get_val("Thuế TNCN"))
+        tong_khau_tru   = phi_san + phi_quang_cao + thue_gtgt + thue_tncn
+        doanh_thu_thuan = doanh_thu_gop + tong_khau_tru
+
+        return {
+            "date_range":       date_range,
+            "ten_shop":         ten_shop,
+            "chu_tk":           chu_tk,
+            "ngan_hang":        ngan_hang,
+            "stk":              str(stk) if stk else "—",
+            "gia_goc":          gia_goc,
+            "hoan_lai":         hoan_lai,
+            "tro_gia":          tro_gia,
+            "ma_uu_dai":        ma_uu_dai,
+            "doanh_thu_gop":    doanh_thu_gop,
+            "phi_san":          phi_san,
+            "phi_quang_cao":    phi_quang_cao,
+            "thue_gtgt":        thue_gtgt,
+            "thue_tncn":        thue_tncn,
+            "tong_khau_tru":    tong_khau_tru,
+            "doanh_thu_thuan":  doanh_thu_thuan,
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi xử lý: {str(e)}"}, status_code=500)
