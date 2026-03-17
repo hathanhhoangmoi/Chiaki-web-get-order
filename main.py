@@ -337,27 +337,31 @@ async def get_order_info(body: dict):
             })
         data = res.json()
 
-        d = data.get("data") or {}
+        # API trả về key "result", không phải "data"
+        d = data.get("result") or data.get("data") or {}
         if isinstance(d, list):
-            d = d[0] if d else {}
+              d = d[0] if d else {}
+
 
         def g(*keys):
             for k in keys:
                 v = d.get(k)
                 if v: return str(v)
             return "—"
+        "phone": next((x for x in d.get("search","").split() if x.isdigit() and len(x) >= 9), "—"),
 
         return {
-            "order_code":    g("order_code", "code", "orderCode"),
-            "shop_name":     g("shop_name", "shopName", "seller_name"),
-            "order_date":    g("created_at", "order_date", "orderDate"),
-            "customer_name": g("customer_name", "customerName", "receiver_name", "receiverName"),
-            "phone":         g("phone", "receiver_phone", "receiverPhone"),
-            "email":         g("email", "customer_email"),
-            "address":       g("address", "receiver_address", "receiverAddress", "shipping_address"),
-            "source":        g("source", "order_source", "channel"),
+            "order_code":    g("code"),
+            "shop_name":     g("store_code", "creator_name"),
+            "order_date":    g("verified_time", "create_time"),
+            "customer_name": g("related_user_name", "receiver_name"),
+            "phone":         phone,
+            "email":         g("email_id"),
+            "address":       g("delivery_address"),
+            "source":        g("source", "from"),
             "_raw":          data
         }
+
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
