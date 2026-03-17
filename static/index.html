@@ -760,6 +760,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 <button class="taken-btn" onclick="toggleShopInfoModal()">
   🏪 THÔNG TIN GIAN HÀNG
 </button>
+<button class="taken-btn" onclick="toggleCustomerInfoModal()">
+  👤 THÔNG TIN KHÁCH HÀNG
+</button>
 
 <button class="taken-btn" id="revenueBtn" onclick="toggleRevenuePanel()">
     💰 DOANH THU GỘP
@@ -2361,7 +2364,74 @@ async function fetchShopInfo() {
     btn.textContent = '🏪 Tra cứu';
   }
 }
- 
+function toggleCustomerInfoModal() {
+  document.getElementById('customerInfoBg').classList.add('show');
+  document.getElementById('customerResult').classList.remove('show');
+  document.getElementById('customerError').classList.remove('show');
+  setTimeout(() => document.getElementById('customerIdInput').focus(), 100);
+}
+
+function closeCustomerInfoModal() {
+  document.getElementById('customerInfoBg').classList.remove('show');
+  document.getElementById('customerIdInput').value = '';
+  document.getElementById('customerResult').classList.remove('show');
+  document.getElementById('customerError').classList.remove('show');
+}
+
+async function fetchCustomerInfo() {
+  const customerId = document.getElementById('customerIdInput').value.trim();
+  const errEl = document.getElementById('customerError');
+  const resultEl = document.getElementById('customerResult');
+  const btn = document.getElementById('customerSearchBtn');
+
+  errEl.classList.remove('show');
+  resultEl.classList.remove('show');
+
+  if (!customerId) {
+    errEl.textContent = 'Vui lòng nhập ID khách hàng.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Đang tra cứu...';
+
+  try {
+    const res = await fetch(`/api/customer-info?customer_id=${encodeURIComponent(customerId)}`, {
+      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.classList.add('show');
+      return;
+    }
+
+    document.getElementById('crName').textContent    = data.username   || '—';
+    document.getElementById('crPhone').textContent   = data.phone      || '—';
+    document.getElementById('crToken').textContent   = data.api_token  || '—';
+
+    // Format ngày giờ đẹp hơn
+    const created = data.created_at
+      ? new Date(data.created_at).toLocaleString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh', hour12: false,
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })
+      : '—';
+    document.getElementById('crCreated').textContent = created;
+
+    resultEl.classList.add('show');
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối server: ' + e.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '👤 Tra cứu';
+  }
+}
+
 if (checkIdGate()) { init(); }
 </script>
 <!-- Modal Thông tin đơn hàng -->
@@ -2427,6 +2497,30 @@ if (checkIdGate()) { init(); }
     <div class="info-btns" style="margin-top:16px">
       <button class="btn-shop-cancel" onclick="closeShopInfoModal()">Đóng</button>
       <button class="btn-shop-search" id="shopSearchBtn" onclick="fetchShopInfo()">🏪 Tra cứu</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Thông tin khách hàng -->
+<div class="info-modal-bg" id="customerInfoBg" style="z-index:7000">
+  <div class="info-modal">
+    <div class="info-modal-icon">👤</div>
+    <div class="info-modal-title">Tra cứu thông tin khách hàng</div>
+    <div class="info-modal-sub">Nhập ID khách hàng để xem thông tin</div>
+    <input class="info-input" id="customerIdInput" type="text"
+      placeholder="VD: 69b0ce646d0c65d1f2935ddb"
+      onkeydown="if(event.key==='Enter') fetchCustomerInfo()"
+      style="margin-bottom:12px" />
+    <div class="info-error" id="customerError"></div>
+    <div class="info-result" id="customerResult">
+      <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">THÔNG TIN KHÁCH HÀNG</div>
+      <div class="info-row"><span class="info-label">Tên khách hàng</span><span class="info-value" id="crName">—</span></div>
+      <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="crPhone">—</span></div>
+      <div class="info-row"><span class="info-label">API Token</span><span class="info-value" id="crToken" style="font-family:monospace;font-size:11px;word-break:break-all">—</span></div>
+      <div class="info-row"><span class="info-label">Tạo tài khoản vào</span><span class="info-value" id="crCreated">—</span></div>
+    </div>
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-info-cancel" onclick="closeCustomerInfoModal()">Đóng</button>
+      <button class="btn-info-search" id="customerSearchBtn" onclick="fetchCustomerInfo()">👤 Tra cứu</button>
     </div>
   </div>
 </div>
