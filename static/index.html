@@ -632,17 +632,17 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   📋 Convert JSON
 </button>
 
-<!-- Panel JSON sau panelMegaads -->
+<!-- Panel JSON rút gọn -->
 <div id="panelJson" style="display:none">
   <div class="table-wrap glass">
     <div class="table-header">
-      <div class="table-title">📋 Chuyển JSON → Bảng dữ liệu</div>
-      <div class="table-count" id="jsonCount">Dán JSON vào ô dưới</div>
+      <div class="table-title">📋 Trích xuất thông tin đơn hàng</div>
+      <div class="table-count" id="jsonCount">Dán JSON để trích xuất</div>
     </div>
     <div style="padding:24px;background:rgba(255,255,255,.35);border-radius:12px;margin:0 20px 20px">
       <div style="position:relative">
-        <textarea id="jsonInput" rows="8" class="id-input" 
-                  placeholder='Dán JSON vào đây...'
+        <textarea id="jsonInput" rows="6" class="id-input" 
+                  placeholder='Dán JSON response từ MegaAds...'
                   style="width:100%;font-family:monospace;font-size:13px;padding:14px;resize:vertical"></textarea>
         <button class="btn-copy" onclick="clearJsonInput()" 
                 style="position:absolute;right:12px;top:12px;font-size:11px;padding:6px 10px">
@@ -651,21 +651,30 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       </div>
       <button class="btn btn-primary" onclick="parseJson()" 
               style="width:100%;margin-top:12px;padding:14px;font-size:14px">
-        ✨ Chuyển thành bảng
+        ✨ Trích xuất 10 thông tin
       </button>
     </div>
+    
+    <!-- Bảng 10 fields cố định -->
     <div id="jsonResult" style="overflow-x:auto;display:none">
-      <table id="jsonTable">
-        <thead id="jsonThead"></thead>
+      <table style="min-width:800px">
+        <thead>
+          <tr>
+            <th style="width:200px">Thông tin</th>
+            <th style="width:120px">Giá trị</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
         <tbody id="jsonTbody">
-          <tr><td colspan="2" class="empty">
-            <div class="empty-icon">📝</div><div>Dán JSON và nhấn chuyển</div>
+          <tr><td colspan="3" class="empty">
+            <div class="empty-icon">📝</div><div>Dán JSON và nhấn trích xuất</div>
           </td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
 
 <!-- Thêm panel mới sau #panelRevenue -->
 <div id="panelMegaads" style="display:none">
@@ -2312,12 +2321,144 @@ function parseJson() {
   try {
     data = JSON.parse(jsonText);
   } catch (e) {
-    showToast('❌ JSON không hợp lệ: ' + e.message);
+    showToast('❌ JSON không hợp lệ');
     return;
   }
   
-  renderJsonTable(data);
+  const mainData = data.result?.[0] || data;
+  if (!mainData) {
+    showToast('❌ Không tìm thấy dữ liệu đơn hàng');
+    return;
+  }
+  
+  renderOrderInfo(mainData);
 }
+
+function renderOrderInfo(data) {
+  const tbody = document.getElementById('jsonTbody');
+  const result = document.getElementById('jsonResult');
+  const count = document.getElementById('jsonCount');
+  
+  result.style.display = 'block';
+  count.textContent = 'Đã trích xuất thành công';
+  
+  tbody.innerHTML = `
+    <tr>
+      <td><b>🔖 Mã đơn hàng</b></td>
+      <td><code style="font-family:monospace">${data.code || '—'}</code></td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(1) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>🏪 Gian hàng đặt hàng</b></td>
+      <td>${data.store_code ? `[${data.store_code}] ${getShopName(data.store_code)}` : '—'}</td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(2) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>⏰ Thời gian đặt hàng</b></td>
+      <td>${data.verified_time || data.create_time || '—'}</td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(3) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>👤 Tên</b></td>
+      <td>${data.related_user_name || '—'}</td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(4) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>📱 SĐT</b></td>
+      <td><code>${extractPhone(data.search) || '—'}</code></td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(5) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>✉️ Email</b></td>
+      <td><code>${extractEmail(data.search) || '—'}</code></td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(6) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>📍 Địa chỉ</b></td>
+      <td style="max-width:250px">${data.delivery_address || '—'}</td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(7) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>🛍 Sản phẩm</b></td>
+      <td>${extractProduct(data.meta_data) || '—'}</td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(8) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr>
+      <td><b>💰 Tổng tiền</b></td>
+      <td><b>${formatMoney(data.amount) || '—'}</b></td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(9) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+    <tr style="background:rgba(216,180,254,.2)">
+      <td><b>🌐 Nguồn đơn hàng</b></td>
+      <td>${data.source || '—'}</td>
+      <td><button class="btn-copy" onclick="copyField('jsonTbody tr:nth-child(10) td:nth-child(2)', this)">📋</button></td>
+    </tr>
+  `;
+  
+  showToast('✅ Đã trích xuất 10 thông tin chính');
+}
+
+// Helper functions
+function getShopName(storeCode) {
+  const shops = {
+    'STK635OPNG': 'TH Cosmetic',
+    // Thêm mapping từ shops_config.py nếu cần
+  };
+  return shops[storeCode] || storeCode;
+}
+
+function extractPhone(search) {
+  if (!search) return null;
+  const phoneMatch = search.match(/(\d{10})/);
+  return phoneMatch ? phoneMatch[1] : null;
+}
+
+function extractEmail(search) {
+  if (!search) return null;
+  const emailMatch = search.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+  return emailMatch ? emailMatch[1] : null;
+}
+
+function extractProduct(metaData) {
+  if (!metaData) return null;
+  try {
+    const meta = JSON.parse(metaData);
+    const lastProduct = meta.url_history ? 
+      Object.values(meta.url_history).find(u => u.url.includes('product_code=')).url : '';
+    const codeMatch = lastProduct.match(/product_code=([A-Z0-9]+)/);
+    return codeMatch ? `Sản phẩm ${codeMatch[1]}` : 'Chiaki.vn';
+  } catch {
+    return 'Chiaki.vn';
+  }
+}
+
+function formatMoney(amount) {
+  if (!amount) return null;
+  const num = parseFloat(amount);
+  return num.toLocaleString('vi-VN') + '₫';
+}
+
+function copyField(selector, btn) {
+  const cell = document.querySelector(selector);
+  if (!cell) return;
+  
+  const text = cell.textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '✅';
+    btn.style.background = 'rgba(110,231,183,.3)';
+    setTimeout(() => {
+      btn.innerHTML = '📋';
+      btn.style.background = '';
+    }, 1500);
+  });
+}
+
+function clearJsonInput() {
+  document.getElementById('jsonInput').value = '';
+  document.getElementById('jsonResult').style.display = 'none';
+  document.getElementById('jsonCount').textContent = 'Dán JSON để trích xuất';
+}
+
 
 function renderJsonTable(data) {
   const result = document.getElementById('jsonResult');
