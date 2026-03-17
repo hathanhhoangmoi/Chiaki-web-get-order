@@ -570,3 +570,94 @@ async def get_chat_info(seller_id: str = Query(...)):
         return {"conversations": result, "total": len(result)}
     except Exception as e:
         return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
+@app.get("/api/revenue/net")
+async def get_revenue_net(shop_id: str = Query(...)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=14)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
+
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": "Không tìm thấy gian hàng."}, status_code=404)
+
+    shop_url, shop_name = shops[shop_id]
+    api_url = (
+        f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
+        f"?source=seller&page_index=1&page_size=500&status=finished"
+        f"&range_date={encoded_range}&date_type=created_at&order=create-desc"
+        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(api_url)
+        if resp.status_code != 200:
+            return JSONResponse({"error": f"API lỗi HTTP {resp.status_code}"}, status_code=500)
+        content_type = resp.headers.get("content-type", "")
+        if "html" in content_type or len(resp.content) < 100:
+            return JSONResponse({"error": "Không nhận được file Excel."}, status_code=500)
+
+        wb = openpyxl.load_workbook(BytesIO(resp.content))
+        ws = wb.active
+
+        # Tìm index cột theo header
+        headers = {}
+        header_row = None
+        for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+            if row and any(cell and "tổng tiền" in str(cell).lower() for cell in row):
+                header_row = i
+                for j, cell in enumerate(row):
+                    if cell:
+                        headers[str(cell).strip().lower()] = j
+                break
+
+        if header_row is None:
+            return JSONResponse({"error": "Không tìm thấy header trong file Excel."}, status_code=500)
+
+        # Tìm cột cần thiết
+        def find_col(keyword):
+            for k, v in headers.items():
+                if keyword.lower() in k:
+                    return v
+            return None
+
+        col_tong_tien   = find_col("tổng tiền")
+        col_phu_phi     = find_col("phụ phí")
+        col_doi_soat    = find_col("ngày đối soát")
+
+        if col_tong_tien is None:
+            return JSONResponse({"error": "Không tìm thấy cột 'Tổng tiền'."}, status_code=500)
+
+        tong_tien_sum = 0
+        phu_phi_sum   = 0
+        row_count     = 0
+
+        for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+            if not row or all(c is None for c in row):
+                continue
+            # Chỉ tính dòng có cột Ngày đối soát trống
+            doi_soat_val = row[col_doi_soat] if col_doi_soat is not None else None
+            if doi_soat_val is not None and str(doi_soat_val).strip() != "":
+                continue
+
+            try:
+                tong_tien_sum += float(row[col_tong_tien] or 0)
+            except: pass
+            try:
+                phu_phi_sum += float(row[col_phu_phi] or 0) if col_phu_phi is not None else 0
+            except: pass
+            row_count += 1
+
+        doanh_thu_thuan = tong_tien_sum - phu_phi_sum
+
+        return {
+            "shop_name":       shop_name,
+            "date_range":      date_range,
+            "row_count":       row_count,
+            "tong_tien":       tong_tien_sum,
+            "phu_phi":         phu_phi_sum,
+            "doanh_thu_thuan": doanh_thu_thuan,
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi xử lý: {str(e)}"}, status_code=500)
