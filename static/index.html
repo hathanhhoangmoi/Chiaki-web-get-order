@@ -2150,11 +2150,18 @@ function enableSound() {
 
 // ── MegaAds Panel ─────────────────────────────────────────
 let megaadsVisible = false;
+let jsonVisible = false;
 
 function toggleMegaadsPanel() {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') { showToast('❌ Chỉ Chang2000'); return; }
-  openToolsModal('megaads');
+  if (currentId !== 'Chang2000') { 
+    showToast('❌ Chỉ Chang2000'); 
+    return; 
+  }
+  document.getElementById('panelMegaads').style.display = megaadsVisible ? 'none' : 'block';
+  document.getElementById('panelMain').style.display = 'none';
+  megaadsVisible = !megaadsVisible;
+  document.getElementById('megaadsBtn').classList.toggle('active', megaadsVisible);
 }
 
 async function fetchMegaads() {
@@ -2266,8 +2273,14 @@ let jsonVisible = false;
 
 function toggleJsonPanel() {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') { showToast('❌ Chỉ Chang2000'); return; }
-  openToolsModal('json');
+  if (currentId !== 'Chang2000') { 
+    showToast('❌ Chỉ Chang2000'); 
+    return; 
+  }
+  document.getElementById('panelJson').style.display = jsonVisible ? 'none' : 'block';
+  document.getElementById('panelMain').style.display = 'none';
+  jsonVisible = !jsonVisible;
+  document.getElementById('jsonBtn').classList.toggle('active', jsonVisible);
 }
 
 function openToolsModal(tab) {
