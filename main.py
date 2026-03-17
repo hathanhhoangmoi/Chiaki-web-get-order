@@ -16,6 +16,8 @@ import urllib.parse
 import httpx
 import openpyxl
 from fastapi import Request
+from fastapi.responses import StreamingResponse
+
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
@@ -797,3 +799,65 @@ async def get_login_history(request: Request):
     if user_id != 'Chang2000':
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
     return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
+@app.get("/api/export-order/{order_code}")
+async def export_order(order_code: str, request: Request):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    import io
+
+    # Lấy dữ liệu đơn từ DB
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM orders WHERE ordercode = ?", (order_code,)
+        ) as cur:
+            row = await cur.fetchone()
+
+    if not row:
+        return JSONResponse({"error": "Không tìm thấy đơn hàng"}, status_code=404)
+
+    order = dict(row)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Đơn hàng"
+
+    # Header style
+    header_fill = PatternFill("solid", fgColor="C8B4FA")
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+
+    headers = [
+        ("Mã đơn",       order.get("ordercode",    "")),
+        ("Ngày tạo",     order.get("orderdate",     "")),
+        ("Gian hàng",    order.get("shopname",      "")),
+        ("Tên khách",    order.get("customername",  "") or order.get("buyername", "")),
+        ("Số điện thoại",order.get("phone",         "")),
+        ("Địa chỉ",      order.get("address",       "")),
+        ("Sản phẩm",     order.get("product",       "")),
+        ("Số lượng",     order.get("quantity",      "")),
+        ("Tổng tiền",    order.get("total",         "")),
+        ("Trạng thái",   order.get("status",        "")),
+    ]
+
+    for i, (label, value) in enumerate(headers, start=1):
+        c_label = ws.cell(row=i, column=1, value=label)
+        c_label.font  = Font(bold=True, color="5B4B8A", size=11)
+        c_label.fill  = PatternFill("solid", fgColor="EDE8FF")
+        c_label.alignment = Alignment(horizontal="left", vertical="center")
+
+        c_val = ws.cell(row=i, column=2, value=str(value) if value else "")
+        c_val.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.column_dimensions["A"].width = 22
+    ws.column_dimensions["B"].width = 48
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    filename = f"don-hang-{order_code}.xlsx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+    )
