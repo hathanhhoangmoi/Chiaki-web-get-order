@@ -921,6 +921,22 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       Tất cả <span class="badge" id="tabAll">0</span>
     </div>
   </div>
+<div class="table-header">
+  <div class="table-title">Danh sách đơn hàng</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="sortSelect" onchange="changeSortOrder()"
+      style="padding:6px 12px;border-radius:10px;border:1px solid rgba(198,181,255,.4);
+             background:rgba(255,255,255,.5);color:#5b4b8a;font-size:12px;
+             font-weight:600;font-family:inherit;outline:none;cursor:pointer">
+      <option value="default">🕐 Mới nhất</option>
+      <option value="total_desc">💰 Giá trị cao → thấp</option>
+      <option value="total_asc">💰 Giá trị thấp → cao</option>
+      <option value="date_desc">📅 Ngày đặt mới nhất</option>
+      <option value="date_asc">📅 Ngày đặt cũ nhất</option>
+    </select>
+    <div class="table-count" id="tableCount"></div>
+  </div>
+</div>
 
   <!-- Panel đơn thường -->
   <div id="panelMain">
@@ -1166,6 +1182,13 @@ let currentShop = '';
 let currentPage = 1;
 const limit = 50;
 let hanoiVisible = false;
+let currentSort = 'default';
+
+function changeSortOrder() {
+  currentSort = document.getElementById('sortSelect').value;
+  currentPage = 1;
+  loadOrders();
+}
 
 async function init() {
   try {
@@ -1232,8 +1255,10 @@ async function loadSummary() {
 async function loadOrders() {
   showLoading(true);
   try {
-    let url = `/api/orders?page=${currentPage}&limit=${limit}`;
-    if (currentShop) url += `&shop_id=${currentShop}`;
+    let url = `api/orders?page=${currentPage}&limit=${limit}`;
+if (currentShop) url += `&shop_id=${currentShop}`;
+if (currentSort !== 'default') url += `&sort=${currentSort}`;
+
     
     // ✅ Gửi ID đăng nhập qua header
     const response = await fetch(url, {
