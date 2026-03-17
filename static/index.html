@@ -730,6 +730,46 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 .rev-row-value.negative { color: #dc2626; }
 .rev-section { font-size: 11px; font-weight: 700; color: #9b8bb4; letter-spacing: .5px; margin: 12px 0 4px; }
 .rev-loading { padding: 36px; text-align: center; color: #b0a0c8; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.chat-conv-item {
+  background: rgba(255,255,255,.45); border: 1px solid rgba(198,181,255,.3);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+}
+.chat-conv-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 10px; gap: 8px;
+}
+.chat-conv-parties { font-size: 12px; }
+.chat-conv-party { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.chat-online-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.chat-online-dot.on  { background: #10b981; }
+.chat-online-dot.off { background: #d1d5db; }
+.chat-conv-name { font-weight: 600; color: #3b3551; }
+.chat-conv-role { font-size: 10px; color: #9b8bb4; margin-left: 2px; }
+.chat-unread-badge {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  color: #fff; border-radius: 20px; padding: 2px 8px;
+  font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+}
+.chat-msg-box {
+  background: rgba(216,180,254,.12); border: 1px solid rgba(198,181,255,.25);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 12px;
+}
+.chat-msg-label { font-size: 10px; font-weight: 700; color: #9b8bb4; letter-spacing: .4px; margin-bottom: 6px; }
+.chat-order-product { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+.chat-order-img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.chat-order-detail { font-size: 11px; color: #4c3f72; line-height: 1.6; }
+.chat-order-title { font-weight: 600; color: #3b3551; font-size: 12px; }
+.chat-order-meta { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+.chat-order-meta span { font-size: 11px; color: #7c6fa0; }
+.chat-order-meta b { color: #3b3551; }
+.chat-conv-footer {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  font-size: 10px; color: #9b8bb4; margin-top: 8px;
+}
+.chat-violation { color: #dc2626; font-weight: 700; }
+.chat-conv-count { font-size: 12px; color: #9b8bb4; margin-bottom: 12px; }
 
 </style>
 </head>
@@ -794,6 +834,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 </button>
 <button class="taken-btn" onclick="toggleCustomerInfoModal()">
   👤 THÔNG TIN KHÁCH HÀNG
+</button>
+<button class="taken-btn" onclick="toggleChatInfoModal()">
+  💬 THÔNG TIN CHAT VỚI KHÁCH CỦA GIAN HÀNG
 </button>
 
 <button class="taken-btn" onclick="toggleRevModal()">
@@ -2538,6 +2581,129 @@ async function loadRevShop(shopId, shopName) {
     document.getElementById('revLoading').style.display = 'none';
   }
 }
+function toggleChatInfoModal() {
+  document.getElementById('chatInfoBg').classList.add('show');
+  document.getElementById('chatResult').style.display = 'none';
+  document.getElementById('chatError').classList.remove('show');
+  setTimeout(() => document.getElementById('chatSellerIdInput').focus(), 100);
+}
+
+function closeChatInfoModal() {
+  document.getElementById('chatInfoBg').classList.remove('show');
+  document.getElementById('chatSellerIdInput').value = '';
+  document.getElementById('chatResult').style.display = 'none';
+  document.getElementById('chatError').classList.remove('show');
+}
+
+async function fetchChatInfo() {
+  const sellerId = document.getElementById('chatSellerIdInput').value.trim();
+  const errEl = document.getElementById('chatError');
+  const btn = document.getElementById('chatSearchBtn');
+
+  errEl.classList.remove('show');
+  document.getElementById('chatResult').style.display = 'none';
+
+  if (!sellerId) {
+    errEl.textContent = 'Vui lòng nhập ID gian hàng.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Đang tải...';
+
+  try {
+    const res = await fetch(`/api/chat-info?seller_id=${encodeURIComponent(sellerId)}`);
+    const data = await res.json();
+
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.classList.add('show');
+      return;
+    }
+
+    document.getElementById('chatCount').textContent = `Tìm thấy ${data.total} cuộc hội thoại`;
+    const list = document.getElementById('chatList');
+    list.innerHTML = '';
+
+    if (!data.conversations || data.conversations.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:#b0a0c8;padding:24px">Không có cuộc hội thoại nào</div>';
+    } else {
+      data.conversations.forEach(c => {
+        const unreadBadge = c.seller_unread > 0
+          ? `<span class="chat-unread-badge">🔴 Shop chưa đọc: ${c.seller_unread}</span>` : '';
+
+        let msgHtml = '';
+        if (c.msg_type === 'text') {
+          msgHtml = `
+            <div class="chat-msg-box">
+              <div class="chat-msg-label">💬 TIN NHẮN CUỐI</div>
+              <div style="color:#3b3551;font-size:12px">"${c.msg_text || '—'}"</div>
+            </div>`;
+        } else if (c.msg_type === 'order' && c.order_info) {
+          const o = c.order_info;
+          const item = (o.product_item || [])[0] || {};
+          msgHtml = `
+            <div class="chat-msg-box">
+              <div class="chat-msg-label">📦 ĐƠN HÀNG</div>
+              <div class="chat-order-product">
+                ${item.image ? `<img class="chat-order-img" src="${item.image}" />` : ''}
+                <div>
+                  <div class="chat-order-title">${item.title || '—'}</div>
+                  <div class="chat-order-meta">
+                    <span>SL: <b>${item.qty || 1}</b></span>
+                    <span>Giá: <b>${Number(item.price||0).toLocaleString('vi')} đ</b></span>
+                    <span>Tổng: <b>${Number(o.total||0).toLocaleString('vi')} đ</b></span>
+                  </div>
+                  <div class="chat-order-meta">
+                    <span>Mã đơn: <b>${o.orderId || '—'}</b></span>
+                    <span>🚚 ${o.status || '—'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        }
+
+        list.innerHTML += `
+          <div class="chat-conv-item">
+            <div class="chat-conv-header">
+              <div class="chat-conv-parties">
+                <div class="chat-conv-party">
+                  <div class="chat-online-dot ${c.customer_online ? 'on' : 'off'}"></div>
+                  <span class="chat-conv-name">${c.customer_name || '—'}</span>
+                  <span class="chat-conv-role">👤 Khách</span>
+                  ${c.customer_id ? `<span style="font-family:monospace;font-size:10px;color:#b0a0c8;margin-left:4px">${c.customer_id}</span>` : ''}
+                </div>
+                <div class="chat-conv-party">
+                  <div class="chat-online-dot ${c.seller_online ? 'on' : 'off'}"></div>
+                  <span class="chat-conv-name">${c.seller_name || '—'}</span>
+                  <span class="chat-conv-role">🏪 Shop</span>
+                </div>
+              </div>
+              ${unreadBadge}
+            </div>
+            ${msgHtml}
+            <div class="chat-conv-footer">
+              <span>🕐 Tạo: ${c.created_at}</span>
+              <span>🔄 Cập nhật: ${c.updated_at}</span>
+              <span>👁️ Xem lần cuối: ${c.last_seen}</span>
+              <span class="${c.has_violation ? 'chat-violation' : ''}">
+                ${c.has_violation ? '⚠️ Có vi phạm' : '✅ Không vi phạm'}
+              </span>
+            </div>
+          </div>`;
+      });
+    }
+
+    document.getElementById('chatResult').style.display = 'block';
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối: ' + e.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💬 Tra cứu';
+  }
+}
 
 if (checkIdGate()) { init(); }
 </script>
@@ -2680,6 +2846,27 @@ if (checkIdGate()) { init(); }
 
     <div class="info-btns" style="margin-top:16px">
       <button class="btn-info-cancel" onclick="closeRevModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Đoạn chat -->
+<div class="info-modal-bg" id="chatInfoBg" style="z-index:7100">
+  <div class="info-modal" style="max-width:560px">
+    <div class="info-modal-icon">💬</div>
+    <div class="info-modal-title">Tra cứu đoạn chat</div>
+    <div class="info-modal-sub">Nhập ID gian hàng để xem các cuộc hội thoại</div>
+    <input class="info-input" id="chatSellerIdInput" type="text"
+      placeholder="VD: 69b0ce646d0c65d1f2935ddb"
+      onkeydown="if(event.key==='Enter') fetchChatInfo()"
+      style="margin-bottom:12px" />
+    <div class="info-error" id="chatError"></div>
+    <div id="chatResult" style="display:none;margin-top:12px">
+      <div class="chat-conv-count" id="chatCount"></div>
+      <div id="chatList"></div>
+    </div>
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-info-cancel" onclick="closeChatInfoModal()">Đóng</button>
+      <button class="btn-info-search" id="chatSearchBtn" onclick="fetchChatInfo()">💬 Tra cứu</button>
     </div>
   </div>
 </div>
