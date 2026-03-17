@@ -2257,7 +2257,8 @@ function copyMegaadsValue(itemIdx, key) {
 document.addEventListener('DOMContentLoaded', function() {
   const currentId = localStorage.getItem('chiaki_id');
   if (currentId === 'Chang2000') {
-    document.getElementById('megaadsBtn').style.display = 'inline-flex';
+    document.getElementById('megaadsBtn').style.display = 'inline-flex';  // ✅ THÊM
+    document.getElementById('jsonBtn').style.display = 'inline-flex';
   }
 });
 // Thêm vào cuối script
