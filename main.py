@@ -313,3 +313,41 @@ async def get_revenue():
         "date_range": date_range,
         "data": results,
     }
+import httpx
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
+
+@app.get("/api/megaads-proxy")
+async def megaads_proxy(
+    inoutput_id: str,
+    request: Request
+):
+    session_id = request.headers.get('X-Session-ID', '')
+    if not session_id or 'laravel_session=' not in session_id:
+        raise HTTPException(400, "Missing valid X-Session-ID header")
+    
+    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={inoutput_id}"
+    
+    headers = {
+        'Accept': 'application/json, text/plain, */*',
+        'platform': 'ios',
+        'Cookie': session_id,
+        'User-Agent': 'chiakiApp/3.6.2'
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            resp = await client.get(url, headers=headers)
+            
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            return JSONResponse(
+                status_code=resp.status_code,
+                content={"error": f"API returned {resp.status_code}", "detail": resp.text[:500]}
+            )
+    except httpx.TimeoutException:
+        raise HTTPException(408, "MegaAds API timeout")
+    except Exception as e:
+        raise HTTPException(500, f"Proxy error: {str(e)}")
+
