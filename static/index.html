@@ -910,6 +910,59 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 .login-badge.in  { background: rgba(167,243,208,.5); color: #065f46; }
 .login-badge.out { background: rgba(254,202,202,.5); color: #991b1b; }
+/* === Download Panel === */
+.download-panel {
+  position: fixed;
+  left: 12px;
+  top: 72px;
+  z-index: 7000;
+  width: 260px;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(198,181,255,.35);
+  border-radius: 20px;
+  box-shadow:
+    6px 0 40px rgba(160,130,200,.18),
+    0 8px 32px rgba(160,130,200,.15),
+    inset 0 1.5px 0 rgba(255,255,255,.9);
+  padding: 18px 16px 16px;
+}
+.download-panel-title {
+  font-size: 13px; font-weight: 700; color: #3b3551;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+}
+.download-input {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid rgba(198,181,255,.5);
+  border-radius: 12px; font-size: 12px;
+  font-family: monospace; letter-spacing: .5px;
+  background: rgba(255,255,255,.6); color: #3b3551;
+  outline: none; transition: border .2s;
+  box-sizing: border-box; margin-bottom: 10px;
+}
+.download-input:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167,139,250,.15);
+}
+.download-input::placeholder { color: #c0b0d8; font-family: Inter, sans-serif; letter-spacing: 0; }
+.btn-download {
+  width: 100%; padding: 10px;
+  border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #c8b4fa, #a78bfa);
+  color: #fff; font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+  box-shadow: 0 4px 14px rgba(167,139,250,.4);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-download:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(167,139,250,.5); }
+.btn-download:disabled { background: rgba(200,190,220,.4); color: rgba(100,80,140,.4); box-shadow: none; cursor: not-allowed; transform: none; }
+.download-msg {
+  margin-top: 8px; font-size: 11px; text-align: center;
+  padding: 6px 10px; border-radius: 8px; display: none;
+}
+.download-msg.ok  { display: block; background: rgba(167,243,208,.4); color: #065f46; }
+.download-msg.err { display: block; background: rgba(254,202,202,.4); color: #dc2626; }
 
 </style>
 </head>
@@ -992,6 +1045,23 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   </div>
 </div>
 
+<!-- Bảng tải đơn Excel - luôn hiển thị bên trái -->
+<div class="download-panel">
+  <div class="download-panel-title">
+    📥 Tải đơn hàng Excel
+  </div>
+  <input
+    class="download-input"
+    id="dlOrderCode"
+    type="text"
+    placeholder="Nhập mã đơn hàng..."
+    onkeydown="if(event.key==='Enter') downloadOrder()"
+  />
+  <button class="btn-download" id="dlBtn" onclick="downloadOrder()">
+    ⬇️ Tải về Excel
+  </button>
+  <div class="download-msg" id="dlMsg"></div>
+</div>
 
 
 <div class="container">
@@ -3176,6 +3246,52 @@ async function loadHistoryPanel() {
     } catch(e) {
       body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
     }
+  }
+}
+async function downloadOrder() {
+  const code = document.getElementById('dlOrderCode').value.trim();
+  const msg  = document.getElementById('dlMsg');
+  const btn  = document.getElementById('dlBtn');
+
+  msg.className = 'download-msg';
+  msg.textContent = '';
+
+  if (!code) {
+    msg.textContent = 'Vui lòng nhập mã đơn hàng';
+    msg.className = 'download-msg err';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span style="font-size:13px">⏳</span> Đang tải...';
+
+  try {
+    const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Không tìm thấy đơn');
+    }
+
+    // Tải file về
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `don-hang-${code}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    msg.textContent = '✅ Tải thành công!';
+    msg.className   = 'download-msg ok';
+    document.getElementById('dlOrderCode').value = '';
+
+  } catch(e) {
+    msg.textContent = '⛔ ' + e.message;
+    msg.className   = 'download-msg err';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇️ Tải về Excel';
   }
 }
 
