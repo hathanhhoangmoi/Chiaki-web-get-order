@@ -321,7 +321,6 @@ async def get_order_info(body: dict):
     if not order_code or not session_cookie:
         return JSONResponse({"error": "Thiếu mã đơn hàng hoặc session cookie"}, status_code=400)
 
-    # Trích xuất inoutputId: bỏ 2 ký tự đầu, lấy 7 ký tự tiếp
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ"}, status_code=400)
 
@@ -338,7 +337,6 @@ async def get_order_info(body: dict):
             })
         data = res.json()
 
-        # Parse thông tin từ response
         d = data.get("data") or {}
         if isinstance(d, list):
             d = d[0] if d else {}
@@ -350,17 +348,16 @@ async def get_order_info(body: dict):
             return "—"
 
         return {
-            "order_code":   g("order_code", "code", "orderCode"),
-            "shop_name":    g("shop_name", "shopName", "seller_name"),
-            "order_date":   g("created_at", "order_date", "orderDate"),
-            "customer_name":g("customer_name", "customerName", "receiver_name", "receiverName"),
-            "phone":        g("phone", "receiver_phone", "receiverPhone"),
-            "email":        g("email", "customer_email"),
-            "address":      g("address", "receiver_address", "receiverAddress", "shipping_address"),
-            "source":       g("source", "order_source", "channel"),
-            "_raw":         data  # để debug nếu cần
+            "order_code":    g("order_code", "code", "orderCode"),
+            "shop_name":     g("shop_name", "shopName", "seller_name"),
+            "order_date":    g("created_at", "order_date", "orderDate"),
+            "customer_name": g("customer_name", "customerName", "receiver_name", "receiverName"),
+            "phone":         g("phone", "receiver_phone", "receiverPhone"),
+            "email":         g("email", "customer_email"),
+            "address":       g("address", "receiver_address", "receiverAddress", "shipping_address"),
+            "source":        g("source", "order_source", "channel"),
+            "_raw":          data
         }
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
-}
