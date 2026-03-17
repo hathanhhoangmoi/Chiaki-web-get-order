@@ -17,6 +17,21 @@ import httpx
 import openpyxl
 from fastapi import Request
 
+# ── Key management cho order-info ─────────────────────────
+VALID_KEYS = {
+    "KEYPHONE-74821-593847-12093": 0,
+    "KEYPHONE-19384-847562-66721": 0,
+    "KEYPHONE-56290-334781-90812": 0,
+    "KEYPHONE-82716-905432-11478": 0,
+    "KEYPHONE-30958-771239-65084": 0,
+    "KEYPHONE-67542-118903-47219": 0,
+    "KEYPHONE-28473-662918-53901": 0,
+    "KEYPHONE-95107-440286-78325": 0,
+    "KEYPHONE-43829-159374-82670": 0,
+    "KEYPHONE-72016-883451-29468": 0,
+}
+KEY_LIMIT = 5
+
 
 # Database setup
 Base.metadata.create_all(bind=engine)
@@ -316,23 +331,34 @@ async def get_revenue():
 @app.post("/api/order-info")
 async def get_order_info(body: dict):
     order_code = body.get("order_code", "").strip()
-    session_cookie = body.get("session_cookie", "").strip()
+    key        = body.get("key", "").strip()
 
-    if not order_code or not session_cookie:
-        return JSONResponse({"error": "Thiếu mã đơn hàng hoặc session cookie"}, status_code=400)
+    if not order_code or not key:
+        return JSONResponse({"error": "Thiếu mã đơn hàng hoặc key."}, status_code=400)
+
+    if key not in VALID_KEYS:
+        return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
+
+    if VALID_KEYS[key] >= KEY_LIMIT:
+        return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
 
     if len(order_code) < 9:
-        return JSONResponse({"error": "Mã đơn hàng không hợp lệ"}, status_code=400)
+        return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
+
+    # Trừ lượt TRƯỚC khi gọi API
+    VALID_KEYS[key] += 1
+    remaining = KEY_LIMIT - VALID_KEYS[key]
 
     input_id = order_code[2:9]
     url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
+    session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(url, headers={
                 "Accept": "application/json, text/plain, */*",
                 "platform": "ios",
-                "Cookie": f"laravel_session={session_cookie}",
+                "Cookie": f"laravel_session={session}",
                 "User-Agent": "chiakiApp/3.6.2"
             })
         data = res.json()
@@ -347,7 +373,6 @@ async def get_order_info(body: dict):
                 if v: return str(v)
             return "—"
 
-        # ✅ Gán vào biến trước, rồi dùng trong return
         phone = next((x for x in d.get("search", "").split() if x.isdigit() and len(x) >= 9), "—")
 
         return {
@@ -359,11 +384,14 @@ async def get_order_info(body: dict):
             "email":         g("email_id"),
             "address":       g("delivery_address"),
             "source":        g("source", "from"),
-            "_raw":          data
+            "remaining":     remaining,
         }
 
     except Exception as e:
+        # Hoàn lượt nếu API lỗi
+        VALID_KEYS[key] -= 1
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
+
 @app.get("/api/shop-info")
 async def get_shop_info(request: Request, shop_id: str = Query(...)):
     user_id = request.headers.get('X-User-ID', '')
@@ -661,3 +689,10 @@ async def get_revenue_net(shop_id: str = Query(...)):
         }
     except Exception as e:
         return JSONResponse({"error": f"Lỗi xử lý: {str(e)}"}, status_code=500)
+@app.post("/api/order-info/check-key")
+async def check_key(body: dict):
+    key = body.get("key", "").strip()
+    if key not in VALID_KEYS:
+        return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
+    used = VALID_KEYS[key]
+    return {"used": used, "remaining": KEY_LIMIT - used, "limit": KEY_LIMIT}
