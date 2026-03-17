@@ -1971,7 +1971,7 @@ function submitId() {
   fetch('/api/auth/login-log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: inputId, event: 'login' })
+    body: JSON.stringify({ key: Id, event: 'login' })
   });
 
 }
@@ -1984,20 +1984,22 @@ function showIdError(msg) {
 
 function changeId() {
   if (!confirm('Bạn có chắc muốn đổi ID? Thời gian còn lại sẽ được tính theo lần nhập đầu tiên.')) return;
+
+  // ✅ Lấy ID trước khi xóa
+  const oldId = localStorage.getItem('chiaki_id') || '';
+  if (oldId) {
+    fetch('/api/auth/login-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: oldId, event: 'logout' })
+    });
+  }
+
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   location.reload();
-  // Ghi log logout
-const oldId = localStorage.getItem('chiaki_id') || '';
-if (oldId) {
-  fetch('/api/auth/login-log', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: oldId, event: 'logout' })
-  });
 }
 
-}
 // ── Chart ────────────────────────────────────────────────
 let mainChart = null;
 let chartMode = 'date';
@@ -2586,7 +2588,7 @@ async function fetchShopInfo() {
 
   try {
     const res = await fetch(`/api/shop-info?shop_id=${shopId}`, {
-      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
     });
     const data = await res.json();
 
@@ -2689,7 +2691,7 @@ async function fetchCustomerInfo() {
 
   try {
     const res = await fetch(`/api/customer-info?customer_id=${encodeURIComponent(customerId)}`, {
-      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
     });
     const data = await res.json();
 
