@@ -632,6 +632,72 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 .btn-info-search:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(167,139,250,.5); }
 .btn-info-search:disabled { background: rgba(200,190,220,.4); color: rgba(100,80,140,.4); box-shadow: none; cursor: not-allowed; transform: none; }
+/* Shop Info Modal */
+.shop-modal-bg {
+  position: fixed; inset: 0; z-index: 6500;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(60,40,90,.3); backdrop-filter: blur(10px); padding: 16px;
+}
+.shop-modal-bg.show { display: flex; }
+.shop-modal {
+  width: 100%; max-width: 520px;
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 22px; padding: 28px;
+  box-shadow: 0 24px 60px rgba(160,130,200,.3);
+  max-height: 90vh; overflow-y: auto;
+}
+.shop-modal-icon { font-size: 36px; text-align: center; margin-bottom: 8px; }
+.shop-modal-title { font-size: 16px; font-weight: 700; color: #3b3551; text-align: center; margin-bottom: 4px; }
+.shop-modal-sub { font-size: 12px; color: #9b8bb4; text-align: center; margin-bottom: 20px; }
+.shop-info-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(198,181,255,.15);
+}
+.shop-info-row:last-of-type { border-bottom: none; }
+.shop-info-label { font-size: 11px; font-weight: 600; color: #9b8bb4; min-width: 150px; margin-top: 1px; }
+.shop-info-value { font-size: 13px; font-weight: 600; color: #3b3551; flex: 1; text-align: right; word-break: break-word; }
+.shop-info-section {
+  font-size: 11px; font-weight: 700; color: #9b8bb4;
+  letter-spacing: .5px; margin: 14px 0 6px; text-transform: uppercase;
+}
+.shop-cccd-wrap { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+.shop-cccd-wrap img {
+  flex: 1; min-width: 140px; max-width: 100%;
+  border-radius: 10px; border: 1px solid rgba(198,181,255,.4);
+  cursor: pointer; transition: transform .2s;
+  max-height: 180px; object-fit: cover;
+}
+.shop-cccd-wrap img:hover { transform: scale(1.02); }
+.shop-warehouse {
+  background: rgba(216,180,254,.15); border: 1px solid rgba(198,181,255,.3);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-size: 12px;
+}
+.shop-warehouse-name { font-weight: 700; color: #5b4b8a; margin-bottom: 4px; }
+.shop-warehouse-detail { color: #7c6fa0; line-height: 1.6; }
+.shop-error {
+  font-size: 12px; color: #dc2626; margin-top: 10px;
+  padding: 8px 12px; background: rgba(254,202,202,.4);
+  border-radius: 8px; display: none;
+}
+.shop-error.show { display: block; }
+.shop-result { display: none; margin-top: 16px; border-top: 1px solid rgba(198,181,255,.3); padding-top: 16px; }
+.shop-result.show { display: block; }
+.btn-shop-search {
+  flex: 2; padding: 11px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #c8b4fa, #a78bfa); color: #fff;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(167,139,250,.4); transition: all .2s;
+}
+.btn-shop-search:hover { transform: translateY(-1px); }
+.btn-shop-search:disabled { background: rgba(200,190,220,.4); color: rgba(100,80,140,.4); box-shadow: none; cursor: not-allowed; transform: none; }
+.btn-shop-cancel {
+  flex: 1; padding: 11px; border: 1px solid rgba(198,181,255,.4); border-radius: 12px;
+  background: rgba(255,255,255,.4); color: #7c6fa0;
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.btn-shop-cancel:hover { background: rgba(255,255,255,.7); }
 
 </style>
 </head>
@@ -2186,7 +2252,113 @@ function enableSound() {
   });
 }
 
-  
+function toggleShopInfoModal() {
+  document.getElementById('shopInfoBg').classList.add('show');
+  document.getElementById('shopResult').classList.remove('show');
+  document.getElementById('shopError').classList.remove('show');
+  setTimeout(() => document.getElementById('shopUrlInput').focus(), 100);
+}
+
+function closeShopInfoModal() {
+  document.getElementById('shopInfoBg').classList.remove('show');
+  document.getElementById('shopUrlInput').value = '';
+  document.getElementById('shopResult').classList.remove('show');
+  document.getElementById('shopError').classList.remove('show');
+}
+
+async function fetchShopInfo() {
+  const urlInput = document.getElementById('shopUrlInput').value.trim();
+  const errEl = document.getElementById('shopError');
+  const resultEl = document.getElementById('shopResult');
+  const btn = document.getElementById('shopSearchBtn');
+
+  errEl.classList.remove('show');
+  resultEl.classList.remove('show');
+
+  // Trích xuất shop_id từ URL
+  const match = urlInput.match(/st(\d+)/i);
+  if (!match) {
+    errEl.textContent = 'Link không hợp lệ. Ví dụ: https://chiaki.vn/gian-hang-stXXXX';
+    errEl.classList.add('show');
+    return;
+  }
+  const shopId = match[1];
+
+  btn.disabled = true;
+  btn.textContent = 'Đang tra cứu...';
+
+  try {
+    const res = await fetch(`/api/shop-info?shop_id=${shopId}`, {
+      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.classList.add('show');
+      return;
+    }
+
+    document.getElementById('srId').textContent         = data.id          || '—';
+    document.getElementById('srCode').textContent       = data.code        || '—';
+    document.getElementById('srName').textContent       = data.name        || '—';
+    document.getElementById('srEmail').textContent      = data.email       || '—';
+    document.getElementById('srPhone').textContent      = data.phone       || '—';
+    document.getElementById('srOwner').textContent      = data.name_organization || '—';
+    document.getElementById('srAddress').textContent    = data.address     || '—';
+    document.getElementById('srCreateTime').textContent = data.create_time || '—';
+    document.getElementById('srBankName').textContent   = data.bank_name   || '—';
+    document.getElementById('srBankHolder').textContent = data.bank_account_holder || '—';
+    document.getElementById('srBankNumber').textContent = data.bank_account_number || '—';
+
+    // Ảnh CCCD
+    const cccdWrap = document.getElementById('srCccdWrap');
+    cccdWrap.innerHTML = '';
+    if (data.cccd_front) {
+      const img = document.createElement('img');
+      img.src = data.cccd_front; img.alt = 'Mặt trước CCCD';
+      img.onclick = () => window.open(data.cccd_front, '_blank');
+      cccdWrap.appendChild(img);
+    }
+    if (data.cccd_back) {
+      const img = document.createElement('img');
+      img.src = data.cccd_back; img.alt = 'Mặt sau CCCD';
+      img.onclick = () => window.open(data.cccd_back, '_blank');
+      cccdWrap.appendChild(img);
+    }
+    if (!data.cccd_front && !data.cccd_back) {
+      cccdWrap.innerHTML = '<span style="font-size:12px;color:#b0a0c8">Không có ảnh</span>';
+    }
+
+    // Kho vận
+    const whWrap = document.getElementById('srWarehouseWrap');
+    whWrap.innerHTML = '';
+    if (data.warehouses && data.warehouses.length > 0) {
+      data.warehouses.forEach(w => {
+        whWrap.innerHTML += `
+          <div class="shop-warehouse">
+            <div class="shop-warehouse-name">🏭 ${w.name || '—'}</div>
+            <div class="shop-warehouse-detail">
+              📞 ${w.phone || '—'}<br>
+              📍 ${w.address || '—'}<br>
+              Trạng thái: <b>${w.status || '—'}</b>
+            </div>
+          </div>`;
+      });
+    } else {
+      whWrap.innerHTML = '<span style="font-size:12px;color:#b0a0c8">Không có thông tin kho</span>';
+    }
+
+    resultEl.classList.add('show');
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối server: ' + e.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🏪 Tra cứu';
+  }
+}
+ 
 if (checkIdGate()) { init(); }
 </script>
 <!-- Modal Thông tin đơn hàng -->
@@ -2219,5 +2391,42 @@ if (checkIdGate()) { init(); }
     </div>
   </div>
 </div>
+<!-- Modal Thông tin gian hàng -->
+<div class="shop-modal-bg" id="shopInfoBg">
+  <div class="shop-modal">
+    <div class="shop-modal-icon">🏪</div>
+    <div class="shop-modal-title">Tra cứu thông tin gian hàng</div>
+    <div class="shop-modal-sub">Nhập link gian hàng Chiaki để xem thông tin</div>
+    <input class="info-input" id="shopUrlInput" type="text"
+      placeholder="https://chiaki.vn/gian-hang-stXXXX"
+      onkeydown="if(event.key==='Enter') fetchShopInfo()"
+      style="margin-bottom:12px" />
+    <div class="shop-error" id="shopError"></div>
+    <div class="shop-result" id="shopResult">
+      <div class="shop-info-section">Thông tin cơ bản</div>
+      <div class="shop-info-row"><span class="shop-info-label">ID gian hàng</span><span class="shop-info-value" id="srId">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Mã gian hàng</span><span class="shop-info-value" id="srCode">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Tên gian hàng</span><span class="shop-info-value" id="srName">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Email</span><span class="shop-info-value" id="srEmail">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">SĐT</span><span class="shop-info-value" id="srPhone">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Tên chủ sở hữu</span><span class="shop-info-value" id="srOwner">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Địa chỉ CCCD/ĐK HKD</span><span class="shop-info-value" id="srAddress">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Thời gian tạo</span><span class="shop-info-value" id="srCreateTime">—</span></div>
+      <div class="shop-info-section">Thông tin ngân hàng</div>
+      <div class="shop-info-row"><span class="shop-info-label">Ngân hàng</span><span class="shop-info-value" id="srBankName">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Chủ tài khoản</span><span class="shop-info-value" id="srBankHolder">—</span></div>
+      <div class="shop-info-row"><span class="shop-info-label">Số tài khoản</span><span class="shop-info-value" id="srBankNumber">—</span></div>
+      <div class="shop-info-section">Ảnh CCCD / ĐK HKD</div>
+      <div class="shop-cccd-wrap" id="srCccdWrap"></div>
+      <div class="shop-info-section">Thông tin kho vận</div>
+      <div id="srWarehouseWrap"></div>
+    </div>
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-shop-cancel" onclick="closeShopInfoModal()">Đóng</button>
+      <button class="btn-shop-search" id="shopSearchBtn" onclick="fetchShopInfo()">🏪 Tra cứu</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
