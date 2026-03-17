@@ -103,25 +103,22 @@ def get_orders(
     shop_id: str = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(50, le=200),
+    sort: str = Query("default"),
     db: Session = Depends(get_db)
 ):
     user_id = request.headers.get('X-User-ID', '')
-    
-    # ✅ Block nếu không phải Chang2000
+
     if shop_id and shop_id in BLOCKED_SHOPS and user_id != 'Chang2000':
         return {
-            "total": 0,
-            "page": page,
-            "data": [],
+            "total": 0, "page": page, "data": [],
             "blocked": True,
             "message": "Shop này bị chặn trích xuất đơn hàng"
         }
-    
+
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
     total = q.count()
-    orders = q.order_by(desc(Order.fetched_at)).offset((page-1)*limit).limit(limit).all()
 
     # Sắp xếp
     if sort == "total_desc":
@@ -135,9 +132,9 @@ def get_orders(
     else:
         q = q.order_by(desc(Order.fetched_at))
 
-    orders = q.offset((page-1)*limit).limit(limit).all()
-    def serialize_order(o):
-        # ✅ Chỉ mask nếu shop bị chặn VÀ user không phải Chang2000
+    orders = q.offset((page - 1) * limit).limit(limit).all()
+
+    def serialize(o):
         mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
         M = "••••••••"
         return {
@@ -160,24 +157,9 @@ def get_orders(
     return {
         "total": total,
         "page": page,
-        "data": [serialize_order(o) for o in orders]
+        "data": [serialize(o) for o in orders]
     }
 
-
-@app.post("/api/sync")
-async def manual_sync():
-    """Kích hoạt sync thủ công"""
-    asyncio.create_task(sync_all_shops())
-    return {"message": "Đang sync... Vui lòng chờ 1-2 phút rồi reload."}
-
-@app.get("/api/stats")
-def get_stats(db: Session = Depends(get_db)):
-    by_status = db.query(Order.status, func.count(Order.id)).group_by(Order.status).all()
-    by_shop = db.query(Order.shop_name, func.count(Order.id)).group_by(Order.shop_name).all()
-    return {
-        "by_status": [{"status": s, "count": c} for s, c in by_status],
-        "by_shop": [{"shop": s, "count": c} for s, c in by_shop],
-    }
 
 @app.get("/api/test-shopname")
 async def test_shopname(url: str = Query(...)):
