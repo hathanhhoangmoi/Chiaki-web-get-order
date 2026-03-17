@@ -1310,7 +1310,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 
     <div class="order-modal-btns">
       <button class="btn-modal-cancel" onclick="closeConfirmModal()">✕ Huỷ</button>
-      <button class="btn-modal-confirm" onclick="acceptOrder()">✅ Xác nhận lấy đơn</button>
+      <button class="btn-modal-confirm" onclick="acceptOrder()">✅ Xác nhận & tải về</button>
     </div>
   </div>
 </div>
@@ -1533,7 +1533,7 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
           <td>
   ${R
     ? `<span class="restricted-mask">••••••••</span>`
-    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 Lấy đơn</button>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`
   }
 </td>
         </tr>`;
@@ -1584,7 +1584,7 @@ async function loadHanoi() {
         <td>
   ${o.restricted
     ? `<span class="restricted-mask">••••••••</span>`
-    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>📦 Lấy đơn</button>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>📦 GET</button>`
   }
 </td>
       </tr>
@@ -1633,7 +1633,7 @@ async function loadNuocHoa() {
         <td>
   ${o.restricted
     ? `<span class="restricted-mask">••••••••</span>`
-    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 Lấy đơn</button>`
+    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`
   }
 </td>
       </tr>
@@ -2332,32 +2332,51 @@ function acceptOrder() {
 
   document.getElementById('orderConfirmBg').classList.remove('show');
   launchFireworks(7000);
-  saveTakenOrder(o.order_code);
+  saveTakenOrder(o.ordercode);
 
-  const totalFmt = o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
-
-  document.getElementById('successAmount').textContent  = `💵 Bạn sẽ nhận được ${totalFmt}`;
-  document.getElementById('successCode').textContent    = o.order_code || '—';
-  document.getElementById('successName').textContent    = o.customer_name || o.buyer_name || '—';
-  document.getElementById('successPhone').textContent   = o.phone || '—';
-  document.getElementById('successAddress').textContent = o.address || '—';
-  document.getElementById('successProduct').textContent = o.product || '—';
+  const totalFmt = o.total ? Number(o.total).toLocaleString('vi') : '—';
+  document.getElementById('successAmount').textContent  = `Bạn sẽ nhận được ${totalFmt}`;
+  document.getElementById('successCode').textContent    = o.ordercode;
+  document.getElementById('successName').textContent    = o.customername || o.buyername;
+  document.getElementById('successPhone').textContent   = o.phone;
+  document.getElementById('successAddress').textContent = o.address;
+  document.getElementById('successProduct').textContent = o.product;
   document.getElementById('successTotal').textContent   = totalFmt;
 
   document.querySelectorAll('.btn-copy').forEach(btn => {
-    btn.textContent = '📋 Copy';
+    btn.textContent = 'Copy';
     btn.classList.remove('copied');
   });
 
-  // 🔊 Phát âm thanh chúc mừng
+  // Phát âm thanh chúc mừng
   const audio = document.getElementById('successSound');
-  if (audio && soundEnabled) { 
+  if (audio && soundEnabled) {
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }
 
   document.getElementById('orderSuccessBg').classList.add('show');
+
+  // ✅ Tự động tải Excel ngầm
+  (async () => {
+    try {
+      const res = await fetch(`/api/export-order/${encodeURIComponent(o.ordercode)}`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `don-hang-${o.ordercode}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.warn('Tải Excel thất bại:', e.message);
+    }
+  })();
 }
+
 
 
 
