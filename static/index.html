@@ -1302,8 +1302,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 <div class="order-modal-bg" id="orderConfirmBg">
   <div class="order-modal">
     <div class="order-modal-icon">📦</div>
-    <div class="order-modal-title">Bạn thật sự muốn lấy đơn này?</div>
-    <div class="order-modal-sub">Xem lại thông tin trước khi xác nhận</div>
+    <div class="order-modal-title">Bạn có muốn tải đơn hàng này không?</div>
+    <div class="order-modal-sub">Kiểm tra lại thông tin đơn hàng trước khi tải về</div>
+
 
     <div class="order-info-row">
       <div class="order-info-label">🔖 Mã đơn</div>
@@ -1333,8 +1334,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
 
     <div class="order-modal-btns">
-      <button class="btn-modal-cancel" onclick="closeConfirmModal()">✕ Huỷ</button>
-      <button class="btn-modal-confirm" onclick="acceptOrder()">✅ Xác nhận & tải về</button>
+      <<button class="btn-modal-cancel" onclick="closeConfirmModal()">Đóng</button>
+      <button class="btn-modal-confirm" onclick="acceptOrder()">Tải về</button>
+
     </div>
   </div>
 </div>
@@ -2335,18 +2337,33 @@ let pendingOrder = null;
 
 function openTakeOrder(raw) {
   try {
-    const o = typeof raw === 'string' ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
+    // Nếu GET truyền vào chuỗi JSON thì parse lại
+    const o = (typeof raw === 'string')
+      ? JSON.parse(raw.replace(/&#39;/g, "'"))
+      : raw;
+
+    // Lưu tạm đơn hàng đang chọn
     pendingOrder = o;
-    document.getElementById('confirmCode').textContent    = o.ordercode || '—';
-    document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
-    document.getElementById('confirmAddress').textContent = o.address || '—';
-    document.getElementById('confirmProduct').textContent = o.product || '—';
-    document.getElementById('confirmTotal').textContent   = o.total ? Number(o.total).toLocaleString('vi') : '—';
+
+    // Đổ thông tin ra popup xác nhận
+    document.getElementById('confirmCode').textContent =
+      o.ordercode || '—';
+    document.getElementById('confirmName').textContent =
+      o.customername || o.buyername || '—';
+    document.getElementById('confirmAddress').textContent =
+      o.address || '—';
+    document.getElementById('confirmProduct').textContent =
+      o.product || '—';
+    document.getElementById('confirmTotal').textContent =
+      o.total ? Number(o.total).toLocaleString('vi') : '—';
+
+    // Mở popup
     document.getElementById('orderConfirmBg').classList.add('show');
-  } catch(e) {
+  } catch (e) {
     console.error('openTakeOrder lỗi:', e, 'raw:', raw);
   }
 }
+
 
 
 
@@ -2357,53 +2374,73 @@ function closeConfirmModal() {
   pendingOrder = null;
 }
 
+
 function acceptOrder() {
   if (!pendingOrder) return;
+
   const o = pendingOrder;
   pendingOrder = null;
 
+  // Đóng popup xác nhận
   document.getElementById('orderConfirmBg').classList.remove('show');
+
+  // Giữ nguyên logic hiệu ứng + lưu lịch sử nếu anh muốn
   launchFireworks(7000);
   saveTakenOrder(o.ordercode);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') : '—';
-  document.getElementById('successAmount').textContent  = `Bạn sẽ nhận được ${totalFmt}`;
-  document.getElementById('successCode').textContent    = o.ordercode    || '—';
-  document.getElementById('successName').textContent    = o.customername || o.buyername || '—';
-  document.getElementById('successPhone').textContent   = o.phone        || '—';
-  document.getElementById('successAddress').textContent = o.address      || '—';
-  document.getElementById('successProduct').textContent = o.product      || '—';
-  document.getElementById('successTotal').textContent   = totalFmt;
+
+  // Đổ thông tin sang modal “Thành công”
+  document.getElementById('successAmount').textContent =
+    `Bạn sẽ nhận được ${totalFmt}`;
+  document.getElementById('successCode').textContent = o.ordercode || '—';
+  document.getElementById('successName').textContent =
+    o.customername || o.buyername || '—';
+  document.getElementById('successPhone').textContent = o.phone || '—';
+  document.getElementById('successAddress').textContent = o.address || '—';
+  document.getElementById('successProduct').textContent = o.product || '—';
+  document.getElementById('successTotal').textContent = totalFmt;
 
   document.querySelectorAll('.btn-copy').forEach(btn => {
     btn.textContent = 'Copy';
     btn.classList.remove('copied');
   });
 
-  const audio = document.getElementById('successSound');
-  if (audio && typeof soundEnabled !== 'undefined' && soundEnabled) {
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-  }
+  // Âm thanh thành công (nếu có file và bật sound)
+  try {
+    const audio = document.getElementById('successSound');
+    if (audio && typeof soundEnabled !== 'undefined' && soundEnabled) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+  } catch (e) {}
 
+  // Mở modal “Nhận đơn thành công”
   document.getElementById('orderSuccessBg').classList.add('show');
 
-  // Tải Excel
+  // TẢI FILE EXCEL: tên file = mã đơn hàng
   (async () => {
     try {
       const code = o.ordercode || '';
-      const res  = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
-      if (!res.ok) return;
+      if (!code) return;
+
+      const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
+      if (!res.ok) {
+        console.warn('Export order trả về', res.status);
+        return;
+      }
+
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      a.href     = url;
+
+      a.href = url;
       a.download = `${code}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch(e) {
+    } catch (e) {
       console.warn('Tải Excel thất bại:', e.message);
     }
   })();
