@@ -561,6 +561,76 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   z-index:9999;
   display:none;
 }
+/* ── Order Info Modal ── */
+.info-modal-bg {
+  position: fixed; inset: 0; z-index: 6000;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(60,40,90,.3); backdrop-filter: blur(10px); padding: 16px;
+}
+.info-modal-bg.show { display: flex; }
+.info-modal {
+  width: 100%; max-width: 480px;
+  background: rgba(255,255,255,.78);
+  backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 22px; padding: 28px;
+  box-shadow: 0 24px 60px rgba(160,130,200,.3);
+  max-height: 90vh; overflow-y: auto;
+}
+.info-modal-icon { font-size: 36px; text-align: center; margin-bottom: 8px; }
+.info-modal-title {
+  font-size: 16px; font-weight: 700; color: #3b3551;
+  text-align: center; margin-bottom: 4px;
+}
+.info-modal-sub {
+  font-size: 12px; color: #9b8bb4;
+  text-align: center; margin-bottom: 20px;
+}
+.info-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.info-input {
+  width: 100%; padding: 11px 14px;
+  border: 1.5px solid rgba(198,181,255,.5); border-radius: 12px;
+  font-size: 13px; font-family: monospace; letter-spacing: .5px;
+  background: rgba(255,255,255,.6); color: #3b3551;
+  outline: none; transition: border .2s;
+}
+.info-input:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,.15); }
+.info-input::placeholder { color: #c0b0d8; font-family: Inter, sans-serif; letter-spacing: 0; }
+.info-result {
+  margin-top: 16px; display: none;
+  border-top: 1px solid rgba(198,181,255,.3); padding-top: 16px;
+}
+.info-result.show { display: block; }
+.info-row {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 8px;
+  padding: 9px 0; border-bottom: 1px solid rgba(198,181,255,.15);
+}
+.info-row:last-of-type { border-bottom: none; }
+.info-label { font-size: 11px; font-weight: 600; color: #9b8bb4; min-width: 130px; margin-top: 1px; }
+.info-value { font-size: 13px; font-weight: 600; color: #3b3551; flex: 1; text-align: right; word-break: break-word; }
+.info-error {
+  font-size: 12px; color: #dc2626; margin-top: 10px;
+  padding: 8px 12px; background: rgba(254,202,202,.4);
+  border-radius: 8px; display: none;
+}
+.info-error.show { display: block; }
+.info-btns { display: flex; gap: 8px; margin-top: 20px; }
+.btn-info-cancel {
+  flex: 1; padding: 11px;
+  border: 1px solid rgba(198,181,255,.4); border-radius: 12px;
+  background: rgba(255,255,255,.4); color: #7c6fa0;
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.btn-info-cancel:hover { background: rgba(255,255,255,.7); }
+.btn-info-search {
+  flex: 2; padding: 11px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #c8b4fa, #a78bfa); color: #fff;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(167,139,250,.4); transition: all .2s;
+}
+.btn-info-search:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(167,139,250,.5); }
+.btn-info-search:disabled { background: rgba(200,190,220,.4); color: rgba(100,80,140,.4); box-shadow: none; cursor: not-allowed; transform: none; }
 
 </style>
 </head>
@@ -616,6 +686,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 <button class="taken-btn" id="takenBtn" onclick="toggleTakenPanel()">
   📋 Đơn đã lấy
   <span class="taken-badge" id="takenBadge">0</span>
+</button>
+<button class="taken-btn" onclick="toggleOrderInfoModal()">
+  🔍 THÔNG TIN ĐƠN HÀNG
 </button>
 
 <button class="taken-btn" id="revenueBtn" onclick="toggleRevenuePanel()">
@@ -2049,6 +2122,40 @@ function enableSound() {
   
 if (checkIdGate()) { init(); }
 </script>
+<!-- Modal Thông tin đơn hàng -->
+<div class="info-modal-bg" id="orderInfoBg">
+  <div class="info-modal">
+    <div class="info-modal-icon">🔍</div>
+    <div class="info-modal-title">Tra cứu thông tin đơn hàng</div>
+    <div class="info-modal-sub">Nhập mã đơn và Session để lấy thông tin chi tiết</div>
+
+    <input class="info-input" id="infoOrderCode" type="text"
+      placeholder="Mã đơn hàng (VD: R8547883114)"
+      onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
+    <input class="info-input" id="infoSession" type="password"
+      placeholder="laravel_session cookie"
+      onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
+
+    <div class="info-error" id="infoError"></div>
+
+    <div class="info-result" id="infoResult">
+      <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">THÔNG TIN ĐƠN HÀNG</div>
+      <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value" id="irCode">—</span></div>
+      <div class="info-row"><span class="info-label">Gian hàng</span><span class="info-value" id="irShop">—</span></div>
+      <div class="info-row"><span class="info-label">Thời gian đặt hàng</span><span class="info-value" id="irDate">—</span></div>
+      <div class="info-row"><span class="info-label">Tên khách hàng</span><span class="info-value" id="irName">—</span></div>
+      <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="irPhone">—</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="irEmail">—</span></div>
+      <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
+      <div class="info-row"><span class="info-label">Nguồn đơn hàng</span><span class="info-value" id="irSource">—</span></div>
+    </div>
+
+    <div class="info-btns">
+      <button class="btn-info-cancel" onclick="closeOrderInfoModal()">Đóng</button>
+      <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()">🔍 Tra cứu</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
