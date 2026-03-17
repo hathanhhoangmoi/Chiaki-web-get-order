@@ -3269,9 +3269,14 @@ async function downloadOrder() {
     const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
 
     if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || 'Không tìm thấy đơn');
-    }
+  let errMsg = 'Không tìm thấy đơn hàng';
+  try {
+    const data = await res.json();
+    errMsg = data.error || errMsg;
+  } catch (_) {}
+  throw new Error(errMsg);
+}
+
 
     // Tải file về
     const blob = await res.blob();
