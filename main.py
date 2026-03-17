@@ -337,18 +337,18 @@ async def get_order_info(body: dict):
             })
         data = res.json()
 
-        # API trả về key "result", không phải "data"
         d = data.get("result") or data.get("data") or {}
         if isinstance(d, list):
-              d = d[0] if d else {}
-
+            d = d[0] if d else {}
 
         def g(*keys):
             for k in keys:
                 v = d.get(k)
                 if v: return str(v)
             return "—"
-        "phone": next((x for x in d.get("search","").split() if x.isdigit() and len(x) >= 9), "—"),
+
+        # ✅ Gán vào biến trước, rồi dùng trong return
+        phone = next((x for x in d.get("search", "").split() if x.isdigit() and len(x) >= 9), "—")
 
         return {
             "order_code":    g("code"),
@@ -361,7 +361,6 @@ async def get_order_info(body: dict):
             "source":        g("source", "from"),
             "_raw":          data
         }
-
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
