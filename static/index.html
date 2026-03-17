@@ -1567,23 +1567,28 @@ function closeOrderInfoModal() {
   document.getElementById('infoResult').classList.remove('show');
   document.getElementById('infoError').classList.remove('show');
   document.getElementById('infoOrderCode').value = '';
-  document.getElementById('infoSession').value = '';
+  document.getElementById('infoKey').value = '';
+  document.getElementById('infoKeyStatus').textContent = '';
+
 }
 
 async function fetchOrderInfo() {
   const code = document.getElementById('infoOrderCode').value.trim();
-  const session = document.getElementById('infoSession').value.trim();
-  const errEl = document.getElementById('infoError');
+  const key  = document.getElementById('infoKey').value.trim();
+  const errEl    = document.getElementById('infoError');
   const resultEl = document.getElementById('infoResult');
-  const btn = document.getElementById('infoSearchBtn');
+  const btn      = document.getElementById('infoSearchBtn');
 
   errEl.classList.remove('show');
   resultEl.classList.remove('show');
 
-  if (!code || !session) {
-    errEl.textContent = 'Vui lòng nhập đầy đủ mã đơn hàng và session cookie.';
-    errEl.classList.add('show');
-    return;
+  if (!code) {
+    errEl.textContent = 'Vui lòng nhập mã đơn hàng.';
+    errEl.classList.add('show'); return;
+  }
+  if (!key) {
+    errEl.textContent = 'Vui lòng nhập key.';
+    errEl.classList.add('show'); return;
   }
 
   btn.disabled = true;
@@ -1593,14 +1598,13 @@ async function fetchOrderInfo() {
     const res = await fetch('/api/order-info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_code: code, session_cookie: session })
+      body: JSON.stringify({ order_code: code, key })
     });
     const data = await res.json();
 
     if (data.error) {
       errEl.textContent = data.error;
-      errEl.classList.add('show');
-      return;
+      errEl.classList.add('show'); return;
     }
 
     document.getElementById('irCode').textContent    = data.order_code    || '—';
@@ -1612,15 +1616,48 @@ async function fetchOrderInfo() {
     document.getElementById('irAddress').textContent = data.address       || '—';
     document.getElementById('irSource').textContent  = data.source        || '—';
 
+    // Hiện lượt còn lại
+    document.getElementById('infoKeyStatus').textContent =
+      `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
+
     resultEl.classList.add('show');
   } catch(e) {
-    errEl.textContent = 'Lỗi kết nối server. Vui lòng thử lại.';
+    errEl.textContent = 'Lỗi kết nối: ' + e.message;
     errEl.classList.add('show');
   } finally {
     btn.disabled = false;
     btn.textContent = '🔍 Tra cứu';
   }
 }
+document.addEventListener('DOMContentLoaded', () => {
+  const keyInput = document.getElementById('infoKey');
+  if (!keyInput) return;
+  let keyTimer;
+  keyInput.addEventListener('input', () => {
+    clearTimeout(keyTimer);
+    const statusEl = document.getElementById('infoKeyStatus');
+    const val = keyInput.value.trim();
+    if (!val) { statusEl.textContent = ''; return; }
+    keyTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/order-info/check-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: val })
+        });
+        const d = await res.json();
+        if (d.error) {
+          statusEl.textContent = '❌ ' + d.error;
+          statusEl.style.color = '#dc2626';
+        } else {
+          statusEl.textContent = `✅ Key hợp lệ — còn ${d.remaining}/${d.limit} lượt`;
+          statusEl.style.color = d.remaining > 0 ? '#059669' : '#dc2626';
+        }
+      } catch { statusEl.textContent = ''; }
+    }, 600);
+  });
+});
+
 
 
 function selectShop(id) {
@@ -2783,9 +2820,12 @@ if (checkIdGate()) { init(); }
     <input class="info-input" id="infoOrderCode" type="text"
       placeholder="Mã đơn hàng (VD: R8547883114)"
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
-    <input class="info-input" id="infoSession" type="password"
-      placeholder="Session ID"
-      onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
+    <input class="info-input" id="infoKey" type="text"
+  placeholder="Nhập key (VD: KEYPHONE-XXXXX-XXXXXX-XXXXX)"
+  onkeydown="if(event.key==='Enter') fetchOrderInfo()"
+  style="margin-bottom:12px;font-family:monospace;letter-spacing:1px" />
+<div id="infoKeyStatus" style="font-size:11px;color:#9b8bb4;margin-bottom:4px;min-height:16px"></div>
+
     <div class="info-error" id="infoError"></div>
     <div class="info-result" id="infoResult">
       <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">THÔNG TIN ĐƠN HÀNG</div>
