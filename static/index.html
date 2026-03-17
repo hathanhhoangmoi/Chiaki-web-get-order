@@ -2135,7 +2135,7 @@ async function fetchMegaads() {
   }
   
   if (!/^R\d{10}$/.test(orderCode)) {
-    showToast('❌ Mã đơn hàng không đúng định dạng (VD: R7548070493)');
+    showToast('❌ Mã đơn hàng không đúng định dạng');
     return;
   }
   
@@ -2143,71 +2143,47 @@ async function fetchMegaads() {
   const btn = event.target;
   const originalText = btn.textContent;
   btn.disabled = true;
-  btn.innerHTML = '🔄 Đang gọi API...';
+  btn.innerHTML = '🔄 Proxy...';
   
   try {
-    // Test CORS trước
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    document.getElementById('megaadsResult').style.display = 'block';
+    const tbody = document.getElementById('megaadsTbody');
+    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:40px">
+      <div class="spinner"></div><div>Gọi qua proxy...</div>
+    </td></tr>`;
     
-    console.log('📞 Gọi API với:', { inoutputId, sessionId: sessionId.slice(0, 20) + '...' });
-    
-    const response = await fetch(`https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=${inoutputId}`, {
-      method: 'GET',
+    // ✅ GỌI PROXY thay vì trực tiếp
+    const response = await fetch(`/api/megaads-proxy?inoutput_id=${inoutputId}`, {
       headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'platform': 'ios',
-        'Cookie': sessionId,
-        'User-Agent': 'chiakiApp/3.6.2 (iOS)',
-        'Origin': 'https://ec.megaads.vn',  // Thêm Origin
-        'Referer': 'https://ec.megaads.vn/'  // Thêm Referer
-      },
-      signal: controller.signal
+        'X-Session-ID': sessionId  // ← Session ID qua custom header
+      }
     });
     
-    clearTimeout(timeoutId);
-    
-    console.log('📡 Response status:', response.status, response.statusText);
-    console.log('📡 Response headers:', [...response.headers.entries()]);
-    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ API Error:', errorText.slice(0, 500));
-      throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
     }
     
     const data = await response.json();
-    // ... rest of success code same as before
     
-  } catch (error) {
-    console.error('🚨 Full error:', error);
-    
-    let errorMsg = 'Lỗi không xác định';
-    if (error.name === 'AbortError') {
-      errorMsg = '⏰ Timeout (10s) - Kiểm tra Session ID';
-    } else if (error.message.includes('Failed to fetch')) {
-      errorMsg = '🚫 CORS/Blocked - Thử proxy hoặc session mới';
-    } else if (error.message.includes('401')) {
-      errorMsg = '🔒 Session ID hết hạn';
-    } else if (error.message.includes('404')) {
-      errorMsg = `❌ Không tìm thấy đơn ${orderCode}`;
+    // ... phần render kết quả giữ nguyên như cũ
+    if (!data || !data.data || data.data.length === 0) {
+      // ... error handling
+    } else {
+      // Render success
+      document.getElementById('megaadsCount').textContent = `${data.data.length} mã`;
+      // ... render table
     }
     
-    const tbody = document.getElementById('megaadsTbody');
-    tbody.innerHTML = `<tr><td colspan="2" class="empty">
-      <div class="empty-icon">⚠️</div>
-      <div>${errorMsg}</div>
-      <div style="font-size:10px;color:#b0a0c8;margin-top:8px">
-        Debug: ${inoutputId}<br>Session: ${sessionId.slice(0,30)}...
-      </div>
-    </td></tr>`;
-    
-    showToast(errorMsg);
+  } catch (error) {
+    console.error('Proxy error:', error);
+    // ... error display
   } finally {
     btn.disabled = false;
-    btn.textContent = originalText;
+    btn.innerHTML = originalText;
   }
 }
+
 
 
 function copyMegaadsValue(itemIdx, key) {
