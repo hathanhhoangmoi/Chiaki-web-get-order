@@ -2934,9 +2934,7 @@ async function loadNetRevShop(shopId, shopName) {
     document.getElementById('netRevLoading').style.display = 'none';
   }
 }
-// Chỉ hiện nút history với Chang2000
-initHistoryBtn()
-let historyPanelOpen = false;
+
 function toggleHistoryPanel() {
   historyPanelOpen = !historyPanelOpen;
   document.getElementById('historyPanel').classList.toggle('open', historyPanelOpen);
