@@ -364,3 +364,51 @@ async def get_order_info(body: dict):
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
+@app.get("/api/shop-info")
+async def get_shop_info(request: Request, shop_id: str = Query(...)):
+    user_id = request.headers.get('X-User-ID', '')
+    BLOCKED = {"4647", "4732", "5112"}
+    if shop_id in BLOCKED and user_id != 'Chang2000':
+        return JSONResponse({"error": "Bạn không có quyền xem thông tin gian hàng này."}, status_code=403)
+
+    url = f"https://api.chiaki.vn/seller/{shop_id}/profile?&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(url)
+        data = res.json()
+        if data.get("status") != "successful":
+            return JSONResponse({"error": "Không tìm thấy gian hàng."}, status_code=404)
+
+        s = data.get("seller", {})
+        meta = {}
+        try:
+            import json as _json
+            meta = _json.loads(s.get("meta_data", "{}"))
+        except: pass
+
+        bank = {}
+        try:
+            import json as _json
+            bank = _json.loads(s.get("bank_info", "{}"))
+        except: pass
+
+        warehouses = meta.get("warehouses", [])
+
+        return {
+            "id":           s.get("id"),
+            "code":         s.get("code"),
+            "name":         s.get("name"),
+            "email":        s.get("email"),
+            "phone":        s.get("phone"),
+            "address":      s.get("address"),
+            "name_organization": s.get("name_organization"),
+            "create_time":  s.get("create_time"),
+            "bank_account_number": bank.get("bank_account_number"),
+            "bank_account_holder": bank.get("bank_account_holder"),
+            "bank_name":    bank.get("bank_name"),
+            "cccd_front":   s.get("citizen_identification_front_files", [{}])[0].get("value") if s.get("citizen_identification_front_files") else None,
+            "cccd_back":    s.get("citizen_identification_back_files", [{}])[0].get("value") if s.get("citizen_identification_back_files") else None,
+            "warehouses":   warehouses,
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
