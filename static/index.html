@@ -628,6 +628,44 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 <button class="btn btn-primary" id="megaadsBtn" onclick="toggleMegaadsPanel()" style="display:none">
   🔒 THÔNG TIN ĐƠN HÀNG
 </button>
+<button class="btn btn-primary" id="jsonBtn" onclick="toggleJsonPanel()" style="display:none;margin-left:8px">
+  📋 Convert JSON
+</button>
+
+<!-- Panel JSON sau panelMegaads -->
+<div id="panelJson" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">📋 Chuyển JSON → Bảng dữ liệu</div>
+      <div class="table-count" id="jsonCount">Dán JSON vào ô dưới</div>
+    </div>
+    <div style="padding:24px;background:rgba(255,255,255,.35);border-radius:12px;margin:0 20px 20px">
+      <div style="position:relative">
+        <textarea id="jsonInput" rows="8" class="id-input" 
+                  placeholder='Dán JSON vào đây...'
+                  style="width:100%;font-family:monospace;font-size:13px;padding:14px;resize:vertical"></textarea>
+        <button class="btn-copy" onclick="clearJsonInput()" 
+                style="position:absolute;right:12px;top:12px;font-size:11px;padding:6px 10px">
+          🗑️ Xóa
+        </button>
+      </div>
+      <button class="btn btn-primary" onclick="parseJson()" 
+              style="width:100%;margin-top:12px;padding:14px;font-size:14px">
+        ✨ Chuyển thành bảng
+      </button>
+    </div>
+    <div id="jsonResult" style="overflow-x:auto;display:none">
+      <table id="jsonTable">
+        <thead id="jsonThead"></thead>
+        <tbody id="jsonTbody">
+          <tr><td colspan="2" class="empty">
+            <div class="empty-icon">📝</div><div>Dán JSON và nhấn chuyển</div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <!-- Thêm panel mới sau #panelRevenue -->
 <div id="panelMegaads" style="display:none">
@@ -2228,7 +2266,142 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('megaadsBtn').style.display = 'inline-flex';
   }
 });
- 
+// Thêm vào cuối script
+let jsonVisible = false;
+
+function toggleJsonPanel() {
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId !== 'Chang2000') {
+    showToast('❌ Chỉ Chang2000 mới có quyền sử dụng');
+    return;
+  }
+  
+  jsonVisible = !jsonVisible;
+  const btn = document.getElementById('jsonBtn');
+  
+  if (jsonVisible) {
+    // Đóng panel khác
+    if (megaadsVisible) toggleMegaadsPanel();
+    // ... đóng các panel khác
+    
+    btn.classList.add('active');
+    document.getElementById('panelJson').style.display = 'block';
+    document.getElementById('panelMain').style.display = 'none';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-id=""]').classList.add('active');
+  } else {
+    btn.classList.remove('active');
+    document.getElementById('panelJson').style.display = 'none';
+    document.getElementById('panelMain').style.display = 'block';
+  }
+}
+
+function clearJsonInput() {
+  document.getElementById('jsonInput').value = '';
+  document.getElementById('jsonResult').style.display = 'none';
+}
+
+function parseJson() {
+  const jsonText = document.getElementById('jsonInput').value.trim();
+  if (!jsonText) {
+    showToast('❌ Vui lòng dán JSON');
+    return;
+  }
+  
+  let data;
+  try {
+    data = JSON.parse(jsonText);
+  } catch (e) {
+    showToast('❌ JSON không hợp lệ: ' + e.message);
+    return;
+  }
+  
+  renderJsonTable(data);
+}
+
+function renderJsonTable(data) {
+  const result = document.getElementById('jsonResult');
+  const thead = document.getElementById('jsonThead');
+  const tbody = document.getElementById('jsonTbody');
+  const count = document.getElementById('jsonCount');
+  
+  result.style.display = 'block';
+  
+  // Tìm data chính (result[0] hoặc root)
+  let mainData = data.result?.[0] || data.result || data.data?.[0] || data;
+  
+  if (!mainData) {
+    tbody.innerHTML = `<tr><td colspan="2" class="empty">
+      <div class="empty-icon">📭</div><div>Không tìm thấy dữ liệu</div>
+    </td></tr>`;
+    return;
+  }
+  
+  count.textContent = `${Object.keys(mainData).length} fields`;
+  
+  // Tạo header
+  thead.innerHTML = '<tr><th style="width:35%">Field</th><th>Value</th></tr>';
+  
+  // Render từng field + copy
+  Object.entries(mainData).forEach(([key, value], idx) => {
+    const tr = document.createElement('tr');
+    const displayValue = typeof value === 'object' ? 
+      JSON.stringify(value, null, 2).slice(0, 500) + '...' : 
+      String(value || '').slice(0, 1000);
+    
+    tr.innerHTML = `
+      <td style="font-weight:600;font-size:11px;color:#9b8bb4;padding:8px 14px 8px 20px;border-right:1px solid rgba(198,181,255,.2);vertical-align:top">
+        ${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+      </td>
+      <td style="position:relative">
+        <div style="font-family:monospace;font-size:12px;padding:8px 60px 8px 14px;word-break:break-all;line-height:1.4;white-space:pre-wrap;max-height:120px;overflow-y:auto">
+          ${displayValue}
+        </div>
+        <button class="btn-copy" onclick="copyJsonValue(${idx}, '${key}')" 
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:.8;font-size:11px;padding:6px 10px">
+          📋 Copy
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  showToast('✅ Đã chuyển JSON thành bảng');
+}
+
+function copyJsonValue(rowIdx, keyPath) {
+  // Tìm textarea gốc để copy full value
+  const jsonText = document.getElementById('jsonInput').value;
+  try {
+    const data = JSON.parse(jsonText);
+    const mainData = data.result?.[0] || data;
+    const fullValue = mainData[keyPath];
+    
+    navigator.clipboard.writeText(JSON.stringify(fullValue, null, 2)).then(() => {
+      const btn = event.target;
+      btn.innerHTML = '✅ Copied!';
+      btn.style.background = 'rgba(110,231,183,.3)';
+      setTimeout(() => {
+        btn.innerHTML = '📋 Copy';
+        btn.style.background = '';
+      }, 1500);
+    });
+  } catch {
+    // Fallback copy display text
+    const cell = event.target.parentElement.querySelector('div');
+    navigator.clipboard.writeText(cell.textContent.trim());
+  }
+}
+
+// Hiển thị button
+document.addEventListener('DOMContentLoaded', function() {
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId === 'Chang2000') {
+    document.getElementById('megaadsBtn').style.display = 'inline-flex';
+    document.getElementById('jsonBtn').style.display = 'inline-flex';
+  }
+});
+
 if (checkIdGate()) { init(); }
 </script>
 
