@@ -551,6 +551,7 @@ async def get_chat_info(seller_id: str = Query(...)):
 
             result.append({
                 "id":                   c.get("_id"),
+                "customer_id":          customer.get("_id"),
                 "customer_name":        customer.get("username"),
                 "customer_online":      customer.get("isOnline", False),
                 "seller_name":          seller.get("username"),
