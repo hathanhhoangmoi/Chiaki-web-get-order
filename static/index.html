@@ -803,14 +803,23 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   box-shadow: 0 0 0 3px rgba(16,185,129,.15);
 }
 .history-panel {
-  position: fixed; right: 0; top: 0; bottom: 0; z-index: 8000;
-  width: 320px; transform: translateX(100%);
-  background: rgba(255,255,255,.85); backdrop-filter: blur(30px) saturate(200%);
+  display: none;                        /* ẩn mặc định, JS sẽ show với Chang2000 */
+  position: fixed;
+  right: 0;
+  top: 60px;                            /* ngay dưới header */
+  bottom: 0;
+  z-index: 8000;
+  width: 320px;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(30px) saturate(200%);
   border-left: 1px solid rgba(198,181,255,.3);
   box-shadow: -8px 0 40px rgba(160,130,200,.2);
-  display: flex; flex-direction: column;
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  flex-direction: column;
 }
+.history-panel.open {
+  display: flex;                        /* hiện khi có class .open */
+}
+
 .history-panel.open { transform: translateX(0); }
 .history-header {
   padding: 18px 16px 12px;
@@ -972,10 +981,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
 </div>
-<!-- Nút mở lịch sử (chỉ hiện với Chang2000) -->
-<button class="history-toggle-btn" id="historyToggleBtn" onclick="toggleHistoryPanel()" title="Lịch sử tra cứu">
-  📋
-</button>
+
 
 
 <div class="container">
@@ -2991,7 +2997,10 @@ async function loadNetRevShop(shopId, shopName) {
 function initHistoryBtn() {
   const uid = localStorage.getItem('chiaki_id') || '';
   if (uid === 'Chang2000') {
-    document.getElementById('historyToggleBtn').classList.add('visible');
+    // Tự mở panel lịch sử luôn, không cần button
+    const panel = document.getElementById('historyPanel');
+    panel.classList.add('open');
+    loadHistoryPanel();
   }
 }
 
@@ -3393,7 +3402,7 @@ if (checkIdGate()) { init(); }
 <div class="history-panel" id="historyPanel">
   <div class="history-header">
     <div class="history-header-title">📋 Lịch sử</div>
-    <button class="history-close" onclick="toggleHistoryPanel()">✕</button>
+    
   </div>
   <div class="history-tabs">
     <button class="history-tab active" id="htabPhone" onclick="switchHistoryTab('phone')">📞 Tra SĐT</button>
