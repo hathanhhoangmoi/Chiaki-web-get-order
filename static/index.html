@@ -770,6 +770,38 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 .chat-violation { color: #dc2626; font-weight: 700; }
 .chat-conv-count { font-size: 12px; color: #9b8bb4; margin-bottom: 12px; }
+#sortSelect {
+  padding: 7px 14px 7px 10px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(16, 185, 129, .35);
+  background: linear-gradient(135deg, rgba(209,250,229,.7), rgba(167,243,208,.5));
+  color: #065f46;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16,185,129,.15);
+  backdrop-filter: blur(8px);
+  transition: all .2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23065f46' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+#sortSelect:hover {
+  border-color: rgba(16,185,129,.6);
+  box-shadow: 0 4px 14px rgba(16,185,129,.25);
+  transform: translateY(-1px);
+}
+
+#sortSelect:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.15);
+}
 
 </style>
 </head>
@@ -924,10 +956,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 <div class="table-header">
   <div class="table-title">Lọc đơn hàng</div>
   <div style="display:flex;gap:8px;align-items:center">
-    <select id="sortSelect" onchange="changeSortOrder()"
-      style="padding:6px 12px;border-radius:10px;border:1px solid rgba(198,181,255,.4);
-             background:rgba(255,255,255,.5);color:#5b4b8a;font-size:12px;
-             font-weight:600;font-family:inherit;outline:none;cursor:pointer">
+    <select id="sortSelect" onchange="changeSortOrder()">
       <option value="default">🕐 Mới nhất</option>
       <option value="total_desc">💰 Giá trị cao → thấp</option>
       <option value="total_asc">💰 Giá trị thấp → cao</option>
