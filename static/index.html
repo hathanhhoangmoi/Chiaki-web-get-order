@@ -2053,7 +2053,7 @@ function submitId() {
   fetch('/api/auth/login-log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: Id, event: 'login' })
+    body: JSON.stringify({ key: id, event: 'login' })
   });
 
 }
@@ -2307,14 +2307,14 @@ let pendingOrder = null;
 
 function openTakeOrder(o) {
   pendingOrder = o;
-  document.getElementById('confirmCode').textContent    = o.order_code || '—';
-  document.getElementById('confirmName').textContent    = o.customer_name || o.buyer_name || '—';
-  document.getElementById('confirmAddress').textContent = o.address || '—';
-  document.getElementById('confirmProduct').textContent = o.product || '—';
-  document.getElementById('confirmTotal').textContent   =
-    o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—';
+  document.getElementById('confirmCode').textContent    = o.ordercode;
+  document.getElementById('confirmName').textContent    = o.customername || o.buyername;
+  document.getElementById('confirmAddress').textContent = o.address;
+  document.getElementById('confirmProduct').textContent = o.product;
+  document.getElementById('confirmTotal').textContent   = o.total ? Number(o.total).toLocaleString('vi') : '—';
   document.getElementById('orderConfirmBg').classList.add('show');
 }
+
 
 function closeConfirmModal() {
   document.getElementById('orderConfirmBg').classList.remove('show');
@@ -2331,12 +2331,13 @@ function acceptOrder() {
   saveTakenOrder(o.ordercode);
 
   const totalFmt = o.total ? Number(o.total).toLocaleString('vi') : '—';
+
   document.getElementById('successAmount').textContent  = `Bạn sẽ nhận được ${totalFmt}`;
-  document.getElementById('successCode').textContent    = o.ordercode;
-  document.getElementById('successName').textContent    = o.customername || o.buyername;
-  document.getElementById('successPhone').textContent   = o.phone;
-  document.getElementById('successAddress').textContent = o.address;
-  document.getElementById('successProduct').textContent = o.product;
+  document.getElementById('successCode').textContent    = o.ordercode    || '—';
+  document.getElementById('successName').textContent    = o.customername || o.buyername || '—';
+  document.getElementById('successPhone').textContent   = o.phone        || '—';
+  document.getElementById('successAddress').textContent = o.address      || '—';
+  document.getElementById('successProduct').textContent = o.product      || '—';
   document.getElementById('successTotal').textContent   = totalFmt;
 
   document.querySelectorAll('.btn-copy').forEach(btn => {
@@ -2344,7 +2345,6 @@ function acceptOrder() {
     btn.classList.remove('copied');
   });
 
-  // Phát âm thanh chúc mừng
   const audio = document.getElementById('successSound');
   if (audio && soundEnabled) {
     audio.currentTime = 0;
@@ -2353,16 +2353,17 @@ function acceptOrder() {
 
   document.getElementById('orderSuccessBg').classList.add('show');
 
-  // ✅ Tự động tải Excel ngầm
+  // ✅ Tải Excel — tên file là mã đơn bắt đầu bằng R
   (async () => {
     try {
-      const res = await fetch(`/api/export-order/${encodeURIComponent(o.ordercode)}`);
+      const code = o.ordercode || '';
+      const res  = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
       if (!res.ok) return;
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href     = url;
-      a.download = `don-hang-${o.ordercode}.xlsx`;
+      a.download = `${code}.xlsx`;          // ✅ tên file = mã đơn (R...)
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2372,6 +2373,7 @@ function acceptOrder() {
     }
   })();
 }
+
 
 
 
@@ -3298,7 +3300,7 @@ async function downloadOrder() {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `don-hang-${code}.xlsx`;
+    a.download = `${code}.xlsx`;  
     a.click();
     URL.revokeObjectURL(url);
 
