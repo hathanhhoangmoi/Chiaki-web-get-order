@@ -1480,10 +1480,10 @@ async function loadSummary() {
       .then(statsRes => {
         const waitItem = statsRes.by_status?.find(s =>
           s.status && s.status.toLowerCase().includes('wait'));
-        document.getElementById('waitCount').textContent =
-          waitItem ? waitItem.count.toLocaleString('vi') : '0';
+        const elWait = document.getElementById('waitCount');
+        if (elWait) elWait.textContent = waitItem ? waitItem.count.toLocaleString('vi') : '0';
       })
-      .catch(e => console.error('stats error:', e));
+      .catch(() => {})
 
     return data;
   } catch(e) {
