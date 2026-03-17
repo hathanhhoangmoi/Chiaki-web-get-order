@@ -2194,16 +2194,13 @@ if (checkIdGate()) { init(); }
     <div class="info-modal-icon">🔍</div>
     <div class="info-modal-title">Tra cứu thông tin đơn hàng</div>
     <div class="info-modal-sub">Nhập mã đơn và Session để lấy thông tin chi tiết</div>
-
     <input class="info-input" id="infoOrderCode" type="text"
       placeholder="Mã đơn hàng (VD: R8547883114)"
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
     <input class="info-input" id="infoSession" type="password"
       placeholder="laravel_session cookie"
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
-
     <div class="info-error" id="infoError"></div>
-
     <div class="info-result" id="infoResult">
       <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">THÔNG TIN ĐƠN HÀNG</div>
       <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value" id="irCode">—</span></div>
@@ -2215,13 +2212,11 @@ if (checkIdGate()) { init(); }
       <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
       <div class="info-row"><span class="info-label">Nguồn đơn hàng</span><span class="info-value" id="irSource">—</span></div>
     </div>
-
     <div class="info-btns">
       <button class="btn-info-cancel" onclick="closeOrderInfoModal()">Đóng</button>
       <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()">🔍 Tra cứu</button>
     </div>
   </div>
 </div>
-
 </body>
 </html>
