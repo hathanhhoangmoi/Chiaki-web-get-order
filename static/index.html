@@ -2317,15 +2317,18 @@ function toggleRevenuePanel() {
 // ── Lấy đơn ─────────────────────────────────────────────
 let pendingOrder = null;
 
-function openTakeOrder(o) {
+function openTakeOrder(raw) {
+  // Nhận cả string JSON lẫn object
+  const o = (typeof raw === 'string') ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
   pendingOrder = o;
-  document.getElementById('confirmCode').textContent    = o.ordercode;
-  document.getElementById('confirmName').textContent    = o.customername || o.buyername;
-  document.getElementById('confirmAddress').textContent = o.address;
-  document.getElementById('confirmProduct').textContent = o.product;
+  document.getElementById('confirmCode').textContent    = o.ordercode    || '—';
+  document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
+  document.getElementById('confirmAddress').textContent = o.address      || '—';
+  document.getElementById('confirmProduct').textContent = o.product      || '—';
   document.getElementById('confirmTotal').textContent   = o.total ? Number(o.total).toLocaleString('vi') : '—';
   document.getElementById('orderConfirmBg').classList.add('show');
 }
+
 
 
 function closeConfirmModal() {
@@ -2358,14 +2361,14 @@ function acceptOrder() {
   });
 
   const audio = document.getElementById('successSound');
-  if (audio && soundEnabled) {
+  if (audio && typeof soundEnabled !== 'undefined' && soundEnabled) {
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }
 
   document.getElementById('orderSuccessBg').classList.add('show');
 
-  // ✅ Tải Excel — tên file là mã đơn bắt đầu bằng R
+  // Tải Excel — tên file = mã đơn (R...)
   (async () => {
     try {
       const code = o.ordercode || '';
@@ -2375,20 +2378,16 @@ function acceptOrder() {
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href     = url;
-      a.download = `${code}.xlsx`;          // ✅ tên file = mã đơn (R...)
+      a.download = `${code}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (e) {
+    } catch(e) {
       console.warn('Tải Excel thất bại:', e.message);
     }
   })();
 }
-
-
-
-
 
 function closeSuccessModal() {
   document.getElementById('orderSuccessBg').classList.remove('show');
@@ -2447,38 +2446,28 @@ function saveTakenOrder(orderCode) {
 }
 
 function renderTakenList() {
-  const list  = getTakenOrders();
+  const list = getTakenOrders();
   const badge = document.getElementById('takenBadge');
   const count = document.getElementById('takenPanelCount');
   const el    = document.getElementById('takenList');
 
-  badge.textContent = list.length;
-  if (count) count.textContent = `${list.length} đơn`;
+  if (badge) badge.textContent = list.length;         // ✅ chỉ set nếu tồn tại
+  if (count) count.textContent = list.length + ' đơn';
+  if (!el) return;                                      // ✅ guard
 
   if (!list.length) {
-    el.innerHTML = `<div class="taken-empty">📭 Chưa có đơn nào được lấy</div>`;
+    el.innerHTML = `<div class="taken-empty">Chưa có đơn nào được lấy</div>`;
     return;
   }
-
-  const currentId = localStorage.getItem('chiaki_id');
-  const canDelete = currentId === 'Chang2000';
-
+  const currentId  = localStorage.getItem('chiakiid');
+  const canDelete  = currentId === 'Chang2000';
   el.innerHTML = list.map((item, idx) => {
-    const d   = new Date(item.taken_at);
-    const fmt = d.toLocaleString('vi-VN', {
-      timeZone:'Asia/Ho_Chi_Minh', hour12:false,
-      day:'2-digit', month:'2-digit',
-      hour:'2-digit', minute:'2-digit'
-    });
+    const d   = new Date(item.takenat);
+    const fmt = d.toLocaleString('vi-VN', { timeZone:'Asia/Ho_Chi_Minh', hour12:false, day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
     return `<div class="taken-item">
-      <div class="taken-code">${item.order_code || '—'}</div>
-      <div><span class="taken-key">${item.key_label}</span></div>
-      <div class="taken-time">
-        ${fmt}
-        ${canDelete ? `
-          <button class="btn-clear-taken" style="margin-left:6px"
-                  onclick="deleteTakenOrder(${idx})">Xoá</button>` : ''}
-      </div>
+      <div class="taken-code">${item.ordercode}</div>
+      <div><span class="taken-key">${item.keylabel}</span></div>
+      <div class="taken-time">${fmt}${canDelete ? ` <button class="btn-clear-taken" style="margin-left:6px" onclick="deleteTakenOrder(${idx})">Xoá</button>` : ''}</div>
     </div>`;
   }).join('');
 }
