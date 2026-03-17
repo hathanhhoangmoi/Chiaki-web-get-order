@@ -802,6 +802,65 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16,185,129,.15);
 }
+.history-panel {
+  position: fixed; right: 0; top: 0; bottom: 0; z-index: 8000;
+  width: 320px; transform: translateX(100%);
+  background: rgba(255,255,255,.85); backdrop-filter: blur(30px) saturate(200%);
+  border-left: 1px solid rgba(198,181,255,.3);
+  box-shadow: -8px 0 40px rgba(160,130,200,.2);
+  display: flex; flex-direction: column;
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.history-panel.open { transform: translateX(0); }
+.history-header {
+  padding: 18px 16px 12px;
+  border-bottom: 1px solid rgba(198,181,255,.2);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.history-header-title { font-size: 14px; font-weight: 700; color: #3b3551; }
+.history-close {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: rgba(198,181,255,.3); color: #7c6fa0;
+  font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.history-stats {
+  padding: 10px 16px; background: rgba(216,180,254,.1);
+  border-bottom: 1px solid rgba(198,181,255,.15);
+  font-size: 11px; color: #9b8bb4; display: flex; gap: 16px;
+}
+.history-stats b { color: #5b4b8a; font-size: 13px; }
+.history-body { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.history-key-block { margin-bottom: 14px; }
+.history-key-label {
+  font-size: 10px; font-weight: 700; color: #9b8bb4;
+  letter-spacing: .4px; margin-bottom: 5px; display: flex; justify-content: space-between;
+}
+.history-key-name {
+  font-family: monospace; font-size: 10px; color: #5b4b8a;
+  background: rgba(216,180,254,.2); padding: 1px 6px; border-radius: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;
+}
+.history-key-used { color: #dc2626; font-weight: 700; }
+.history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 10px; border-radius: 8px; margin-bottom: 3px;
+  background: rgba(255,255,255,.5); border: 1px solid rgba(198,181,255,.2);
+  font-size: 11px;
+}
+.history-item-code { font-weight: 700; color: #3b3551; font-family: monospace; }
+.history-item-time { color: #b0a0c8; font-size: 10px; }
+.history-empty { text-align: center; color: #c4b5d4; padding: 40px 20px; font-size: 12px; }
+.history-toggle-btn {
+  position: fixed; right: 16px; bottom: 80px; z-index: 7900;
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff; font-size: 18px; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(245,158,11,.4);
+  display: none; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.history-toggle-btn.visible { display: flex; }
+.history-toggle-btn:hover { transform: scale(1.1); }
 
 </style>
 </head>
@@ -2871,6 +2930,66 @@ async function loadNetRevShop(shopId, shopName) {
     document.getElementById('netRevLoading').style.display = 'none';
   }
 }
+// Chỉ hiện nút history với Chang2000
+function initHistoryBtn() {
+  const uid = localStorage.getItem('chiakiid') || '';
+  if (uid === 'Chang2000') {
+    document.getElementById('historyToggleBtn').classList.add('visible');
+  }
+}
+
+let historyPanelOpen = false;
+function toggleHistoryPanel() {
+  historyPanelOpen = !historyPanelOpen;
+  document.getElementById('historyPanel').classList.toggle('open', historyPanelOpen);
+  if (historyPanelOpen) loadHistoryPanel();
+}
+
+async function loadHistoryPanel() {
+  const body = document.getElementById('historyBody');
+  body.innerHTML = '<div class="history-empty">Đang tải...</div>';
+
+  try {
+    const res = await fetch('/api/order-info/history', {
+      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      body.innerHTML = `<div class="history-empty">⛔ ${data.error}</div>`;
+      return;
+    }
+
+    document.getElementById('hsTotalQueries').textContent = data.total_queries;
+    document.getElementById('hsTotalKeys').textContent    = data.data.length;
+
+    if (!data.data.length) {
+      body.innerHTML = '<div class="history-empty">Chưa có tra cứu nào</div>';
+      return;
+    }
+
+    body.innerHTML = data.data.map(k => `
+      <div class="history-key-block">
+        <div class="history-key-label">
+          <span class="history-key-name">${k.key}</span>
+          <span class="history-key-used">${k.used}/${k.limit} lượt</span>
+        </div>
+        ${k.history.slice().reverse().map(h => `
+          <div class="history-item">
+            <span class="history-item-code">📦 ${h.order_code}</span>
+            <span class="history-item-time">${h.time}</span>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+
+  } catch(e) {
+    body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
+  }
+}
+
+// Gọi khi load trang
+document.addEventListener('DOMContentLoaded', initHistoryBtn);
 
 if (checkIdGate()) { init(); }
 </script>
@@ -3095,6 +3214,25 @@ if (checkIdGate()) { init(); }
     <div class="info-btns" style="margin-top:16px">
       <button class="btn-info-cancel" onclick="closeNetRevenueModal()">Đóng</button>
     </div>
+  </div>
+</div>
+<!-- Nút mở lịch sử (chỉ hiện với Chang2000) -->
+<button class="history-toggle-btn" id="historyToggleBtn" onclick="toggleHistoryPanel()" title="Lịch sử tra cứu">
+  📋
+</button>
+
+<!-- Panel lịch sử -->
+<div class="history-panel" id="historyPanel">
+  <div class="history-header">
+    <div class="history-header-title">📋 Lịch sử lấy số điện thoại khách hàng</div>
+    <button class="history-close" onclick="toggleHistoryPanel()">✕</button>
+  </div>
+  <div class="history-stats">
+    <div>Tổng tra cứu: <b id="hsTotalQueries">—</b></div>
+    <div>Số key dùng: <b id="hsTotalKeys">—</b></div>
+  </div>
+  <div class="history-body" id="historyBody">
+    <div class="history-empty">Đang tải...</div>
   </div>
 </div>
 
