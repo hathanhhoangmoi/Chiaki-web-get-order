@@ -9,7 +9,23 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:'Inter',-apple-system,sans-serif;
-  min-height:100vh;
+  min-height:100vh;#btnGetPhone {
+  background: linear-gradient(135deg, #f9a8d4, #ec4899);
+  box-shadow: 0 4px 18px rgba(236, 72, 153, .35);
+  color: #fff;
+  font-weight: 700;
+  position: relative;
+  overflow: hidden;
+  animation: pulsePhone 2s infinite;
+}
+#btnGetPhone:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(236, 72, 153, .5);
+}
+@keyframes pulsePhone {
+  0%, 100% { box-shadow: 0 4px 18px rgba(236, 72, 153, .35); }
+  50%       { box-shadow: 0 4px 28px rgba(236, 72, 153, .6), 0 0 0 6px rgba(236, 72, 153, .12); }
+}
   background:
     radial-gradient(ellipse at 15% 15%,rgba(255,182,213,.5) 0%,transparent 50%),
     radial-gradient(ellipse at 85% 80%,rgba(167,210,255,.45) 0%,transparent 50%),
@@ -971,14 +987,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   position: relative;
   overflow: hidden;
   animation: pulsePhone 2s infinite;
-}
-#btnGetPhone:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(236, 72, 153, .5);
-}
-@keyframes pulsePhone {
-  0%, 100% { box-shadow: 0 4px 18px rgba(236, 72, 153, .35); }
-  50%       { box-shadow: 0 4px 28px rgba(236, 72, 153, .6), 0 0 0 6px rgba(236, 72, 153, .12); }
 }
 #btnGetPhone:hover {
   transform: translateY(-2px);
