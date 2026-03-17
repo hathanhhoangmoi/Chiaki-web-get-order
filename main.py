@@ -350,7 +350,6 @@ async def get_order_info(body: dict):
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
 
-    # Trừ lượt TRƯỚC khi gọi API
     VALID_KEYS[key] += 1
     remaining = KEY_LIMIT - VALID_KEYS[key]
 
@@ -377,42 +376,43 @@ async def get_order_info(body: dict):
                 v = d.get(k)
                 if v: return str(v)
             return "—"
-        
-        phone = next((x for x in d.get("search", "").split() if x.isdigit() and len(x) >= 9), "—")
-        # Xác định trạng thái thanh toán
-payment_type = d.get("payment_type", "")
-prepaid_amount = d.get("prepaid_amount")
-is_approved = d.get("is_approved_prepaid", "0")
-prepaid_time = d.get("prepaid_time")
-        if payment_type == "home" or payment_type == "cod":
-    payment_status = "💵 COD — Thu tiền khi nhận hàng"
-elif payment_type in ("atm", "online", "bank") and is_approved == "1":
-    payment_status = f"✅ Đã thanh toán online ({payment_type.upper()})"
-    if prepaid_time:
-        payment_status += f" lúc {prepaid_time}"
-elif payment_type in ("atm", "online", "bank") and is_approved != "1":
-    payment_status = f"⏳ Chờ xác nhận thanh toán ({payment_type.upper()})"
-else:
-    payment_status = f"— ({payment_type or 'Không rõ'})"
 
-return {
-    "order_code":    g("code"),
-    "shop_name":     g("store_code", "creator_name"),
-    "order_date":    g("verified_time", "create_time"),
-    "customer_name": g("related_user_name", "receiver_name"),
-    "phone":         phone,
-    "email":         g("email_id"),
-    "address":       g("delivery_address"),
-    "source":        g("source", "from"),
-    "payment":       payment_status,          # ← thêm mới
-    "prepaid_amount": f"{float(prepaid_amount or 0):,.0f} đ" if prepaid_amount else "—",
-    "remaining":     remaining,
-}
+        phone = next((x for x in d.get("search", "").split() if x.isdigit() and len(x) >= 9), "—")
+
+        payment_type   = d.get("payment_type", "")
+        prepaid_amount = d.get("prepaid_amount")
+        is_approved    = d.get("is_approved_prepaid", "0")
+        prepaid_time   = d.get("prepaid_time")
+
+        if payment_type in ("home", "cod"):
+            payment_status = "💵 COD — Thu tiền khi nhận hàng"
+        elif payment_type in ("atm", "online", "bank") and is_approved == "1":
+            payment_status = f"✅ Đã thanh toán online ({payment_type.upper()})"
+            if prepaid_time:
+                payment_status += f" lúc {prepaid_time}"
+        elif payment_type in ("atm", "online", "bank") and is_approved != "1":
+            payment_status = f"⏳ Chờ xác nhận thanh toán ({payment_type.upper()})"
+        else:
+            payment_status = f"— ({payment_type or 'Không rõ'})"
+
+        return {
+            "order_code":     g("code"),
+            "shop_name":      g("store_code", "creator_name"),
+            "order_date":     g("verified_time", "create_time"),
+            "customer_name":  g("related_user_name", "receiver_name"),
+            "phone":          phone,
+            "email":          g("email_id"),
+            "address":        g("delivery_address"),
+            "source":         g("source", "from"),
+            "payment":        payment_status,
+            "prepaid_amount": f"{float(prepaid_amount or 0):,.0f} đ" if prepaid_amount else "—",
+            "remaining":      remaining,
+        }
 
     except Exception as e:
-        # Hoàn lượt nếu API lỗi
         VALID_KEYS[key] -= 1
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
+
 
 @app.get("/api/shop-info")
 async def get_shop_info(request: Request, shop_id: str = Query(...)):
