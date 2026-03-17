@@ -803,19 +803,29 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   box-shadow: 0 0 0 3px rgba(16,185,129,.15);
 }
 .history-panel {
-  display: none;                        /* ẩn mặc định, JS sẽ show với Chang2000 */
+  display: none;
   position: fixed;
-  right: 0;
-  top: 60px;                            /* ngay dưới header */
-  bottom: 0;
+  right: 12px;                                    /* lề phải */
+  top: 72px;                                      /* cách header */
+  bottom: 12px;                                   /* lề dưới */
   z-index: 8000;
   width: 320px;
-  background: rgba(255,255,255,.85);
+  background: rgba(255, 255, 255, .88);
   backdrop-filter: blur(30px) saturate(200%);
-  border-left: 1px solid rgba(198,181,255,.3);
-  box-shadow: -8px 0 40px rgba(160,130,200,.2);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(198, 181, 255, .35);
+  border-radius: 20px;                            /* bo cong góc */
+  box-shadow:
+    -6px 0 40px rgba(160, 130, 200, .18),
+    0 8px 32px rgba(160, 130, 200, .15),
+    inset 0 1.5px 0 rgba(255, 255, 255, .9);     /* shadow đẹp */
   flex-direction: column;
+  overflow: hidden;
 }
+.history-panel.open {
+  display: flex;
+}
+
 .history-panel.open {
   display: flex;                        /* hiện khi có class .open */
 }
