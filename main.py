@@ -36,6 +36,8 @@ VALID_KEYS = {
     "KEYPHONE-HOANG0833969683": 0,
 }
 KEY_LIMIT = 5
+# Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
+KEY_HISTORY: dict = {k: [] for k in VALID_KEYS}
 
 
 # Database setup
@@ -347,7 +349,11 @@ async def get_order_info(body: dict):
 
     VALID_KEYS[key] += 1
     remaining = KEY_LIMIT - VALID_KEYS[key]
-
+    from datetime import timezone
+now_vn = datetime.now(timezone(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
+if key not in KEY_HISTORY:
+    KEY_HISTORY[key] = []
+KEY_HISTORY[key].append({"order_code": order_code, "time": now_vn})
     input_id = order_code[2:9]
     url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
     session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
@@ -713,3 +719,19 @@ async def check_key(body: dict):
         return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
     used = VALID_KEYS[key]
     return {"used": used, "remaining": KEY_LIMIT - used, "limit": KEY_LIMIT}
+@app.get("/api/order-info/history")
+async def get_key_history(request: Request):
+    user_id = request.headers.get('X-User-ID', '')
+    if user_id != 'Chang2000':
+        return JSONResponse({"error": "Không có quyền."}, status_code=403)
+
+    result = []
+    for key, logs in KEY_HISTORY.items():
+        if logs:
+            result.append({
+                "key":     key,
+                "used":    VALID_KEYS.get(key, 0),
+                "limit":   KEY_LIMIT,
+                "history": logs
+            })
+    return {"data": result, "total_queries": sum(len(v) for v in KEY_HISTORY.values())}
