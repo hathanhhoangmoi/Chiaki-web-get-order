@@ -2334,15 +2334,20 @@ function toggleRevenuePanel() {
 let pendingOrder = null;
 
 function openTakeOrder(raw) {
-  const o = typeof raw === 'string' ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
-  pendingOrder = o;
-  document.getElementById('confirmCode').textContent    = o.ordercode    || '—';
-  document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
-  document.getElementById('confirmAddress').textContent = o.address      || '—';
-  document.getElementById('confirmProduct').textContent = o.product      || '—';
-  document.getElementById('confirmTotal').textContent   = o.total ? Number(o.total).toLocaleString('vi') : '—';
-  document.getElementById('orderConfirmBg').classList.add('show');
+  try {
+    const o = typeof raw === 'string' ? JSON.parse(raw.replace(/&#39;/g, "'")) : raw;
+    pendingOrder = o;
+    document.getElementById('confirmCode').textContent    = o.ordercode || '—';
+    document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
+    document.getElementById('confirmAddress').textContent = o.address || '—';
+    document.getElementById('confirmProduct').textContent = o.product || '—';
+    document.getElementById('confirmTotal').textContent   = o.total ? Number(o.total).toLocaleString('vi') : '—';
+    document.getElementById('orderConfirmBg').classList.add('show');
+  } catch(e) {
+    console.error('openTakeOrder lỗi:', e, 'raw:', raw);
+  }
 }
+
 
 
 
