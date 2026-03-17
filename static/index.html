@@ -2934,13 +2934,7 @@ async function loadNetRevShop(shopId, shopName) {
   }
 }
 // Chỉ hiện nút history với Chang2000
-function initHistoryBtn() {
-  const uid = localStorage.getItem('chiakiid') || '';
-  if (uid === 'Chang2000') {
-    document.getElementById('historyToggleBtn').classList.add('visible');
-  }
-}
-
+initHistoryBtn()
 let historyPanelOpen = false;
 function toggleHistoryPanel() {
   historyPanelOpen = !historyPanelOpen;
@@ -2951,7 +2945,8 @@ function toggleHistoryPanel() {
 async function loadHistoryPanel() {
   const body = document.getElementById('historyBody');
   body.innerHTML = '<div class="history-empty">Đang tải...</div>';
-
+  const uid = localStorage.getItem('chiakiid') || '';
+  console.log('[History] Sending X-User-ID:', uid); // debug
   try {
     const res = await fetch('/api/order-info/history', {
       headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
