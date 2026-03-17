@@ -624,6 +624,46 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       30 ngày
     </span>
   </button>
+<!-- Thêm vào phần header-right, sau nút revenueBtn -->
+<button class="btn btn-primary" id="megaadsBtn" onclick="toggleMegaadsPanel()" style="display:none">
+  🔒 THÔNG TIN ĐƠN HÀNG
+</button>
+
+<!-- Thêm panel mới sau #panelRevenue -->
+<div id="panelMegaads" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">🔒 THÔNG TIN ĐƠN HÀNG</div>
+      <div class="table-count" id="megaadsCount">Nhập thông tin để tra cứu</div>
+    </div>
+    <div style="padding:20px;background:rgba(255,255,255,.35);border-radius:12px;margin:0 20px 20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="display:block;font-size:11px;color:#9b8bb4;margin-bottom:4px;font-weight:600">📦 Mã đơn hàng</label>
+          <input id="megaadsOrderCode" class="id-input" placeholder="VD: R7548070493" style="font-family:monospace"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:#9b8bb4;margin-bottom:4px;font-weight:600">🔑 Session ID</label>
+          <input id="megaadsSessionId" class="id-input" placeholder="laravel_session=..." style="font-family:monospace"/>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="fetchMegaads()" style="width:100%;margin-top:12px;padding:12px 20px;font-size:14px">
+        🚀 Tra cứu ngay
+      </button>
+    </div>
+    <div id="megaadsResult" style="overflow-x:auto;display:none">
+      <table id="megaadsTable">
+        <thead id="megaadsThead"></thead>
+        <tbody id="megaadsTbody">
+          <tr><td colspan="2" class="empty">
+            <div class="empty-icon">⏳</div><div>Nhập thông tin và nhấn tra cứu</div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
     <div class="sync-info">Cập nhật gần nhất:<br><b id="lastSyncTime">—</b></div>
     <button class="btn btn-primary" id="syncBtn" onclick="manualSync()">🔄 Cập nhật ngay</button>
   </div>
@@ -2046,7 +2086,175 @@ function enableSound() {
   });
 }
 
+// ── MegaAds Panel ─────────────────────────────────────────
+let megaadsVisible = false;
+
+function toggleMegaadsPanel() {
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId !== 'Chang2000') {
+    showToast('❌ Chỉ Chang2000 mới có quyền sử dụng tính năng này');
+    return;
+  }
+
+  megaadsVisible = !megaadsVisible;
+  const btn = document.getElementById('megaadsBtn');
   
+  if (megaadsVisible) {
+    // Đóng các panel khác
+    if (hanoiVisible) toggleHanoiPanel();
+    if (nuocHoaVisible) toggleNuocHoaPanel();
+    if (revenueVisible) toggleRevenuePanel();
+    if (document.getElementById('takenPanel').classList.contains('show')) {
+      document.getElementById('takenPanel').classList.remove('show');
+    }
+    
+    btn.classList.add('active');
+    document.getElementById('panelMegaads').style.display = 'block';
+    document.getElementById('panelMain').style.display = 'none';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-id=""]').classList.add('active');
+    
+    // Clear form
+    document.getElementById('megaadsOrderCode').value = '';
+    document.getElementById('megaadsSessionId').value = '';
+    document.getElementById('megaadsResult').style.display = 'none';
+  } else {
+    btn.classList.remove('active');
+    document.getElementById('panelMegaads').style.display = 'none';
+    document.getElementById('panelMain').style.display = 'block';
+  }
+}
+
+async function fetchMegaads() {
+  const orderCode = document.getElementById('megaadsOrderCode').value.trim();
+  const sessionId = document.getElementById('megaadsSessionId').value.trim();
+  
+  if (!orderCode || !sessionId) {
+    showToast('❌ Vui lòng nhập đầy đủ Mã đơn hàng và Session ID');
+    return;
+  }
+  
+  if (!/^R\d{10}$/.test(orderCode)) {
+    showToast('❌ Mã đơn hàng không đúng định dạng (VD: R7548070493)');
+    return;
+  }
+  
+  const inoutputId = orderCode.slice(1, 8); // Lấy 7 ký tự sau R
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Đang tra cứu...';
+  
+  try {
+    document.getElementById('megaadsResult').style.display = 'block';
+    const tbody = document.getElementById('megaadsTbody');
+    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;padding:40px">
+      <div class="spinner" style="margin:0 auto 12px"></div>
+      <div>Đang tra cứu mã khuyến mãi...</div>
+    </td></tr>`;
+    
+    const response = await fetch(`https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=${inoutputId}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'platform': 'ios',
+        'Cookie': sessionId,
+        'User-Agent': 'chiakiApp/3.6.2'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (!data || !data.data || data.data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="2" class="empty">
+        <div class="empty-icon">📭</div>
+        <div>Không tìm thấy mã khuyến mãi cho đơn hàng ${orderCode}</div>
+      </td></tr>`;
+      document.getElementById('megaadsCount').textContent = '0 mã khuyến mãi';
+      return;
+    }
+    
+    document.getElementById('megaadsCount').textContent = `${data.data.length} mã khuyến mãi`;
+    
+    tbody.innerHTML = data.data.map((item, idx) => {
+      const keys = Object.keys(item);
+      return keys.map(key => `
+        <tr>
+          <td style="font-weight:600;font-size:11px;color:#9b8bb4;padding:8px 14px 8px 20px;border-right:1px solid rgba(198,181,255,.2)">
+            ${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+          </td>
+          <td style="position:relative">
+            <div style="font-family:monospace;font-size:12px;padding:8px 20px 8px 14px;word-break:break-all">
+              ${item[key] || '—'}
+            </div>
+            <button class="btn-copy" onclick="copyMegaadsValue(${idx}, '${key}')" 
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:.8">
+              📋 Copy
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }).join('');
+    
+    showToast(`✅ Tìm thấy ${data.data.length} thông tin cho đơn ${orderCode}`);
+    
+  } catch (error) {
+    console.error('MegaAds error:', error);
+    const tbody = document.getElementById('megaadsTbody');
+    tbody.innerHTML = `<tr><td colspan="2" class="empty">
+      <div class="empty-icon">⚠️</div>
+      <div>Lỗi tra cứu: ${error.message}</div>
+    </td></tr>`;
+    showToast('❌ Lỗi kết nối MegaAds API');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Tra cứu ngay';
+  }
+}
+
+function copyMegaadsValue(itemIdx, key) {
+  // Tìm element chứa value
+  const row = document.querySelector(`#megaadsTbody tr:nth-child(${itemIdx * 2 + 2}) td:last-child div`);
+  if (!row) return;
+  
+  const text = row.textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✅ Đã copy';
+    btn.style.background = 'rgba(110,231,183,.3)';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+  }).catch(() => {
+    // Fallback
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✅ Đã copy';
+    btn.style.background = 'rgba(110,231,183,.3)';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+  });
+}
+
+// Hiển thị button chỉ cho Chang2000
+document.addEventListener('DOMContentLoaded', function() {
+  const currentId = localStorage.getItem('chiaki_id');
+  if (currentId === 'Chang2000') {
+    document.getElementById('megaadsBtn').style.display = 'inline-flex';
+  }
+});
+ 
 if (checkIdGate()) { init(); }
 </script>
 
