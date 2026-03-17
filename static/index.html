@@ -1683,15 +1683,20 @@ function confirmPass() {
 
 function toggleOrderInfoModal() {
   document.getElementById('orderInfoBg').classList.add('show');
+  // Tự điền key lần trước
+  const savedKey = localStorage.getItem('lastInfoKey');
+  if (savedKey && !document.getElementById('infoKey').value) {
+    document.getElementById('infoKey').value = savedKey;
+  }
   setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
 }
+
 
 function closeOrderInfoModal() {
   document.getElementById('orderInfoBg').classList.remove('show');
   document.getElementById('infoResult').classList.remove('show');
   document.getElementById('infoError').classList.remove('show');
   document.getElementById('infoOrderCode').value = '';
-  document.getElementById('infoKey').value = '';
   document.getElementById('infoKeyStatus').textContent = '';
 
 }
@@ -1714,7 +1719,7 @@ async function fetchOrderInfo() {
     errEl.textContent = 'Vui lòng nhập key.';
     errEl.classList.add('show'); return;
   }
-
+  localStorage.setItem('lastInfoKey', key);
   btn.disabled = true;
   btn.textContent = 'Đang tra cứu...';
 
@@ -2934,6 +2939,14 @@ async function loadNetRevShop(shopId, shopName) {
     document.getElementById('netRevLoading').style.display = 'none';
   }
 }
+function initHistoryBtn() {
+  const uid = localStorage.getItem('chiakiid') || '';
+  if (uid === 'Chang2000') {
+    document.getElementById('historyToggleBtn').classList.add('visible');
+  }
+}
+
+let historyPanelOpen = false;
 
 function toggleHistoryPanel() {
   historyPanelOpen = !historyPanelOpen;
