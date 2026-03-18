@@ -68,7 +68,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-
+UNLIMITED_KEYS = {"KEYPHONE-UNLIMITED"} 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Sync ngay khi khởi động
@@ -366,11 +366,8 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     if key not in VALID_KEYS:
         return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
 
-    if VALID_KEYS[key] >= KEY_LIMIT:
-    UNLIMITED_KEYS = {"KEYPHONE-UNLIMITED"}  # Các key không giới hạn
-
     if key not in UNLIMITED_KEYS and VALID_KEYS[key] >= KEY_LIMIT:
-        return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
+    return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
 
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
