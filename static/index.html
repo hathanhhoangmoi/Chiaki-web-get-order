@@ -1877,7 +1877,9 @@ async function fetchOrderInfo() {
     document.getElementById('irSource').textContent  = data.source        || '—';
     document.getElementById('irPayment').textContent  = data.payment       || '—';
     document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
-
+    document.getElementById('irShippingCode').textContent    = d.shipping_code         || '—';
+    document.getElementById('irDeliveryStatus').textContent  = d.delivery_status === 'successful' ? '✅ Đã giao thành công' : (d.delivery_status || '—');
+    document.getElementById('irShipperReceive').textContent  = d.shipper_receive_time  || '—';
     // Hiện lượt còn lại
     document.getElementById('infoKeyStatus').textContent =
       `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
@@ -3273,7 +3275,10 @@ if (checkIdGate()) { init(); }
       <div class="info-row"><span class="info-label">Nguồn đơn hàng</span><span class="info-value" id="irSource">—</span></div>
       <div class="info-row"><span class="info-label">Thanh toán</span><span class="info-value" id="irPayment">—</span></div>
       <div class="info-row"><span class="info-label">Số tiền TT</span><span class="info-value" id="irPrepaid">—</span></div>
-
+      <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin:12px 0 8px">VẬN CHUYỂN</div>
+      <div class="info-row"><span class="info-label">Mã vận đơn</span><span class="info-value" id="irShippingCode">—</span></div>
+      <div class="info-row"><span class="info-label">Trạng thái giao</span><span class="info-value" id="irDeliveryStatus">—</span></div>
+      <div class="info-row"><span class="info-label">Shipper lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
     </div>
     <div class="info-btns">
       <button class="btn-info-cancel" onclick="closeOrderInfoModal()">Đóng</button>
