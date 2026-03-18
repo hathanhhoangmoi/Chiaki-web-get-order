@@ -990,6 +990,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -1314,7 +1315,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       <div class="order-info-label">💰 Tổng tiền</div>
       <div class="order-info-value" id="confirmTotal">—</div>
     </div>
-
+    
     <div class="order-modal-btns">
       <button class="btn-modal-cancel" onclick="closeConfirmModal()">❌ Đóng</button>
       <button class="btn-modal-confirm" onclick="acceptOrder()">🔽 Tải về</button>
@@ -1888,9 +1889,23 @@ async function fetchOrderInfo() {
     document.getElementById('irShippingCode').textContent    = data.shipping_code         || '—';
     document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✅ Đã giao thành công' : (data.delivery_status || '—');
     document.getElementById('irShipperReceive').textContent  = data.shipper_receive_time  || '—';
+
+    window.currentInfoData = {
+  shop_name:      data.shop_name      || '—',
+  shipping_code:  data.shipping_code  || '—',
+  order_code:     data.order_code     || '—',
+  customer_name:  data.customer_name  || '—',
+  address:        data.address        || '—',
+  product:        data.product        || '—',
+  order_date:     data.order_date     || '—',
+  prepaid_amount: data.prepaid_amount || '—'
+};
+    
     // Hiện lượt còn lại
     document.getElementById('infoKeyStatus').textContent =
       `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
+const pdfBtn = document.getElementById('btnExportPdf');
+if (pdfBtn) pdfBtn.style.display = 'block';
 
     resultEl.classList.add('show');
   } catch(e) {
@@ -3259,6 +3274,96 @@ function searchOrder() {
   openTakeOrder(found);
 }
 
+// ─── Export phiếu vận chuyển PDF 4×6 inch ─────────────────
+const CHIAKI_LOGO = 'https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/e2484ef5-1362-44fb-ab05-f6b426a669d5';
+
+function exportShippingLabel() {
+  const d = window.currentInfoData;
+  if (!d || !d.order_code || d.order_code === '—') {
+    alert('Vui lòng tra cứu đơn hàng trước.');
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = `
+    position:absolute; left:-9999px; top:0;
+    width:384px; min-height:576px;
+    padding:16px 18px; box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:10px; line-height:1.5;
+    background:#fff; color:#000;
+  `;
+
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:10px;">
+      <img src="${CHIAKI_LOGO}" style="height:36px;object-fit:contain;" alt="Chiaki.vn">
+      <div style="text-align:right;font-size:9px;line-height:1.7;">
+        <div><b>Mã vận đơn:</b> ${d.shipping_code}</div>
+        <div><b>Mã đơn hàng:</b> ${d.order_code}</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid #000;padding:7px 10px;margin-bottom:10px;border-radius:4px;">
+      <div style="font-size:9px;font-weight:700;color:#666;margin-bottom:2px;">TỪ:</div>
+      <div style="font-weight:700;font-size:11px;">${d.shop_name}</div>
+    </div>
+
+    <div style="border:2px solid #000;padding:9px 10px;margin-bottom:10px;border-radius:4px;">
+      <div style="font-size:9px;font-weight:700;color:#666;margin-bottom:3px;">ĐẾN:</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:3px;">${d.customer_name}</div>
+      <div style="font-size:10px;">${d.address}</div>
+    </div>
+
+    <div style="border:1px solid #000;padding:8px 10px;margin-bottom:10px;border-radius:4px;">
+      <div style="font-size:9px;font-weight:700;color:#666;margin-bottom:4px;">NỘI DUNG HÀNG (Tổng SL sản phẩm: 1)</div>
+      <div style="font-size:10px;">1. ${d.product} &nbsp; SL: 1</div>
+      <div style="font-size:8px;color:#888;margin-top:6px;">
+        Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn / Mã đơn hàng trước khi nhận hàng.
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="width:72px;height:72px;border:1px solid #ccc;border-radius:4px;
+                  display:flex;align-items:center;justify-content:center;font-size:8px;color:#bbb;">QR Code</div>
+      <div style="flex:1;margin-left:12px;height:44px;border:1px solid #ccc;border-radius:4px;
+                  display:flex;align-items:center;justify-content:center;font-size:8px;color:#bbb;">Barcode</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;font-size:9px;
+                border-top:1px solid #ddd;padding-top:8px;margin-bottom:10px;">
+      <span><b>Ngày đặt hàng:</b><br><b style="font-size:11px;">${d.order_date}</b></span>
+    </div>
+
+    <div style="border:2px solid #000;border-radius:6px;padding:10px 14px;
+                display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:10px;color:#555;">Tiền thu người nhận:</div>
+      <div style="font-size:22px;font-weight:900;">${d.prepaid_amount}</div>
+    </div>
+
+    <div style="border:1px solid #000;margin-top:10px;border-radius:4px;padding:8px 10px;
+                display:flex;justify-content:flex-end;">
+      <div style="text-align:center;width:120px;">
+        <div style="font-size:8px;font-weight:700;">Chữ ký người nhận</div>
+        <div style="font-size:8px;color:#888;margin-top:2px;">Xác nhận hàng nguyên vẹn, không móp/méo, bể/vỡ</div>
+        <div style="height:36px;"></div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(wrap);
+
+  html2pdf().set({
+    margin: 0,
+    filename: `${d.order_code}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'in', format: [4, 6], orientation: 'portrait' }
+  }).from(wrap).save()
+    .catch(e => alert('Xuất PDF thất bại: ' + e.message))
+    .finally(() => document.body.removeChild(wrap));
+}
+// ─── End export PDF ────────────────────────────────────────
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
@@ -3297,6 +3402,12 @@ if (checkIdGate()) { init(); }
       <div class="info-row"><span class="info-label">Trạng thái giao</span><span class="info-value" id="irDeliveryStatus">—</span></div>
       <div class="info-row"><span class="info-label">Shipper lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
     </div>
+    <!-- Button Export PDF 4x6 inch -->
+    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
+      <button class="btn-modal-cancel" onclick="closeInfoModal()">Đóng</button>
+      <button class="btn-modal-confirm" onclick="exportShippingLabel()" style="background: #ff6b35;">📄 IN PHIẾU GIAO HÀNG"</button>
+    </div>
+
     <div class="info-btns">
       <button class="btn-info-cancel" onclick="closeOrderInfoModal()">Đóng</button>
       <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()">🔍 Tra cứu</button>
