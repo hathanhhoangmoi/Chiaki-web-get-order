@@ -369,7 +369,7 @@ async def get_revenue():
         "data": results,
     }
 @app.post("/api/order-info")
-async def get_order_info(body: dict):
+async def get_order_info(body: dict, db: Session = Depends(get_db)):
     order_code = body.get("order_code", "").strip()
     key        = body.get("key", "").strip()
 
@@ -436,24 +436,28 @@ async def get_order_info(body: dict):
             payment_status = f"⏳ Chờ xác nhận thanh toán ({payment_type.upper()})"
         else:
             payment_status = f"— ({payment_type or 'Không rõ'})"
-
+        db_order = db.query(Order).filter(
+            Order.order_code.like(f"%_{order_code}")
+        ).first()
+        db_product = db_order.product if db_order else "—"
+        db_total   = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
         return {
-            "order_code":     g("code"),
-            "shop_name":      g("store_code", "creator_name"),
-            "order_date":     g("verified_time", "create_time"),
-            "customer_name":  g("related_user_name", "receiver_name"),
-            "phone":          phone,
-            "email":          g("email_id"),
-            "address":        g("delivery_address"),
-            "source":         g("source", "from"),
-            "payment":        payment_status,
-            "prepaid_amount": f"{float(prepaid_amount or 0):,.0f} đ" if prepaid_amount else "—",
-            "shipping_code":    g("shipping_code"),
-            "delivery_status":  g("delivery_status"),
-            "shipper_receive_time": g("shipper_receive_time"),
-            "remaining":      remaining,
-        }
-
+    "order_code":           g("code"),
+    "shop_name":            g("store_code", "creator_name"),
+    "order_date":           g("verified_time", "create_time"),
+    "customer_name":        g("related_user_name", "receiver_name"),
+    "phone":                phone,
+    "email":                g("email_id"),
+    "address":              g("delivery_address"),
+    "source":               g("source", "from"),
+    "payment":              payment_status,
+    "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
+    "shipping_code":        g("shipping_code"),
+    "delivery_status":      g("delivery_status"),
+    "shipper_receive_time": g("shipper_receive_time"),
+    "product":              db_product,          # ← thêm mới
+    "remaining":            remaining,
+}
     except Exception as e:
         VALID_KEYS[key] -= 1
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
