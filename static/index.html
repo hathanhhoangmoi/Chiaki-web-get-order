@@ -3307,29 +3307,44 @@ function searchOrder() {
 // ─── Export phiếu vận chuyển PDF 4×6 inch ─────────────────
 const CHIAKI_LOGO = 'https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/e2484ef5-1362-44fb-ab05-f6b426a669d5';
 
-function exportShippingLabel() {
+async function exportShippingLabel() {
   const d = window.currentInfoData;
   if (!d || !d.order_code || d.order_code === '—') {
     alert('Vui lòng tra cứu đơn hàng trước.');
     return;
   }
 
-  // Đổ dữ liệu vào phiếu
-  document.getElementById('slShippingCode').textContent = d.shipping_code;
-  document.getElementById('slOrderCode').textContent    = d.order_code;
-  document.getElementById('slShopName').textContent     = d.shop_name;
-  document.getElementById('slCustomerName').textContent = d.customer_name;
-  document.getElementById('slAddress').textContent      = d.address;
-  document.getElementById('slProduct').textContent      = d.product;
-  document.getElementById('slOrderDate').textContent    = d.order_date;
-  document.getElementById('slTotal').textContent        = d.prepaid_amount;
+  const btn = document.getElementById('btnExportPdf');
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tạo phiếu...';
 
-  // Đặt tên file in = mã đơn, rồi gọi print
-  const oldTitle = document.title;
-  document.title = d.order_code;
-  window.print();
-  document.title = oldTitle;
+  try {
+    const res = await fetch('/api/print-label', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    });
+
+    if (!res.ok) throw new Error('Server lỗi ' + res.status);
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${d.order_code}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Tạo phiếu thất bại: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
 }
+
 
 // ─── End export PDF ────────────────────────────────────────
 
