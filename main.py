@@ -58,27 +58,7 @@ VALID_KEYS = {
     "KEYPHONE-40816-529743-17638": 0,
     "KEYPHONE-96253-187640-83592": 0,
     "KEYPHONE-13784-690215-47286": 0,
-    "KEYPHONE-HOANG": 0,
-    "KEYPHONE-HOANG1": 0,
-    "KEYPHONE-HOANG2": 0,
-    "KEYPHONE-HOANG3": 0,
-    "KEYPHONE-HOANG4": 0,
-    "KEYPHONE-HOANG5": 0,
-    "KEYPHONE-HOANG6": 0,
-    "KEYPHONE-HOANG7": 0,
-    "KEYPHONE-HOANG8": 0,
-    "KEYPHONE-HOANG9": 0,
-    "KEYPHONE-HOANG10": 0,
-    "KEYPHONE-HOANG11": 0,
-    "KEYPHONE-HOANG12": 0,
-    "KEYPHONE-HOANG13": 0,
-    "KEYPHONE-HOANG14": 0,
-    "KEYPHONE-HOANG15": 0,
-    "KEYPHONE-HOANG16": 0,
-    "KEYPHONE-HOANG17": 0,
-    "KEYPHONE-HOANG18": 0,
-    "KEYPHONE-HOANG19": 0,
-    "KEYPHONE-HOANG20": 0,
+    "KEYPHONE-UNLIMITED": 0,
 }
 KEY_LIMIT = 5
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
@@ -387,13 +367,16 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
 
     if VALID_KEYS[key] >= KEY_LIMIT:
+    UNLIMITED_KEYS = {"KEYPHONE-UNLIMITED"}  # Các key không giới hạn
+
+    if key not in UNLIMITED_KEYS and VALID_KEYS[key] >= KEY_LIMIT:
         return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
 
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
 
     VALID_KEYS[key] += 1
-    remaining = KEY_LIMIT - VALID_KEYS[key]
+    remaining = -1 if key in UNLIMITED_KEYS else KEY_LIMIT - VALID_KEYS[key]
 
     from datetime import timezone as _tz
     now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
@@ -773,7 +756,13 @@ async def check_key(body: dict):
     if key not in VALID_KEYS:
         return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
     used = VALID_KEYS[key]
-    return {"used": used, "remaining": KEY_LIMIT - used, "limit": KEY_LIMIT}
+is_unlimited = key in UNLIMITED_KEYS
+return {
+    "used": used,
+    "remaining": -1 if is_unlimited else KEY_LIMIT - used,
+    "limit": -1 if is_unlimited else KEY_LIMIT,
+    "unlimited": is_unlimited
+}
 @app.get("/api/order-info/history")
 async def get_key_history(request: Request):
     user_id = request.headers.get('X-User-ID', '')
