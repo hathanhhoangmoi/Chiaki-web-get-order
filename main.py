@@ -17,8 +17,6 @@ import httpx
 import openpyxl
 from fastapi import Request
 from fastapi.responses import StreamingResponse
-import aiosqlite
-
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
