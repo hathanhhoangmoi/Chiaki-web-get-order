@@ -1874,6 +1874,7 @@ async function fetchOrderInfo() {
     document.getElementById('irPhone').textContent   = data.phone         || '—';
     document.getElementById('irEmail').textContent   = data.email         || '—';
     document.getElementById('irAddress').textContent = data.address       || '—';
+    document.getElementById('irProduct').textContent  = data.product        || '—';
     document.getElementById('irSource').textContent  = data.source        || '—';
     document.getElementById('irPayment').textContent  = data.payment       || '—';
     document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
@@ -3272,6 +3273,7 @@ if (checkIdGate()) { init(); }
       <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="irPhone">—</span></div>
       <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="irEmail">—</span></div>
       <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
+      <div class="info-row"><span class="info-label">Sản phẩm</span><span class="info-value" id="irProduct">—</span></div>
       <div class="info-row"><span class="info-label">Nguồn đơn hàng</span><span class="info-value" id="irSource">—</span></div>
       <div class="info-row"><span class="info-label">Thanh toán</span><span class="info-value" id="irPayment">—</span></div>
       <div class="info-row"><span class="info-label">Số tiền TT</span><span class="info-value" id="irPrepaid">—</span></div>
