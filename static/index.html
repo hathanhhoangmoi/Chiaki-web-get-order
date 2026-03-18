@@ -1076,19 +1076,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 
 <!-- Bảng tải đơn Excel - luôn hiển thị bên trái -->
 <div class="download-panel">
-  <div class="download-panel-title">
-    📥 Tải đơn hàng
-  </div>
-  <input
-    class="download-input"
-    id="dlOrderCode"
-    type="text"
-    placeholder="Nhập mã đơn hàng..."
-    onkeydown="if(event.key==='Enter') downloadOrder()"
-  />
-  <button class="btn-download" id="dlBtn" onclick="downloadOrder()">
-    ⬇️ Tải về Excel
-  </button>
+  <div class="download-panel-title">🔍 Tìm kiếm đơn hàng</div>
+  <input class="download-input" id="dlOrderCode" type="text" placeholder="Nhập mã đơn (R123456789)..." onkeydown="if(event.key==='Enter') searchOrder()">
+  <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
   <div class="download-msg" id="dlMsg"></div>
 </div>
 
@@ -2337,43 +2327,29 @@ let pendingOrder = null;
 
 function openTakeOrder(raw) {
   try {
-    // Nếu GET truyền vào chuỗi JSON thì parse lại
     const o = (typeof raw === 'string')
       ? JSON.parse(raw.replace(/&#39;/g, "'"))
       : raw;
-
-    // Lưu tạm đơn hàng đang chọn
     pendingOrder = o;
 
-    // Đổ thông tin ra popup xác nhận
-    document.getElementById('confirmCode').textContent =
-      o.ordercode || '—';
-    document.getElementById('confirmName').textContent =
-      o.customername || o.buyername || '—';
-    document.getElementById('confirmAddress').textContent =
-      o.address || '—';
-    document.getElementById('confirmProduct').textContent =
-      o.product || '—';
-    document.getElementById('confirmTotal').textContent =
-      o.total ? Number(o.total).toLocaleString('vi') : '—';
+    // Đọc đúng field từ DB
+    document.getElementById('confirmCode').textContent    = o.ordercode    || '—';
+    document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
+    document.getElementById('confirmAddress').textContent = o.address       || '—';
+    document.getElementById('confirmProduct').textContent = o.product       || '—';
+    document.getElementById('confirmTotal').textContent   = o.total
+      ? Number(o.total).toLocaleString('vi') : '—';
 
-    // Mở popup
     document.getElementById('orderConfirmBg').classList.add('show');
-  } catch (e) {
-    console.error('openTakeOrder lỗi:', e, 'raw:', raw);
+  } catch(e) {
+    console.error('openTakeOrder lỗi:', e);
   }
 }
-
-
-
-
-
 
 function closeConfirmModal() {
   document.getElementById('orderConfirmBg').classList.remove('show');
   pendingOrder = null;
 }
-
 
 function acceptOrder() {
   if (!pendingOrder) return;
@@ -3155,14 +3131,12 @@ function initHistoryBtn() {
   const uid = localStorage.getItem('chiakiid');
   if (uid === 'Chang2000' || uid === 'PhuongPN2000') {
     const panel = document.getElementById('historyPanel');
-    panel.classList.add('open');
-    loadHistoryPanel();
-    // Hiện nút toggle lịch sử
     const toggleBtn = document.getElementById('historyToggleBtn');
+    if (panel) panel.classList.add('open');
     if (toggleBtn) toggleBtn.classList.add('visible');
+    loadHistoryPanel();
   }
 }
-
 
 let historyPanelOpen = false;
 
@@ -3328,58 +3302,31 @@ async function loadHistoryPanel() {
     }
   }
 }
-async function downloadOrder() {
-  const code = document.getElementById('dlOrderCode').value.trim();
-  const msg  = document.getElementById('dlMsg');
-  const btn  = document.getElementById('dlBtn');
+function searchOrder() {
+  const raw   = document.getElementById('dlOrderCode').value.trim();
+  const msgEl = document.getElementById('dlMsg');
 
-  msg.className = 'download-msg';
-  msg.textContent = '';
+  if (!raw) return;
 
-  if (!code) {
-    msg.textContent = 'Vui lòng nhập mã đơn hàng';
-    msg.className = 'download-msg err';
+  // Tìm trong allOrders (đã load sẵn), so khớp phần sau dấu "_"
+  // DB lưu dạng: IDShop_Mã đơn  →  so với giá trị nhập vào
+  const found = (window.allOrders || []).find(o => {
+    const code = (o.ordercode || '').split('_').slice(1).join('_') || o.ordercode;
+    return code.toLowerCase() === raw.toLowerCase();
+  });
+
+  msgEl.className = 'download-msg';
+  msgEl.style.display = 'block';
+
+  if (!found) {
+    msgEl.textContent = '📦 Đơn hàng đã được gian hàng gửi đi';
+    msgEl.classList.add('err');
     return;
   }
 
-  btn.disabled = true;
-  btn.innerHTML = '<span style="font-size:13px">⏳</span> Đang tải...';
-
-  try {
-    const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
-
-    if (!res.ok) {
-  let errMsg = 'Không tìm thấy đơn hàng';
-  try {
-    const data = await res.json();
-    errMsg = data.error || errMsg;
-  } catch (_) {}
-  throw new Error(errMsg);
+  msgEl.style.display = 'none';
+  openTakeOrder(found);
 }
-
-
-    // Tải file về
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `${code}.xlsx`;  
-    a.click();
-    URL.revokeObjectURL(url);
-
-    msg.textContent = '✅ Tải thành công!';
-    msg.className   = 'download-msg ok';
-    document.getElementById('dlOrderCode').value = '';
-
-  } catch(e) {
-    msg.textContent = '⛔ ' + e.message;
-    msg.className   = 'download-msg err';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '⬇️ Tải về Excel';
-  }
-}
-
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
