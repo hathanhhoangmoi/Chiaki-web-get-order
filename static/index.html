@@ -1877,9 +1877,9 @@ async function fetchOrderInfo() {
     document.getElementById('irSource').textContent  = data.source        || '—';
     document.getElementById('irPayment').textContent  = data.payment       || '—';
     document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
-    document.getElementById('irShippingCode').textContent    = d.shipping_code         || '—';
-    document.getElementById('irDeliveryStatus').textContent  = d.delivery_status === 'successful' ? '✅ Đã giao thành công' : (d.delivery_status || '—');
-    document.getElementById('irShipperReceive').textContent  = d.shipper_receive_time  || '—';
+    document.getElementById('irShippingCode').textContent    = data.shipping_code         || '—';
+    document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✅ Đã giao thành công' : (d.delivery_status || '—');
+    document.getElementById('irShipperReceive').textContent  = data.shipper_receive_time  || '—';
     // Hiện lượt còn lại
     document.getElementById('infoKeyStatus').textContent =
       `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
