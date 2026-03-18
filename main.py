@@ -367,7 +367,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
 
     if key not in UNLIMITED_KEYS and VALID_KEYS[key] >= KEY_LIMIT:
-    return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
+        return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
 
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
@@ -753,12 +753,12 @@ async def check_key(body: dict):
     if key not in VALID_KEYS:
         return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
     used = VALID_KEYS[key]
-is_unlimited = key in UNLIMITED_KEYS
-return {
-    "used": used,
-    "remaining": -1 if is_unlimited else KEY_LIMIT - used,
-    "limit": -1 if is_unlimited else KEY_LIMIT,
-    "unlimited": is_unlimited
+    is_unlimited = key in UNLIMITED_KEYS
+    return {
+        "used": used,
+        "remaining": -1 if is_unlimited else KEY_LIMIT - used,
+        "limit": -1 if is_unlimited else KEY_LIMIT,
+        "unlimited": is_unlimited
 }
 @app.get("/api/order-info/history")
 async def get_key_history(request: Request):
