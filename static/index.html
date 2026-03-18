@@ -1945,7 +1945,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-
+function closeOrderInfoModal() {
+  document.getElementById('orderInfoBg').classList.remove('show');
+  document.getElementById('infoResult').classList.remove('show');
+  document.getElementById('infoError').classList.remove('show');
+  document.getElementById('infoOrderCode').value = '';
+  document.getElementById('infoKeyStatus').textContent = '';
+  // Ẩn lại nút PDF
+  const pdfBtn = document.getElementById('btnExportPdf');
+  if (pdfBtn) pdfBtn.style.display = 'none';
+}
 
 function selectShop(id) {
   if (hanoiVisible) {
@@ -3277,6 +3286,9 @@ function searchOrder() {
 // ─── Export phiếu vận chuyển PDF 4×6 inch ─────────────────
 const CHIAKI_LOGO = 'https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/e2484ef5-1362-44fb-ab05-f6b426a669d5';
 
+// ─── Export phiếu vận chuyển PDF 4×6 inch ─────────────────
+const CHIAKI_LOGO = 'https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/e2484ef5-1362-44fb-ab05-f6b426a669d5';
+
 function exportShippingLabel() {
   const d = window.currentInfoData;
   if (!d || !d.order_code || d.order_code === '—') {
@@ -3285,85 +3297,137 @@ function exportShippingLabel() {
   }
 
   const wrap = document.createElement('div');
+  // FIX: visibility:hidden thay vì left:-9999px
   wrap.style.cssText = `
-    position:absolute; left:-9999px; top:0;
-    width:384px; min-height:576px;
+    position:fixed; top:0; left:0;
+    visibility:hidden; pointer-events:none;
+    width:384px;
     padding:16px 18px; box-sizing:border-box;
     font-family:Arial,Helvetica,sans-serif;
     font-size:10px; line-height:1.5;
     background:#fff; color:#000;
+    z-index:-1;
   `;
 
   wrap.innerHTML = `
+    <!-- HEADER: Logo trái + Mã vận đơn / đơn hàng phải -->
     <div style="display:flex;align-items:flex-start;justify-content:space-between;
                 border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:10px;">
-      <img src="${CHIAKI_LOGO}" style="height:36px;object-fit:contain;" alt="Chiaki.vn">
-      <div style="text-align:right;font-size:9px;line-height:1.7;">
-        <div><b>Mã vận đơn:</b> ${d.shipping_code}</div>
-        <div><b>Mã đơn hàng:</b> ${d.order_code}</div>
+      <img src="${CHIAKI_LOGO}" crossorigin="anonymous"
+           style="height:38px;object-fit:contain;" alt="Chiaki.vn"
+           onerror="this.outerHTML='<span style=font-weight:900;font-size:18px;font-style:italic>Chiaki.vn</span>'">
+      <div style="text-align:right;font-size:9px;line-height:1.9;">
+        <div><b>Mã vận đơn: ${d.shipping_code}</b></div>
+        <div>Mã đơn hàng: ${d.order_code}</div>
       </div>
     </div>
 
-    <div style="border:1px solid #000;padding:7px 10px;margin-bottom:10px;border-radius:4px;">
-      <div style="font-size:9px;font-weight:700;color:#666;margin-bottom:2px;">TỪ:</div>
-      <div style="font-weight:700;font-size:11px;">${d.shop_name}</div>
+    <!-- Dòng kẻ mã barcode (để trắng) -->
+    <div style="border:1px dashed #bbb;border-radius:4px;height:36px;
+                display:flex;align-items:center;justify-content:center;
+                font-size:8px;color:#ccc;margin-bottom:10px;">
+      ████ ██ ████ ██ ████ (barcode)
     </div>
 
-    <div style="border:2px solid #000;padding:9px 10px;margin-bottom:10px;border-radius:4px;">
-      <div style="font-size:9px;font-weight:700;color:#666;margin-bottom:3px;">ĐẾN:</div>
-      <div style="font-weight:700;font-size:13px;margin-bottom:3px;">${d.customer_name}</div>
-      <div style="font-size:10px;">${d.address}</div>
-    </div>
-
-    <div style="border:1px solid #000;padding:8px 10px;margin-bottom:10px;border-radius:4px;">
-      <div style="font-size:9px;font-weight:700;color:#666;margin-bottom:4px;">NỘI DUNG HÀNG (Tổng SL sản phẩm: 1)</div>
-      <div style="font-size:10px;">1. ${d.product} &nbsp; SL: 1</div>
-      <div style="font-size:8px;color:#888;margin-top:6px;">
-        Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn / Mã đơn hàng trước khi nhận hàng.
+    <!-- Phần TỪ / ĐẾN hai cột -->
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div style="flex:1;border:1px solid #000;padding:7px 9px;border-radius:4px;">
+        <div style="font-size:8px;font-weight:700;color:#555;margin-bottom:3px;">Từ:</div>
+        <div style="font-weight:700;font-size:11px;">${d.shop_name}</div>
+      </div>
+      <div style="flex:2;border:2px solid #000;padding:7px 9px;border-radius:4px;">
+        <div style="font-size:8px;font-weight:700;color:#555;margin-bottom:3px;">Đến:</div>
+        <div style="font-weight:700;font-size:12px;margin-bottom:3px;">${d.customer_name}</div>
+        <div style="font-size:9px;line-height:1.6;">${d.address}</div>
       </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="width:72px;height:72px;border:1px solid #ccc;border-radius:4px;
-                  display:flex;align-items:center;justify-content:center;font-size:8px;color:#bbb;">QR Code</div>
-      <div style="flex:1;margin-left:12px;height:44px;border:1px solid #ccc;border-radius:4px;
-                  display:flex;align-items:center;justify-content:center;font-size:8px;color:#bbb;">Barcode</div>
+    <!-- Nội dung hàng + QR bên phải -->
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div style="flex:1;border:1px solid #000;padding:8px 9px;border-radius:4px;">
+        <div style="font-size:8px;font-weight:700;margin-bottom:5px;">
+          Nội dung hàng (Tổng SL sản phẩm: 1)
+        </div>
+        <div style="font-size:10px;line-height:1.6;">
+          1. ${d.product}, SL: 1
+        </div>
+        <div style="font-size:7.5px;color:#888;margin-top:8px;">
+          Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn / Mã đơn hàng<br>
+          trước khi nhận hàng (Lưu ý: Một số sản phẩm có thể bị ẩn do<br>
+          danh sách quá dài.)
+        </div>
+      </div>
+      <!-- QR để trắng -->
+      <div style="width:80px;border:1px solid #ccc;border-radius:4px;
+                  display:flex;flex-direction:column;align-items:center;
+                  justify-content:center;gap:4px;padding:6px;">
+        <div style="width:64px;height:64px;border:1px solid #ddd;
+                    background:#f9f9f9;border-radius:3px;"></div>
+        <div style="font-size:7px;color:#bbb;">QR Code</div>
+      </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;font-size:9px;
-                border-top:1px solid #ddd;padding-top:8px;margin-bottom:10px;">
-      <span><b>Ngày đặt hàng:</b><br><b style="font-size:11px;">${d.order_date}</b></span>
+    <!-- Ngày đặt hàng -->
+    <div style="text-align:right;font-size:9px;margin-bottom:10px;">
+      <span style="color:#555;">Ngày đặt hàng:</span><br>
+      <b style="font-size:11px;">${d.order_date}</b>
     </div>
 
-    <div style="border:2px solid #000;border-radius:6px;padding:10px 14px;
-                display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:10px;color:#555;">Tiền thu người nhận:</div>
-      <div style="font-size:22px;font-weight:900;">${d.prepaid_amount}</div>
+    <!-- Tiền thu người nhận -->
+    <div style="border-top:2px solid #000;padding-top:10px;
+                display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:10px;">Tiền thu người nhận:</div>
+      <div style="font-size:26px;font-weight:900;letter-spacing:1px;">${d.prepaid_amount}</div>
     </div>
 
-    <div style="border:1px solid #000;margin-top:10px;border-radius:4px;padding:8px 10px;
-                display:flex;justify-content:flex-end;">
-      <div style="text-align:center;width:120px;">
-        <div style="font-size:8px;font-weight:700;">Chữ ký người nhận</div>
-        <div style="font-size:8px;color:#888;margin-top:2px;">Xác nhận hàng nguyên vẹn, không móp/méo, bể/vỡ</div>
-        <div style="height:36px;"></div>
+    <!-- Chữ ký + Chỉ dẫn -->
+    <div style="border:1px solid #000;border-radius:4px;padding:8px 10px;
+                display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="font-size:8px;color:#555;max-width:200px;line-height:1.6;">
+        <b>Chỉ dẫn giao hàng:</b> Được đồng kiểm; Không bóc tem, seal, thử sản phẩm;
+        Chuyển hoàn sau 3 lần phát; Lưu kho tối đa 5 ngày.
+      </div>
+      <div style="text-align:center;width:110px;">
+        <div style="font-size:8px;font-weight:700;margin-bottom:2px;">Chữ ký người nhận</div>
+        <div style="font-size:7.5px;color:#888;">
+          Xác nhận hàng nguyên vẹn,<br>không móp/méo, bể/vỡ
+        </div>
+        <div style="height:32px;border-bottom:1px solid #999;margin-top:6px;"></div>
       </div>
     </div>
   `;
 
   document.body.appendChild(wrap);
 
-  html2pdf().set({
-    margin: 0,
-    filename: `${d.order_code}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'in', format: [4, 6], orientation: 'portrait' }
-  }).from(wrap).save()
-    .catch(e => alert('Xuất PDF thất bại: ' + e.message))
-    .finally(() => document.body.removeChild(wrap));
+  // Đợi ảnh load xong mới render
+  const img = wrap.querySelector('img');
+  const doExport = () => {
+    html2pdf().set({
+      margin: 0,
+      filename: `${d.order_code}.pdf`,
+      image: { type: 'jpeg', quality: 0.99 },
+      html2canvas: {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { unit: 'in', format: [4, 6], orientation: 'portrait' }
+    }).from(wrap).save()
+      .catch(e => alert('Xuất PDF thất bại: ' + e.message))
+      .finally(() => document.body.removeChild(wrap));
+  };
+
+  if (img) {
+    img.onload  = doExport;
+    img.onerror = doExport; // nếu logo lỗi vẫn xuất được
+  } else {
+    doExport();
+  }
 }
 // ─── End export PDF ────────────────────────────────────────
+
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
