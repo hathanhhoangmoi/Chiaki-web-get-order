@@ -1467,7 +1467,7 @@ async function loadSummary() {
       tabs.appendChild(div);
     });
 
-    fetch('/api/stats')
+    fetch('/api/summary')
       .then(r => r.json())
       .then(statsRes => {
         const waitItem = statsRes.by_status?.find(s =>
@@ -1547,14 +1547,17 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
           <td style="text-align:center">${R ? M() : (o.quantity || '—')}</td>
           <td><b>${R ? M() : (o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—')}</b></td>
           <td>
-  ${R
-    ? `<span class="restricted-mask">••••••••</span>`
-    : (() => {
-        const payload = JSON.stringify(o).replace(/'/g, '&#39;');
-        return `<button class="btn-take-order" onclick="openTakeOrder('${payload}')">📦 GET</button>`;
-      })()
-  }
-</td>
+            ${R
+              ? `<span class="restricted-mask">••••••••</span>`
+              : (() => {
+                const payload = JSON.stringify(o)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '&quot;');
+                return `<button class="btn-take-order" onclick="openTakeOrder('${payload}')">📦 GET</button>`;
+                })()
+            }
+          </td>
 
         </tr>`;
     }).join('');
@@ -2475,7 +2478,7 @@ function renderTakenList() {
     el.innerHTML = `<div class="taken-empty">Chưa có đơn nào được lấy</div>`;
     return;
   }
-  const currentId = localStorage.getItem('chiakiid');
+  const currentId = localStorage.getItem('chiaki_id');
   const canDelete = currentId === 'Chang2000';
   el.innerHTML = list.map((item, idx) => {
     const d   = new Date(item.takenat);
@@ -3110,7 +3113,7 @@ async function loadNetRevShop(shopId, shopName) {
   }
 }
 function initHistoryBtn() {
-  const uid = localStorage.getItem('chiakiid');
+  const uid = localStorage.getItem('chiaki_id');
   const panel    = document.getElementById('historyPanel');
   const toggleBtn = document.getElementById('historyToggleBtn');
 
