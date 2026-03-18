@@ -1491,7 +1491,14 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
     });
     const data = await response.json();
     showLoading(false);
-
+    if (data.data) {
+  window.allOrders = (window.allOrders || []);
+  // Gộp thêm trang mới vào (tránh mất dữ liệu trang trước)
+  const existingCodes = new Set(window.allOrders.map(o => o.order_code));
+  data.data.forEach(o => {
+    if (!existingCodes.has(o.order_code)) window.allOrders.push(o);
+  });
+}
     if (data.error) {
   document.getElementById('tableBody').innerHTML = `
     <tr><td colspan="10" class="empty">
@@ -3225,15 +3232,22 @@ function searchOrder() {
 
   if (!raw) return;
 
-  // Tìm trong allOrders (đã load sẵn), so khớp phần sau dấu "_"
-  // DB lưu dạng: IDShop_Mã đơn  →  so với giá trị nhập vào
-  const found = (window.allOrders || []).find(o => {
-    const code = (o.ordercode || '').split('_').slice(1).join('_') || o.ordercode;
-    return code.toLowerCase() === raw.toLowerCase();
-  });
-
-  msgEl.className = 'download-msg';
+  msgEl.className  = 'download-msg';
   msgEl.style.display = 'block';
+
+  if (!window.allOrders || window.allOrders.length === 0) {
+    msgEl.textContent = '⚠️ Dữ liệu chưa tải xong, vui lòng thử lại.';
+    msgEl.classList.add('err');
+    return;
+  }
+
+  // DB lưu dạng: IDShop_R123456789 → tách phần sau dấu _ để so khớp
+  const found = window.allOrders.find(o => {
+    const full = o.order_code || '';
+    const afterUnderscore = full.includes('_') ? full.split('_').slice(1).join('_') : full;
+    return afterUnderscore.toLowerCase() === raw.toLowerCase()
+        || full.toLowerCase() === raw.toLowerCase();
+  });
 
   if (!found) {
     msgEl.textContent = '📦 Đơn hàng đã được gian hàng gửi đi';
@@ -3244,6 +3258,7 @@ function searchOrder() {
   msgEl.style.display = 'none';
   openTakeOrder(found);
 }
+
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
