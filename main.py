@@ -17,6 +17,7 @@ import httpx
 import openpyxl
 from fastapi import Request
 from fastapi.responses import StreamingResponse
+import aiosqlite
 
 
 # ── Key management cho order-info ─────────────────────────
@@ -79,7 +80,6 @@ KEY_LIMIT = 5
 KEY_HISTORY: dict = {k: [] for k in VALID_KEYS}
 # Lưu lịch sử đăng nhập: {key: [{"event": "login/logout", "time": ...}]}
 LOGIN_HISTORY: list = []  # [{key, event, time}]
-
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
@@ -800,49 +800,38 @@ async def get_login_history(request: Request):
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
     return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
 @app.get("/api/export-order/{order_code}")
-async def export_order(order_code: str, request: Request):
+async def export_order(order_code: str, request: Request, db: Session = Depends(get_db)):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     import io
 
-    # Lấy dữ liệu đơn từ DB
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute(
-            "SELECT * FROM orders WHERE ordercode = ?", (order_code,)
-        ) as cur:
-            row = await cur.fetchone()
+    # Tìm đơn trong DB — dùng SQLAlchemy như các endpoint khác
+    order = db.query(Order).filter(Order.order_code == order_code).first()
 
-    if not row:
+    if not order:
         return JSONResponse({"error": "Không tìm thấy đơn hàng"}, status_code=404)
-
-    order = dict(row)
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Đơn hàng"
 
-    # Header style
-    header_fill = PatternFill("solid", fgColor="C8B4FA")
-    header_font = Font(bold=True, color="FFFFFF", size=12)
-
     headers = [
-        ("Mã đơn",       order.get("ordercode",    "")),
-        ("Ngày tạo",     order.get("orderdate",     "")),
-        ("Gian hàng",    order.get("shopname",      "")),
-        ("Tên khách",    order.get("customername",  "") or order.get("buyername", "")),
-        ("Số điện thoại",order.get("phone",         "")),
-        ("Địa chỉ",      order.get("address",       "")),
-        ("Sản phẩm",     order.get("product",       "")),
-        ("Số lượng",     order.get("quantity",      "")),
-        ("Tổng tiền",    order.get("total",         "")),
-        ("Trạng thái",   order.get("status",        "")),
+        ("Mã đơn",        order.order_code or ""),
+        ("Ngày tạo",      order.order_date or ""),
+        ("Gian hàng",     order.shop_name or ""),
+        ("Tên khách",     order.customer_name or order.buyer_name or ""),
+        ("Số điện thoại", order.phone or ""),
+        ("Địa chỉ",       order.address or ""),
+        ("Sản phẩm",      order.product or ""),
+        ("Số lượng",      order.quantity or ""),
+        ("Tổng tiền",     order.total or ""),
+        ("Trạng thái",    order.status or ""),
     ]
 
     for i, (label, value) in enumerate(headers, start=1):
         c_label = ws.cell(row=i, column=1, value=label)
-        c_label.font  = Font(bold=True, color="5B4B8A", size=11)
-        c_label.fill  = PatternFill("solid", fgColor="EDE8FF")
+        c_label.font = Font(bold=True, color="5B4B8A", size=11)
+        c_label.fill = PatternFill("solid", fgColor="EDE8FF")
         c_label.alignment = Alignment(horizontal="left", vertical="center")
 
         c_val = ws.cell(row=i, column=2, value=str(value) if value else "")
