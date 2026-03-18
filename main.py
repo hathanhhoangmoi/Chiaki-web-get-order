@@ -448,6 +448,9 @@ async def get_order_info(body: dict):
             "source":         g("source", "from"),
             "payment":        payment_status,
             "prepaid_amount": f"{float(prepaid_amount or 0):,.0f} đ" if prepaid_amount else "—",
+            "shipping_code":    g("shipping_code"),
+            "delivery_status":  g("delivery_status"),
+            "shipper_receive_time": g("shipper_receive_time"),
             "remaining":      remaining,
         }
 
