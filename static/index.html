@@ -1927,7 +1927,7 @@ async function fetchOrderInfo() {
       `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
 const pdfBtn = document.getElementById('btnExportPdf');
 if (pdfBtn) pdfBtn.style.display = 'block';
-
+document.getElementById('btnExportPdf').style.display = 'block';
     resultEl.classList.add('show');
   } catch(e) {
     errEl.textContent = 'Lỗi kết nối: ' + e.message;
@@ -1972,6 +1972,7 @@ function closeOrderInfoModal() {
   document.getElementById('infoError').classList.remove('show');
   document.getElementById('infoOrderCode').value = '';
   document.getElementById('infoKeyStatus').textContent = '';
+  document.getElementById('btnExportPdf').style.display = 'none'; 
   // Ẩn lại nút PDF
   const pdfBtn = document.getElementById('btnExportPdf');
   if (pdfBtn) pdfBtn.style.display = 'none';
@@ -3388,7 +3389,7 @@ if (checkIdGate()) { init(); }
     <!-- Button Export PDF 4x6 inch -->
     <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
       <button class="btn-modal-cancel" onclick="closeInfoModal()">Đóng</button>
-      <button class="btn-modal-confirm" onclick="exportShippingLabel()" style="background: #ff6b35;">📄 IN PHIẾU GIAO HÀNG"</button>
+      <button id="btnExportPdf" class="btn-modal-confirm" onclick="exportShippingLabel()" style="background:#ff6b35;display:none;">📄 IN PHIẾU GIAO HÀNG</button>
     </div>
 
     <div class="info-btns">
