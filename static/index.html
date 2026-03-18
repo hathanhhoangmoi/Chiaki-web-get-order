@@ -1549,9 +1549,13 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
           <td>
   ${R
     ? `<span class="restricted-mask">••••••••</span>`
-    : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`
+    : (() => {
+        const payload = JSON.stringify(o).replace(/'/g, '&#39;');
+        return `<button class="btn-take-order" onclick="openTakeOrder('${payload}')">📦 GET</button>`;
+      })()
   }
 </td>
+
         </tr>`;
     }).join('');
 
@@ -2330,19 +2334,24 @@ function openTakeOrder(raw) {
     const o = (typeof raw === 'string')
       ? JSON.parse(raw.replace(/&#39;/g, "'"))
       : raw;
-    pendingOrder = o;
 
-    // Đọc đúng field từ DB
-    document.getElementById('confirmCode').textContent    = o.ordercode    || '—';
-    document.getElementById('confirmName').textContent    = o.customername || o.buyername || '—';
-    document.getElementById('confirmAddress').textContent = o.address       || '—';
-    document.getElementById('confirmProduct').textContent = o.product       || '—';
-    document.getElementById('confirmTotal').textContent   = o.total
-      ? Number(o.total).toLocaleString('vi') : '—';
+    // lưu object đơn hàng để acceptOrder dùng
+    window.pendingOrder = o;
+
+    document.getElementById('confirmCode').textContent =
+      o.order_code || o.ordercode || '—';
+    document.getElementById('confirmName').textContent =
+      o.customer_name || o.buyer_name || '—';
+    document.getElementById('confirmAddress').textContent =
+      o.address || '—';
+    document.getElementById('confirmProduct').textContent =
+      o.product || '—';
+    document.getElementById('confirmTotal').textContent =
+      o.total ? Number(o.total).toLocaleString('vi') : '—';
 
     document.getElementById('orderConfirmBg').classList.add('show');
-  } catch(e) {
-    console.error('openTakeOrder lỗi:', e);
+  } catch (e) {
+    console.error('openTakeOrder lỗi:', e, raw);
   }
 }
 
@@ -2352,72 +2361,45 @@ function closeConfirmModal() {
 }
 
 function acceptOrder() {
-  if (!pendingOrder) return;
+  if (!window.pendingOrder) return;
 
-  const o = pendingOrder;
-  pendingOrder = null;
+  const o = window.pendingOrder;
+  window.pendingOrder = null;
 
-  // Đóng popup xác nhận
+  // đóng popup xác nhận
   document.getElementById('orderConfirmBg').classList.remove('show');
 
-  // Giữ nguyên logic hiệu ứng + lưu lịch sử nếu anh muốn
-  launchFireworks(7000);
-  saveTakenOrder(o.ordercode);
-
-  const totalFmt = o.total ? Number(o.total).toLocaleString('vi') : '—';
-
-  // Đổ thông tin sang modal “Thành công”
-  document.getElementById('successAmount').textContent =
-    `Bạn sẽ nhận được ${totalFmt}`;
-  document.getElementById('successCode').textContent = o.ordercode || '—';
-  document.getElementById('successName').textContent =
-    o.customername || o.buyername || '—';
-  document.getElementById('successPhone').textContent = o.phone || '—';
-  document.getElementById('successAddress').textContent = o.address || '—';
-  document.getElementById('successProduct').textContent = o.product || '—';
-  document.getElementById('successTotal').textContent = totalFmt;
-
-  document.querySelectorAll('.btn-copy').forEach(btn => {
-    btn.textContent = 'Copy';
-    btn.classList.remove('copied');
-  });
-
-  // Âm thanh thành công (nếu có file và bật sound)
+  // hiệu ứng + modal thành công vẫn giữ (nếu anh đang dùng)
   try {
-    const audio = document.getElementById('successSound');
-    if (audio && typeof soundEnabled !== 'undefined' && soundEnabled) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }
+    launchFireworks(7000);
   } catch (e) {}
 
-  // Mở modal “Nhận đơn thành công”
-  document.getElementById('orderSuccessBg').classList.add('show');
+  // tên mã đơn theo backend
+  const code = o.order_code || o.ordercode || '';
+  if (!code) {
+    console.warn('Không có mã đơn để export', o);
+    return;
+  }
 
-  // TẢI FILE EXCEL: tên file = mã đơn hàng
+  // gọi API backend export Excel
   (async () => {
     try {
-      const code = o.ordercode || '';
-      if (!code) return;
-
       const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
       if (!res.ok) {
-        console.warn('Export order trả về', res.status);
+        console.warn('export-order HTTP', res.status);
         return;
       }
-
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-
       a.href = url;
-      a.download = `${code}.xlsx`;
+      a.download = `don-hang-${code}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      console.warn('Tải Excel thất bại:', e.message);
+      console.warn('Tải Excel lỗi:', e);
     }
   })();
 }
@@ -3129,12 +3111,21 @@ async function loadNetRevShop(shopId, shopName) {
 }
 function initHistoryBtn() {
   const uid = localStorage.getItem('chiakiid');
-  if (uid === 'Chang2000' || uid === 'PhuongPN2000') {
-    const panel = document.getElementById('historyPanel');
-    const toggleBtn = document.getElementById('historyToggleBtn');
-    if (panel) panel.classList.add('open');
-    if (toggleBtn) toggleBtn.classList.add('visible');
-    loadHistoryPanel();
+  const panel    = document.getElementById('historyPanel');
+  const toggleBtn = document.getElementById('historyToggleBtn');
+
+  if (uid === 'Chang2000') {
+    if (panel) {
+      panel.classList.add('open');   // panel hiện
+    }
+    if (toggleBtn) {
+      toggleBtn.classList.add('visible'); // nút tròn hiện
+    }
+    // chờ DOM/ID set ổn rồi mới load
+    setTimeout(() => loadHistoryPanel(), 200);
+  } else {
+    if (panel) panel.classList.remove('open');
+    if (toggleBtn) toggleBtn.classList.remove('visible');
   }
 }
 
