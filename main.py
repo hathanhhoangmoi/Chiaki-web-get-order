@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_
 from database import engine, get_db, migrate
 from models import Base, Order, ShopMeta, DeliveringOrder, FinishedOrder, ReturnedOrder, RevenueCache, RevenueNetCache
-from scheduler import start_scheduler, sync_all_shops
+from scheduler import start_scheduler, sync_all
 from shops_config import get_shops_map, BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN
 from fetcher import sync_shop
 from datetime import datetime, timedelta
@@ -288,7 +288,7 @@ async def get_orders(
             return await fetch_one(client, sid, sname)
 
     async with httpx.AsyncClient(timeout=30) as client:
-        tasks = [fetch_with_sem(client, sid, sname) for sid, _, sname in shop_items]
+        tasks = [fetch_with_sem(client, sid, val[1]) for sid, val in shop_items]
         results = await asyncio.gather(*tasks)
 
     all_orders = [o for shop_orders in results for o in shop_orders]
