@@ -129,7 +129,7 @@ def get_orders(
     request: Request,
     shop_id: str = Query(None),
     page: int = Query(1, ge=1),
-    limit: int = Query(50, le=200),
+    limit: int = Query(200, le=200),
     sort: str = Query("default"),
     db: Session = Depends(get_db)
 ):
