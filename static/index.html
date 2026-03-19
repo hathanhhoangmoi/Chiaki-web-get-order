@@ -1179,6 +1179,22 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div class="table-count" id="tableCount"></div>
   </div>
 </div>
+<!-- Tab chờ lấy hàng / đang giao -->
+<div id="orderTabBar" style="display:flex;gap:8px;margin-bottom:12px;">
+  <button id="tabWaiting" onclick="switchOrderTab('waiting')"
+    style="padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;
+           background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;
+           font-weight:700;font-size:12px;font-family:inherit;
+           box-shadow:0 3px 12px rgba(167,139,250,.35);">
+    📦 Chờ lấy hàng
+  </button>
+  <button id="tabDelivering" onclick="switchOrderTab('delivering')"
+    style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
+           background:rgba(255,255,255,.4);color:#7c6fa0;
+           font-weight:700;font-size:12px;font-family:inherit;">
+    🚚 Đang giao
+  </button>
+</div>
 
   <!-- Panel đơn thường -->
   <div id="panelMain">
@@ -2007,6 +2023,11 @@ function selectShop(id) {
   document.querySelectorAll('.tab').forEach(t =>
     t.classList.toggle('active', t.dataset.id === id));
   loadOrders();
+  if (currentOrderTab === 'delivering') {
+  loadDeliveringOrders();
+} else {
+  loadOrders();
+}
 }
 function showBlockedNotice(shopId) {
   const tab = document.querySelector(`.tab[data-id="${shopId}"]`);
@@ -3345,9 +3366,70 @@ async function exportShippingLabel() {
     btn.textContent = oldText;
   }
 }
+// ── Tab Chờ lấy hàng / Đang giao ──────────────────────────
+let currentOrderTab = 'waiting';
 
+function switchOrderTab(tab) {
+  currentOrderTab = tab;
+  const btnW = document.getElementById('tabWaiting');
+  const btnD = document.getElementById('tabDelivering');
 
-// ─── End export PDF ────────────────────────────────────────
+  if (tab === 'waiting') {
+    btnW.style.cssText = 'padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;font-weight:700;font-size:12px;font-family:inherit;box-shadow:0 3px 12px rgba(167,139,250,.35);';
+    btnD.style.cssText = 'padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;background:rgba(255,255,255,.4);color:#7c6fa0;font-weight:700;font-size:12px;font-family:inherit;';
+    // Reset về bảng cũ
+    currentPage = 1;
+    loadOrders();
+  } else {
+    btnD.style.cssText = 'padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;font-weight:700;font-size:12px;font-family:inherit;box-shadow:0 3px 12px rgba(167,139,250,.35);';
+    btnW.style.cssText = 'padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;background:rgba(255,255,255,.4);color:#7c6fa0;font-weight:700;font-size:12px;font-family:inherit;';
+    loadDeliveringOrders();
+  }
+}
+
+async function loadDeliveringOrders() {
+  const tbody = document.getElementById('tableBody');
+  const countEl = document.getElementById('tableCount');
+  const paginationEl = document.getElementById('pagination');
+
+  tbody.innerHTML = '<tr><td colspan="10" class="empty"><div class="empty-icon">🚚</div><div>Đang tải đơn đang giao...</div></td></tr>';
+  if (paginationEl) paginationEl.innerHTML = '';
+
+  const url = currentShop
+    ? `/api/orders/delivering?shop_id=${currentShop}`
+    : `/api/orders/delivering`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const orders = data.data || [];
+
+    if (countEl) countEl.textContent = `${orders.length.toLocaleString('vi')} đơn đang giao`;
+
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty"><div class="empty-icon">📭</div><div>Không có đơn đang giao trong 30 ngày qua</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = orders.map(o => `
+      <tr>
+        <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
+        <td style="font-size:11px;color:#9b8bb4">${o.order_date}</td>
+        <td><span class="shop-chip">${o.shop_name}</span></td>
+        <td>${o.customer_name}</td>
+        <td style="font-family:monospace">${o.phone}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.address}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.product}</td>
+        <td></td>
+        <td><b>${o.total !== '—' ? Number(o.total).toLocaleString('vi') : '—'}</b></td>
+        <td><span class="tag" style="background:rgba(251,191,36,.25);color:#92400e;border:1px solid rgba(251,191,36,.4)">🚚 Đang giao</span></td>
+      </tr>
+    `).join('');
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">⚠️</div><div>Lỗi: ${e.message}</div></td></tr>`;
+  }
+}
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
