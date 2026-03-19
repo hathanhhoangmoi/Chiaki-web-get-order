@@ -74,14 +74,6 @@ async def sync_status_orders(status: str, ModelClass, days=30):
 
     return len(all_orders)
 
-
-Đây là 3 hàm viết lại hoàn chỉnh:
-
-python
-PROXY_URL = "https://chiaki-proxy.hathanhhoang-edu.workers.dev"
-
-
-# ─────────────────────────────────────────
 # FETCH EXCEL ĐƠN HÀNG TỪNG SHOP
 # ─────────────────────────────────────────
 async def fetch_excel_orders(client, sid, shop_name, status, encoded_range, pagesize=500):
