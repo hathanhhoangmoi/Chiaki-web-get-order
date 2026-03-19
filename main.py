@@ -462,21 +462,21 @@ async def get_shop_info(request: Request, shop_id: str = Query(...)):
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(url)
 
-# Kiểm tra response rỗng
-if not res.text.strip():
-    return JSONResponse({"error": "Không lấy được thông tin gian hàng (response rỗng)"}, status_code=500)
+        # Kiểm tra response rỗng
+        if not res.text.strip():
+            return JSONResponse({"error": "Không lấy được thông tin gian hàng (response rỗng)"}, status_code=500)
 
-# Kiểm tra không phải HTML
-if "<!DOCTYPE" in res.text or "<html" in res.text:
-    return JSONResponse({"error": "Chiaki trả về trang lỗi, vui lòng thử lại"}, status_code=500)
+        # Kiểm tra không phải HTML
+        if "<!DOCTYPE" in res.text or "<html" in res.text:
+            return JSONResponse({"error": "Chiaki trả về trang lỗi, vui lòng thử lại"}, status_code=500)
 
-try:
-    data = res.json()
-except Exception:
-    return JSONResponse({"error": f"Lỗi parse JSON: {res.text[:100]}"}, status_code=500)
+        try:
+            data = res.json()
+        except Exception:
+            return JSONResponse({"error": f"Lỗi parse JSON: {res.text[:100]}"}, status_code=500)
 
-if data.get("status") != "successful":
-    return JSONResponse({"error": "Không tìm thấy gian hàng."}, status_code=404)
+        if data.get("status") != "successful":
+            return JSONResponse({"error": "Không tìm thấy gian hàng."}, status_code=404)
 
         s = data.get("seller", {})
         meta = {}
