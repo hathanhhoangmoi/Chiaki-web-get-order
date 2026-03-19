@@ -1152,6 +1152,29 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 
 
   </div>
+<!-- Stats row đơn ĐANG GIAO -->
+<div class="stats-row" id="deliveringStatsRow" style="margin-bottom:16px;">
+  <div class="stat-card">
+    <div class="stat-label">🚚 Tổng đang giao</div>
+    <div class="stat-value" id="dlvTotal">—</div>
+    <div class="stat-sub">Đơn đang trên đường giao</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">🏪 Số gian hàng</div>
+    <div class="stat-value" id="dlvShops">—</div>
+    <div class="stat-sub">Gian hàng có đơn đang giao</div>
+  </div>
+  <div class="stat-card clickable" id="dlvHanoiCard" onclick="toggleDlvHanoiPanel()">
+    <div class="stat-label">📍 Đang giao tại Hà Nội</div>
+    <div class="stat-value" id="dlvHanoiCount">—</div>
+    <div class="stat-sub" id="dlvHanoiSub">Click để xem danh sách</div>
+  </div>
+  <div class="stat-card clickable" id="dlvNuocHoaCard" onclick="toggleDlvNuocHoaPanel()">
+    <div class="stat-label">🌸 Đang giao nước hoa</div>
+    <div class="stat-value" id="dlvNuocHoaCount">—</div>
+    <div class="stat-sub" id="dlvNuocHoaSub">Click để xem danh sách</div>
+  </div>
+</div>
 
   <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
   <div class="shop-tabs" id="shopTabs">
@@ -1280,6 +1303,50 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
   </div>
 </div>
+<!-- Panel Hà Nội ĐANG GIAO -->
+<div id="panelDlvHanoi" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">🚚 Đơn đang giao tại Hà Nội</div>
+      <div class="table-count" id="dlvHanoiTableCount"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
+          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
+        </tr></thead>
+        <tbody id="tbodyDlvHanoi">
+          <tr><td colspan="9" class="empty"><div class="empty-icon">🚚</div><div>Chưa tải dữ liệu</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Panel Nước hoa ĐANG GIAO -->
+<div id="panelDlvNuocHoa" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">🌸 Đơn đang giao nước hoa</div>
+      <div class="table-count" id="dlvNuocHoaTableCount"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
+          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
+        </tr></thead>
+        <tbody id="tbodyDlvNuocHoa">
+          <tr><td colspan="9" class="empty"><div class="empty-icon">🌸</div><div>Chưa tải dữ liệu</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- Panel Doanh thu — ẩn mặc định -->
 <div id="panelRevenue" style="display:none">
   <div class="table-wrap glass">
@@ -3430,6 +3497,151 @@ async function loadDeliveringOrders() {
     tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">⚠️</div><div>Lỗi: ${e.message}</div></td></tr>`;
   }
 }
+// ── DELIVERING STATS ────────────────────────────────────────
+let dlvAllOrders = [];       // cache toàn bộ đơn đang giao
+let dlvHanoiVisible = false;
+let dlvNuocHoaVisible = false;
+let dlvLoaded = false;
+
+async function loadDeliveringStats() {
+  try {
+    const res = await fetch('/api/orders/delivering');
+    const data = await res.json();
+    dlvAllOrders = data.data || [];
+    dlvLoaded = true;
+
+    // Tổng
+    document.getElementById('dlvTotal').textContent = dlvAllOrders.length.toLocaleString('vi');
+
+    // Số shop khác nhau
+    const shops = new Set(dlvAllOrders.map(o => o.shop_id));
+    document.getElementById('dlvShops').textContent = shops.size;
+
+    // Hà Nội
+    const kw = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
+    const hanoi = dlvAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
+    document.getElementById('dlvHanoiCount').textContent = hanoi.length.toLocaleString('vi');
+
+    // Nước hoa
+    const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
+    const nuochoa = dlvAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
+    document.getElementById('dlvNuocHoaCount').textContent = nuochoa.length.toLocaleString('vi');
+
+  } catch(e) {
+    document.getElementById('dlvTotal').textContent = 'Lỗi';
+    console.error('loadDeliveringStats error', e);
+  }
+}
+
+function renderDlvTable(tbodyId, countId, orders) {
+  const tbody = document.getElementById(tbodyId);
+  const countEl = document.getElementById(countId);
+  if (countEl) countEl.textContent = `${orders.length.toLocaleString('vi')} đơn`;
+  if (!orders.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">📭</div><div>Không có đơn nào</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = orders.map(o => `
+    <tr>
+      <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
+      <td style="font-size:11px;color:#9b8bb4">${o.order_date}</td>
+      <td><span class="shop-chip">${o.shop_name}</span></td>
+      <td>${o.customer_name}</td>
+      <td style="font-family:monospace">${o.phone}</td>
+      <td style="max-width:200px;white-space:normal;word-break:break-word">${o.address}</td>
+      <td style="max-width:200px;white-space:normal;word-break:break-word">${o.product}</td>
+      <td><b>${o.total !== '—' && !isNaN(o.total) ? Number(o.total).toLocaleString('vi') : o.total}</b></td>
+      <td><span class="tag tag-wait">🚚 Đang giao</span></td>
+    </tr>
+  `).join('');
+}
+
+function toggleDlvHanoiPanel() {
+  dlvHanoiVisible = !dlvHanoiVisible;
+  const card = document.getElementById('dlvHanoiCard');
+  const panel = document.getElementById('panelDlvHanoi');
+  const panelMain = document.getElementById('panelMain');
+
+  if (dlvHanoiVisible) {
+    // Tắt panel nước hoa đang giao nếu đang mở
+    if (dlvNuocHoaVisible) {
+      dlvNuocHoaVisible = false;
+      document.getElementById('dlvNuocHoaCard').classList.remove('active');
+      document.getElementById('dlvNuocHoaSub').textContent = 'Click để xem danh sách';
+      document.getElementById('panelDlvNuocHoa').style.display = 'none';
+    }
+    card.classList.add('active');
+    document.getElementById('dlvHanoiSub').textContent = 'Đang hiển thị · Click ẩn';
+    panel.style.display = 'block';
+    panelMain.style.display = 'none';
+
+    // Render nếu đã load
+    const kw = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
+    const filtered = dlvLoaded
+      ? dlvAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())))
+      : [];
+    if (!dlvLoaded) {
+      document.getElementById('tbodyDlvHanoi').innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">⏳</div><div>Đang tải...</div></td></tr>';
+      loadDeliveringStats().then(() => {
+        const kw2 = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
+        const f2 = dlvAllOrders.filter(o => o.address && kw2.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
+        renderDlvTable('tbodyDlvHanoi', 'dlvHanoiTableCount', f2);
+      });
+    } else {
+      renderDlvTable('tbodyDlvHanoi', 'dlvHanoiTableCount', filtered);
+    }
+  } else {
+    card.classList.remove('active');
+    document.getElementById('dlvHanoiSub').textContent = 'Click để xem danh sách';
+    panel.style.display = 'none';
+    panelMain.style.display = 'block';
+  }
+}
+
+function toggleDlvNuocHoaPanel() {
+  dlvNuocHoaVisible = !dlvNuocHoaVisible;
+  const card = document.getElementById('dlvNuocHoaCard');
+  const panel = document.getElementById('panelDlvNuocHoa');
+  const panelMain = document.getElementById('panelMain');
+
+  if (dlvNuocHoaVisible) {
+    if (dlvHanoiVisible) {
+      dlvHanoiVisible = false;
+      document.getElementById('dlvHanoiCard').classList.remove('active');
+      document.getElementById('dlvHanoiSub').textContent = 'Click để xem danh sách';
+      document.getElementById('panelDlvHanoi').style.display = 'none';
+    }
+    card.classList.add('active');
+    document.getElementById('dlvNuocHoaSub').textContent = 'Đang hiển thị · Click ẩn';
+    panel.style.display = 'block';
+    panelMain.style.display = 'none';
+
+    const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
+    const filtered = dlvLoaded
+      ? dlvAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())))
+      : [];
+    if (!dlvLoaded) {
+      document.getElementById('tbodyDlvNuocHoa').innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">⏳</div><div>Đang tải...</div></td></tr>';
+      loadDeliveringStats().then(() => {
+        const kwNH2 = ['nước hoa','nuoc hoa','nươc hoa'];
+        const f2 = dlvAllOrders.filter(o => o.product && kwNH2.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
+        renderDlvTable('tbodyDlvNuocHoa', 'dlvNuocHoaTableCount', f2);
+      });
+    } else {
+      renderDlvTable('tbodyDlvNuocHoa', 'dlvNuocHoaTableCount', filtered);
+    }
+  } else {
+    card.classList.remove('active');
+    document.getElementById('dlvNuocHoaSub').textContent = 'Click để xem danh sách';
+    panel.style.display = 'none';
+    panelMain.style.display = 'block';
+  }
+}
+
+// Gọi load stats đang giao khi khởi động
+loadDeliveringStats();
+// Cập nhật lại mỗi 5 phút cùng với các panel khác
+setInterval(loadDeliveringStats, 300000);
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
