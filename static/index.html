@@ -1124,6 +1124,37 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <canvas id="mainChart"></canvas>
   </div>
 </div>
+<!-- Doanh thu gộp 3 loại đơn -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;" id="revenueSummaryRow">
+
+  <!-- Đơn chờ lấy hàng -->
+  <div class="stat-card" style="border-left:4px solid #a78bfa;">
+    <div class="stat-label" style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#7c6fa0;">
+      📦 Doanh thu gộp — Chờ lấy hàng
+    </div>
+    <div class="stat-value" id="revWaiting" style="font-size:24px;margin-top:6px;">—</div>
+    <div class="stat-sub" id="revWaitingCount">Đang tính...</div>
+  </div>
+
+  <!-- Đơn đang giao -->
+  <div class="stat-card" style="border-left:4px solid #f59e0b;">
+    <div class="stat-label" style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#7c6fa0;">
+      🚚 Doanh thu gộp — Đang giao
+    </div>
+    <div class="stat-value" id="revDelivering" style="font-size:24px;margin-top:6px;">—</div>
+    <div class="stat-sub" id="revDeliveringCount">Đang tính...</div>
+  </div>
+
+  <!-- Đơn đã giao -->
+  <div class="stat-card" style="border-left:4px solid #10b981;">
+    <div class="stat-label" style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#7c6fa0;">
+      ✅ Doanh thu gộp — Đã giao
+    </div>
+    <div class="stat-value" id="revFinished" style="font-size:24px;margin-top:6px;">—</div>
+    <div class="stat-sub" id="revFinishedCount">Đang tính...</div>
+  </div>
+
+</div>
 
   <!-- Stats row — 4 cards, Hà Nội là card thứ 4 có thể click -->
   <div class="stats-row">
@@ -3898,6 +3929,85 @@ function toggleFinNuocHoaPanel() {
 // Gọi load sau khi delivering load xong để tránh đồng thời
 setTimeout(loadFinishedStats, 8000);
 setInterval(loadFinishedStats, 300000);
+// ── DOANH THU GỘP ───────────────────────────────────────────
+function calcRevSummary() {
+  function sumTotal(orders) {
+    return orders.reduce((acc, o) => {
+      const val = parseFloat(String(o.total).replace(/,/g, '').replace(/\./g, '').trim());
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+  }
+
+  function fmt(val) {
+    return val.toLocaleString('vi') + ' đ';
+  }
+
+  // Chờ lấy hàng — lấy từ API summary vì dùng DB
+  fetch('/api/summary').then(r => r.json()).then(data => {
+    // Tổng đơn từ DB (chờ lấy hàng)
+    const total = data.total_orders || 0;
+    document.getElementById('revWaitingCount').textContent = `${total.toLocaleString('vi')} đơn`;
+  }).catch(() => {});
+
+  // Tính tổng tiền từ cache đang giao
+  if (dlvLoaded && dlvAllOrders.length > 0) {
+    const sum = sumTotal(dlvAllOrders);
+    document.getElementById('revDelivering').textContent = fmt(sum);
+    document.getElementById('revDeliveringCount').textContent = `${dlvAllOrders.length.toLocaleString('vi')} đơn`;
+  }
+
+  // Tính tổng tiền từ cache đã giao
+  if (finLoaded && finAllOrders.length > 0) {
+    const sum = sumTotal(finAllOrders);
+    document.getElementById('revFinished').textContent = fmt(sum);
+    document.getElementById('revFinishedCount').textContent = `${finAllOrders.length.toLocaleString('vi')} đơn`;
+  }
+}
+
+// Tính tổng tiền chờ lấy hàng từ DB
+async function calcWaitingRevenue() {
+  try {
+    const res = await fetch('/api/orders?page=1&limit=200');
+    const data = await res.json();
+    const all = data.data || [];
+    // Gộp tất cả trang nếu total > 200
+    let allOrders = [...all];
+    const total = data.total || 0;
+    if (total > 200) {
+      const pages = Math.ceil(total / 200);
+      const fetches = [];
+      for (let p = 2; p <= Math.min(pages, 10); p++) {
+        fetches.push(fetch(`/api/orders?page=${p}&limit=200`).then(r => r.json()));
+      }
+      const rest = await Promise.all(fetches);
+      rest.forEach(d => { allOrders = allOrders.concat(d.data || []); });
+    }
+    const sum = allOrders.reduce((acc, o) => {
+      const val = parseFloat(String(o.total || 0).replace(/[^0-9.]/g, ''));
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    document.getElementById('revWaiting').textContent = sum.toLocaleString('vi') + ' đ';
+    document.getElementById('revWaitingCount').textContent = `${total.toLocaleString('vi')} đơn`;
+  } catch(e) {
+    document.getElementById('revWaiting').textContent = 'Lỗi';
+  }
+}
+
+// Gọi sau khi các cache load xong
+calcWaitingRevenue();
+
+// Theo dõi khi delivering và finished load xong thì cập nhật
+const _origLoadDlv = loadDeliveringStats;
+loadDeliveringStats = async function() {
+  await _origLoadDlv();
+  calcRevSummary();
+};
+
+const _origLoadFin = loadFinishedStats;
+loadFinishedStats = async function() {
+  await _origLoadFin();
+  calcRevSummary();
+};
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
