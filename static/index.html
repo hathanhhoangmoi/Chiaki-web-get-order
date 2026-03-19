@@ -3636,7 +3636,7 @@ async function loadDeliveringStats() {
     const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
     const nuochoa = dlvAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
     document.getElementById('dlvNuocHoaCount').textContent = nuochoa.length.toLocaleString('vi');
-
+    updateRevDelivering();
   } catch(e) {
     document.getElementById('dlvTotal').textContent = 'Lỗi';
     console.error('loadDeliveringStats error', e);
@@ -3822,7 +3822,7 @@ async function loadFinishedStats() {
     const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
     const nuochoa = finAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
     document.getElementById('finNuocHoaCount').textContent = nuochoa.length.toLocaleString('vi');
-
+    updateRevFinished();
   } catch(e) {
     document.getElementById('finTotal').textContent = 'Lỗi';
     console.error('loadFinishedStats error', e);
@@ -3930,39 +3930,27 @@ function toggleFinNuocHoaPanel() {
 setTimeout(loadFinishedStats, 8000);
 setInterval(loadFinishedStats, 300000);
 // ── DOANH THU GỘP ───────────────────────────────────────────
-function calcRevSummary() {
-  function sumTotal(orders) {
-    return orders.reduce((acc, o) => {
-      const val = parseFloat(String(o.total).replace(/,/g, '').replace(/\./g, '').trim());
-      return acc + (isNaN(val) ? 0 : val);
-    }, 0);
-  }
-
-  function fmt(val) {
-    return val.toLocaleString('vi') + ' đ';
-  }
-
-  // Chờ lấy hàng — lấy từ API summary vì dùng DB
-  fetch('/api/summary').then(r => r.json()).then(data => {
-    // Tổng đơn từ DB (chờ lấy hàng)
-    const total = data.total_orders || 0;
-    document.getElementById('revWaitingCount').textContent = `${total.toLocaleString('vi')} đơn`;
-  }).catch(() => {});
-
-  // Tính tổng tiền từ cache đang giao
-  if (dlvLoaded && dlvAllOrders.length > 0) {
-    const sum = sumTotal(dlvAllOrders);
-    document.getElementById('revDelivering').textContent = fmt(sum);
-    document.getElementById('revDeliveringCount').textContent = `${dlvAllOrders.length.toLocaleString('vi')} đơn`;
-  }
-
-  // Tính tổng tiền từ cache đã giao
-  if (finLoaded && finAllOrders.length > 0) {
-    const sum = sumTotal(finAllOrders);
-    document.getElementById('revFinished').textContent = fmt(sum);
-    document.getElementById('revFinishedCount').textContent = `${finAllOrders.length.toLocaleString('vi')} đơn`;
-  }
+function sumTotal(orders) {
+  return orders.reduce((acc, o) => {
+    const val = parseFloat(String(o.total || '0').replace(/\./g, '').replace(/,/g, '.').trim());
+    return acc + (isNaN(val) ? 0 : val);
+  }, 0);
 }
+
+function updateRevDelivering() {
+  if (!dlvLoaded || dlvAllOrders.length === 0) return;
+  const sum = sumTotal(dlvAllOrders);
+  document.getElementById('revDelivering').textContent = sum.toLocaleString('vi') + ' đ';
+  document.getElementById('revDeliveringCount').textContent = `${dlvAllOrders.length.toLocaleString('vi')} đơn`;
+}
+
+function updateRevFinished() {
+  if (!finLoaded || finAllOrders.length === 0) return;
+  const sum = sumTotal(finAllOrders);
+  document.getElementById('revFinished').textContent = sum.toLocaleString('vi') + ' đ';
+  document.getElementById('revFinishedCount').textContent = `${finAllOrders.length.toLocaleString('vi')} đơn`;
+}
+
 
 // Tính tổng tiền chờ lấy hàng từ DB
 async function calcWaitingRevenue() {
