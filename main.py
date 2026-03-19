@@ -6,8 +6,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_
 from database import engine, get_db, migrate
-from models import Base, Order, ShopMeta, DeliveringOrder, FinishedOrder, ReturnedOrder, RevenueCache, RevenueNetCache
-from scheduler import start_scheduler, sync_all
+from models import Base, Order, ShopMeta
+from scheduler import start_scheduler, sync_all_shops
 from shops_config import get_shops_map, BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN
 from fetcher import sync_shop
 from datetime import datetime, timedelta
@@ -69,12 +69,10 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 Base.metadata.create_all(bind=engine)
 migrate()
 UNLIMITED_KEYS = {"KEYPHONE-UNLIMITED"} 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    migrate()
-    asyncio.create_task(sync_all())   # ← đổi sync_all_shops → sync_all
+    # Sync ngay khi khởi động
+    asyncio.create_task(sync_all_shops())
     start_scheduler()
     yield
 
@@ -127,7 +125,7 @@ def get_summary(db: Session = Depends(get_db)):
     }
 
 @app.get("/api/orders")
-async def get_orders(
+def get_orders(
     request: Request,
     shop_id: str = Query(None),
     page: int = Query(1, ge=1),
@@ -144,170 +142,50 @@ async def get_orders(
             "message": "Shop này bị chặn trích xuất đơn hàng"
         }
 
-    # ── Thử lấy từ DB trước ──────────────────────────────────────
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
+    total = q.count()
 
-    db_total = q.count()
-
-    # Nếu DB có data → dùng DB (nhanh hơn)
-    if db_total > 0:
-        if sort == "total_desc":
-            q = q.order_by(desc(Order.total))
-        elif sort == "total_asc":
-            q = q.order_by(Order.total)
-        elif sort == "date_desc":
-            q = q.order_by(desc(Order.order_date))
-        elif sort == "date_asc":
-            q = q.order_by(Order.order_date)
-        else:
-            q = q.order_by(desc(Order.fetched_at))
-
-        orders_db = q.offset((page - 1) * limit).limit(limit).all()
-
-        def serialize_db(o):
-            mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
-            M = "••••••••"
-            return {
-                "order_code":    M if mask else o.order_code,
-                "shop_name":     o.shop_name,
-                "shop_id":       o.shop_id,
-                "buyer_name":    M if mask else o.buyer_name,
-                "customer_name": M if mask else o.customer_name,
-                "phone":         M if mask else o.phone,
-                "address":       M if mask else o.address,
-                "product":       M if mask else o.product,
-                "quantity":      M if mask else o.quantity,
-                "total":         M if mask else o.total,
-                "status":        M if mask else o.status,
-                "order_date":    M if mask else o.order_date,
-                "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-                "restricted":    mask,
-                "source":        "db",
-            }
-
-        return {"total": db_total, "page": page, "data": [serialize_db(o) for o in orders_db]}
-
-    # ── DB trống → fallback gọi thẳng Chiaki API ─────────────────
-    from datetime import timezone
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)
-    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
-    encoded_range = urllib.parse.quote(date_range)
-
-    shops = get_shops_map()
-    shop_items = (
-        [(shop_id, *shops[shop_id])] if shop_id and shop_id in shops
-        else list(shops.items())
-    )
-
-    async def fetch_one(client, sid, sname):
-        api_url = (
-            f"https://api.chiaki.vn/api/{sid}/export-excel-order"
-            f"?source=seller&pageIndex=1&pageSize={limit}"
-            f"&status=all&rangeDate={encoded_range}"
-            f"&dateType=createdat&order=create-desc"
-            f"&SellerId={SELLER_ID}&SellerToken={SELLER_TOKEN}"
-        )
-        try:
-            resp = await client.get(api_url)
-            if resp.status_code != 200:
-                return []
-            ct = resp.headers.get("content-type", "")
-            if "html" in ct or len(resp.content) < 100:
-                return []
-
-            wb = openpyxl.load_workbook(BytesIO(resp.content))
-            ws = wb.active
-            headers_map = {}
-            header_row = None
-
-            for i, row in enumerate(ws.iter_rows(values_only=True), 1):
-                if row and any(cell and "mã đơn" in str(cell).lower() for cell in row):
-                    header_row = i
-                    for j, cell in enumerate(row):
-                        if cell:
-                            headers_map[str(cell).strip().lower()] = j
-                    break
-
-            if header_row is None:
-                return []
-
-            def fc(kw):
-                for k, v in headers_map.items():
-                    if kw.lower() in k:
-                        return v
-                return None
-
-            col_code    = fc("mã đơn")
-            col_date    = fc("ngày tạo") or fc("ngày tạo")
-            col_name    = fc("tên người nhận") or fc("tên khách")
-            col_phone   = fc("số điện thoại") or fc("điện thoại")
-            col_address = fc("địa chỉ")
-            col_product = fc("tên sản phẩm") or fc("sản phẩm")
-            col_total   = fc("tổng tiền") or fc("giá trị")
-            col_status  = fc("trạng thái")
-
-            orders = []
-            for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
-                if not row or all(c is None for c in row):
-                    continue
-
-                def gv(col):
-                    return str(row[col]).strip() if col is not None and row[col] is not None else ""
-
-                mask = sid in BLOCKED_SHOPS and user_id != 'Chang2000'
-                M = "••••••••"
-                orders.append({
-                    "order_code":    M if mask else gv(col_code),
-                    "shop_name":     sname,
-                    "shop_id":       sid,
-                    "buyer_name":    M if mask else gv(col_name),
-                    "customer_name": M if mask else gv(col_name),
-                    "phone":         M if mask else gv(col_phone),
-                    "address":       M if mask else gv(col_address),
-                    "product":       M if mask else gv(col_product),
-                    "quantity":      M if mask else "",
-                    "total":         M if mask else gv(col_total),
-                    "status":        M if mask else gv(col_status),
-                    "order_date":    M if mask else gv(col_date),
-                    "fetched_at":    datetime.now().isoformat(),
-                    "restricted":    mask,
-                    "source":        "chiaki_live",
-                })
-            return orders
-        except Exception as e:
-            print(f"[orders fallback] {sid} lỗi: {e}")
-            return []
-
-    semaphore = asyncio.Semaphore(10)
-
-    async def fetch_with_sem(client, sid, sname):
-        async with semaphore:
-            return await fetch_one(client, sid, sname)
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        tasks = [fetch_with_sem(client, sid, val[1]) for sid, val in shop_items]
-        results = await asyncio.gather(*tasks)
-
-    all_orders = [o for shop_orders in results for o in shop_orders]
-
-    # Sắp xếp phía server nếu cần
+    # Sắp xếp
     if sort == "total_desc":
-        all_orders.sort(key=lambda x: float(x["total"].replace(",", "") or 0) if x["total"] not in ["", "••••••••"] else 0, reverse=True)
+        q = q.order_by(desc(Order.total))
     elif sort == "total_asc":
-        all_orders.sort(key=lambda x: float(x["total"].replace(",", "") or 0) if x["total"] not in ["", "••••••••"] else 0)
+        q = q.order_by(Order.total)
     elif sort == "date_desc":
-        all_orders.sort(key=lambda x: x["order_date"] or "", reverse=True)
+        q = q.order_by(desc(Order.order_date))
     elif sort == "date_asc":
-        all_orders.sort(key=lambda x: x["order_date"] or "")
+        q = q.order_by(Order.order_date)
+    else:
+        q = q.order_by(desc(Order.fetched_at))
 
-    total = len(all_orders)
-    start = (page - 1) * limit
-    paged = all_orders[start:start + limit]
+    orders = q.offset((page - 1) * limit).limit(limit).all()
 
-    return {"total": total, "page": page, "data": paged, "source": "chiaki_live"}
+    def serialize(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        M = "••••••••"
+        return {
+            "order_code":    M if mask else o.order_code,
+            "shop_name":     o.shop_name,
+            "shop_id":       o.shop_id,
+            "buyer_name":    M if mask else o.buyer_name,
+            "customer_name": M if mask else o.customer_name,
+            "phone":         M if mask else o.phone,
+            "address":       M if mask else o.address,
+            "product":       M if mask else o.product,
+            "quantity":      M if mask else o.quantity,
+            "total":         M if mask else o.total,
+            "status":        M if mask else o.status,
+            "order_date":    M if mask else o.order_date,
+            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+            "restricted":    mask,
+        }
+
+    return {
+        "total": total,
+        "page": page,
+        "data": [serialize(o) for o in orders]
+    }
 
 
 @app.get("/api/test-shopname")
@@ -383,7 +261,100 @@ def get_chart_data(db: Session = Depends(get_db)):
         "by_shop": [{"shop": s, "count": c} for s, c in by_shop if s],
     }
 
+@app.get("/api/revenue")
+async def get_revenue():
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
 
+    shops = get_shops_map()
+    results = []
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        for shop_id, (shop_url, shop_name) in shops.items():
+            api_url = (
+                f"https://api.chiaki.vn/api/{shop_id}"
+                f"/export-excel-summary-amount-order"
+                f"?source=seller&page_index=1&page_size=500"
+                f"&status=all&range_date={encoded_range}"
+                f"&date_type=created_at&order=create-desc"
+                f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+            )
+            try:
+                resp = await client.get(api_url)
+                if resp.status_code != 200:
+                    print(f"[revenue] {shop_id} HTTP {resp.status_code}")
+                    continue
+
+                content_type = resp.headers.get("content-type", "")
+                if "html" in content_type or len(resp.content) < 100:
+                    print(f"[revenue] {shop_id} không phải Excel")
+                    continue
+
+                wb = openpyxl.load_workbook(BytesIO(resp.content))
+                ws = wb.active
+
+                def get_val(key_text):
+                    for row in ws.iter_rows():
+                        for i, cell in enumerate(row):
+                            if cell.value and key_text.lower() in str(cell.value).lower():
+                                if i + 1 < len(row) and row[i + 1].value is not None:
+                                    return row[i + 1].value
+                    return None
+
+                def to_float(val):
+                    if val is None:
+                        return 0
+                    try:
+                        return float(val)
+                    except:
+                        return 0
+
+                ten_shop = get_val("Người Bán") or shop_name
+                chu_tk = get_val("Tên chủ tài khoản") or "—"
+                ngan_hang = get_val("Tên ngân hàng") or "—"
+                stk = get_val("Tài khoản ngân hàng") or "—"
+
+                # Doanh thu gộp
+                gia_goc = to_float(get_val("Giá gốc"))
+                hoan_lai = to_float(get_val("Số tiền hoàn lại"))
+                tro_gia = to_float(get_val("Sản phẩm được trợ giá từ Chiaki"))
+                ma_uu_dai = to_float(get_val("Mã ưu đãi do Người Bán chịu"))
+                doanh_thu_gop = gia_goc + hoan_lai + tro_gia + ma_uu_dai
+
+                # Phí + thuế
+                phi_co_dinh = to_float(get_val("Phí cố định"))
+                phi_dich_vu = to_float(get_val("Phí Dịch Vụ"))
+                phi_thanh_toan = to_float(get_val("Phí thanh toán"))
+                phi_san = phi_co_dinh + phi_dich_vu + phi_thanh_toan
+                phi_quang_cao = to_float(get_val("Phí quảng cáo"))
+                thue_gtgt = to_float(get_val("Thuế GTGT"))
+                thue_tncn = to_float(get_val("Thuế TNCN"))
+                tong_thue = thue_gtgt + thue_tncn
+                tong_khau_tru = phi_san + phi_quang_cao + tong_thue
+
+                # Doanh thu thuần = gộp + khấu trừ (khấu trừ là số âm)
+                doanh_thu_thuan = doanh_thu_gop + tong_khau_tru
+
+                results.append({
+                    "ten_shop": ten_shop,
+                    "chu_tk": chu_tk,
+                    "ngan_hang": ngan_hang,
+                    "stk": str(stk) if stk else "—",
+                    "doanh_thu_gop": doanh_thu_gop,
+                    "tong_khau_tru": tong_khau_tru,
+                    "doanh_thu_thuan": doanh_thu_thuan,
+                    "_shop_id": shop_id,
+                })
+
+            except Exception as e:
+                print(f"[revenue] {shop_id} lỗi: {e}")
+
+    return {
+        "date_range": date_range,
+        "data": results,
+    }
 @app.post("/api/order-info")
 async def get_order_info(body: dict, db: Session = Depends(get_db)):
     order_code = body.get("order_code", "").strip()
@@ -685,42 +656,97 @@ async def get_chat_info(seller_id: str = Query(...)):
         return {"conversations": result, "total": len(result)}
     except Exception as e:
         return JSONResponse({"error": f"Lỗi: {str(e)}"}, status_code=500)
-# ── DOANH THU GỘP → ĐỌC TỪ DB ────────────────────────
-@app.get("/api/revenue")
-def get_revenue(db: Session = Depends(get_db)):
-    rows = db.query(RevenueCache).all()
-    return {
-        "date_range": rows[0].date_range if rows else "",
-        "data": [
-            {
-                "shop_id":          r.shop_id,
-                "ten_shop":         r.ten_shop,
-                "chu_tk":           r.chu_tk,
-                "ngan_hang":        r.ngan_hang,
-                "stk":              r.stk,
-                "doanh_thu_gop":    r.doanh_thu_gop,
-                "tong_khau_tru":    r.tong_khau_tru,
-                "doanh_thu_thuan":  r.doanh_thu_thuan,
-            }
-            for r in rows
-        ],
-    }
-
-# ── DOANH THU THUẦN TỪNG SHOP → ĐỌC TỪ DB ────────────
 @app.get("/api/revenue/net")
-def get_revenue_net(shop_id: str = Query(...), db: Session = Depends(get_db)):
-    r = db.query(RevenueNetCache).filter(RevenueNetCache.shop_id == shop_id).first()
-    if not r:
-        return JSONResponse({"error": "Chưa có dữ liệu, vui lòng chờ sync"}, status_code=404)
-    return {
-        "shop_name":        r.shop_name,
-        "date_range":       r.date_range,
-        "row_count":        r.row_count,
-        "tong_tien":        r.tong_tien,
-        "phu_phi":          r.phu_phi,
-        "doanh_thu_thuan":  r.doanh_thu_thuan,
-    }
+async def get_revenue_net(shop_id: str = Query(...)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=14)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
 
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": "Không tìm thấy gian hàng."}, status_code=404)
+
+    shop_url, shop_name = shops[shop_id]
+    api_url = (
+        f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
+        f"?source=seller&page_index=1&page_size=500&status=finished"
+        f"&range_date={encoded_range}&date_type=created_at&order=create-desc"
+        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(api_url)
+        if resp.status_code != 200:
+            return JSONResponse({"error": f"API lỗi HTTP {resp.status_code}"}, status_code=500)
+        content_type = resp.headers.get("content-type", "")
+        if "html" in content_type or len(resp.content) < 100:
+            return JSONResponse({"error": "Không nhận được file Excel."}, status_code=500)
+
+        wb = openpyxl.load_workbook(BytesIO(resp.content))
+        ws = wb.active
+
+        # Tìm index cột theo header
+        headers = {}
+        header_row = None
+        for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+            if row and any(cell and "tổng tiền" in str(cell).lower() for cell in row):
+                header_row = i
+                for j, cell in enumerate(row):
+                    if cell:
+                        headers[str(cell).strip().lower()] = j
+                break
+
+        if header_row is None:
+            return JSONResponse({"error": "Không tìm thấy header trong file Excel."}, status_code=500)
+
+        # Tìm cột cần thiết
+        def find_col(keyword):
+            for k, v in headers.items():
+                if keyword.lower() in k:
+                    return v
+            return None
+
+        col_tong_tien   = find_col("tổng tiền")
+        col_phu_phi     = find_col("phụ phí")
+        col_doi_soat    = find_col("ngày đối soát")
+
+        if col_tong_tien is None:
+            return JSONResponse({"error": "Không tìm thấy cột 'Tổng tiền'."}, status_code=500)
+
+        tong_tien_sum = 0
+        phu_phi_sum   = 0
+        row_count     = 0
+
+        for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+            if not row or all(c is None for c in row):
+                continue
+            # Chỉ tính dòng có cột Ngày đối soát trống
+            doi_soat_val = row[col_doi_soat] if col_doi_soat is not None else None
+            if doi_soat_val is not None and str(doi_soat_val).strip() != "":
+                continue
+
+            try:
+                tong_tien_sum += float(row[col_tong_tien] or 0)
+            except: pass
+            try:
+                phu_phi_sum += float(row[col_phu_phi] or 0) if col_phu_phi is not None else 0
+            except: pass
+            row_count += 1
+
+        doanh_thu_thuan = tong_tien_sum - phu_phi_sum
+
+        return {
+            "shop_name":       shop_name,
+            "date_range":      date_range,
+            "row_count":       row_count,
+            "tong_tien":       tong_tien_sum,
+            "phu_phi":         phu_phi_sum,
+            "doanh_thu_thuan": doanh_thu_thuan,
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi xử lý: {str(e)}"}, status_code=500)
 @app.post("/api/order-info/check-key")
 async def check_key(body: dict):
     key = body.get("key", "").strip()
@@ -953,92 +979,264 @@ async def print_label(body: dict):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{order_code}.pdf"'}
     )
-
-
-# ── HÀM SERIALIZE DÙNG CHUNG ──────────────────────────
-def serialize_cached_order(o, user_id):
-    mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
-    M = "••••••••"
-    return {
-        "order_code":    M if mask else o.order_code,
-        "shop_name":     o.shop_name,
-        "shop_id":       o.shop_id,
-        "buyer_name":    M if mask else o.buyer_name,
-        "customer_name": M if mask else o.customer_name,
-        "phone":         M if mask else o.phone,
-        "address":       M if mask else o.address,
-        "product":       M if mask else o.product,
-        "quantity":      M if mask else o.quantity,
-        "total":         M if mask else o.total,
-        "order_date":    M if mask else o.order_date,
-        "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-        "restricted":    mask,
-    }
-
-
-# ── ĐANG GIAO ─────────────────────────────────────────
 @app.get("/api/orders/delivering")
-def get_delivering_orders(
-    request: Request,
-    shop_id: str = Query(None),
-    db: Session = Depends(get_db)
-):
-    user_id = request.headers.get('X-User-ID', '')
-    q = db.query(DeliveringOrder)
-    if shop_id:
-        q = q.filter(DeliveringOrder.shop_id == shop_id)
-    orders = q.order_by(desc(DeliveringOrder.order_date)).all()
-    return {
-        "total":     len(orders),
-        "data":      [serialize_cached_order(o, user_id) for o in orders],
-        "cached":    True,
-        "synced_at": orders[0].fetched_at.isoformat() if orders else None,
-    }
+async def get_delivering_orders(shop_id: str = Query(None)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
 
+    shops = get_shops_map()
+    shop_items = list({shop_id: shops[shop_id]}.items()) if shop_id and shop_id in shops else list(shops.items())
 
-# ── ĐÃ GIAO ───────────────────────────────────────────
+    async def fetch_one(client, sid, shop_name):
+        api_url = (
+            f"https://api.chiaki.vn/api/{sid}/export-excel-order"
+            f"?source=seller&page_index=1&page_size=200"
+            f"&status=delivering"
+            f"&range_date={encoded_range}"
+            f"&date_type=created_at&order=create-desc"
+            f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+        )
+        try:
+            resp = await client.get(api_url)
+            if resp.status_code != 200:
+                return []
+            if "html" in resp.headers.get("content-type", "") or len(resp.content) < 100:
+                return []
+
+            wb = openpyxl.load_workbook(BytesIO(resp.content))
+            ws = wb.active
+
+            headers_map = {}
+            header_row = None
+            for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+                if row and any(cell and "mã đơn" in str(cell).lower() for cell in row):
+                    header_row = i
+                    for j, cell in enumerate(row):
+                        if cell:
+                            headers_map[str(cell).strip().lower()] = j
+                    break
+
+            if header_row is None:
+                return []
+
+            def fc(kw):
+                for k, v in headers_map.items():
+                    if kw.lower() in k:
+                        return v
+                return None
+
+            col_code    = fc("mã đơn")
+            col_date    = fc("ngày tạo") or fc("ngày đặt")
+            col_name    = fc("tên người nhận") or fc("tên khách")
+            col_phone   = fc("số điện thoại") or fc("điện thoại")
+            col_address = fc("địa chỉ")
+            col_product = fc("tên sản phẩm") or fc("sản phẩm")
+            col_total   = fc("tổng tiền") or fc("giá trị")
+
+            orders = []
+            for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+                if not row or all(c is None for c in row):
+                    continue
+                def gv(col):
+                    return str(row[col]).strip() if col is not None and row[col] is not None else "—"
+                orders.append({
+                    "shop_id":       sid,
+                    "shop_name":     shop_name,
+                    "order_code":    gv(col_code),
+                    "order_date":    gv(col_date),
+                    "customer_name": gv(col_name),
+                    "phone":         gv(col_phone),
+                    "address":       gv(col_address),
+                    "product":       gv(col_product),
+                    "total":         gv(col_total),
+                })
+            return orders
+
+        except Exception as e:
+            print(f"[delivering] {sid} lỗi: {e}")
+            return []
+
+    # Gọi song song tất cả shop, giới hạn 10 request cùng lúc tránh bị block
+    semaphore = asyncio.Semaphore(10)
+
+    async def fetch_with_sem(client, sid, shop_name):
+        async with semaphore:
+            return await fetch_one(client, sid, shop_name)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        tasks = [fetch_with_sem(client, sid, shop_name) for sid, (_, shop_name) in shop_items]
+        results = await asyncio.gather(*tasks)
+
+    all_orders = [order for shop_orders in results for order in shop_orders]
+
+    return {"date_range": date_range, "total": len(all_orders), "data": all_orders}
 @app.get("/api/orders/finished")
-def get_finished_orders(
-    request: Request,
-    shop_id: str = Query(None),
-    db: Session = Depends(get_db)
-):
-    user_id = request.headers.get('X-User-ID', '')
-    q = db.query(FinishedOrder)
-    if shop_id:
-        q = q.filter(FinishedOrder.shop_id == shop_id)
-    orders = q.order_by(desc(FinishedOrder.order_date)).all()
-    return {
-        "total":     len(orders),
-        "data":      [serialize_cached_order(o, user_id) for o in orders],
-        "cached":    True,
-        "synced_at": orders[0].fetched_at.isoformat() if orders else None,
-    }
+async def get_finished_orders(shop_id: str = Query(None)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
 
+    shops = get_shops_map()
+    shop_items = list({shop_id: shops[shop_id]}.items()) if shop_id and shop_id in shops else list(shops.items())
 
-# ── HOÀN HÀNG ─────────────────────────────────────────
+    async def fetch_one(client, sid, shop_name):
+        api_url = (
+            f"https://api.chiaki.vn/api/{sid}/export-excel-order"
+            f"?source=seller&page_index=1&page_size=200"
+            f"&status=finished"
+            f"&range_date={encoded_range}"
+            f"&date_type=created_at&order=create-desc"
+            f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+        )
+        try:
+            resp = await client.get(api_url)
+            if resp.status_code != 200:
+                return []
+            if "html" in resp.headers.get("content-type", "") or len(resp.content) < 100:
+                return []
+            wb = openpyxl.load_workbook(BytesIO(resp.content))
+            ws = wb.active
+            headers_map = {}
+            header_row = None
+            for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+                if row and any(cell and "mã đơn" in str(cell).lower() for cell in row):
+                    header_row = i
+                    for j, cell in enumerate(row):
+                        if cell:
+                            headers_map[str(cell).strip().lower()] = j
+                    break
+            if header_row is None:
+                return []
+            def fc(kw):
+                for k, v in headers_map.items():
+                    if kw.lower() in k:
+                        return v
+                return None
+            col_code    = fc("mã đơn")
+            col_date    = fc("ngày tạo") or fc("ngày đặt")
+            col_name    = fc("tên người nhận") or fc("tên khách")
+            col_phone   = fc("số điện thoại") or fc("điện thoại")
+            col_address = fc("địa chỉ")
+            col_product = fc("tên sản phẩm") or fc("sản phẩm")
+            col_total   = fc("tổng tiền") or fc("giá trị")
+            orders = []
+            for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+                if not row or all(c is None for c in row):
+                    continue
+                def gv(col):
+                    return str(row[col]).strip() if col is not None and row[col] is not None else "—"
+                orders.append({
+                    "shop_id":       sid,
+                    "shop_name":     shop_name,
+                    "order_code":    gv(col_code),
+                    "order_date":    gv(col_date),
+                    "customer_name": gv(col_name),
+                    "phone":         gv(col_phone),
+                    "address":       gv(col_address),
+                    "product":       gv(col_product),
+                    "total":         gv(col_total),
+                })
+            return orders
+        except Exception as e:
+            print(f"[finished] {sid} lỗi: {e}")
+            return []
+
+    semaphore = asyncio.Semaphore(5)  # thấp hơn delivering để tránh rate-limit
+
+    async def fetch_with_sem(client, sid, shop_name):
+        async with semaphore:
+            return await fetch_one(client, sid, shop_name)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        tasks = [fetch_with_sem(client, sid, shop_name) for sid, (_, shop_name) in shop_items]
+        results = await asyncio.gather(*tasks)
+
+    all_orders = [order for shop_orders in results for order in shop_orders]
+    return {"date_range": date_range, "total": len(all_orders), "data": all_orders}
 @app.get("/api/orders/returned")
-def get_returned_orders(
-    request: Request,
-    shop_id: str = Query(None),
-    db: Session = Depends(get_db)
-):
-    user_id = request.headers.get('X-User-ID', '')
-    q = db.query(ReturnedOrder)
-    if shop_id:
-        q = q.filter(ReturnedOrder.shop_id == shop_id)
-    orders = q.order_by(desc(ReturnedOrder.order_date)).all()
-    return {
-        "total":     len(orders),
-        "data":      [serialize_cached_order(o, user_id) for o in orders],
-        "cached":    True,
-        "synced_at": orders[0].fetched_at.isoformat() if orders else None,
-    }
-# ── FORCE SYNC THỦ CÔNG ───────────────────────────────
-@app.post("/api/admin/force-sync")
-async def force_sync(request: Request):
-    user_id = request.headers.get('X-User-ID', '')
-    if user_id != 'Chang2000':
-        return JSONResponse({"error": "Không có quyền"}, status_code=403)
-    asyncio.create_task(sync_all())
-    return {"ok": True, "message": "Đang sync tất cả, kiểm tra lại sau 3-5 phút"}
+async def get_returned_orders(shop_id: str = Query(None)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
+
+    shops = get_shops_map()
+    shop_items = list({shop_id: shops[shop_id]}.items()) if shop_id and shop_id in shops else list(shops.items())
+
+    async def fetch_one(client, sid, shop_name):
+        api_url = (
+            f"https://api.chiaki.vn/api/{sid}/export-excel-order"
+            f"?source=seller&page_index=1&page_size=200"
+            f"&status=returned"
+            f"&range_date={encoded_range}"
+            f"&date_type=created_at&order=create-desc"
+            f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+        )
+        try:
+            resp = await client.get(api_url)
+            if resp.status_code != 200:
+                return []
+            if "html" in resp.headers.get("content-type", "") or len(resp.content) < 100:
+                return []
+            wb = openpyxl.load_workbook(BytesIO(resp.content))
+            ws = wb.active
+            headers_map = {}
+            header_row = None
+            for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+                if row and any(cell and "mã đơn" in str(cell).lower() for cell in row):
+                    header_row = i
+                    for j, cell in enumerate(row):
+                        if cell:
+                            headers_map[str(cell).strip().lower()] = j
+                    break
+            if header_row is None:
+                return []
+            def fc(kw):
+                for k, v in headers_map.items():
+                    if kw.lower() in k:
+                        return v
+                return None
+            col_code    = fc("mã đơn")
+            col_date    = fc("ngày tạo") or fc("ngày đặt")
+            col_name    = fc("tên người nhận") or fc("tên khách")
+            col_phone   = fc("số điện thoại") or fc("điện thoại")
+            col_address = fc("địa chỉ")
+            col_product = fc("tên sản phẩm") or fc("sản phẩm")
+            col_total   = fc("tổng tiền") or fc("giá trị")
+            orders = []
+            for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+                if not row or all(c is None for c in row):
+                    continue
+                def gv(col):
+                    return str(row[col]).strip() if col is not None and row[col] is not None else "—"
+                orders.append({
+                    "shop_id":       sid,
+                    "shop_name":     shop_name,
+                    "order_code":    gv(col_code),
+                    "order_date":    gv(col_date),
+                    "customer_name": gv(col_name),
+                    "phone":         gv(col_phone),
+                    "address":       gv(col_address),
+                    "product":       gv(col_product),
+                    "total":         gv(col_total),
+                })
+            return orders
+        except Exception as e:
+            print(f"[returned] {sid} lỗi: {e}")
+            return []
+
+    semaphore = asyncio.Semaphore(3)  # thấp nhất, hoàn hàng ít ưu tiên hơn
+
+    async def fetch_with_sem(client, sid, shop_name):
+        async with semaphore:
+            return await fetch_one(client, sid, shop_name)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        tasks = [fetch_with_sem(client, sid, shop_name) for sid, (_, shop_name) in shop_items]
+        results = await asyncio.gather(*tasks)
+
+    all_orders = [order for shop_orders in results for order in shop_orders]
+    return {"date_range": date_range, "total": len(all_orders), "data": all_orders}
