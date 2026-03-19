@@ -12,7 +12,7 @@ from models import (
     Order, DeliveringOrder, FinishedOrder,
     ReturnedOrder, RevenueCache, RevenueNetCache, ShopMeta
 )
-
+PROXY_URL = "https://chiaki-proxy.hathanhhoang-edu.workers.dev"
 scheduler = AsyncIOScheduler(timezone="Asia/Ho_Chi_Minh")
 
 # ─────────────────────────────────────────
@@ -40,16 +40,62 @@ def build_date_range(days=30):
 # ─────────────────────────────────────────
 # HELPER: FETCH EXCEL ĐƠN HÀNG TỪNG SHOP
 # ─────────────────────────────────────────
+
+# ─────────────────────────────────────────
+# SYNC ĐƠN HÀNG THEO STATUS VÀO DB
+# ─────────────────────────────────────────
+async def sync_status_orders(status: str, ModelClass, days=30):
+    date_range, encoded_range = build_date_range(days)
+    shops = get_shops_map()
+    semaphore = asyncio.Semaphore(5)
+
+    async def fetch_one(client, sid, sname):
+        async with semaphore:
+            return await fetch_excel_orders(client, sid, sname, status, encoded_range)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        tasks = [fetch_one(client, sid, val[1]) for sid, val in shops.items()]
+        results = await asyncio.gather(*tasks)
+
+    all_orders = [o for shop_orders in results for o in shop_orders]
+
+    db = SessionLocal()
+    try:
+        db.query(ModelClass).delete()
+        for o in all_orders:
+            db.add(ModelClass(**o))
+        db.commit()
+        print(f"  ✅ [{status}] Lưu {len(all_orders)} đơn vào DB")
+    except Exception as e:
+        db.rollback()
+        print(f"  ❌ [{status}] DB error: {e}")
+    finally:
+        db.close()
+
+    return len(all_orders)
+
+
+Đây là 3 hàm viết lại hoàn chỉnh:
+
+python
+PROXY_URL = "https://chiaki-proxy.hathanhhoang-edu.workers.dev"
+
+
+# ─────────────────────────────────────────
+# FETCH EXCEL ĐƠN HÀNG TỪNG SHOP
+# ─────────────────────────────────────────
 async def fetch_excel_orders(client, sid, shop_name, status, encoded_range, pagesize=500):
-    url = (
+    chiaki_url = (
         f"https://api.chiaki.vn/api/{sid}/export-excel-order"
         f"?source=seller&pageIndex=1&pageSize={pagesize}"
         f"&status={status}&rangeDate={encoded_range}"
         f"&dateType=createdat&order=create-desc"
         f"&SellerId={SELLER_ID}&SellerToken={SELLER_TOKEN}"
     )
+    url = f"{PROXY_URL}?url={urllib.parse.quote(chiaki_url, safe='')}"
+
     try:
-        resp = await client.get(url, headers=HEADERS)
+        resp = await client.get(url)
         if resp.status_code != 200:
             print(f"  [{status}] {sid} HTTP {resp.status_code}")
             return []
@@ -108,45 +154,13 @@ async def fetch_excel_orders(client, sid, shop_name, status, encoded_range, page
                 "total":         gv(col_total),
                 "order_date":    gv(col_date),
             })
+
+        print(f"  [{status}] {sid} → {len(orders)} đơn")
         return orders
 
     except Exception as e:
         print(f"  [{status}] {sid} lỗi: {e}")
         return []
-
-
-# ─────────────────────────────────────────
-# SYNC ĐƠN HÀNG THEO STATUS VÀO DB
-# ─────────────────────────────────────────
-async def sync_status_orders(status: str, ModelClass, days=30):
-    date_range, encoded_range = build_date_range(days)
-    shops = get_shops_map()
-    semaphore = asyncio.Semaphore(5)
-
-    async def fetch_one(client, sid, sname):
-        async with semaphore:
-            return await fetch_excel_orders(client, sid, sname, status, encoded_range)
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        tasks = [fetch_one(client, sid, val[1]) for sid, val in shops.items()]
-        results = await asyncio.gather(*tasks)
-
-    all_orders = [o for shop_orders in results for o in shop_orders]
-
-    db = SessionLocal()
-    try:
-        db.query(ModelClass).delete()
-        for o in all_orders:
-            db.add(ModelClass(**o))
-        db.commit()
-        print(f"  ✅ [{status}] Lưu {len(all_orders)} đơn vào DB")
-    except Exception as e:
-        db.rollback()
-        print(f"  ❌ [{status}] DB error: {e}")
-    finally:
-        db.close()
-
-    return len(all_orders)
 
 
 # ─────────────────────────────────────────
@@ -159,19 +173,22 @@ async def sync_revenue(days=30):
 
     async def fetch_one(client, sid, sname):
         async with semaphore:
-            url = (
+            chiaki_url = (
                 f"https://api.chiaki.vn/api/{sid}/export-excel-summary-amount-order"
                 f"?source=seller&pageIndex=1&pageSize=500"
                 f"&status=all&rangeDate={encoded_range}"
                 f"&dateType=createdat&order=create-desc"
                 f"&SellerId={SELLER_ID}&SellerToken={SELLER_TOKEN}"
             )
+            url = f"{PROXY_URL}?url={urllib.parse.quote(chiaki_url, safe='')}"
             try:
-                resp = await client.get(url, headers=HEADERS)
+                resp = await client.get(url)
                 if resp.status_code != 200:
+                    print(f"  [revenue] {sid} HTTP {resp.status_code}")
                     return None
                 ct = resp.headers.get("content-type", "")
                 if "html" in ct or len(resp.content) < 100:
+                    print(f"  [revenue] {sid} FAILED (bị chặn hoặc rỗng)")
                     return None
 
                 wb = openpyxl.load_workbook(BytesIO(resp.content))
@@ -193,21 +210,22 @@ async def sync_revenue(days=30):
                     except:
                         return 0
 
-                gia_goc    = to_float(get_val("Giá gốc"))
-                hoan_lai   = to_float(get_val("Số tiền hoàn lại"))
-                tro_gia    = to_float(get_val("Sản phẩm được trợ giá"))
-                mau_u_dai  = to_float(get_val("Mẫu ưu đãi do Người Bán chịu"))
-                doanh_thu_gop = gia_goc + hoan_lai + tro_gia + mau_u_dai
+                gia_goc         = to_float(get_val("Giá gốc"))
+                hoan_lai        = to_float(get_val("Số tiền hoàn lại"))
+                tro_gia         = to_float(get_val("Sản phẩm được trợ giá"))
+                mau_u_dai       = to_float(get_val("Mẫu ưu đãi do Người Bán chịu"))
+                doanh_thu_gop   = gia_goc + hoan_lai + tro_gia + mau_u_dai
 
-                phi_co_dinh   = to_float(get_val("Phí cố định"))
-                phi_dich_vu   = to_float(get_val("Phí Dịch Vụ"))
-                phi_tt        = to_float(get_val("Phí thanh toán"))
-                phi_qc        = to_float(get_val("Phí quảng cáo"))
-                thue_gtgt     = to_float(get_val("Thuế GTGT"))
-                thue_tncn     = to_float(get_val("Thuế TNCN"))
-                tong_khau_tru = phi_co_dinh + phi_dich_vu + phi_tt + phi_qc + thue_gtgt + thue_tncn
+                phi_co_dinh     = to_float(get_val("Phí cố định"))
+                phi_dich_vu     = to_float(get_val("Phí Dịch Vụ"))
+                phi_tt          = to_float(get_val("Phí thanh toán"))
+                phi_qc          = to_float(get_val("Phí quảng cáo"))
+                thue_gtgt       = to_float(get_val("Thuế GTGT"))
+                thue_tncn       = to_float(get_val("Thuế TNCN"))
+                tong_khau_tru   = phi_co_dinh + phi_dich_vu + phi_tt + phi_qc + thue_gtgt + thue_tncn
                 doanh_thu_thuan = doanh_thu_gop - tong_khau_tru
 
+                print(f"  [revenue] {sid} → {doanh_thu_gop:,.0f}đ")
                 return {
                     "shop_id":          sid,
                     "shop_name":        sname,
@@ -229,7 +247,6 @@ async def sync_revenue(days=30):
         results = await asyncio.gather(*tasks)
 
     valid = [r for r in results if r is not None]
-
     db = SessionLocal()
     try:
         db.query(RevenueCache).delete()
@@ -254,19 +271,22 @@ async def sync_revenue_net(days=14):
 
     async def fetch_one(client, sid, sname):
         async with semaphore:
-            url = (
+            chiaki_url = (
                 f"https://api.chiaki.vn/api/{sid}/export-excel-order"
                 f"?source=seller&pageIndex=1&pageSize=500"
                 f"&status=finished&rangeDate={encoded_range}"
                 f"&dateType=createdat&order=create-desc"
                 f"&SellerId={SELLER_ID}&SellerToken={SELLER_TOKEN}"
             )
+            url = f"{PROXY_URL}?url={urllib.parse.quote(chiaki_url, safe='')}"
             try:
-                resp = await client.get(url, headers=HEADERS)
+                resp = await client.get(url)
                 if resp.status_code != 200:
+                    print(f"  [revenue_net] {sid} HTTP {resp.status_code}")
                     return None
                 ct = resp.headers.get("content-type", "")
                 if "html" in ct or len(resp.content) < 100:
+                    print(f"  [revenue_net] {sid} FAILED")
                     return None
 
                 wb = openpyxl.load_workbook(BytesIO(resp.content))
@@ -290,8 +310,8 @@ async def sync_revenue_net(days=14):
                             return v
                     return None
 
-                col_total  = find_col("tổng tiền")
-                col_phuphi = find_col("phụ phí")
+                col_total   = find_col("tổng tiền")
+                col_phuphi  = find_col("phụ phí")
                 col_doisoat = find_col("ngày đối soát")
 
                 if col_total is None:
@@ -301,7 +321,6 @@ async def sync_revenue_net(days=14):
                 for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
                     if not row or all(c is None for c in row):
                         continue
-                    # Chỉ tính dòng chưa có ngày đối soát
                     doi_soat = row[col_doisoat] if col_doisoat is not None else None
                     if doi_soat is not None and str(doi_soat).strip() != "":
                         continue
@@ -315,6 +334,7 @@ async def sync_revenue_net(days=14):
                         pass
                     row_count += 1
 
+                print(f"  [revenue_net] {sid} → {row_count} đơn, {tong_tien_sum:,.0f}đ")
                 return {
                     "shop_id":          sid,
                     "shop_name":        sname,
@@ -333,7 +353,6 @@ async def sync_revenue_net(days=14):
         results = await asyncio.gather(*tasks)
 
     valid = [r for r in results if r is not None]
-
     db = SessionLocal()
     try:
         db.query(RevenueNetCache).delete()
@@ -346,11 +365,6 @@ async def sync_revenue_net(days=14):
         print(f"  ❌ [revenue_net] DB error: {e}")
     finally:
         db.close()
-
-
-# ─────────────────────────────────────────
-# SYNC CHUẨN BỊ HÀNG (dùng fetcher.py cũ)
-# ─────────────────────────────────────────
 async def sync_all_shops():
     """Sync đơn chờ lấy hàng vào bảng orders (dùng fetcher.py cũ)"""
     print("[scheduler] Bắt đầu quét toàn bộ gian hàng...")
