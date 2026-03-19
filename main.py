@@ -125,7 +125,7 @@ def get_summary(db: Session = Depends(get_db)):
     }
 
 @app.get("/api/orders")
-def get_orders(
+async def get_orders(
     request: Request,
     shop_id: str = Query(None),
     page: int = Query(1, ge=1),
@@ -142,50 +142,170 @@ def get_orders(
             "message": "Shop này bị chặn trích xuất đơn hàng"
         }
 
+    # ── Thử lấy từ DB trước ──────────────────────────────────────
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
-    total = q.count()
 
-    # Sắp xếp
+    db_total = q.count()
+
+    # Nếu DB có data → dùng DB (nhanh hơn)
+    if db_total > 0:
+        if sort == "total_desc":
+            q = q.order_by(desc(Order.total))
+        elif sort == "total_asc":
+            q = q.order_by(Order.total)
+        elif sort == "date_desc":
+            q = q.order_by(desc(Order.order_date))
+        elif sort == "date_asc":
+            q = q.order_by(Order.order_date)
+        else:
+            q = q.order_by(desc(Order.fetched_at))
+
+        orders_db = q.offset((page - 1) * limit).limit(limit).all()
+
+        def serialize_db(o):
+            mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+            M = "••••••••"
+            return {
+                "order_code":    M if mask else o.order_code,
+                "shop_name":     o.shop_name,
+                "shop_id":       o.shop_id,
+                "buyer_name":    M if mask else o.buyer_name,
+                "customer_name": M if mask else o.customer_name,
+                "phone":         M if mask else o.phone,
+                "address":       M if mask else o.address,
+                "product":       M if mask else o.product,
+                "quantity":      M if mask else o.quantity,
+                "total":         M if mask else o.total,
+                "status":        M if mask else o.status,
+                "order_date":    M if mask else o.order_date,
+                "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+                "restricted":    mask,
+                "source":        "db",
+            }
+
+        return {"total": db_total, "page": page, "data": [serialize_db(o) for o in orders_db]}
+
+    # ── DB trống → fallback gọi thẳng Chiaki API ─────────────────
+    from datetime import timezone
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    date_range = f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+    encoded_range = urllib.parse.quote(date_range)
+
+    shops = get_shops_map()
+    shop_items = (
+        [(shop_id, *shops[shop_id])] if shop_id and shop_id in shops
+        else list(shops.items())
+    )
+
+    async def fetch_one(client, sid, sname):
+        api_url = (
+            f"https://api.chiaki.vn/api/{sid}/export-excel-order"
+            f"?source=seller&pageIndex=1&pageSize={limit}"
+            f"&status=all&rangeDate={encoded_range}"
+            f"&dateType=createdat&order=create-desc"
+            f"&SellerId={SELLER_ID}&SellerToken={SELLER_TOKEN}"
+        )
+        try:
+            resp = await client.get(api_url)
+            if resp.status_code != 200:
+                return []
+            ct = resp.headers.get("content-type", "")
+            if "html" in ct or len(resp.content) < 100:
+                return []
+
+            wb = openpyxl.load_workbook(BytesIO(resp.content))
+            ws = wb.active
+            headers_map = {}
+            header_row = None
+
+            for i, row in enumerate(ws.iter_rows(values_only=True), 1):
+                if row and any(cell and "mã đơn" in str(cell).lower() for cell in row):
+                    header_row = i
+                    for j, cell in enumerate(row):
+                        if cell:
+                            headers_map[str(cell).strip().lower()] = j
+                    break
+
+            if header_row is None:
+                return []
+
+            def fc(kw):
+                for k, v in headers_map.items():
+                    if kw.lower() in k:
+                        return v
+                return None
+
+            col_code    = fc("mã đơn")
+            col_date    = fc("ngày tạo") or fc("ngày tạo")
+            col_name    = fc("tên người nhận") or fc("tên khách")
+            col_phone   = fc("số điện thoại") or fc("điện thoại")
+            col_address = fc("địa chỉ")
+            col_product = fc("tên sản phẩm") or fc("sản phẩm")
+            col_total   = fc("tổng tiền") or fc("giá trị")
+            col_status  = fc("trạng thái")
+
+            orders = []
+            for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+                if not row or all(c is None for c in row):
+                    continue
+
+                def gv(col):
+                    return str(row[col]).strip() if col is not None and row[col] is not None else ""
+
+                mask = sid in BLOCKED_SHOPS and user_id != 'Chang2000'
+                M = "••••••••"
+                orders.append({
+                    "order_code":    M if mask else gv(col_code),
+                    "shop_name":     sname,
+                    "shop_id":       sid,
+                    "buyer_name":    M if mask else gv(col_name),
+                    "customer_name": M if mask else gv(col_name),
+                    "phone":         M if mask else gv(col_phone),
+                    "address":       M if mask else gv(col_address),
+                    "product":       M if mask else gv(col_product),
+                    "quantity":      M if mask else "",
+                    "total":         M if mask else gv(col_total),
+                    "status":        M if mask else gv(col_status),
+                    "order_date":    M if mask else gv(col_date),
+                    "fetched_at":    datetime.now().isoformat(),
+                    "restricted":    mask,
+                    "source":        "chiaki_live",
+                })
+            return orders
+        except Exception as e:
+            print(f"[orders fallback] {sid} lỗi: {e}")
+            return []
+
+    semaphore = asyncio.Semaphore(10)
+
+    async def fetch_with_sem(client, sid, sname):
+        async with semaphore:
+            return await fetch_one(client, sid, sname)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        tasks = [fetch_with_sem(client, sid, sname) for sid, _, sname in shop_items]
+        results = await asyncio.gather(*tasks)
+
+    all_orders = [o for shop_orders in results for o in shop_orders]
+
+    # Sắp xếp phía server nếu cần
     if sort == "total_desc":
-        q = q.order_by(desc(Order.total))
+        all_orders.sort(key=lambda x: float(x["total"].replace(",", "") or 0) if x["total"] not in ["", "••••••••"] else 0, reverse=True)
     elif sort == "total_asc":
-        q = q.order_by(Order.total)
+        all_orders.sort(key=lambda x: float(x["total"].replace(",", "") or 0) if x["total"] not in ["", "••••••••"] else 0)
     elif sort == "date_desc":
-        q = q.order_by(desc(Order.order_date))
+        all_orders.sort(key=lambda x: x["order_date"] or "", reverse=True)
     elif sort == "date_asc":
-        q = q.order_by(Order.order_date)
-    else:
-        q = q.order_by(desc(Order.fetched_at))
+        all_orders.sort(key=lambda x: x["order_date"] or "")
 
-    orders = q.offset((page - 1) * limit).limit(limit).all()
+    total = len(all_orders)
+    start = (page - 1) * limit
+    paged = all_orders[start:start + limit]
 
-    def serialize(o):
-        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
-        M = "••••••••"
-        return {
-            "order_code":    M if mask else o.order_code,
-            "shop_name":     o.shop_name,
-            "shop_id":       o.shop_id,
-            "buyer_name":    M if mask else o.buyer_name,
-            "customer_name": M if mask else o.customer_name,
-            "phone":         M if mask else o.phone,
-            "address":       M if mask else o.address,
-            "product":       M if mask else o.product,
-            "quantity":      M if mask else o.quantity,
-            "total":         M if mask else o.total,
-            "status":        M if mask else o.status,
-            "order_date":    M if mask else o.order_date,
-            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-            "restricted":    mask,
-        }
-
-    return {
-        "total": total,
-        "page": page,
-        "data": [serialize(o) for o in orders]
-    }
+    return {"total": total, "page": page, "data": paged, "source": "chiaki_live"}
 
 
 @app.get("/api/test-shopname")
