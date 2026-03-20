@@ -364,7 +364,7 @@ async def get_revenue():
     }
 @app.post("/api/order-info")
 async def get_order_info(body: dict, db: Session = Depends(get_db)):
-    order_code = body.get("order_code", "").strip()
+    order_code = body.get("ordercode", "").strip()
     key        = body.get("key", "").strip()
 
     if not order_code or not key:
@@ -436,22 +436,23 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         db_product = db_order.product if db_order else "—"
         db_total   = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
         return {
-    "order_code":           g("code"),
-    "shop_name":            g("store_code", "creator_name"),
-    "order_date":           g("verified_time", "create_time"),
-    "customer_name":        g("related_user_name", "receiver_name"),
-    "phone":                phone,
-    "email":                g("email_id"),
-    "address":              g("delivery_address"),
-    "source":               g("source", "from"),
-    "payment":              payment_status,
-    "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
-    "shipping_code":        g("shipping_code"),
-    "delivery_status":      g("delivery_status"),
-    "shipper_receive_time": g("shipper_receive_time"),
-    "product":              db_product,          # ← thêm mới
-    "remaining":            remaining,
+    "ordercode":           g("code"),
+    "shopname":            g("store_code", "creator_name"),
+    "orderdate":           g("verified_time", "create_time"),
+    "customername":        g("related_user_name", "receiver_name"),
+    "phone":               phone,
+    "email":               g("email_id"),
+    "address":             g("delivery_address"),
+    "source":              g("source", "from"),
+    "payment":             payment_status,
+    "prepaidamount":       db_total,
+    "shippingcode":        g("shipping_code"),
+    "deliverystatus":      g("delivery_status"),
+    "shipperreceivetime":  g("shipper_receive_time"),
+    "product":             db_product,
+    "remaining":           remaining,
 }
+
     except Exception as e:
         VALID_KEYS[key] -= 1
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
