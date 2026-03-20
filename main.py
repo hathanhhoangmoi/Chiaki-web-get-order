@@ -25,7 +25,7 @@ from reportlab.lib.utils import simpleSplit
 import io
 from fastapi.responses import StreamingResponse
 from fastapi.responses import HTMLResponse
-
+from shops_config import SHOP_NAME_MAP
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
@@ -434,7 +434,12 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         Order.order_code.like(f"%_{order_code}")
             ).first()
         db_product   = db_order.product   if db_order else "—"
-        db_shop_name = db_order.shop_name if db_order else g("store_code", "creator_name")
+        shop_id_from_api = g("store_code", "creator_name")
+        db_shop_name = (
+            SHOP_NAME_MAP.get(shop_id_from_api)        # 1. lookup từ shops_config
+            or (db_order.shop_name if db_order else None)  # 2. fallback DB
+            or shop_id_from_api                            # 3. fallback mã gốc
+        )
         db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
 
         return {
