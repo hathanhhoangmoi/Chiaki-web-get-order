@@ -24,6 +24,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import simpleSplit
 import io
 from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse
+
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
@@ -104,6 +106,10 @@ def serialize_order(o, mask=False):
 @app.get("/", response_class=HTMLResponse)
 async def root():
     with open("static/index.html", encoding="utf-8") as f:
+        return f.read()
+@app.get("/phone", response_class=HTMLResponse)
+async def phone_page():
+    with open("static/phone.html", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/api/summary")
