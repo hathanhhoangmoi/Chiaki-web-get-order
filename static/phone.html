@@ -248,10 +248,10 @@ async function doSearch() {
     if (data.error) { showErr(data.error); return; }
 
     document.getElementById('resPhone').textContent   = data.phone       || 'Không có';
-    document.getElementById('resCode').textContent    = data.ordercode   || code;
-    document.getElementById('resShop').textContent    = data.shopname    || '—';
-    document.getElementById('resDate').textContent    = data.orderdate   || '—';
-    document.getElementById('resName').textContent    = data.customername || data.receivername || '—';
+    document.getElementById('resCode').textContent    = data.orde_rcode   || code;
+    document.getElementById('resShop').textContent    = data.shop_name    || '—';
+    document.getElementById('resDate').textContent    = data.order_date   || '—';
+    document.getElementById('resName').textContent    = data.customer_name || data.receivername || '—';
     document.getElementById('resAddress').textContent = data.address     || '—';
     document.getElementById('resProduct').textContent = data.product     || '—';
     document.getElementById('resPayment').textContent = data.payment     || '—';
