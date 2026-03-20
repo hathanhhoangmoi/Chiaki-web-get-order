@@ -1125,7 +1125,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   </div>
 </div>
 <!-- Doanh thu gộp 3 loại đơn -->
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;" id="revenueSummaryRow">
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px;" id="revenueSummaryRow">
 
   <!-- Đơn chờ lấy hàng -->
   <div class="stat-card" style="border-left:4px solid #a78bfa;">
@@ -1144,24 +1144,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div class="stat-value" id="revDelivering" style="font-size:24px;margin-top:6px;">—</div>
     <div class="stat-sub" id="revDeliveringCount">Đang tính...</div>
   </div>
-
-  <!-- Đơn đã giao -->
-  <div class="stat-card" style="border-left:4px solid #10b981;">
-    <div class="stat-label" style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#7c6fa0;">
-      ✅ Doanh thu gộp — Đã giao
-    </div>
-    <div class="stat-value" id="revFinished" style="font-size:24px;margin-top:6px;">—</div>
-    <div class="stat-sub" id="revFinishedCount">Đang tính...</div>
-  </div>
-  <!-- Hoàn hàng -->
-<div class="stat-card" style="border-left:4px solid #f87171;">
-  <div class="stat-label" style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#7c6fa0;">
-    🔄 Doanh thu gộp — Hoàn hàng
-  </div>
-  <div class="stat-value" id="revReturned" style="font-size:24px;margin-top:6px;">—</div>
-  <div class="stat-sub" id="revReturnedCount">Đang tính...</div>
-</div>
-
 </div>
 
   <!-- Stats row — 4 cards, Hà Nội là card thứ 4 có thể click -->
@@ -1214,51 +1196,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div class="stat-sub" id="dlvNuocHoaSub">Click để xem danh sách</div>
   </div>
 </div>
-<!-- Stats row đơn ĐÃ GIAO THÀNH CÔNG -->
-<div class="stats-row" id="finishedStatsRow" style="margin-bottom:16px;">
-  <div class="stat-card">
-    <div class="stat-label">✅ Tổng đã giao</div>
-    <div class="stat-value" id="finTotal">—</div>
-    <div class="stat-sub">Đơn giao thành công trong 30 ngày</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">🏪 Số gian hàng</div>
-    <div class="stat-value" id="finShops">—</div>
-    <div class="stat-sub">Gian hàng có đơn đã giao thành công trong 30 ngày</div>
-  </div>
-  <div class="stat-card clickable" id="finHanoiCard" onclick="toggleFinHanoiPanel()">
-    <div class="stat-label">📍 Đã giao tại Hà Nội</div>
-    <div class="stat-value" id="finHanoiCount">—</div>
-    <div class="stat-sub" id="finHanoiSub">Click để xem danh sách</div>
-  </div>
-  <div class="stat-card clickable" id="finNuocHoaCard" onclick="toggleFinNuocHoaPanel()">
-    <div class="stat-label">🌸 Đã giao nước hoa</div>
-    <div class="stat-value" id="finNuocHoaCount">—</div>
-    <div class="stat-sub" id="finNuocHoaSub">Click để xem danh sách</div>
-  </div>
-</div>
-<!-- Stats row đơn HOÀN HÀNG -->
-<div class="stats-row" id="returnedStatsRow" style="margin-bottom:16px;">
-  <div class="stat-card">
-    <div class="stat-label">🔄 Tổng hoàn hàng</div>
-    <div class="stat-value" id="retTotal">—</div>
-    <div class="stat-sub">Đơn hoàn trong 30 ngày</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">🏪 Số gian hàng</div>
-    <div class="stat-value" id="retShops">—</div>
-    <div class="stat-sub">Gian hàng có đơn hoàn</div>
-  </div>
-  <div class="stat-card clickable" id="retHanoiCard" onclick="toggleRetHanoiPanel()">
-    <div class="stat-label">📍 Hoàn tại Hà Nội</div>
-    <div class="stat-value" id="retHanoiCount">—</div>
-    <div class="stat-sub" id="retHanoiSub">Click để xem danh sách</div>
-  </div>
-  <div class="stat-card clickable" id="retNuocHoaCard" onclick="toggleRetNuocHoaPanel()">
-    <div class="stat-label">🌸 Hoàn nước hoa</div>
-    <div class="stat-value" id="retNuocHoaCount">—</div>
-    <div class="stat-sub" id="retNuocHoaSub">Click để xem danh sách</div>
-  </div>
+
 </div>
 
   <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
@@ -1302,20 +1240,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
            font-weight:700;font-size:12px;font-family:inherit;">
     🚚 Đang giao hàng
   </button>
-  <button id="tabFinished" onclick="switchOrderTab('finished')"
-    style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
-           background:rgba(255,255,255,.4);color:#7c6fa0;
-           font-weight:700;font-size:12px;font-family:inherit;">
-    ✅ Đã giao thành công
-  </button>
-  <button id="tabReturned" onclick="switchOrderTab('returned')"
-  style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
-         background:rgba(255,255,255,.4);color:#7c6fa0;
-         font-weight:700;font-size:12px;font-family:inherit;">
-  🔄 Hoàn hàng
-</button>
 </div>
-
 
   <!-- Panel đơn thường -->
   <div id="panelMain">
@@ -1438,92 +1363,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
           <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
         </tr></thead>
         <tbody id="tbodyDlvNuocHoa">
-          <tr><td colspan="9" class="empty"><div class="empty-icon">🌸</div><div>Chưa tải dữ liệu</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<!-- Panel Hà Nội ĐÃ GIAO -->
-<div id="panelFinHanoi" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">✅ Đơn đã giao tại Hà Nội</div>
-      <div class="table-count" id="finHanoiTableCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyFinHanoi">
-          <tr><td colspan="9" class="empty"><div class="empty-icon">✅</div><div>Chưa tải dữ liệu</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Panel Nước hoa ĐÃ GIAO -->
-<div id="panelFinNuocHoa" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">🌸 Đơn đã giao nước hoa</div>
-      <div class="table-count" id="finNuocHoaTableCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyFinNuocHoa">
-          <tr><td colspan="9" class="empty"><div class="empty-icon">🌸</div><div>Chưa tải dữ liệu</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<!-- Panel Hà Nội HOÀN HÀNG -->
-<div id="panelRetHanoi" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">🔄 Đơn hoàn tại Hà Nội</div>
-      <div class="table-count" id="retHanoiTableCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyRetHanoi">
-          <tr><td colspan="9" class="empty"><div class="empty-icon">🔄</div><div>Chưa tải dữ liệu</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Panel Nước hoa HOÀN HÀNG -->
-<div id="panelRetNuocHoa" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">🌸 Đơn hoàn nước hoa</div>
-      <div class="table-count" id="retNuocHoaTableCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyRetNuocHoa">
           <tr><td colspan="9" class="empty"><div class="empty-icon">🌸</div><div>Chưa tải dữ liệu</div></td></tr>
         </tbody>
       </table>
@@ -3834,183 +3673,7 @@ function toggleDlvNuocHoaPanel() {
 loadDeliveringStats();
 // Cập nhật lại mỗi 5 phút cùng với các panel khác
 setInterval(loadDeliveringStats, 300000);
-// ── FINISHED (ĐÃ GIAO) STATS ────────────────────────────────
-let finAllOrders = [];
-let finHanoiVisible = false;
-let finNuocHoaVisible = false;
-let finLoaded = false;
 
-async function loadFinishedOrders() {
-  const tbody = document.getElementById('tableBody');
-  const countEl = document.getElementById('tableCount');
-  const paginationEl = document.getElementById('pagination');
-
-  tbody.innerHTML = '<tr><td colspan="10" class="empty"><div class="empty-icon">✅</div><div>Đang tải đơn đã giao...</div></td></tr>';
-  if (paginationEl) paginationEl.innerHTML = '';
-
-  const url = currentShop
-    ? `/api/orders/finished?shop_id=${currentShop}`
-    : `/api/orders/finished`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    const orders = data.data || [];
-
-    if (countEl) countEl.textContent = `${orders.length.toLocaleString('vi')} đơn đã giao`;
-
-    if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty"><div class="empty-icon">📭</div><div>Không có đơn đã giao trong 30 ngày qua</div></td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = orders.map(o => `
-      <tr>
-        <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
-        <td style="font-size:11px;color:#9b8bb4">${o.order_date}</td>
-        <td><span class="shop-chip">${o.shop_name}</span></td>
-        <td>${o.customer_name}</td>
-        <td style="font-family:monospace">${o.phone}</td>
-        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.address}</td>
-        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.product}</td>
-        <td></td>
-        <td><b>${o.total !== '—' && !isNaN(o.total) ? Number(o.total).toLocaleString('vi') : o.total}</b></td>
-        <td><span class="tag tag-done">✅ Đã giao</span></td>
-      </tr>
-    `).join('');
-
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">⚠️</div><div>Lỗi: ${e.message}</div></td></tr>`;
-  }
-}
-  
-  
-async function loadFinishedStats() {
-  try {
-    const res = await fetch('/api/orders/finished');
-    const data = await res.json();
-    finAllOrders = data.data || [];
-    finLoaded = true;
-
-    document.getElementById('finTotal').textContent = finAllOrders.length.toLocaleString('vi');
-
-    const shops = new Set(finAllOrders.map(o => o.shop_id));
-    document.getElementById('finShops').textContent = shops.size;
-
-    const kw = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
-    const hanoi = finAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
-    document.getElementById('finHanoiCount').textContent = hanoi.length.toLocaleString('vi');
-
-    const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
-    const nuochoa = finAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
-    document.getElementById('finNuocHoaCount').textContent = nuochoa.length.toLocaleString('vi');
-    updateRevFinished();
-  } catch(e) {
-    document.getElementById('finTotal').textContent = 'Lỗi';
-    console.error('loadFinishedStats error', e);
-  }
-}
-
-function renderFinTable(tbodyId, countId, orders, tagHtml) {
-  const tbody = document.getElementById(tbodyId);
-  const countEl = document.getElementById(countId);
-  if (countEl) countEl.textContent = `${orders.length.toLocaleString('vi')} đơn`;
-  if (!orders.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">📭</div><div>Không có đơn nào</div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = orders.map(o => `
-    <tr>
-      <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
-      <td style="font-size:11px;color:#9b8bb4">${o.order_date}</td>
-      <td><span class="shop-chip">${o.shop_name}</span></td>
-      <td>${o.customer_name}</td>
-      <td style="font-family:monospace">${o.phone}</td>
-      <td style="max-width:200px;white-space:normal;word-break:break-word">${o.address}</td>
-      <td style="max-width:200px;white-space:normal;word-break:break-word">${o.product}</td>
-      <td><b>${o.total !== '—' && !isNaN(o.total) ? Number(o.total).toLocaleString('vi') : o.total}</b></td>
-      <td>${tagHtml}</td>
-    </tr>
-  `).join('');
-}
-
-function toggleFinHanoiPanel() {
-  finHanoiVisible = !finHanoiVisible;
-  const card = document.getElementById('finHanoiCard');
-  const panel = document.getElementById('panelFinHanoi');
-  const panelMain = document.getElementById('panelMain');
-
-  if (finHanoiVisible) {
-    if (finNuocHoaVisible) {
-      finNuocHoaVisible = false;
-      document.getElementById('finNuocHoaCard').classList.remove('active');
-      document.getElementById('finNuocHoaSub').textContent = 'Click để xem danh sách';
-      document.getElementById('panelFinNuocHoa').style.display = 'none';
-    }
-    card.classList.add('active');
-    document.getElementById('finHanoiSub').textContent = 'Đang hiển thị · Click ẩn';
-    panel.style.display = 'block';
-    panelMain.style.display = 'none';
-
-    const kw = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
-    if (!finLoaded) {
-      document.getElementById('tbodyFinHanoi').innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">⏳</div><div>Đang tải...</div></td></tr>';
-      loadFinishedStats().then(() => {
-        const filtered = finAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
-        renderFinTable('tbodyFinHanoi', 'finHanoiTableCount', filtered, '<span class="tag tag-done">✅ Đã giao</span>');
-      });
-    } else {
-      const filtered = finAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
-      renderFinTable('tbodyFinHanoi', 'finHanoiTableCount', filtered, '<span class="tag tag-done">✅ Đã giao</span>');
-    }
-  } else {
-    card.classList.remove('active');
-    document.getElementById('finHanoiSub').textContent = 'Click để xem danh sách';
-    panel.style.display = 'none';
-    panelMain.style.display = 'block';
-  }
-}
-
-function toggleFinNuocHoaPanel() {
-  finNuocHoaVisible = !finNuocHoaVisible;
-  const card = document.getElementById('finNuocHoaCard');
-  const panel = document.getElementById('panelFinNuocHoa');
-  const panelMain = document.getElementById('panelMain');
-
-  if (finNuocHoaVisible) {
-    if (finHanoiVisible) {
-      finHanoiVisible = false;
-      document.getElementById('finHanoiCard').classList.remove('active');
-      document.getElementById('finHanoiSub').textContent = 'Click để xem danh sách';
-      document.getElementById('panelFinHanoi').style.display = 'none';
-    }
-    card.classList.add('active');
-    document.getElementById('finNuocHoaSub').textContent = 'Đang hiển thị · Click ẩn';
-    panel.style.display = 'block';
-    panelMain.style.display = 'none';
-
-    const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
-    if (!finLoaded) {
-      document.getElementById('tbodyFinNuocHoa').innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">⏳</div><div>Đang tải...</div></td></tr>';
-      loadFinishedStats().then(() => {
-        const filtered = finAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
-        renderFinTable('tbodyFinNuocHoa', 'finNuocHoaTableCount', filtered, '<span class="tag tag-done">✅ Đã giao</span>');
-      });
-    } else {
-      const filtered = finAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
-      renderFinTable('tbodyFinNuocHoa', 'finNuocHoaTableCount', filtered, '<span class="tag tag-done">✅ Đã giao</span>');
-    }
-  } else {
-    card.classList.remove('active');
-    document.getElementById('finNuocHoaSub').textContent = 'Click để xem danh sách';
-    panel.style.display = 'none';
-    panelMain.style.display = 'block';
-  }
-}
-
-// Gọi load sau khi delivering load xong để tránh đồng thời
-setTimeout(loadFinishedStats, 8000);
-setInterval(loadFinishedStats, 300000);
 // ── DOANH THU GỘP ───────────────────────────────────────────
 function sumTotal(orders) {
   return orders.reduce((acc, o) => {
@@ -4025,14 +3688,6 @@ function updateRevDelivering() {
   document.getElementById('revDelivering').textContent = sum.toLocaleString('vi') + ' đ';
   document.getElementById('revDeliveringCount').textContent = `${dlvAllOrders.length.toLocaleString('vi')} đơn`;
 }
-
-function updateRevFinished() {
-  if (!finLoaded || finAllOrders.length === 0) return;
-  const sum = sumTotal(finAllOrders);
-  document.getElementById('revFinished').textContent = sum.toLocaleString('vi') + ' đ';
-  document.getElementById('revFinishedCount').textContent = `${finAllOrders.length.toLocaleString('vi')} đơn`;
-}
-
 
 // Tính tổng tiền chờ lấy hàng từ DB
 async function calcWaitingRevenue() {
@@ -4066,167 +3721,11 @@ async function calcWaitingRevenue() {
 // Gọi sau khi các cache load xong
 calcWaitingRevenue();
 
-// Theo dõi khi delivering và finished load xong thì cập nhật
-const _origLoadDlv = loadDeliveringStats;
-loadDeliveringStats = async function() {
-  await _origLoadDlv();
-  calcRevSummary();
-};
-
 const _origLoadFin = loadFinishedStats;
 loadFinishedStats = async function() {
   await _origLoadFin();
   calcRevSummary();
 };
-// ── RETURNED (HOÀN HÀNG) ────────────────────────────────────
-let retAllOrders = [];
-let retHanoiVisible = false;
-let retNuocHoaVisible = false;
-let retLoaded = false;
-
-async function loadReturnedStats() {
-  try {
-    const res = await fetch('/api/orders/returned');
-    const data = await res.json();
-    retAllOrders = data.data || [];
-    retLoaded = true;
-
-    document.getElementById('retTotal').textContent = retAllOrders.length.toLocaleString('vi');
-    const shops = new Set(retAllOrders.map(o => o.shop_id));
-    document.getElementById('retShops').textContent = shops.size;
-
-    const kw = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
-    const hanoi = retAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
-    document.getElementById('retHanoiCount').textContent = hanoi.length.toLocaleString('vi');
-
-    const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
-    const nuochoa = retAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
-    document.getElementById('retNuocHoaCount').textContent = nuochoa.length.toLocaleString('vi');
-
-    updateRevReturned();
-  } catch(e) {
-    document.getElementById('retTotal').textContent = 'Lỗi';
-  }
-}
-
-function updateRevReturned() {
-  if (!retLoaded || retAllOrders.length === 0) return;
-  const sum = sumTotal(retAllOrders);
-  document.getElementById('revReturned').textContent = sum.toLocaleString('vi') + ' đ';
-  document.getElementById('revReturnedCount').textContent = `${retAllOrders.length.toLocaleString('vi')} đơn`;
-}
-
-function toggleRetHanoiPanel() {
-  retHanoiVisible = !retHanoiVisible;
-  const card = document.getElementById('retHanoiCard');
-  const panel = document.getElementById('panelRetHanoi');
-  const panelMain = document.getElementById('panelMain');
-  if (retHanoiVisible) {
-    if (retNuocHoaVisible) {
-      retNuocHoaVisible = false;
-      document.getElementById('retNuocHoaCard').classList.remove('active');
-      document.getElementById('retNuocHoaSub').textContent = 'Click để xem danh sách';
-      document.getElementById('panelRetNuocHoa').style.display = 'none';
-    }
-    card.classList.add('active');
-    document.getElementById('retHanoiSub').textContent = 'Đang hiển thị · Click ẩn';
-    panel.style.display = 'block';
-    panelMain.style.display = 'none';
-    const kw = ['hà nội','ha noi',' hn','hanoi','Hà Nội'];
-    const doRender = () => {
-      const f = retAllOrders.filter(o => o.address && kw.some(k => o.address.toLowerCase().includes(k.toLowerCase())));
-      renderFinTable('tbodyRetHanoi', 'retHanoiTableCount', f, '<span class="tag tag-cancel">🔄 Hoàn hàng</span>');
-    };
-    if (!retLoaded) {
-      document.getElementById('tbodyRetHanoi').innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">⏳</div><div>Đang tải...</div></td></tr>';
-      loadReturnedStats().then(doRender);
-    } else { doRender(); }
-  } else {
-    card.classList.remove('active');
-    document.getElementById('retHanoiSub').textContent = 'Click để xem danh sách';
-    panel.style.display = 'none';
-    panelMain.style.display = 'block';
-  }
-}
-
-function toggleRetNuocHoaPanel() {
-  retNuocHoaVisible = !retNuocHoaVisible;
-  const card = document.getElementById('retNuocHoaCard');
-  const panel = document.getElementById('panelRetNuocHoa');
-  const panelMain = document.getElementById('panelMain');
-  if (retNuocHoaVisible) {
-    if (retHanoiVisible) {
-      retHanoiVisible = false;
-      document.getElementById('retHanoiCard').classList.remove('active');
-      document.getElementById('retHanoiSub').textContent = 'Click để xem danh sách';
-      document.getElementById('panelRetHanoi').style.display = 'none';
-    }
-    card.classList.add('active');
-    document.getElementById('retNuocHoaSub').textContent = 'Đang hiển thị · Click ẩn';
-    panel.style.display = 'block';
-    panelMain.style.display = 'none';
-    const kwNH = ['nước hoa','nuoc hoa','nươc hoa'];
-    const doRender = () => {
-      const f = retAllOrders.filter(o => o.product && kwNH.some(k => o.product.toLowerCase().includes(k.toLowerCase())));
-      renderFinTable('tbodyRetNuocHoa', 'retNuocHoaTableCount', f, '<span class="tag tag-cancel">🔄 Hoàn hàng</span>');
-    };
-    if (!retLoaded) {
-      document.getElementById('tbodyRetNuocHoa').innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">⏳</div><div>Đang tải...</div></td></tr>';
-      loadReturnedStats().then(doRender);
-    } else { doRender(); }
-  } else {
-    card.classList.remove('active');
-    document.getElementById('retNuocHoaSub').textContent = 'Click để xem danh sách';
-    panel.style.display = 'none';
-    panelMain.style.display = 'block';
-  }
-}
-
-async function loadReturnedOrders() {
-  const tbody = document.getElementById('tableBody');
-  const countEl = document.getElementById('tableCount');
-  const paginationEl = document.getElementById('pagination');
-  tbody.innerHTML = '<tr><td colspan="10" class="empty"><div class="empty-icon">🔄</div><div>Đang tải đơn hoàn hàng...</div></td></tr>';
-  if (paginationEl) paginationEl.innerHTML = '';
-  const url = currentShop ? `/api/orders/returned?shop_id=${currentShop}` : `/api/orders/returned`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    const orders = data.data || [];
-    if (countEl) countEl.textContent = `${orders.length.toLocaleString('vi')} đơn hoàn hàng`;
-    if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty"><div class="empty-icon">📭</div><div>Không có đơn hoàn trong 30 ngày qua</div></td></tr>';
-      return;
-    }
-    tbody.innerHTML = orders.map(o => `
-      <tr>
-        <td><b style="font-family:monospace;font-size:11px">${o.order_code}</b></td>
-        <td style="font-size:11px;color:#9b8bb4">${o.order_date}</td>
-        <td><span class="shop-chip">${o.shop_name}</span></td>
-        <td>${o.customer_name}</td>
-        <td style="font-family:monospace">${o.phone}</td>
-        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.address}</td>
-        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.product}</td>
-        <td></td>
-        <td><b>${o.total !== '—' && !isNaN(o.total) ? Number(o.total).toLocaleString('vi') : o.total}</b></td>
-        <td><span class="tag tag-cancel">🔄 Hoàn hàng</span></td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">⚠️</div><div>Lỗi: ${e.message}</div></td></tr>`;
-  }
-}
-
-// Thêm case 'returned' vào switchOrderTab
-// Tìm dòng: } else if (tab === 'finished') {
-// Thêm tiếp sau:
-// } else if (tab === 'returned') {
-//   loadReturnedOrders();
-// }
-
-// Load sau finished 8s → returned sau 16s
-setTimeout(loadReturnedStats, 16000);
-setInterval(loadReturnedStats, 300000);
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
@@ -4481,86 +3980,6 @@ if (checkIdGate()) { init(); }
   </div>
   <div class="history-body" id="historyBody"></div>
 </div>
-<div id="shippingLabelPrint">
-  <!-- HEADER: Logo + mã đơn -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;
-              border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:8px;">
-    <img src="https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/e2484ef5-1362-44fb-ab05-f6b426a669d5"
-         style="height:34px;object-fit:contain;" alt="Chiaki.vn">
-    <div style="text-align:right;font-size:8.5px;line-height:1.8;">
-      <div><b>Mã vận đơn: <span id="slShippingCode"></span></b></div>
-      <div>Mã đơn hàng: <span id="slOrderCode"></span></div>
-    </div>
-  </div>
-
-  <!-- Barcode để trắng -->
-  <div style="border:1px dashed #ccc;height:34px;border-radius:3px;margin-bottom:8px;"></div>
-
-  <!-- TỪ / ĐẾN -->
-  <div style="display:flex;gap:8px;margin-bottom:8px;">
-    <div style="flex:1;border:1px solid #000;padding:6px 8px;border-radius:3px;">
-      <div style="font-size:8px;font-weight:700;color:#555;margin-bottom:2px;">Từ:</div>
-      <div style="font-weight:700;font-size:11px;" id="slShopName"></div>
-    </div>
-    <div style="flex:2;border:2px solid #000;padding:6px 8px;border-radius:3px;">
-      <div style="font-size:8px;font-weight:700;color:#555;margin-bottom:2px;">Đến:</div>
-      <div style="font-weight:700;font-size:12px;margin-bottom:2px;" id="slCustomerName"></div>
-      <div style="font-size:9px;line-height:1.5;" id="slAddress"></div>
-    </div>
-  </div>
-
-  <!-- Nội dung hàng + QR -->
-  <div style="display:flex;gap:8px;margin-bottom:8px;">
-    <div style="flex:1;border:1px solid #000;padding:7px 8px;border-radius:3px;">
-      <div style="font-size:8px;font-weight:700;margin-bottom:4px;">
-        Nội dung hàng (Tổng SL sản phẩm: 1)
-      </div>
-      <div style="font-size:9.5px;line-height:1.6;">1. <span id="slProduct"></span>, SL: 1</div>
-      <div style="font-size:7.5px;color:#888;margin-top:6px;line-height:1.5;">
-        Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn / Mã đơn hàng trước khi nhận hàng
-        (Lưu ý: Một số sản phẩm có thể bị ẩn do danh sách quá dài.)
-      </div>
-    </div>
-    <!-- QR để trắng -->
-    <div style="width:74px;border:1px solid #ccc;border-radius:3px;
-                display:flex;flex-direction:column;align-items:center;
-                justify-content:center;padding:6px;gap:4px;">
-      <div style="width:60px;height:60px;background:#f5f5f5;border:1px solid #eee;border-radius:2px;"></div>
-      <div style="font-size:7px;color:#bbb;">QR Code</div>
-    </div>
-  </div>
-
-  <!-- Ngày đặt hàng -->
-  <div style="text-align:right;font-size:9px;margin-bottom:8px;
-              border-top:1px solid #ddd;padding-top:7px;">
-    Ngày đặt hàng:<br>
-    <b style="font-size:11px;" id="slOrderDate"></b>
-  </div>
-
-  <!-- Tiền thu -->
-  <div style="border-top:2px solid #000;padding-top:8px;margin-bottom:8px;
-              display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:10px;">Tiền thu người nhận:</div>
-    <div style="font-size:24px;font-weight:900;" id="slTotal"></div>
-  </div>
-
-  <!-- Chữ ký + Chỉ dẫn -->
-  <div style="border:1px solid #000;border-radius:3px;padding:7px 9px;
-              display:flex;justify-content:space-between;align-items:flex-start;">
-    <div style="font-size:7.5px;color:#555;max-width:190px;line-height:1.6;">
-      <b>Chỉ dẫn giao hàng:</b> Được đồng kiểm; Không bóc tem, seal, thử sản phẩm;
-      Chuyển hoàn sau 3 lần phát; Lưu kho tối đa 5 ngày.
-    </div>
-    <div style="text-align:center;width:110px;">
-      <div style="font-size:8px;font-weight:700;">Chữ ký người nhận</div>
-      <div style="font-size:7.5px;color:#888;margin-top:2px;">
-        Xác nhận hàng nguyên vẹn,<br>không móp/méo, bể/vỡ
-      </div>
-      <div style="height:30px;border-bottom:1px solid #999;margin-top:6px;"></div>
-    </div>
-  </div>
-</div>
-
 
 </body>
 </html>
