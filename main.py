@@ -62,7 +62,7 @@ VALID_KEYS = {
     "KEYPHONE-13784-690215-47286": 0,
     "KEYPHONE-UNLIMITED": 0,
 }
-KEY_LIMIT = 5
+KEY_LIMIT = 20
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
 KEY_HISTORY: dict = {k: [] for k in VALID_KEYS}
 # Lưu lịch sử đăng nhập: {key: [{"event": "login/logout", "time": ...}]}
