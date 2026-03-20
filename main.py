@@ -63,7 +63,7 @@ VALID_KEYS = {
     "HOANG-UNLIMITED": 0,
     "HIEU-UNLIMITED": 0,
 }
-KEY_LIMIT = 20
+KEY_LIMIT = 10
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
 KEY_HISTORY: dict = {k: [] for k in VALID_KEYS}
 # Lưu lịch sử đăng nhập: {key: [{"event": "login/logout", "time": ...}]}
