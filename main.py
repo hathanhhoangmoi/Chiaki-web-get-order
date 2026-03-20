@@ -436,9 +436,10 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         db_product   = db_order.product   if db_order else "—"
         shop_id_from_api = g("store_code", "creator_name")
         db_shop_name = (
-            SHOP_NAME_MAP.get(shop_id_from_api)        # 1. lookup từ shops_config
-            or (db_order.shop_name if db_order else None)  # 2. fallback DB
-            or shop_id_from_api                            # 3. fallback mã gốc
+            SHOP_NAME_MAP.get(shop_id_from_api)
+            or SHOP_ID_NAME_MAP.get(shop_id_from_api)
+            or (db_order.shop_name if db_order else None)
+            or shop_id_from_api
         )
         db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
 
