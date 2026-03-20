@@ -75,7 +75,7 @@ def extract_id(url: str) -> str | None:
 
 def get_shops_map() -> dict:
     result = {}
-    for shop_id, url, name in SHOPS:
+    for url, name, code in SHOPS:
         sid = extract_id(url)
         if sid:
             result[sid] = (url, name)
