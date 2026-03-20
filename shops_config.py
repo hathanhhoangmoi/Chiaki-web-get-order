@@ -27,7 +27,7 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st1164", "O2 PHARMACY", "ST62778NKR"),
     ("https://chiaki.vn/gian-hang-st3612", "NGUYENKIM", "STYKS36NRV"),
     ("https://chiaki.vn/gian-hang-st5092", "Thế Giới Son", "STICBF43TU"),
-    ("https://chiaki.vn/gian-hang-st5125", "Felice Beauty Garden", ")STNAHLO6A2",
+    ("https://chiaki.vn/gian-hang-st5125", "Felice Beauty Garden", "STNAHLO6A2"),
     ("https://chiaki.vn/gian-hang-st1600", "ChoychoyStore", "ST8TO6BBH6"),
     ("https://chiaki.vn/gian-hang-st2423", "Peony Cosmetics", "STMDTS134P"),
     ("https://chiaki.vn/gian-hang-st4965", "nhathuocsuckhoe2", "STD14EBRRV"),
