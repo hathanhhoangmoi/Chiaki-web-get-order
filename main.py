@@ -508,8 +508,9 @@ async def get_shop_info(request: Request, shop_id: str = Query(...)):
             "bank_account_number": bank.get("bank_account_number"),
             "bank_account_holder": bank.get("bank_account_holder"),
             "bank_name":    bank.get("bank_name"),
-            "cccd_front":   s.get("citizen_identification_front_files", [{}])[0].get("value") if s.get("citizen_identification_front_files") else None,
-            "cccd_back":    s.get("citizen_identification_back_files", [{}])[0].get("value") if s.get("citizen_identification_back_files") else None,
+            "cccd_front":       (s.get("citizen_identification_front_files") or [{}])[0].get("value"),
+            "cccd_back":        (s.get("citizen_identification_back_files")  or [{}])[0].get("value"),
+            "business_license": (s.get("business_license_files")            or [{}])[0].get("value"),
             "warehouses":   warehouses,
         }
     except Exception as e:
