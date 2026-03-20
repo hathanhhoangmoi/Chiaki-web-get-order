@@ -439,7 +439,6 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         shop_id_from_api = g("store_code", "creator_name")
         db_shop_name = (
             SHOP_NAME_MAP.get(shop_id_from_api)
-            or SHOP_ID_NAME_MAP.get(shop_id_from_api)
             or (db_order.shop_name if db_order else None)
             or shop_id_from_api
         )
@@ -447,7 +446,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
 
         return {
     "order_code":           g("code"),
-    "shop_name":             db_shop_name,
+    "shop_name":            db_shop_name,
     "order_date":           g("verified_time", "create_time"),
     "customer_name":        g("related_user_name", "receiver_name"),
     "phone":                phone,
