@@ -3463,25 +3463,19 @@ function switchOrderTab(tab) {
   currentOrderTab = tab;
   const btnW = document.getElementById('tabWaiting');
   const btnD = document.getElementById('tabDelivering');
-  const btnF = document.getElementById('tabFinished');
-
+ 
   const activeStyle = 'padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;font-weight:700;font-size:12px;font-family:inherit;box-shadow:0 3px 12px rgba(167,139,250,.35);';
   const inactiveStyle = 'padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;background:rgba(255,255,255,.4);color:#7c6fa0;font-weight:700;font-size:12px;font-family:inherit;';
 
   btnW.style.cssText = tab === 'waiting'    ? activeStyle : inactiveStyle;
   btnD.style.cssText = tab === 'delivering' ? activeStyle : inactiveStyle;
-  btnF.style.cssText = tab === 'finished'   ? activeStyle : inactiveStyle;
-
+  
   if (tab === 'waiting') {
     currentPage = 1;
     loadOrders();
   } else if (tab === 'delivering') {
     loadDeliveringOrders();
-  } else if (tab === 'finished') {
-    loadFinishedOrders();
-  } else if (tab === 'returned') {
-  loadReturnedOrders();
-  }
+  } 
 }
 
 
@@ -3720,12 +3714,6 @@ async function calcWaitingRevenue() {
 
 // Gọi sau khi các cache load xong
 calcWaitingRevenue();
-
-const _origLoadFin = loadFinishedStats;
-loadFinishedStats = async function() {
-  await _origLoadFin();
-  calcRevSummary();
-};
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
