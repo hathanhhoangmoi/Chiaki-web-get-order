@@ -2151,11 +2151,6 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 4000);
 }
 
-// ── ID Auth ────────────────────────────────────────────
-const VALID_IDS = {
-  'PNPhuong2000': { hours: 1,      label: 'Phương' },
-  'Chang2000': { hours: 9999999999,      label: 'Hoàng' },
-};
 const ID_KEY         = 'chiaki_id';
 const ID_EXP         = 'chiaki_id_exp';
 const ID_FIRST_ENTRY = 'chiaki_id_first';
@@ -2210,43 +2205,51 @@ function startExpireCountdown() {
   window._countdownTimer = setInterval(update, 1000);
 }
 
-function submitId() {
-  const input   = document.getElementById('idInput');
-  const id      = input.value.trim();
+async function submitId() {
+  const input = document.getElementById('idInput');
+  const id = input.value.trim();
   if (!id) { showIdError('Vui lòng nhập ID truy cập'); return; }
-  const keyInfo = VALID_IDS[id];
-  if (!keyInfo) {
-    showIdError('ID không hợp lệ. Vui lòng kiểm tra lại.');
-    input.value = ''; return;
-  }
+
   let firstEntry = parseInt(localStorage.getItem(ID_FIRST_ENTRY) || '0');
   if (!firstEntry) {
     firstEntry = Date.now();
     localStorage.setItem(ID_FIRST_ENTRY, String(firstEntry));
   }
-  const expMs = firstEntry + keyInfo.hours * 3600000;
-  if (Date.now() > expMs) {
-    showIdError('⏰ ID đã hết hạn. Vui lòng liên hệ.');
-    input.value = '';
-    localStorage.removeItem(ID_KEY);
-    localStorage.removeItem(ID_EXP);
-    localStorage.removeItem(ID_FIRST_ENTRY);
-    return;
-  }
-  localStorage.setItem(ID_KEY, id);
-  localStorage.setItem(ID_EXP, String(expMs));
-  document.getElementById('idGate').style.display    = 'none';
-  document.getElementById('idDisplay').style.display = 'block';
-  document.getElementById('maskedId').textContent    = maskId(id);
-  startExpireCountdown();
-  init();
-  // Ghi log login
-  fetch('/api/auth/login-log', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: id, event: 'login' })
-  });
 
+  try {
+    const res = await fetch('/api/auth/verify-id', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, firstEntry })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      showIdError(data.error);
+      input.value = '';
+      localStorage.removeItem(ID_KEY);
+      localStorage.removeItem(ID_EXP);
+      localStorage.removeItem(ID_FIRST_ENTRY);
+      return;
+    }
+
+    localStorage.setItem(ID_KEY, id);
+    localStorage.setItem(ID_EXP, String(data.expMs));
+    document.getElementById('idGate').style.display    = 'none';
+    document.getElementById('idDisplay').style.display = 'block';
+    document.getElementById('maskedId').textContent    = maskId(id);
+    startExpireCountdown();
+    init();
+    // Ghi log login
+    fetch('/api/auth/login-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: id, event: 'login' })
+    });
+
+  } catch(e) {
+    showIdError('Lỗi kết nối: ' + e.message);
+  }
 }
 
 function showIdError(msg) {
