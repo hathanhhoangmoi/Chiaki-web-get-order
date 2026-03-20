@@ -1150,8 +1150,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     <div class="stat-sub" id="revDeliveringCount">Đang tính...</div>
   </div>
 </div>
-
-  <!-- Stats row — 4 cards, Hà Nội là card thứ 4 có thể click -->
+  
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">📦 Tổng đơn hàng</div>
@@ -1163,19 +1162,24 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       <div class="stat-value" id="totalShops">—</div>
       <div class="stat-sub">Gian hàng đang bị theo dõi</div>
     </div>
-    <!-- ✅ Card Hà Nội — clickable, toggle panel -->
+
     <div class="stat-card clickable" id="hanoiCard" onclick="toggleHanoiPanel()">
       <div class="stat-label">📍 Đơn tại Hà Nội</div>
       <div class="stat-value" id="hanoiStatCount">—</div>
       <div class="stat-sub" id="hanoiCardSub">Click để xem danh sách</div>
     </div>
-    <!-- Thêm sau div id="hanoiCard" -->
-<div class="stat-card clickable" id="nuocHoaCard" onclick="toggleNuocHoaPanel()">
-  <div class="stat-label">🌸 Đơn nước hoa</div>  <!-- ← bỏ "các" -->
-  <div class="stat-value" id="nuocHoaStatCount">16</div>
-  <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
-</div>
 
+    <div class="stat-card clickable" id="mienBacCard" onclick="toggleMienBacPanel()">
+      <div class="stat-label">Đơn miền Bắc</div>
+      <div class="stat-value" id="mienBacStatCount">—</div>
+      <div class="stat-sub" id="mienBacCardSub">Click xem danh sách</div>
+    </div>
+
+    <div class="stat-card clickable" id="nuocHoaCard" onclick="toggleNuocHoaPanel()">
+      <div class="stat-label">🌸 Đơn nước hoa</div>  <!-- ← bỏ "các" -->
+      <div class="stat-value" id="nuocHoaStatCount">16</div>
+      <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
+    </div>
 
   </div>
 <!-- Stats row đơn ĐANG GIAO -->
@@ -1280,8 +1284,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
   </div>
 
-  <!-- Panel Hà Nội — ẩn mặc định -->
-  <div id="panelHanoi" style="display:none">
+   <div id="panelHanoi" style="display:none">
     <div class="table-wrap glass">
       <div class="table-header">
         <div class="table-title">📍 Đơn hàng tại Hà Nội</div>
@@ -1308,7 +1311,28 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
       </div>
     </div>
   </div>
-<!-- Panel Nước hoa — ẩn mặc định -->
+
+  <!-- Panel Miền Bắc -->
+<div id="panelMienBac" style="display:none">
+  <div class="table-wrap glass">
+    <div class="table-header">
+      <div class="table-title">Đơn hàng Miền Bắc</div>
+      <div class="table-count" id="mienBacCount"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
+          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+          <th>Sản phẩm</th><th>SL</th><th>Tổng tiền</th><th>Trạng thái</th>
+        </tr></thead>
+        <tbody id="tbodyMienBac"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Panel Nước hoa -->
 <div id="panelNuocHoa" style="display:none">
   <div class="table-wrap glass">
     <div class="table-header">
@@ -1558,7 +1582,7 @@ async function init() {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); }, 300_000);
+  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); loadMienBac(); }, 300_000);
 }
 
 async function loadSummary() {
@@ -3722,6 +3746,69 @@ async function calcWaitingRevenue() {
 
 // Gọi sau khi các cache load xong
 calcWaitingRevenue();
+let mienBacVisible = false;
+
+async function loadMienBac() {
+  try {
+    const res = await fetch('/api/orders/mien-bac', {
+      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+    });
+    const data = await res.json();
+    const count = Array.isArray(data) ? data.length : 0;
+    document.getElementById('mienBacStatCount').textContent = count.toLocaleString('vi');
+    document.getElementById('mienBacCount').textContent = `${count} đơn hàng`;
+    const tbody = document.getElementById('tbodyMienBac');
+    if (!count) {
+      tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">📭</div><div>Không có đơn nào tại Miền Bắc</div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(o => `<tr>
+      <td><b style="font-family:monospace;font-size:11px">${o.ordercode}</b></td>
+      <td style="font-size:11px;color:#9b8bb4">${o.orderdate}</td>
+      <td><span class="shop-chip">${o.shopname} </span></td>
+      <td>${o.customername || o.buyername}</td>
+      <td style="font-family:monospace">${o.restricted ? '<span class="restricted-mask"></span>' : o.phone ? `<span class="phone-blur">${o.phone}</span>` : ''}</td>
+      <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address}</td>
+      <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product}</td>
+      <td style="text-align:center">${o.quantity}</td>
+      <td><b>${o.total ? Number(o.total).toLocaleString('vi') : ''}</b></td>
+      <td>${o.restricted ? '<span class="restricted-mask"></span>' : ''}</td>
+    </tr>`).join('');
+  } catch(e) { console.error('loadMienBac error', e); }
+}
+
+function toggleMienBacPanel() {
+  mienBacVisible = !mienBacVisible;
+  const card = document.getElementById('mienBacCard');
+  const panel = document.getElementById('panelMienBac');
+  const panelMain = document.getElementById('panelMain');
+
+  // Đóng các panel khác
+  if (hanoiVisible) {
+    hanoiVisible = false;
+    document.getElementById('hanoiCard').classList.remove('active');
+    document.getElementById('hanoiCardSub').textContent = 'Click xem danh sách';
+    document.getElementById('panelHanoi').style.display = 'none';
+  }
+  if (nuocHoaVisible) {
+    nuocHoaVisible = false;
+    document.getElementById('nuocHoaCard').classList.remove('active');
+    document.getElementById('nuocHoaCardSub').textContent = 'Click xem danh sách';
+    document.getElementById('panelNuocHoa').style.display = 'none';
+  }
+
+  if (mienBacVisible) {
+    card.classList.add('active');
+    document.getElementById('mienBacCardSub').textContent = 'Đang hiển thị · Click để ẩn';
+    panel.style.display = 'block';
+    panelMain.style.display = 'none';
+  } else {
+    card.classList.remove('active');
+    document.getElementById('mienBacCardSub').textContent = 'Click xem danh sách';
+    panel.style.display = 'none';
+    panelMain.style.display = 'block';
+  }
+}
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
