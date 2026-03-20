@@ -62,6 +62,7 @@ VALID_KEYS = {
     "KEYPHONE-13784-690215-47286": 0,
     "HOANG-UNLIMITED": 0,
     "HIEU-UNLIMITED": 0,
+    "SNAPSHOP": 0,
 }
 KEY_LIMIT = 10
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
