@@ -1573,11 +1573,12 @@ async function init() {
     if (summaryData && summaryData.shops) {
       fetchAndUpdateShopNames(summaryData.shops);
     }
-    loadHanoi(); // load count ngay khi init
+    loadHanoi(); //
     loadNuocHoa();
     loadChartData();
     renderTakenList();
     initHistoryBtn();
+    loadMienBac();
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
