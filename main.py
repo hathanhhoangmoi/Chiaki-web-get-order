@@ -1066,7 +1066,7 @@ async def get_delivering_orders(shop_id: str = Query(None)):
             return await fetch_one(client, sid, shop_name)
 
     async with httpx.AsyncClient(timeout=30) as client:
-        tasks = [fetch_with_sem(client, sid, shop_name) for sid, (_, shop_name) in shop_items]
+        tasks = [fetch_with_sem(client, sid, val[1]) for sid, val in shop_items]
         results = await asyncio.gather(*tasks)
 
     all_orders = [order for shop_orders in results for order in shop_orders]
