@@ -3623,6 +3623,7 @@ function renderDlvTable(tbodyId, countId, orders) {
       <td style="max-width:200px;white-space:normal;word-break:break-word">${o.address}</td>
       <td style="max-width:200px;white-space:normal;word-break:break-word">${o.product}</td>
       <td><b>${o.total !== '—' && !isNaN(o.total) ? Number(o.total).toLocaleString('vi') : o.total}</b></td>
+      <td style="text-align:center">${o.quantity || '—'}</td>
       <td><span class="tag tag-wait">🚚 Đang giao</span></td>
     </tr>
   `).join('');
