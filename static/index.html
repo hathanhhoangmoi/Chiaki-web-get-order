@@ -2021,7 +2021,7 @@ async function fetchOrderInfo() {
     const res = await fetch('/api/order-info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ordercode: code, key })
+      body: JSON.stringify({ order_code: code, key })
     });
     const data = await res.json();
 
