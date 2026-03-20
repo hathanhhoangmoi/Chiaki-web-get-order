@@ -444,7 +444,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
 
         return {
     "order_code":           g("code"),
-    "shopname":             db_shop_name,
+    "shopname":             SHOP_NAME_MAP.get(store_code, store_code)
     "order_date":           g("verified_time", "create_time"),
     "customer_name":        g("related_user_name", "receiver_name"),
     "phone":                phone,
