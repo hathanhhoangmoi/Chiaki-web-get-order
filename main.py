@@ -1051,6 +1051,7 @@ async def get_delivering_orders(shop_id: str = Query(None)):
             col_phone   = fc("số điện thoại") or fc("điện thoại")
             col_address = fc("địa chỉ")
             col_product = fc("tên sản phẩm") or fc("sản phẩm")
+            col_qty     = fc("số lượng") or fc("sl")  
             col_total   = fc("tổng tiền") or fc("giá trị")
 
             orders = []
@@ -1068,6 +1069,7 @@ async def get_delivering_orders(shop_id: str = Query(None)):
                     "phone":         gv(col_phone),
                     "address":       gv(col_address),
                     "product":       gv(col_product),
+                    "quantity":      gv(col_qty), 
                     "total":         gv(col_total),
                 })
             return orders
