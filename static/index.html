@@ -3766,7 +3766,7 @@ async function loadMienBac() {
     tbody.innerHTML = data.map(o => `<tr>
       <td><b style="font-family:monospace;font-size:11px">${o.ordercode}</b></td>
       <td style="font-size:11px;color:#9b8bb4">${o.orderdate}</td>
-      <td><span class="shop-chip">${o.shopname} </span></td>
+      <td><span class="shop-chip">${o.shop_name} </span></td>
       <td>${o.customername || o.buyername}</td>
       <td style="font-family:monospace">${o.restricted ? '<span class="restricted-mask"></span>' : o.phone ? `<span class="phone-blur">${o.phone}</span>` : ''}</td>
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address}</td>
