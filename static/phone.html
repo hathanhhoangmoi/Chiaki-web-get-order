@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Tra SĐT – Chiaki</title>
+<title>Tra cứu SĐT – Chiaki</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -191,12 +191,9 @@ body{
 
     <div style="text-align:center" id="remainingWrap"></div>
   </div>
-
-  <a href="/" class="back-link">← Quay về trang chính</a>
 </div>
-
 <script>
-// Kiểm tra key khi gõ
+
 let keyTimer;
 document.getElementById('inpKey').addEventListener('input', () => {
   clearTimeout(keyTimer);
@@ -304,7 +301,6 @@ function copyPhone() {
   });
 }
 
-// Tự điền key đã lưu
 window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('lastPhoneKey');
   if (saved) document.getElementById('inpKey').value = saved;
