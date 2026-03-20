@@ -1073,7 +1073,7 @@ async def get_delivering_orders(shop_id: str = Query(None)):
             return []
 
     # Gọi song song tất cả shop, giới hạn 10 request cùng lúc tránh bị block
-    semaphore = asyncio.Semaphore(10)
+    semaphore = asyncio.Semaphore(2)
 
     async def fetch_with_sem(client, sid, shop_name):
         async with semaphore:
