@@ -1046,8 +1046,8 @@ async def get_delivering_orders(shop_id: str = Query(None)):
                 return None
 
             col_code    = fc("mã đơn")
-            col_date    = fc("ngày tạo") or fc("ngày đặt")
-            col_name    = fc("tên người nhận") or fc("tên khách")
+            col_date    = fc("Thời gian đặt hàng") or fc("ngày đặt")
+            col_name    = fc("Người đặt hàng") or fc("tên khách")
             col_phone   = fc("số điện thoại") or fc("điện thoại")
             col_address = fc("địa chỉ")
             col_product = fc("tên sản phẩm") or fc("sản phẩm")
