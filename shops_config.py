@@ -54,7 +54,9 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st3218", "Bảo Lâm Anh", "STPNJGJTR5"),
     ("https://chiaki.vn/gian-hang-st2557", "XUAN MINH PHARMACY", "STSV6MW0BI"),    
 ]
-
+def extract_id(url: str) -> str | None:
+    m = re.search(r'-st(\d+)', url, re.IGNORECASE)
+    return m.group(1) if m else None
 # Credentials từ extension của bạn
 SELLER_ID    = "4647"
 SELLER_TOKEN = "ebf7e96d976f74aa77b2b874b7a087ef"
@@ -73,10 +75,6 @@ SHOP_ID_NAME_MAP = {
     for url, name, code in SHOPS
     if extract_id(url)
 }
-def extract_id(url: str) -> str | None:
-    m = re.search(r'-st(\d+)', url, re.IGNORECASE)
-    return m.group(1) if m else None
-
 
 def get_shops_map() -> dict:
     result = {}
