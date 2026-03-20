@@ -29,5 +29,5 @@ async def sync_all_shops():
 
 
 def start_scheduler():
-    scheduler.add_job(sync_all_shops, "interval", minutes=30, id="sync_all")
+    scheduler.add_job(sync_all_shops, "interval", minutes=45, id="sync_all")
     scheduler.start()
