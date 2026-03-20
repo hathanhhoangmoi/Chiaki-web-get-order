@@ -407,6 +407,8 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         if isinstance(d, list):
             d = d[0] if d else {}
         print(f"[debug] store_code in d = {d.get('store_code')}")
+        print(f"[debug] SHOP_NAME_MAP.get = '{SHOP_NAME_MAP.get('STD14EBRRV')}'")
+        print(f"[debug] SHOP_NAME_MAP keys = {list(SHOP_NAME_MAP.keys())[:5]}")
         def g(*keys):
             for k in keys:
                 v = d.get(k)
