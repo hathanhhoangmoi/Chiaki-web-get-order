@@ -1127,8 +1127,8 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
         "vĩnh phúc", "vinh phuc"
     ]
     filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
-    orders = db.query(Order).filter(or_(*filters)).order_by(Order.orderdate.desc()).all()
+    orders = db.query(Order).filter(or_(*filters)).order_by(Order.order_date.desc()).all()
     def serialize_with_user(o):
-        mask = o.shopid in BLOCKED_SHOPS and user_id != 'Chang2000'
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
         return serialize_order(o, mask=mask)
     return [serialize_with_user(o) for o in orders]
