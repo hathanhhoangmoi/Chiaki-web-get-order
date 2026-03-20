@@ -72,7 +72,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HOANG-UNLIMITED", "HIEU-UNLIMITED"} 
+UNLIMITED_KEYS = {"HOANG-UNLIMITED", "HIEU-UNLIMITED", "SNAPSHOP"} 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Sync ngay khi khởi động
