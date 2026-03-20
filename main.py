@@ -406,7 +406,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         d = data.get("result") or data.get("data") or {}
         if isinstance(d, list):
             d = d[0] if d else {}
-
+        print(f"[debug] store_code in d = {d.get('store_code')}")
         def g(*keys):
             for k in keys:
                 v = d.get(k)
