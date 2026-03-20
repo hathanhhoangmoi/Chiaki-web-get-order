@@ -1084,6 +1084,7 @@ async def verify_id(body: dict):
     VALID_IDS = {
         "PNPhuong2000": {"hours": 1,           "label": "Phương"},
         "ChangAUTHKEY2000":    {"hours": 9999999999,   "label": "Hoàng"},
+        "Chang2000":    {"hours": 9999999999,   "label": "Hoàng"},
     }
     user_id = body.get("id", "").strip()
     info = VALID_IDS.get(user_id)
