@@ -1079,3 +1079,24 @@ async def get_delivering_orders(shop_id: str = Query(None)):
     all_orders = [order for shop_orders in results for order in shop_orders]
 
     return {"date_range": date_range, "total": len(all_orders), "data": all_orders}
+@app.post("/api/auth/verify-id")
+async def verify_id(body: dict):
+    VALID_IDS = {
+        "PNPhuong2000": {"hours": 1,           "label": "Phương"},
+        "ChangAUTHKEY2000":    {"hours": 9999999999,   "label": "Hoàng"},
+    }
+    user_id = body.get("id", "").strip()
+    info = VALID_IDS.get(user_id)
+    if not info:
+        return JSONResponse({"error": "ID không hợp lệ."}, status_code=403)
+    
+    import time
+    first_entry = body.get("firstEntry")  # ms từ frontend
+    if not first_entry:
+        first_entry = int(time.time() * 1000)
+    
+    exp_ms = first_entry + info["hours"] * 3600000
+    if int(time.time() * 1000) > exp_ms:
+        return JSONResponse({"error": "ID đã hết hạn."}, status_code=403)
+    
+    return {"ok": True, "label": info["label"], "expMs": exp_ms, "firstEntry": first_entry}
