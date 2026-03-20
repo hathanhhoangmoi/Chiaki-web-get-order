@@ -423,7 +423,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         prepaid_time   = d.get("prepaid_time")
 
         if payment_type in ("home", "cod"):
-            payment_status = "💵 COD — Thu tiền khi nhận hàng"
+            payment_status = "💵 COD — Thanh toán khi nhận hàng"
         elif payment_type in ("atm", "online", "bank") and is_approved == "1":
             payment_status = f"✅ Đã thanh toán online ({payment_type.upper()})"
             if prepaid_time:
