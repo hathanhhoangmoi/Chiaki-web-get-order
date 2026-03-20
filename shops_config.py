@@ -68,10 +68,15 @@ BLOCKED_SHOPS = {
     "5096",  # The Senté Hill
     "5125",  # Felice Beauty Garden
 }
-
+SHOP_ID_NAME_MAP = {
+    extract_id(url): name
+    for url, name, code in SHOPS
+    if extract_id(url)
+}
 def extract_id(url: str) -> str | None:
     m = re.search(r'-st(\d+)', url, re.IGNORECASE)
     return m.group(1) if m else None
+
 
 def get_shops_map() -> dict:
     result = {}
