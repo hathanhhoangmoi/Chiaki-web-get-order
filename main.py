@@ -435,9 +435,8 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             ).first()
         db_product   = db_order.product   if db_order else "—"
         db_shop_name = db_order.shop_name if db_order else g("store_code", "creator_name")
-db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
+        db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
 
-        db_total   = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
         return {
     "order_code":           g("code"),
     "shopname":             db_shop_name,
