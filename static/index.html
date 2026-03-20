@@ -25,7 +25,7 @@ body{
 @keyframes pulsePhone {
   0%, 100% { box-shadow: 0 4px 18px rgba(236, 72, 153, .35); }
   50%       { box-shadow: 0 4px 28px rgba(236, 72, 153, .6), 0 0 0 6px rgba(236, 72, 153, .12); }
-}
+}body: JSON.stringify
   background:
     radial-gradient(ellipse at 15% 15%,rgba(255,182,213,.5) 0%,transparent 50%),
     radial-gradient(ellipse at 85% 80%,rgba(167,210,255,.45) 0%,transparent 50%),
@@ -2021,7 +2021,7 @@ async function fetchOrderInfo() {
     const res = await fetch('/api/order-info', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_code: code, key })
+      body: JSON.stringify({ ordercode: code, key })
     });
     const data = await res.json();
 
