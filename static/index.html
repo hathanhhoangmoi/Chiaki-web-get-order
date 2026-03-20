@@ -2925,22 +2925,34 @@ async function fetchShopInfo() {
     document.getElementById('srBankHolder').textContent = data.bank_account_holder || '—';
     document.getElementById('srBankNumber').textContent = data.bank_account_number || '—';
 
-    // Ảnh CCCD
     const cccdWrap = document.getElementById('srCccdWrap');
     cccdWrap.innerHTML = '';
-    if (data.cccd_front) {
+
+    const frontFiles = data.cccd_front ? [data.cccd_front] : [];
+    const backFiles  = data.cccd_back  ? [data.cccd_back]  : [];
+    const licFiles   = data.business_license ? [data.business_license] : [];
+
+    function addImg(wrap, url, label) {
+      const div = document.createElement('div');
+      div.style = 'display:inline-block;margin:4px;text-align:center';
       const img = document.createElement('img');
-      img.src = data.cccd_front; img.alt = 'Mặt trước CCCD';
-      img.onclick = () => window.open(data.cccd_front, '_blank');
-      cccdWrap.appendChild(img);
+      img.src = url;
+      img.alt = label;
+      img.style = 'width:140px;height:90px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #ddd';
+      img.onclick = () => window.open(url, '_blank');
+      const cap = document.createElement('div');
+      cap.style = 'font-size:10px;color:#9b8bb4;margin-top:3px';
+      cap.textContent = label;
+      div.appendChild(img);
+      div.appendChild(cap);
+      wrap.appendChild(div);
     }
-    if (data.cccd_back) {
-      const img = document.createElement('img');
-      img.src = data.cccd_back; img.alt = 'Mặt sau CCCD';
-      img.onclick = () => window.open(data.cccd_back, '_blank');
-      cccdWrap.appendChild(img);
-    }
-    if (!data.cccd_front && !data.cccd_back) {
+
+    if (frontFiles.length) addImg(cccdWrap, frontFiles[0], 'Mặt trước CCCD');
+    if (backFiles.length)  addImg(cccdWrap, backFiles[0],  'Mặt sau CCCD');
+    if (licFiles.length)   addImg(cccdWrap, licFiles[0],   'Giấy đăng ký HKD');
+
+    if (!frontFiles.length && !backFiles.length && !licFiles.length) {
       cccdWrap.innerHTML = '<span style="font-size:12px;color:#b0a0c8">Không có ảnh</span>';
     }
 
