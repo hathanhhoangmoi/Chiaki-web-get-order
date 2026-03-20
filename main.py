@@ -1101,3 +1101,27 @@ async def verify_id(body: dict):
         return JSONResponse({"error": "ID đã hết hạn."}, status_code=403)
     
     return {"ok": True, "label": info["label"], "expMs": exp_ms, "firstEntry": first_entry}
+@app.get("/api/orders/mien-bac")
+async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "")
+    keywords = [
+        "hải phòng", "hai phong",
+        "bắc giang", "bac giang", "bắc kạn", "bac kan",
+        "cao bằng", "cao bang", "hà giang", "ha giang",
+        "lạng sơn", "lang son", "phú thọ", "phu tho",
+        "quảng ninh", "quang ninh", "thái nguyên", "thai nguyen",
+        "tuyên quang", "tuyen quang", "điện biên", "dien bien",
+        "hòa bình", "hoa binh", "lai châu", "lai chau",
+        "lào cai", "lao cai", "sơn la", "son la",
+        "yên bái", "yen bai", "bắc ninh", "bac ninh",
+        "hà nam", "ha nam", "hải dương", "hai duong",
+        "hưng yên", "hung yen", "nam định", "nam dinh",
+        "ninh bình", "ninh binh", "thái bình", "thai binh",
+        "vĩnh phúc", "vinh phuc"
+    ]
+    filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
+    orders = db.query(Order).filter(or_(*filters)).order_by(Order.orderdate.desc()).all()
+    def serialize_with_user(o):
+        mask = o.shopid in BLOCKED_SHOPS and user_id != 'Chang2000'
+        return serialize_order(o, mask=mask)
+    return [serialize_with_user(o) for o in orders]
