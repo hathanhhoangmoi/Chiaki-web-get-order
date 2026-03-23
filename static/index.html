@@ -1071,7 +1071,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
     </div>
     
 <button class="btn btn-primary" id="btnGetPhone" onclick="toggleOrderInfoModal()">
-  🔍 XỬ LÝ ĐƠN HÀNG
+  🔍 LẤY SỐ ĐIỆN THOẠI KHÁCH HÀNG
 </button>
 <button class="btn btn-primary" onclick="toggleShopInfoModal()">
   🏪 NHÀ BÁN
@@ -1272,18 +1272,20 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   </div>
 </div>
 <!-- Tab chờ lấy hàng / đang giao -->
-<div style="display:flex; justify-content:center; margin-bottom:12px;">
-  <button id="tabWaiting" onclick="switchOrderTab('waiting')" style="padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;
-             background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;
-             font-weight:700;font-size:12px;font-family:inherit;
-             box-shadow:0 3px 12px rgba(167,139,250,.35);">
-      📦 Chờ lấy hàng
-    </button>
-  <button id="tabDelivering" onclick="switchOrderTab('delivering')" style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
-             background:rgba(255,255,255,.4);color:#7c6fa0;
-             font-weight:700;font-size:12px;font-family:inherit;">
-      🚚 Đang giao hàng
-    </button>
+<div id="orderTabBar" style="display:flex;gap:8px;margin-bottom:12px;">
+  <button id="tabWaiting" onclick="switchOrderTab('waiting')"
+    style="padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;
+           background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;
+           font-weight:700;font-size:12px;font-family:inherit;
+           box-shadow:0 3px 12px rgba(167,139,250,.35);">
+    📦 Chờ lấy hàng
+  </button>
+  <button id="tabDelivering" onclick="switchOrderTab('delivering')"
+    style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
+           background:rgba(255,255,255,.4);color:#7c6fa0;
+           font-weight:700;font-size:12px;font-family:inherit;">
+    🚚 Đang giao hàng
+  </button>
 </div>
 
   <!-- Panel đơn thường -->
@@ -3929,6 +3931,11 @@ function closeCancelOrderModal() {
   document.getElementById('cancelOrderBg').style.display = 'none';
 }
 
+// Đóng khi click nền
+document.getElementById('cancelOrderBg').addEventListener('click', function(e) {
+  if (e.target === this) closeCancelOrderModal();
+});
+
 // Live check cancel key
 document.getElementById('cancelModalKey').addEventListener('input', function() {
   const val = this.value.trim();
@@ -4054,8 +4061,8 @@ if (checkIdGate()) { init(); }
 <div class="info-modal-bg" id="orderInfoBg">
   <div class="info-modal">
     <div class="info-modal-icon">🔍</div>
-    <div class="info-modal-title"Tra cứu/huỷ đơn hàng </div>
-    <div class="info-modal-sub">Nhập mã đơn và PHONE KEY/CANCEL KEY để thực hiện</div>
+    <div class="info-modal-title">Tra cứu thông tin đơn hàng</div>
+    <div class="info-modal-sub">Nhập mã đơn và Session để lấy thông tin chi tiết</div>
     <input class="info-input" id="infoOrderCode" type="text"
       placeholder="Mã đơn hàng (VD: R1234567890)"
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
@@ -4092,10 +4099,10 @@ if (checkIdGate()) { init(); }
     <div class="info-btns">
       <button class="btn-info-cancel" onclick="closeOrderInfoModal()">ĐÓNG</button>
       <button onclick="openCancelOrderModal()"
-        style="flex:1; padding:11px; background:linear-gradient(135deg,#fecaca,#f97373);
+        style="flex:1; padding:11px; background:linear-gradient(135deg,#e74c3c,#c0392b);
                color:#fff; border:none; border-radius:12px; font-family:inherit;
                font-size:13px; font-weight:700; cursor:pointer;
-               box-shadow:0 4px 14px rgba(248,113,113,.3); transition:all .2s;">
+               box-shadow:0 4px 14px rgba(231,76,60,.3); transition:all .2s;">
         🚫 HUỶ
       </button>
       <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()">TRA CỨU</button>
