@@ -60,7 +60,7 @@ VALID_KEYS = {
     "KEYPHONE-40816-529743-17638": 0,
     "KEYPHONE-96253-187640-83592": 0,
     "KEYPHONE-13784-690215-47286": 0,
-    "UNLIMITED38241540": 0,
+    "ADMIN-UNLIMITED-HOANG": 0,
 }
 KEY_LIMIT = 10
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
@@ -70,16 +70,18 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"UNLIMITED38241540"}
+UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
 # ── Key management cho Cancel Order ───────────────────────
 CANCEL_KEYS = {
-    "CANCEL-KEY-15463574": 0,
-    "CANCEL-KEY-28374651": 0,
-    "CANCEL-KEY-39485762": 0,
-    "CANCEL-KEY-47596873": 0,
-    "CANCEL-KEY-56607984": 0,
+    "CANCEL-KEY-1546-3574": 0,
+    "CANCEL-KEY-2837-4651": 0,
+    "CANCEL-KEY-3948-5762": 0,
+    "CANCEL-KEY-4759-6873": 0,
+    "CANCEL-KEY-5660-7984": 0,
+    "ADMIN-UNLIMITED-HOANG": 0,
 }
 CANCEL_KEY_LIMIT = 10
+CANCEL_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"} 
 CANCEL_KEY_HISTORY: dict = {k: [] for k in CANCEL_KEYS}
 
 @asynccontextmanager
@@ -1159,8 +1161,9 @@ async def cancel_order(body: dict):
     if cancel_key not in CANCEL_KEYS:
         return JSONResponse({"error": "Cancel Key không hợp lệ."}, status_code=403)
 
-    if CANCEL_KEYS[cancel_key] >= CANCEL_KEY_LIMIT:
-        return JSONResponse({"error": f"Cancel Key đã hết lượt sử dụng ({CANCEL_KEY_LIMIT}/{CANCEL_KEY_LIMIT})."}, status_code=403)
+    if cancel_key not in CANCEL_UNLIMITED_KEYS and CANCEL_KEYS[cancel_key] >= CANCEL_KEY_LIMIT:
+    return JSONResponse({"error": f"Cancel Key đã hết lượt sử dụng ({CANCEL_KEY_LIMIT}/{CANCEL_KEY_LIMIT})."}, status_code=403)
+
 
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
@@ -1226,7 +1229,7 @@ async def cancel_order(body: dict):
         status = result.get("status") or result.get("message") or ""
         if "successful" in str(status).lower() or result.get("success") is True:
             CANCEL_KEYS[cancel_key] += 1
-            remaining = CANCEL_KEY_LIMIT - CANCEL_KEYS[cancel_key]
+            remaining = -1 if cancel_key in CANCEL_UNLIMITED_KEYS else CANCEL_KEY_LIMIT - CANCEL_KEYS[cancel_key]
 
             from datetime import timezone as _tz
             now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
@@ -1241,3 +1244,16 @@ async def cancel_order(body: dict):
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
+@app.post("/api/order/cancel/check-key")
+async def check_cancel_key(body: dict):
+    key = body.get("key", "").strip()
+    if key not in CANCEL_KEYS:
+        return JSONResponse({"error": "Cancel Key không hợp lệ."}, status_code=403)
+    used = CANCEL_KEYS[key]
+    is_unlimited = key in CANCEL_UNLIMITED_KEYS
+    return {
+        "used": used,
+        "remaining": -1 if is_unlimited else CANCEL_KEY_LIMIT - used,
+        "limit": -1 if is_unlimited else CANCEL_KEY_LIMIT,
+        "unlimited": is_unlimited
+    }
