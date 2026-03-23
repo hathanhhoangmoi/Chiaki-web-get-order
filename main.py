@@ -1183,8 +1183,14 @@ async def cancel_order(body: dict):
         if isinstance(d, list):
             d = d[0] if d else {}
 
+        # DEBUG - xem toàn bộ response
+        print(f"[cancel] raw data keys: {list(data.keys())}")
+        print(f"[cancel] d keys: {list(d.keys()) if isinstance(d, dict) else d}")
+        print(f"[cancel] sync_id={d.get('sync_id')} id={d.get('id')} order_id={d.get('order_id')}")
+
         sync_id = d.get("sync_id") or d.get("id")
         order_id = d.get("order_id") or d.get("code") or order_code
+
 
         if not sync_id:
             return JSONResponse({"error": "Không lấy được sync_id. Liên hệ admin để được hỗ trợ về đơn hàng này."}, status_code=400)
