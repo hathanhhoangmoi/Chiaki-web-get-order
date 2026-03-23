@@ -1147,6 +1147,7 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
         mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
         return serialize_order(o, mask=mask)
     return [serialize_with_user(o) for o in orders]
+
 @app.post("/api/order/cancel")
 async def cancel_order(body: dict):
     order_code = body.get("order_code", "").strip()
@@ -1164,12 +1165,14 @@ async def cancel_order(body: dict):
     if len(order_code) < 9:
         return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
 
-    # Bước 1: Lấy sync_id từ API order-info
-    input_id = order_code[2:9]
-    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
+    # order_id và input_id = 7 số sau 2 ký tự đầu
+    # VD: R8547883114 → bỏ "R8" → lấy "5478831"
+    order_id = order_code[2:9]
+    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={order_id}"
     session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
 
     try:
+        # Bước 1: Lấy sync_id
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(url, headers={
                 "Accept": "application/json, text/plain, */*",
@@ -1183,24 +1186,17 @@ async def cancel_order(body: dict):
         if isinstance(d, list):
             d = d[0] if d else {}
 
-        # DEBUG - xem toàn bộ response
-        print(f"[cancel] raw data keys: {list(data.keys())}")
-        print(f"[cancel] d keys: {list(d.keys()) if isinstance(d, dict) else d}")
-        print(f"[cancel] sync_id={d.get('sync_id')} id={d.get('id')} order_id={d.get('order_id')}")
-
         sync_id = d.get("sync_id") or d.get("id")
 
-        # order_id = ký tự thứ 2 đến thứ 9 của mã đơn hàng (index 1:9)
-        # VD: R1234567890 → 12345678
-        order_id = order_code[1:9] if len(order_code) >= 9 else order_code
-
-
+        print(f"[cancel] order_code={order_code} → order_id={order_id} | sync_id={sync_id}")
 
         if not sync_id:
-            return JSONResponse({"error": "Không lấy được sync_id. Liên hệ admin để được hỗ trợ về đơn hàng này."}, status_code=400)
+            return JSONResponse({
+                "error": "Không lấy được sync_id. Liên hệ admin để được hỗ trợ về đơn hàng này.",
+                "debug_keys": list(d.keys()) if isinstance(d, dict) else str(d)
+            }, status_code=400)
 
-        # Bước 2: Gửi yêu cầu huỷ đơn
-        cancel_url = "https://api.chiaki.vn/api/order/request-cancel"
+        # Bước 2: Huỷ đơn với sync_id + order_id vừa lấy
         cancel_payload = {
             "sync_id": str(sync_id),
             "order_id": str(order_id),
@@ -1208,9 +1204,11 @@ async def cancel_order(body: dict):
             "cancel_reason": "Thay đổi đơn hàng (màu sắc, kích thước, thêm mã giảm giá,...)"
         }
 
+        print(f"[cancel] payload → {cancel_payload}")
+
         async with httpx.AsyncClient(timeout=15) as client:
             cancel_res = await client.post(
-                cancel_url,
+                "https://api.chiaki.vn/api/order/request-cancel",
                 json=cancel_payload,
                 headers={
                     "Accept": "application/json, text/plain, */*",
@@ -1222,10 +1220,11 @@ async def cancel_order(body: dict):
             )
             result = cancel_res.json()
 
+        print(f"[cancel] result → {result}")
+
         # Kiểm tra kết quả
         status = result.get("status") or result.get("message") or ""
-        if "successful" in str(status).lower() or result.get("success") == True:
-            # Trừ lượt key khi thành công
+        if "successful" in str(status).lower() or result.get("success") is True:
             CANCEL_KEYS[cancel_key] += 1
             remaining = CANCEL_KEY_LIMIT - CANCEL_KEYS[cancel_key]
 
