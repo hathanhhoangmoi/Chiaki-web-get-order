@@ -1189,7 +1189,11 @@ async def cancel_order(body: dict):
         print(f"[cancel] sync_id={d.get('sync_id')} id={d.get('id')} order_id={d.get('order_id')}")
 
         sync_id = d.get("sync_id") or d.get("id")
-        order_id = d.get("order_id") or d.get("code") or order_code
+
+        # order_id = ký tự thứ 2 đến thứ 9 của mã đơn hàng (index 1:9)
+        # VD: R1234567890 → 12345678
+        order_id = order_code[1:9] if len(order_code) >= 9 else order_code
+
 
 
         if not sync_id:
