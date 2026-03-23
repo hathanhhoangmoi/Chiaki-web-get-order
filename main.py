@@ -29,37 +29,17 @@ from shops_config import SHOP_NAME_MAP
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
-    "KEYPHONE-74821-593847-12093": 0,
-    "KEYPHONE-38472-915630-74219": 0,
-    "KEYPHONE-92715-483029-61584": 0,
-    "KEYPHONE-56029-771843-20936": 0,
-    "KEYPHONE-71384-602915-88420": 0,
-    "KEYPHONE-24890-394761-53018": 0,
-    "KEYPHONE-67531-820947-16359": 0,
-    "KEYPHONE-10928-573640-82941": 0,
-    "KEYPHONE-84276-315098-47025": 0,
-    "KEYPHONE-39610-748235-92164": 0,
-    "KEYPHONE-51873-269104-65782": 0,
-    "KEYPHONE-73105-984260-31279": 0,
-    "KEYPHONE-26489-507318-94621": 0,
-    "KEYPHONE-89017-431265-70834": 0,
-    "KEYPHONE-47260-915384-62318": 0,
-    "KEYPHONE-63918-280745-15492": 0,
-    "KEYPHONE-20574-639182-87031": 0,
-    "KEYPHONE-91834-752609-44126": 0,
-    "KEYPHONE-37481-596203-78540": 0,
-    "KEYPHONE-68209-413875-26914": 0,
-    "KEYPHONE-15738-904261-83275": 0,
-    "KEYPHONE-42068-735914-50923": 0,
-    "KEYPHONE-76325-108479-64290": 0,
-    "KEYPHONE-98104-652738-31589": 0,
-    "KEYPHONE-54673-219804-77831": 0,
-    "KEYPHONE-83017-467295-19064": 0,
-    "KEYPHONE-29460-873512-65918": 0,
-    "KEYPHONE-71529-364087-92810": 0,
-    "KEYPHONE-40816-529743-17638": 0,
-    "KEYPHONE-96253-187640-83592": 0,
-    "KEYPHONE-13784-690215-47286": 0,
+    "PHONE-KEY-3265-6216": 0,
+    "PHONE-KEY-1842-7395": 0,
+    "PHONE-KEY-5927-1048": 0,
+    "PHONE-KEY-3371-8864": 0,
+    "PHONE-KEY-7605-2193": 0,
+    "PHONE-KEY-9483-5521": 0,
+    "PHONE-KEY-4017-6738": 0,
+    "PHONE-KEY-8256-1904": 0,
+    "PHONE-KEY-6392-4475": 0,
+    "PHONE-KEY-1578-9036": 0,
+    "PHONE-KEY-2741-6882": 0,
     "ADMIN-UNLIMITED-HOANG": 0,
 }
 KEY_LIMIT = 10
@@ -1106,8 +1086,8 @@ async def get_delivering_orders(shop_id: str = Query(None)):
 @app.post("/api/auth/verify-id")
 async def verify_id(body: dict):
     VALID_IDS = {
-        "PNPhuong2000": {"hours": 1,           "label": "Phương"},
-        "ChangAUTHKEY2000":    {"hours": 9999999999,   "label": "Hoàng"},
+        "LOGIN-KEY-PHUONG2000": {"hours": 1,           "label": "Phương"},
+        "LOGIN-KEY-CHANGTESTUSER":    {"hours": 9999999999,   "label": "Hoàng"},
         "Chang2000":    {"hours": 9999999999,   "label": "Hoàng"},
     }
     user_id = body.get("id", "").strip()
