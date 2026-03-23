@@ -70,7 +70,18 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"UNLIMITED38241540"} 
+UNLIMITED_KEYS = {"UNLIMITED38241540"}
+# ── Key management cho Cancel Order ───────────────────────
+CANCEL_KEYS = {
+    "CANCEL-KEY-15463574": 0,
+    "CANCEL-KEY-28374651": 0,
+    "CANCEL-KEY-39485762": 0,
+    "CANCEL-KEY-47596873": 0,
+    "CANCEL-KEY-56607984": 0,
+}
+CANCEL_KEY_LIMIT = 10
+CANCEL_KEY_HISTORY: dict = {k: [] for k in CANCEL_KEYS}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Sync ngay khi khởi động
@@ -1136,3 +1147,88 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
         mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
         return serialize_order(o, mask=mask)
     return [serialize_with_user(o) for o in orders]
+@app.post("/api/order/cancel")
+async def cancel_order(body: dict):
+    order_code = body.get("order_code", "").strip()
+    cancel_key = body.get("cancel_key", "").strip()
+
+    if not order_code or not cancel_key:
+        return JSONResponse({"error": "Thiếu mã đơn hàng hoặc cancel key."}, status_code=400)
+
+    if cancel_key not in CANCEL_KEYS:
+        return JSONResponse({"error": "Cancel Key không hợp lệ."}, status_code=403)
+
+    if CANCEL_KEYS[cancel_key] >= CANCEL_KEY_LIMIT:
+        return JSONResponse({"error": f"Cancel Key đã hết lượt sử dụng ({CANCEL_KEY_LIMIT}/{CANCEL_KEY_LIMIT})."}, status_code=403)
+
+    if len(order_code) < 9:
+        return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
+
+    # Bước 1: Lấy sync_id từ API order-info
+    input_id = order_code[2:9]
+    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
+    session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(url, headers={
+                "Accept": "application/json, text/plain, */*",
+                "platform": "ios",
+                "Cookie": f"laravel_session={session}",
+                "User-Agent": "chiakiApp/3.6.2"
+            })
+            data = res.json()
+
+        d = data.get("result") or data.get("data") or {}
+        if isinstance(d, list):
+            d = d[0] if d else {}
+
+        sync_id = d.get("sync_id") or d.get("id")
+        order_id = d.get("order_id") or d.get("code") or order_code
+
+        if not sync_id:
+            return JSONResponse({"error": "Không lấy được sync_id. Liên hệ admin để được hỗ trợ về đơn hàng này."}, status_code=400)
+
+        # Bước 2: Gửi yêu cầu huỷ đơn
+        cancel_url = "https://api.chiaki.vn/api/order/request-cancel"
+        cancel_payload = {
+            "sync_id": str(sync_id),
+            "order_id": str(order_id),
+            "cancel_code": "change_item_order",
+            "cancel_reason": "Thay đổi đơn hàng (màu sắc, kích thước, thêm mã giảm giá,...)"
+        }
+
+        async with httpx.AsyncClient(timeout=15) as client:
+            cancel_res = await client.post(
+                cancel_url,
+                json=cancel_payload,
+                headers={
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Encoding": "gzip, deflate",
+                    "Content-Type": "application/json",
+                    "token": "YjYTQY7fP4vExhg0a8itBqBEFKzZlmcKWBoxkwc91XNyF3zpCi",
+                    "User-Agent": "chiakiApp/3.6.2"
+                }
+            )
+            result = cancel_res.json()
+
+        # Kiểm tra kết quả
+        status = result.get("status") or result.get("message") or ""
+        if "successful" in str(status).lower() or result.get("success") == True:
+            # Trừ lượt key khi thành công
+            CANCEL_KEYS[cancel_key] += 1
+            remaining = CANCEL_KEY_LIMIT - CANCEL_KEYS[cancel_key]
+
+            from datetime import timezone as _tz
+            now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
+            CANCEL_KEY_HISTORY[cancel_key].append({"order_code": order_code, "time": now_vn})
+
+            return {"ok": True, "message": "Đã huỷ đơn hàng thành công.", "remaining": remaining}
+        else:
+            return JSONResponse({
+                "error": "Liên hệ admin để được hỗ trợ về đơn hàng này.",
+                "detail": result
+            }, status_code=400)
+
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
