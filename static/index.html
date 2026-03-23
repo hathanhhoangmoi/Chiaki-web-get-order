@@ -3929,11 +3929,6 @@ function closeCancelOrderModal() {
   document.getElementById('cancelOrderBg').style.display = 'none';
 }
 
-// Đóng khi click nền
-document.getElementById('cancelOrderBg').addEventListener('click', function(e) {
-  if (e.target === this) closeCancelOrderModal();
-});
-
 // Live check cancel key
 document.getElementById('cancelModalKey').addEventListener('input', function() {
   const val = this.value.trim();
