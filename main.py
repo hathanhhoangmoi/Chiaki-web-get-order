@@ -61,7 +61,6 @@ VALID_KEYS = {
     "KEYPHONE-96253-187640-83592": 0,
     "KEYPHONE-13784-690215-47286": 0,
     "UNLIMITED38241540": 0,
-    "HIEU-UNLIMITED": 0,
 }
 KEY_LIMIT = 10
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
@@ -71,7 +70,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"UNLIMITED38241540", "HIEU-UNLIMITED"} 
+UNLIMITED_KEYS = {"UNLIMITED38241540"} 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Sync ngay khi khởi động
