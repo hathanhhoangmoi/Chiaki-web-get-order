@@ -934,6 +934,8 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   top: 92px;
   z-index: 7000;
   width: 360px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;   
   background: rgba(255,255,255,.88);
   backdrop-filter: blur(30px) saturate(200%);
   -webkit-backdrop-filter: blur(30px) saturate(200%);
@@ -1096,10 +1098,45 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 <!-- Bảng tải đơn Excel - luôn hiển thị bên trái -->
 <div class="download-panel">
   <div class="download-panel-title">🔍 Tìm kiếm đơn hàng</div>
-  <input class="download-input" id="dlOrderCode" type="text" placeholder="Nhập mã đơn (R1234567890)..." onkeydown="if(event.key==='Enter') searchOrder()">
+  <input class="download-input" id="dlOrderCode" type="text"
+         placeholder="Nhập mã đơn (R123456789)..."
+         onkeydown="if(event.key==='Enter') searchOrder()">
   <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
   <div class="download-msg" id="dlMsg"></div>
+
+  <!-- ── HUỶ ĐƠN ── -->
+  <div style="margin-top:16px;border-top:1px solid rgba(198,181,255,.25);padding-top:14px;">
+    <div class="download-panel-title" style="color:#991b1b;">🚫 Huỷ đơn hàng</div>
+
+    <label style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.4px;
+                  text-transform:uppercase;display:block;margin-bottom:5px;">
+      Mã đơn hàng cần huỷ
+    </label>
+    <input class="download-input" id="cancelCodeSide" type="text"
+           placeholder="VD: R123456789"
+           onkeydown="if(event.key==='Enter') doCancelSide()"/>
+
+    <label style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.4px;
+                  text-transform:uppercase;display:block;margin-bottom:5px;margin-top:8px;">
+      Cancel Key
+    </label>
+    <input class="download-input" id="cancelKeySide" type="text"
+           placeholder="CANCEL-KEY-****-****"
+           onkeydown="if(event.key==='Enter') doCancelSide()"/>
+
+    <button class="btn-download" id="btnCancelSide" onclick="doCancelSide()"
+            style="background:linear-gradient(135deg,#fecaca,#f97373);
+                   color:#7f1d1d;
+                   box-shadow:0 4px 14px rgba(248,113,113,.4);
+                   margin-top:8px;">
+      🚫 Gửi yêu cầu huỷ đơn
+    </button>
+    <div id="cancelMsgSide"
+         style="display:none;margin-top:8px;font-size:11px;
+                padding:8px 10px;border-radius:8px;line-height:1.6;"></div>
+  </div>
 </div>
+
 
 
 <div class="container">
@@ -2915,7 +2952,7 @@ async function fetchShopInfo() {
   // Trích xuất shop_id từ URL
   const match = urlInput.match(/st(\d+)/i);
   if (!match) {
-    errEl.textContent = 'Link không hợp lệ. Ví dụ: https://chiaki.vn/gian-hang-stXXXX';
+    errEl.textContent = 'Link không hợp lệ. Ví dụ: https://chiaki.vn/gian-hang-st****';
     errEl.classList.add('show');
     return;
   }
@@ -3905,7 +3942,7 @@ document.getElementById('cancelModalKey').addEventListener('input', function() {
   const statusEl = document.getElementById('cancelKeyStatus');
   if (!val) { statusEl.textContent = ''; return; }
   if (!val.startsWith('CANCEL-KEY-')) {
-    statusEl.textContent = 'Key không đúng định dạng CANCEL-KEY-XXXXXXXX';
+    statusEl.textContent = 'Key không đúng định dạng CANCEL-KEY-****-****';
     statusEl.style.color = '#dc2626';
     return;
   }
@@ -3965,6 +4002,57 @@ async function submitCancelOrder() {
     btn.textContent = 'Xác nhận huỷ đơn';
   }
 }
+async function doCancelSide() {
+  const code = document.getElementById('cancelCodeSide').value.trim();
+  const key  = document.getElementById('cancelKeySide').value.trim();
+  const box  = document.getElementById('cancelMsgSide');
+  const btn  = document.getElementById('btnCancelSide');
+
+  box.style.display = 'none';
+
+  if (!code || !key) {
+    box.style.display = 'block';
+    box.style.background = 'rgba(254,202,202,.4)';
+    box.style.color = '#991b1b';
+    box.style.border = '1px solid rgba(252,165,165,.3)';
+    box.innerHTML = 'Vui lòng nhập đầy đủ <b>Mã đơn</b> và <b>CANCEL KEY</b>.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Đang xử lý...';
+
+  try {
+    const res = await fetch('/api/order/cancel', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ order_code: code, cancel_key: key })
+    });
+    const data = await res.json();
+    box.style.display = 'block';
+    if (data.ok) {
+      box.style.background = 'rgba(167,243,208,.4)';
+      box.style.color = '#065f46';
+      box.style.border = '1px solid rgba(110,231,183,.4)';
+      box.innerHTML = `✅ <b>${data.message}</b><br>Lượt còn lại: <b>${data.remaining === -1 ? '∞' : data.remaining}</b>`;
+      document.getElementById('cancelCodeSide').value = '';
+    } else {
+      box.style.background = 'rgba(254,202,202,.4)';
+      box.style.color = '#991b1b';
+      box.style.border = '1px solid rgba(252,165,165,.3)';
+      box.innerHTML = `❌ ${data.error || 'Có lỗi xảy ra.'}`;
+    }
+  } catch(e) {
+    box.style.display = 'block';
+    box.style.background = 'rgba(254,202,202,.4)';
+    box.style.color = '#991b1b';
+    box.style.border = '1px solid rgba(252,165,165,.3)';
+    box.textContent = '❌ Lỗi kết nối: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🚫 Gửi yêu cầu huỷ đơn';
+  }
+}
 
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
@@ -3979,7 +4067,7 @@ if (checkIdGate()) { init(); }
       placeholder="Mã đơn hàng (VD: R1234567890)"
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
     <input class="info-input" id="infoKey" type="text"
-  placeholder="Nhập key (VD: KEYPHONE-XXXXX-XXXXXX-XXXXX)"
+  placeholder="Nhập key (VD: PHONE-KEY-****-****)"
   onkeydown="if(event.key==='Enter') fetchOrderInfo()"
   style="margin-bottom:12px;font-family:monospace;letter-spacing:1px" />
 <div id="infoKeyStatus" style="font-size:11px;color:#9b8bb4;margin-bottom:4px;min-height:16px"></div>
@@ -4029,7 +4117,7 @@ if (checkIdGate()) { init(); }
     <div class="shop-modal-title">Tra cứu thông tin gian hàng</div>
     <div class="shop-modal-sub">Nhập link gian hàng Chiaki để xem thông tin</div>
     <input class="info-input" id="shopUrlInput" type="text"
-      placeholder="https://chiaki.vn/gian-hang-stXXXX"
+      placeholder="https://chiaki.vn/gian-hang-st****"
       onkeydown="if(event.key==='Enter') fetchShopInfo()"
       style="margin-bottom:12px" />
     <div class="shop-error" id="shopError"></div>
@@ -4247,7 +4335,7 @@ if (checkIdGate()) { init(); }
              outline:none; letter-spacing:1px;" />
 
     <label style="font-size:12px; font-weight:700; color:#5b4b8a; letter-spacing:.4px;">CANCEL KEY</label>
-    <input id="cancelModalKey" type="text" placeholder="VD: CANCEL-KEY-XXXXXXXX"
+    <input id="cancelModalKey" type="text" placeholder="VD: CANCEL-KEY-****-****"
       style="width:100%; box-sizing:border-box; margin:6px 0 4px; padding:10px 14px;
              border:1.5px solid #ddd; border-radius:8px; font-size:13px; font-family:monospace;
              outline:none; letter-spacing:1px;"
