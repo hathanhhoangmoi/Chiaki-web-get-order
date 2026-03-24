@@ -881,134 +881,171 @@ async def export_order(order_code: str, request: Request, db: Session = Depends(
     )
 @app.post("/api/print-label")
 async def print_label(body: dict):
-    shop_name     = body.get("shop_name", "")
-    shipping_code = body.get("shipping_code", "")
-    order_code    = body.get("order_code", "")
-    customer_name = body.get("customer_name", "")
-    address       = body.get("address", "")
-    product       = body.get("product", "")
-    order_date    = body.get("order_date", "")
-    total         = body.get("prepaid_amount", "")
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import inch
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.utils import simpleSplit
+    from reportlab.graphics.barcode import code128
+    import io, os
+
+    shop_name    = body.get("shop_name", "")
+    shipping_code= body.get("shipping_code", "")
+    order_code   = body.get("order_code", "")
+    customer_name= body.get("customer_name", "")
+    address      = body.get("address", "")
+    product      = body.get("product", "")
+    order_date   = body.get("order_date", "")
+    total        = body.get("prepaid_amount", "")
+
+    # ── Font tiếng Việt ──
+    FONT_DIR = os.path.join(os.path.dirname(__file__), "static", "fonts")
+    try:
+        pdfmetrics.registerFont(TTFont("Roboto",      f"{FONT_DIR}/Roboto-Regular.ttf"))
+        pdfmetrics.registerFont(TTFont("Roboto-Bold", f"{FONT_DIR}/Roboto-Bold.ttf"))
+        F_REG  = "Roboto"
+        F_BOLD = "Roboto-Bold"
+    except:
+        F_REG  = "Helvetica"
+        F_BOLD = "Helvetica-Bold"
 
     W, H = 4 * inch, 6 * inch
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=(W, H))
-
-    # Màu đen
     c.setFillColorRGB(0, 0, 0)
 
-    # ── HEADER: Logo text + mã đơn ──────────────────────────
-    c.setFont("Helvetica-BoldOblique", 16)
-    c.drawString(0.18*inch, H - 0.32*inch, "Chiaki.vn")
+    # ════════════════════════════════
+    # HEADER — Logo + Mã đơn
+    # ════════════════════════════════
+    c.setFont(F_BOLD, 18)
+    c.drawString(0.18*inch, H - 0.35*inch, "Chiaki.vn")
 
-    c.setFont("Helvetica-Bold", 7)
-    c.drawRightString(W - 0.18*inch, H - 0.22*inch, f"Ma van don: {shipping_code}")
-    c.setFont("Helvetica", 7)
-    c.drawRightString(W - 0.18*inch, H - 0.32*inch, f"Ma don hang: {order_code}")
+    c.setFont(F_BOLD, 7.5)
+    c.drawRightString(W - 0.18*inch, H - 0.22*inch, f"Mã vận đơn: {shipping_code}")
+    c.setFont(F_REG, 7.5)
+    c.drawRightString(W - 0.18*inch, H - 0.34*inch, f"Mã đơn hàng: {order_code}")
+
+    # Barcode mã vận đơn
+    if shipping_code:
+        try:
+            bc = code128.Code128(shipping_code, barHeight=0.28*inch, barWidth=0.9)
+            bc.drawOn(c, W - 1.5*inch, H - 0.38*inch)
+        except:
+            pass
 
     # Đường kẻ ngang dưới header
-    y_line = H - 0.4*inch
+    y_line = H - 0.45*inch
     c.setLineWidth(1.5)
     c.line(0.18*inch, y_line, W - 0.18*inch, y_line)
 
-    # ── BARCODE placeholder ──────────────────────────────────
-    c.setLineWidth(0.5)
-    c.setDash(3, 2)
-    c.rect(0.18*inch, H - 0.72*inch, W - 0.36*inch, 0.25*inch)
-    c.setDash()
-
-    # ── TỪ ──────────────────────────────────────────────────
-    y_from = H - 1.05*inch
+    # ════════════════════════════════
+    # TỪ / ĐẾN
+    # ════════════════════════════════
+    y_from = H - 1.08*inch
     c.setLineWidth(0.8)
-    c.rect(0.18*inch, y_from - 0.32*inch, 1.2*inch, 0.42*inch)
-    c.setFont("Helvetica-Bold", 7)
-    c.drawString(0.24*inch, y_from + 0.04*inch, "Tu:")
-    c.setFont("Helvetica-Bold", 8.5)
-    # wrap shop name
-    lines = simpleSplit(shop_name, "Helvetica-Bold", 8.5, 1.1*inch)
-    for i, ln in enumerate(lines[:2]):
+    # Box TỪ
+    c.rect(0.18*inch, y_from - 0.32*inch, 1.2*inch, 0.44*inch)
+    c.setFont(F_BOLD, 7)
+    c.drawString(0.24*inch, y_from + 0.04*inch, "Từ:")
+    shop_lines = simpleSplit(shop_name, F_BOLD, 8, 1.1*inch)
+    c.setFont(F_BOLD, 8)
+    for i, ln in enumerate(shop_lines[:2]):
         c.drawString(0.24*inch, y_from - 0.08*inch - i*0.13*inch, ln)
 
-    # ── ĐẾN ─────────────────────────────────────────────────
-    c.setLineWidth(1.5)
-    c.rect(1.5*inch, y_from - 0.32*inch, W - 1.68*inch, 0.42*inch)
-    c.setFont("Helvetica-Bold", 7)
-    c.drawString(1.56*inch, y_from + 0.04*inch, "Den:")
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(1.56*inch, y_from - 0.08*inch, customer_name[:30])
-    c.setFont("Helvetica", 7.5)
-    addr_lines = simpleSplit(address, "Helvetica", 7.5, 2.2*inch)
-    for i, ln in enumerate(addr_lines[:3]):
-        c.drawString(1.56*inch, y_from - 0.2*inch - i*0.12*inch, ln)
+    # Box ĐẾN
+    c.rect(1.52*inch, y_from - 0.32*inch, W - 1.7*inch, 0.44*inch)
+    c.setFont(F_BOLD, 7)
+    c.drawString(1.58*inch, y_from + 0.04*inch, "Đến:")
+    c.setFont(F_BOLD, 8.5)
+    c.drawString(1.58*inch, y_from - 0.08*inch, customer_name[:28])
+    c.setFont(F_REG, 7)
+    addr_lines = simpleSplit(address, F_REG, 7, 2.2*inch)
+    for i, ln in enumerate(addr_lines[:2]):
+        c.drawString(1.58*inch, y_from - 0.22*inch - i*0.12*inch, ln)
 
-    # ── NỘI DUNG HÀNG + QR ──────────────────────────────────
-    y_content = H - 2.0*inch
+    # ════════════════════════════════
+    # NỘI DUNG HÀNG + QR
+    # ════════════════════════════════
+    y_content = H - 2.05*inch
     box_h = 1.1*inch
     c.setLineWidth(0.8)
+    # Box sản phẩm
     c.rect(0.18*inch, y_content - box_h, 2.9*inch, box_h)
-
-    c.setFont("Helvetica-Bold", 7.5)
-    c.drawString(0.24*inch, y_content - 0.14*inch, "Noi dung hang (Tong SL san pham: 1)")
-
-    c.setFont("Helvetica", 8)
-    prod_lines = simpleSplit(f"1. {product}, SL: 1", "Helvetica", 8, 2.78*inch)
+    c.setFont(F_BOLD, 7.5)
+    c.drawString(0.24*inch, y_content - 0.14*inch, "Nội dung hàng (Tổng SL sản phẩm: 1)")
+    c.setFont(F_REG, 7.5)
+    prod_lines = simpleSplit(f"1. {product}, SL: 1", F_REG, 7.5, 2.78*inch)
     for i, ln in enumerate(prod_lines[:4]):
         c.drawString(0.24*inch, y_content - 0.28*inch - i*0.13*inch, ln)
 
-    c.setFont("Helvetica", 6.5)
-    note = "Kiem tra ten san pham va doi chieu Ma van don / Ma don hang truoc khi nhan hang."
-    note_lines = simpleSplit(note, "Helvetica", 6.5, 2.78*inch)
-    for i, ln in enumerate(note_lines[:2]):
-        c.drawString(0.24*inch, y_content - 0.86*inch - i*0.11*inch, ln)
+    # Ghi chú nhỏ
+    c.setFont(F_REG, 6)
+    note = "Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn/ Mã đơn hàng trước khi nhận hàng (Lưu ý: Một số sản phẩm có thể bị ẩn do danh sách quá dài.)"
+    note_lines = simpleSplit(note, F_REG, 6, 2.78*inch)
+    for i, ln in enumerate(note_lines[:3]):
+        c.drawString(0.24*inch, y_content - 0.84*inch - i*0.10*inch, ln)
 
-    # QR placeholder
-    c.setLineWidth(0.5)
-    c.rect(3.16*inch, y_content - box_h, 0.66*inch, 0.66*inch)
-    c.setFont("Helvetica", 6)
-    c.drawCentredString(3.49*inch, y_content - box_h - 0.1*inch, "QR Code")
+    # Box QR / mã kho
+    c.rect(3.16*inch, y_content - box_h, 0.66*inch, box_h)
+    c.setFont(F_BOLD, 7.5)
+    c.drawCentredString(3.49*inch, y_content - 0.28*inch, "HN-20")
+    c.setFont(F_REG, 6.5)
+    c.drawCentredString(3.49*inch, y_content - 0.42*inch, "03-01")
 
-    # ── NGÀY ĐẶT HÀNG ───────────────────────────────────────
+    # ════════════════════════════════
+    # NGÀY ĐẶT HÀNG
+    # ════════════════════════════════
     y_date = y_content - box_h - 0.2*inch
     c.setLineWidth(0.5)
     c.line(0.18*inch, y_date, W - 0.18*inch, y_date)
-    c.setFont("Helvetica", 7.5)
-    c.drawRightString(W - 0.18*inch, y_date - 0.14*inch, "Ngay dat hang:")
-    c.setFont("Helvetica-Bold", 9)
-    c.drawRightString(W - 0.18*inch, y_date - 0.26*inch, order_date)
+    c.setFont(F_REG, 7)
+    c.drawRightString(W - 0.18*inch, y_date - 0.14*inch, "Ngày đặt hàng:")
+    c.setFont(F_BOLD, 9)
+    c.drawRightString(W - 0.18*inch, y_date - 0.27*inch, order_date)
 
-    # ── TIỀN THU ────────────────────────────────────────────
-    y_money = y_date - 0.42*inch
+    # ════════════════════════════════
+    # TIỀN THU + CHỮ KÝ
+    # ════════════════════════════════
+    y_money = y_date - 0.45*inch
     c.setLineWidth(1.5)
     c.line(0.18*inch, y_money, W - 0.18*inch, y_money)
-    c.setFont("Helvetica", 8)
-    c.drawString(0.18*inch, y_money - 0.2*inch, "Tien thu nguoi nhan:")
-    c.setFont("Helvetica-Bold", 20)
-    c.drawRightString(W - 0.18*inch, y_money - 0.28*inch, total)
+    c.setFont(F_REG, 7.5)
+    c.drawString(0.18*inch, y_money - 0.20*inch, "Tiền thu người nhận:")
+    c.setFont(F_BOLD, 7)
+    c.drawRightString(W - 0.18*inch, y_money - 0.14*inch, f"Khối lượng tối đa: 100g")
+    c.setFont(F_BOLD, 20)
+    c.drawString(0.18*inch, y_money - 0.48*inch, f"{total} VND" if total else "")
 
-    # ── CHỮ KÝ + CHỈ DẪN ────────────────────────────────────
-    y_sign = y_money - 0.6*inch
+    # Box chữ ký
+    y_sign = y_money - 0.55*inch
     c.setLineWidth(0.8)
-    c.rect(0.18*inch, y_sign - 0.55*inch, W - 0.36*inch, 0.65*inch)
+    c.rect(2.9*inch, y_sign - 0.55*inch, W - 3.08*inch, 0.65*inch)
+    c.setFont(F_BOLD, 7.5)
+    c.drawCentredString(3.49*inch, y_sign - 0.08*inch, "Chữ ký người nhận")
+    c.setFont(F_REG, 6.5)
+    c.drawCentredString(3.49*inch, y_sign - 0.20*inch, "Xác nhận hàng nguyên vẹn, không")
+    c.drawCentredString(3.49*inch, y_sign - 0.31*inch, "móp/méo, bể/vỡ")
 
-    c.setFont("Helvetica", 6.5)
-    guide = "Chi dan giao hang: Duoc dong kiem; Khong boc tem, seal, thu san pham; Chuyen hoan sau 3 lan phat; Luu kho toi da 5 ngay."
-    guide_lines = simpleSplit(guide, "Helvetica", 6.5, 2.2*inch)
-    for i, ln in enumerate(guide_lines[:3]):
-        c.drawString(0.24*inch, y_sign - 0.1*inch - i*0.11*inch, ln)
-
-    c.setFont("Helvetica-Bold", 7.5)
-    c.drawCentredString(3.5*inch, y_sign - 0.08*inch, "Chu ky nguoi nhan")
-    c.setFont("Helvetica", 6.5)
-    c.drawCentredString(3.5*inch, y_sign - 0.2*inch, "Xac nhan hang nguyen ven,")
-    c.drawCentredString(3.5*inch, y_sign - 0.3*inch, "khong mop/meo, be/vo")
-    c.line(3.0*inch, y_sign - 0.5*inch, W - 0.18*inch, y_sign - 0.5*inch)
+    # ════════════════════════════════
+    # CHỈ DẪN GIAO HÀNG
+    # ════════════════════════════════
+    y_guide = y_sign - 0.65*inch
+    c.setLineWidth(0.5)
+    c.setDash(3, 2)
+    c.line(0.18*inch, y_guide + 0.05*inch, W - 0.18*inch, y_guide + 0.05*inch)
+    c.setDash()
+    c.setFont(F_BOLD, 6.5)
+    guide = "Chỉ dẫn giao hàng: Được đồng kiểm; Không bóc tem, seal, thử sản phẩm; Chuyển hoàn sau 3 lần phát; Lưu kho tối đa 5 ngày."
+    guide_lines = simpleSplit(guide, F_BOLD, 6.5, W - 0.36*inch)
+    for i, ln in enumerate(guide_lines):
+        c.drawString(0.18*inch, y_guide - i*0.12*inch, ln)
 
     c.save()
     buf.seek(0)
     return StreamingResponse(
         buf,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{order_code}.pdf"'}
+        headers={"Content-Disposition": f"attachment; filename={order_code}.pdf"}
     )
 @app.get("/api/orders/delivering")
 async def get_delivering_orders(shop_id: str = Query(None)):
