@@ -1384,7 +1384,6 @@ async def check_getorder_key(body: dict):
         "unlimited": is_unlimited,
     }
 
-
 @app.post("/api/shop-orders")
 async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
     import re
@@ -1398,79 +1397,56 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
     if key not in GETORDER_UNLIMITED_KEYS and GETORDER_KEYS[key] >= GETORDER_KEY_LIMIT:
         return JSONResponse({"error": f"Key đã hết lượt ({GETORDER_KEY_LIMIT}/{GETORDER_KEY_LIMIT})."}, status_code=403)
 
-    # Bước 1: Trích store_code từ URL (dạng chữ, VD: ST8RBD8N7P)
+    # Bước 1: Trích store_code từ URL người dùng nhập
+    # VD: https://chiaki.vn/gian-hang-ST8RBD8N7P → ST8RBD8N7P
     m = re.search(r'gian-hang-([A-Z0-9]+)', shop_url, re.IGNORECASE)
     if not m:
         return JSONResponse({"error": "Link không hợp lệ. VD: https://chiaki.vn/gian-hang-ST****"}, status_code=400)
     store_code = m.group(1).upper()
 
-    # Bước 2: Tra SHOP_NAME_MAP (key là store_code chữ) → lấy shop_name
-    shop_name = SHOP_NAME_MAP.get(store_code)
-
-    # Bước 3: Tìm shop_id số trong DB qua ShopMeta hoặc Order.store_code
-    # Thử tìm qua ShopMeta trước
+    # Bước 2: Tìm shop_id số bằng cách duyệt get_shops_map()
+    # get_shops_map() trả về {shop_id_số: (shop_url_có_store_code, shop_name)}
+    shops = get_shops_map()
     numeric_shop_id = None
+    shop_name = None
 
-    # Tìm trong Order: lấy 1 đơn có store_code khớp để lấy shop_id số
-    sample_order = db.query(Order).filter(
-        Order.order_code.like(f"%{store_code}%")
-    ).first()
-    if sample_order:
-        numeric_shop_id = sample_order.shop_id
-        if not shop_name:
-            shop_name = sample_order.shop_name
+    for sid, (s_url, s_name) in shops.items():
+        # So khớp store_code trong URL của map
+        if store_code.lower() in s_url.lower():
+            numeric_shop_id = str(sid)
+            shop_name = s_name
+            break
 
-    # Nếu không tìm được qua order_code, thử ShopMeta
-    if not numeric_shop_id:
-        all_meta = db.query(ShopMeta).all()
-        for m_shop in all_meta:
-            # shop_url trong ShopMeta thường chứa store_code
-            if m_shop.shop_id and store_code.lower() in str(getattr(m_shop, 'shop_url', '') or '').lower():
-                numeric_shop_id = m_shop.shop_id
-                if not shop_name:
-                    shop_name = m_shop.shop_name
-                break
-
-    # Nếu vẫn không tìm được → thử get_shops_map
-    if not numeric_shop_id:
-        shops = get_shops_map()
-        for sid, info in shops.items():
-            url_in_map = info[0] if isinstance(info, (list, tuple)) else str(info)
-            if store_code.lower() in url_in_map.lower():
-                numeric_shop_id = sid
-                if not shop_name:
-                    shop_name = info[1] if isinstance(info, (list, tuple)) and len(info) > 1 else SHOP_NAME_MAP.get(sid, sid)
-                break
+    print(f"[shop-orders] store_code={store_code} → numeric_shop_id={numeric_shop_id}, shop_name={shop_name}")
 
     if not numeric_shop_id:
         return JSONResponse({
             "error": f"Không tìm thấy gian hàng '{store_code}' trong hệ thống.",
-            "debug_store_code": store_code
+            "hint": "Kiểm tra lại link gian hàng."
         }, status_code=404)
 
-    # Bước 4: Query DB theo shop_id số + status
+    # Bước 3: Query DB theo shop_id số + status chờ lấy hàng / đang giao
     orders_db = (
         db.query(Order)
         .filter(
-            Order.shop_id == str(numeric_shop_id),
+            Order.shop_id == numeric_shop_id,
             Order.status.in_(["request_out", "delivering", "wait"])
         )
         .order_by(Order.order_date.desc())
         .all()
     )
 
-    # Ghi key usage
+    print(f"[shop-orders] shop_id={numeric_shop_id} → {len(orders_db)} đơn")
+
+    # Ghi lượt dùng key
     GETORDER_KEYS[key] += 1
     remaining = -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key]
     from datetime import timezone as _tz
     now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
     GETORDER_KEY_HISTORY.setdefault(key, []).append({"shop_url": shop_url, "time": now_vn})
 
-    # Debug log
-    print(f"[shop-orders] store_code={store_code} → numeric_shop_id={numeric_shop_id}, found={len(orders_db)} orders")
-
     return {
-        "shop_name":  shop_name or store_code,
+        "shop_name":  shop_name,
         "shop_id":    numeric_shop_id,
         "store_code": store_code,
         "total":      len(orders_db),
