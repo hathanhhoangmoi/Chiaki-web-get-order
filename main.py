@@ -1386,63 +1386,92 @@ async def check_getorder_key(body: dict):
 
 @app.post("/api/shop-orders")
 async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
-    import re
-    shop_url = body.get("shop_url", "").strip()
-    key      = body.get("key", "").strip()
+    try:
+        import re
+        shop_url = body.get("shop_url", "").strip()
+        key      = body.get("key", "").strip()
 
-    if not shop_url or not key:
-        return JSONResponse({"error": "Thiếu link gian hàng hoặc key."}, status_code=400)
-    if key not in GETORDER_KEYS:
-        return JSONResponse({"error": "GETORDER-KEY không hợp lệ."}, status_code=403)
-    if key not in GETORDER_UNLIMITED_KEYS and GETORDER_KEYS[key] >= GETORDER_KEY_LIMIT:
-        return JSONResponse({"error": f"Key đã hết lượt ({GETORDER_KEY_LIMIT}/{GETORDER_KEY_LIMIT})."}, status_code=403)
+        if not shop_url or not key:
+            return JSONResponse({"error": "Thiếu link gian hàng hoặc key."}, status_code=400)
+        if key not in GETORDER_KEYS:
+            return JSONResponse({"error": "GETORDER-KEY không hợp lệ."}, status_code=403)
+        if key not in GETORDER_UNLIMITED_KEYS and GETORDER_KEYS[key] >= GETORDER_KEY_LIMIT:
+            return JSONResponse({"error": f"Key đã hết lượt ({GETORDER_KEY_LIMIT}/{GETORDER_KEY_LIMIT})."}, status_code=403)
 
-    m = re.search(r'gian-hang-([A-Z0-9]+)', shop_url, re.IGNORECASE)
-    if not m:
-        return JSONResponse({"error": "Link không hợp lệ. VD: https://chiaki.vn/gian-hang-ST****"}, status_code=400)
-    store_code = m.group(1).upper()
+        m = re.search(r'gian-hang-([A-Z0-9]+)', shop_url, re.IGNORECASE)
+        if not m:
+            return JSONResponse({"error": "Link không hợp lệ. VD: https://chiaki.vn/gian-hang-ST****"}, status_code=400)
+        store_code = m.group(1).upper()
 
-    shops = get_shops_map()
-    numeric_shop_id = None
-    shop_name = None
-    for sid, (s_url, s_name) in shops.items():
-        if store_code.lower() in s_url.lower():
-            numeric_shop_id = str(sid)
-            shop_name = s_name
-            break
+        shops = get_shops_map()
+        numeric_shop_id = None
+        shop_name = None
+        for sid, val in shops.items():
+            # val có thể là (url, name) hoặc dạng khác — xử lý an toàn
+            if isinstance(val, (list, tuple)) and len(val) >= 2:
+                s_url, s_name = val[0], val[1]
+            elif isinstance(val, str):
+                s_url, s_name = val, str(sid)
+            else:
+                continue
+            if store_code.lower() in str(s_url).lower():
+                numeric_shop_id = str(sid)
+                shop_name = s_name
+                break
 
-    if not numeric_shop_id:
-        return JSONResponse({"error": f"Không tìm thấy gian hàng '{store_code}'."}, status_code=404)
+        print(f"[shop-orders] store_code={store_code} → shop_id={numeric_shop_id}, name={shop_name}")
 
-    # ── Debug: lấy tất cả status thực tế của shop này ──
-    from sqlalchemy import func as _func
-    status_stats = (
-        db.query(Order.status, _func.count(Order.id))
-        .filter(Order.shop_id == numeric_shop_id)
-        .group_by(Order.status)
-        .all()
-    )
-    all_statuses = [s for s, _ in status_stats]
-    print(f"[shop-orders] shop_id={numeric_shop_id} | statuses in DB: {status_stats}")
+        if not numeric_shop_id:
+            return JSONResponse({"error": f"Không tìm thấy gian hàng '{store_code}'."}, status_code=404)
 
-    # ── Khớp linh hoạt: tất cả status chứa từ khoá "chờ", "lấy", "giao", "delivering", "request" ──
-    KEYWORDS = ["request_out", "delivering", "wait", "chờ", "lấy hàng", "đang giao", "pickup"]
-    matched_statuses = [
-        s for s in all_statuses
-        if s and any(kw.lower() in s.lower() for kw in KEYWORDS)
-    ]
+        # Lấy tất cả status trong DB của shop này
+        status_stats = (
+            db.query(Order.status, func.count(Order.id))
+            .filter(Order.shop_id == numeric_shop_id)
+            .group_by(Order.status)
+            .all()
+        )
+        print(f"[shop-orders] status_stats={status_stats}")
 
-    # Nếu không khớp từ khoá nào → lấy tất cả đơn và trả về kèm debug
-    if not matched_statuses:
-        # Trả về 20 đơn gần nhất + thông tin debug để xác định status đúng
-        sample = db.query(Order).filter(Order.shop_id == numeric_shop_id).order_by(Order.order_date.desc()).limit(20).all()
+        all_statuses = [str(s) for s, _ in status_stats if s is not None]
+
+        KEYWORDS = ["request_out", "delivering", "wait", "chờ", "lấy hàng", "đang giao", "pickup"]
+        matched_statuses = [
+            s for s in all_statuses
+            if any(kw.lower() in s.lower() for kw in KEYWORDS)
+        ]
+        print(f"[shop-orders] matched_statuses={matched_statuses}")
+
+        if matched_statuses:
+            orders_db = (
+                db.query(Order)
+                .filter(Order.shop_id == numeric_shop_id, Order.status.in_(matched_statuses))
+                .order_by(Order.order_date.desc())
+                .all()
+            )
+        else:
+            # Không khớp keyword → trả 20 đơn gần nhất để debug
+            orders_db = (
+                db.query(Order)
+                .filter(Order.shop_id == numeric_shop_id)
+                .order_by(Order.order_date.desc())
+                .limit(20)
+                .all()
+            )
+
+        GETORDER_KEYS[key] += 1
+        remaining = -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key]
+        from datetime import timezone as _tz
+        now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
+        GETORDER_KEY_HISTORY.setdefault(key, []).append({"shop_url": shop_url, "time": now_vn})
+
         return {
-            "shop_name":     shop_name,
-            "shop_id":       numeric_shop_id,
-            "store_code":    store_code,
-            "total":         len(sample),
-            "remaining":     -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key],
-            "debug_statuses": status_stats,  # ← xem field này để biết status thực tế
+            "shop_name":      shop_name,
+            "shop_id":        numeric_shop_id,
+            "store_code":     store_code,
+            "total":          len(orders_db),
+            "remaining":      remaining,
+            "debug_statuses": [[s, c] for s, c in status_stats],
             "orders": [{
                 "order_code":    o.order_code,
                 "order_date":    o.order_date,
@@ -1452,41 +1481,10 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
                 "quantity":      o.quantity,
                 "total":         str(o.total) if o.total else None,
                 "status":        o.status,
-            } for o in sample],
+            } for o in orders_db],
         }
 
-    orders_db = (
-        db.query(Order)
-        .filter(
-            Order.shop_id == numeric_shop_id,
-            Order.status.in_(matched_statuses)
-        )
-        .order_by(Order.order_date.desc())
-        .all()
-    )
-
-    print(f"[shop-orders] matched_statuses={matched_statuses} → {len(orders_db)} đơn")
-
-    GETORDER_KEYS[key] += 1
-    remaining = -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key]
-    from datetime import timezone as _tz
-    now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
-    GETORDER_KEY_HISTORY.setdefault(key, []).append({"shop_url": shop_url, "time": now_vn})
-
-    return {
-        "shop_name":  shop_name,
-        "shop_id":    numeric_shop_id,
-        "store_code": store_code,
-        "total":      len(orders_db),
-        "remaining":  remaining,
-        "orders": [{
-            "order_code":    o.order_code,
-            "order_date":    o.order_date,
-            "customer_name": o.customer_name or o.buyer_name,
-            "phone":         o.phone,
-            "product":       o.product,
-            "quantity":      o.quantity,
-            "total":         str(o.total) if o.total else None,
-            "status":        o.status,
-        } for o in orders_db],
-    }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"error": f"Lỗi server: {str(e)}"}, status_code=500)
