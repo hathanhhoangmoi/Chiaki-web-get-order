@@ -26,6 +26,7 @@ import io
 from fastapi.responses import StreamingResponse
 from fastapi.responses import HTMLResponse
 from shops_config import SHOP_NAME_MAP
+import json as _json
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
@@ -381,10 +382,10 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     KEY_HISTORY[key].append({"order_code": order_code, "time": now_vn})
 
     input_id = order_code[2:9]
-
+    
     url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
     session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
-
+    url_history_parsed = []
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(url, headers={
@@ -435,7 +436,17 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             or shop_id_from_api
         )
         db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
-
+    url_history_parsed = []
+        try:
+            meta_raw = d.get("meta_data", "{}")
+            meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+            uh = meta.get("url_history", {})
+            if isinstance(uh, dict):
+                url_history_parsed = [v for _, v in sorted(uh.items(), key=lambda x: int(x[0]))]
+            elif isinstance(uh, list):
+                url_history_parsed = uh
+        except:
+            pass
         return {
     "order_code":           g("code"),
     "shop_name":            db_shop_name,
@@ -451,6 +462,8 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     "delivery_status":      g("delivery_status"),
     "shipper_receive_time": g("shipper_receive_time"),
     "product":              db_product,          # ← thêm mới
+    "quantity":             d.get("quantity") or (dborder.quantity if db_order else None),
+    "url_history":          url_history_parsed,
     "remaining":            remaining,
 }
     except Exception as e:
