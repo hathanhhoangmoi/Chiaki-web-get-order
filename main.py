@@ -447,7 +447,13 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
                 url_history_parsed = uh
         except Exception:
                 url_history_parsed = []
+        meta = {}
+        try:
+            meta = json.loads(g("meta_data") or "{}")
+        except:
+            pass
 
+        source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or
         return {
     "order_code":           g("code"),
     "status":               g("status"),
@@ -458,6 +464,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     "email":                g("email_id"),
     "address":              g("delivery_address"),
     "source":               g("source", "from"),
+    "source_from":          source_from,
     "payment":              payment_status,
     "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
     "shipping_code":        g("shipping_code"),
