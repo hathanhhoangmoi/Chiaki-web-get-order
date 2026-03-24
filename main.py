@@ -473,53 +473,82 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         db_order = db.query(Order).filter(
         Order.order_code.like(f"%_{order_code}")
             ).first()
-        db_product   = db_order.product   if db_order else "—"
-        shop_id_from_api = g("store_code", "creator_name")
-        db_shop_name = (
-            SHOP_NAME_MAP.get(shop_id_from_api)
-            or (db_order.shop_name if db_order else None)
-            or shop_id_from_api
-        )
-        db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
-        url_history_parsed = []
+        # ── Parse meta_data để lấy danh sách sản phẩm ──
+        import json as _json
+        products_detail = []
         try:
-            meta_raw = d.get("meta_data", "{}")
-            meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
-            uh = meta.get("url_history", {})
-            if isinstance(uh, dict):
-                url_history_parsed = [v for _, v in sorted(uh.items(), key=lambda x: int(x[0]))]
-            elif isinstance(uh, list):
-                url_history_parsed = uh
-        except Exception:
-                url_history_parsed = []
-        meta = {}
-        try:
-            meta = json.loads(g("meta_data") or "{}")
-        except:
-            pass
+            meta_raw = d.get("meta_data") or d.get("metadata") or "{}"
+            if isinstance(meta_raw, str):
+                meta_parsed = _json.loads(meta_raw)
+            else:
+                meta_parsed = meta_raw
 
-        source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
+            item_profits = meta_parsed.get("itemProfits", [])
+
+            if item_profits:
+                # Lấy tên sản phẩm + tên shop từng item qua API
+                async def fetch_product_info(client, pcode):
+                    try:
+                        pid = pcode.lstrip("S").lstrip("0") or pcode
+                        purl = f"https://chiaki.vn/api/products/{pid}?version=3.6.2"
+                        r = await client.get(purl, headers={"User-Agent": "chiakiApp3.6.2"}, timeout=8)
+                        pdata = r.json()
+                        item = pdata.get("result") or (pdata.get("data") or [None])[0] if isinstance(pdata.get("data"), list) else pdata.get("data")
+                        if item:
+                            return {
+                                "code": pcode,
+                                "name": item.get("name") or item.get("product_name") or pcode,
+                                "price": None,
+                                "shop_name": item.get("store_name") or item.get("shop_name") or "",
+                                "shop_id": str(item.get("store_id") or ""),
+                            }
+                    except:
+                        pass
+                    return {"code": pcode, "name": pcode, "price": None, "shop_name": "", "shop_id": ""}
+
+                async with httpx.AsyncClient(timeout=10) as pclient:
+                    tasks = [fetch_product_info(pclient, item["code"]) for item in item_profits]
+                    pinfos = await asyncio.gather(*tasks)
+
+                for i, item in enumerate(item_profits):
+                    pinfo = pinfos[i] if i < len(pinfos) else {}
+                    # Tên shop: ưu tiên SHOPNAMEMAP nếu có shop_id
+                    shop_id_str = pinfo.get("shop_id", "")
+                    shop_name_resolved = SHOPNAMEMAP.get(shop_id_str) or pinfo.get("shop_name") or ""
+                    products_detail.append({
+                        "code":     item.get("code", ""),
+                        "name":     pinfo.get("name") or item.get("code", ""),
+                        "quantity": item.get("quantity", 1),
+                        "price":    item.get("price", ""),
+                        "shop_name": shop_name_resolved,
+                        "shop_id":   shop_id_str,
+                    })
+        except Exception as ep:
+            print(f"[products_detail] lỗi: {ep}")
+
+        # Fallback: nếu không parse được thì dùng DB
+        if not products_detail and dborder and dborder.product:
+            products_detail = [{"code": "", "name": db_order.product, "quantity": db_order.quantity or 1, "price": "", "shop_name": db_order.shop_name or "", "shop_id": str(db_order.shop_id or "")}]
+
         return {
-    "order_code":           g("code"),
-    "status":               g("status"),
-    "shop_name":            db_shop_name,
-    "order_date":           g("verified_time", "create_time"),
-    "customer_name":        g("related_user_name", "receiver_name"),
-    "phone":                phone,
-    "email":                g("email_id"),
-    "address":              g("delivery_address"),
-    "source":               g("source", "from"),
-    "source_from":          source_from,
-    "payment":              payment_status,
-    "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
-    "shipping_code":        g("shipping_code"),
-    "delivery_status":      g("delivery_status"),
-    "shipper_receive_time": g("shipper_receive_time"),
-    "product":              db_product,          # ← thêm mới
-    "quantity":             d.get("quantity") or (db_order.quantity if db_order else None),
-    "url_history":          url_history_parsed,
-    "remaining":            remaining,
-}
+            "order_code":        g("code"),
+            "shop_name":         db_shop_name,
+            "order_date":        g("verified_time") or g("create_time"),
+            "customer_name":     g("related_user_name") or g("receiver_name"),
+            "phone":            phone,
+            "email":            g("email_id"),
+            "address":          g("delivery_address"),
+            "source":           g("source") or g("from"),
+            "payment":          paymentstatus,
+            "prepaidamount":    dbtotal,
+            "shipping_code":     g("shipping_code"),
+            "delivery_status":   g("delivery_status"),
+            "shipper_receive_time": g("shipper_receive_time"),
+            "product":          db_product,        # giữ lại để tương thích
+            "products":         products_detail,  # ← THÊM MỚI: danh sách đầy đủ
+            "remaining":        remaining,
+        }
+
     except Exception as e:
         VALID_KEYS[key] -= 1
         return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
