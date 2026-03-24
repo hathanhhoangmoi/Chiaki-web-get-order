@@ -385,7 +385,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     
     url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
     session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
-    url_history_parsed = []
+    
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(url, headers={
@@ -436,7 +436,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             or shop_id_from_api
         )
         db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
-            url_history_parsed = []
+        url_history_parsed = []
         try:
             meta_raw = d.get("meta_data", "{}")
             meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
@@ -446,7 +446,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             elif isinstance(uh, list):
                 url_history_parsed = uh
         except Exception:
-            url_history_parsed = []
+                url_history_parsed = []
 
         return {
     "order_code":           g("code"),
