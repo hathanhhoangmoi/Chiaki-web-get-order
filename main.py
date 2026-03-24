@@ -463,7 +463,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     "delivery_status":      g("delivery_status"),
     "shipper_receive_time": g("shipper_receive_time"),
     "product":              db_product,          # ← thêm mới
-    "quantity":             d.get("quantity") or (dborder.quantity if db_order else None),
+    "quantity":             d.get("quantity") or (db_order.quantity if db_order else None),
     "url_history":          url_history_parsed,
     "remaining":            remaining,
 }
