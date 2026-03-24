@@ -527,7 +527,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             print(f"[products_detail] lỗi: {ep}")
 
         # Fallback: nếu không parse được thì dùng DB
-        if not products_detail and dborder and dborder.product:
+        if not products_detail and db_order and db_order.product:
             products_detail = [{"code": "", "name": db_order.product, "quantity": db_order.quantity or 1, "price": "", "shop_name": db_order.shop_name or "", "shop_id": str(db_order.shop_id or "")}]
 
         return {
