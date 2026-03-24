@@ -583,12 +583,13 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 /* ── Order Info Modal ── */
 .info-modal-bg {
-  position: relative; inset: 0; z-index: 6000;
+  position: fixed; inset: 0; z-index: 6000;
   display: none; align-items: center; justify-content: center;
   background: rgba(60,40,90,.3); backdrop-filter: blur(10px); padding: 16px;
 }
 .info-modal-bg.show { display: flex; }
 .info-modal {
+  position: relative;
   width: 100%; max-width: 480px;
   background: rgba(255,255,255,.78);
   backdrop-filter: blur(30px) saturate(200%);
