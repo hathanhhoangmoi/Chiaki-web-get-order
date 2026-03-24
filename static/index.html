@@ -2264,14 +2264,13 @@ const pdfBtn = document.getElementById('btnExportPdf');
 if (pdfBtn) pdfBtn.style.display = 'block';
 document.getElementById('btnExportPdf').style.display = 'block';
     resultEl.classList.add('show');
-    catch(e) {
+  catch(e) {
     errEl.textContent = 'Lỗi kết nối: ' + e.message;
     errEl.classList.add('show');
   } finally {
     btn.disabled = false;
     btn.textContent = '🔍 Tra cứu';
   }
-}
 document.addEventListener('DOMContentLoaded', () => {
   const keyInput = document.getElementById('infoKey');
   if (!keyInput) return;
