@@ -2208,16 +2208,7 @@ const SHOP_ID_NAME = {
                     <span style="color:#b0a0c8;font-size:10px;white-space:nowrap;flex-shrink:0">${time}</span>
                 </div>`;
             }).join('');
-        } if (uhEl) {
-    if (data.url_history && data.url_history.length > 0) {
-        const deduped = data.url_history.filter((item, i, arr) =>
-            i === 0 || item.url !== arr[i - 1].url
-        )
-        uhEl.innerHTML = deduped.map((item) => {
-            // ... code render từng dòng hành trình
-        }).join('')
     } else {
-        // ← THAY THẾ ĐOẠN NÀY
         const srcFrom = (data.source_from || '').toLowerCase()
         let reason = ''
 
@@ -2264,7 +2255,7 @@ const pdfBtn = document.getElementById('btnExportPdf');
 if (pdfBtn) pdfBtn.style.display = 'block';
 document.getElementById('btnExportPdf').style.display = 'block';
     resultEl.classList.add('show');
-  catch(e) {
+    } catch(e) {
     errEl.textContent = 'Lỗi kết nối: ' + e.message;
     errEl.classList.add('show');
   } finally {
