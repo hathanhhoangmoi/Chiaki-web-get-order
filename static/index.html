@@ -2122,16 +2122,7 @@ statusBanner.style.background = statusBg
 statusBanner.style.color = statusColor
 statusBanner.style.display = 'block'
 
-    document.getElementById('irCode').textContent    = data.order_code    || '—';
-    document.getElementById('irShop').textContent    = data.shop_name     || '—';
-    document.getElementById('irDate').textContent    = data.order_date    || '—';
-    document.getElementById('irName').textContent    = data.customer_name || '—';
-    document.getElementById('irPhone').textContent   = data.phone         || '—';
-    document.getElementById('irEmail').textContent   = data.email         || '—';
-    document.getElementById('irAddress').textContent = data.address       || '—';
-    document.getElementById('irProduct').textContent  = data.product        || '—';
-    document.getElementById('irQuantity').textContent = data.quantity ?? '—';
-    // Map store_id → tên shop (từ shops_config.py)
+// ═══ Đặt NGOÀI hàm fetchOrderInfo (khai báo 1 lần) ═══
 const SHOP_ID_NAME = {
     "2732": "Min Duty", "4299": "HADES Shop", "3522": "ShipnhanhStore",
     "4337": "TH Cosmetic", "3684": "Hoya Life", "3540": "Rongcon",
@@ -2152,56 +2143,93 @@ const SHOP_ID_NAME = {
     "4342": "Sản Phẩm Hỗ Trợ", "1015": "Green Healthy & Beauty",
     "3218": "Bảo Lâm Anh", "2557": "XUAN MINH PHARMACY"
 }
+    // ═══ BÊN TRONG hàm fetchOrderInfo, thay toàn bộ đoạn cũ bằng đây ═══
 
-if (data.url_history && data.url_history.length > 0) {
-    uhEl.innerHTML = data.url_history.map((item) => {
-        const url = item.url || ''
-        const time = item.time || ''
-        const storeId = (url.match(/store_id=(\d+)/) || [])[1] || ''
-        const storeName = storeId ? (SHOP_ID_NAME[storeId] || `Store #${storeId}`) : ''
-        const productId = (url.match(/product_id=(\d+)/) || [])[1] || ''
-        const productCode = (url.match(/product_code=([^&]+)/) || [])[1] || ''
+    document.getElementById('irCode').textContent     = data.order_code    || '—';
+    document.getElementById('irShop').textContent     = data.shop_name     || '—';
+    document.getElementById('irDate').textContent     = data.order_date    || '—';
+    document.getElementById('irName').textContent     = data.customer_name || '—';
+    document.getElementById('irPhone').textContent    = data.phone         || '—';
+    document.getElementById('irEmail').textContent    = data.email         || '—';
+    document.getElementById('irAddress').textContent  = data.address       || '—';
+    document.getElementById('irProduct').textContent  = data.product       || '—';
+    document.getElementById('irQuantity').textContent = data.quantity      ?? '—';
 
-        let icon = '🔗', action = '', bg = 'rgba(255,255,255,.4)', border = 'rgba(198,181,255,.2)', color = '#4c3f72'
+    // ── Status banner ──
+    const statusBanner = document.getElementById('irStatusBanner');
+    const st = (data.status || '').toLowerCase();
+    let statusText = data.status || '—';
+    let statusBg = 'rgba(198,181,255,.3)', statusColor = '#5b4b8a';
+    if (st.includes('wait') || st.includes('chờ') || st.includes('cho')) {
+        statusText = '⏳ ' + statusText; statusBg = 'rgba(253,230,138,.4)'; statusColor = '#92400e';
+    } else if (st.includes('delivering') || st.includes('giao')) {
+        statusText = '🚚 ' + statusText; statusBg = 'rgba(147,197,253,.35)'; statusColor = '#1e40af';
+    } else if (st.includes('done') || st.includes('finish') || st.includes('hoàn') || st.includes('hoan')) {
+        statusText = '✅ ' + statusText; statusBg = 'rgba(167,243,208,.4)'; statusColor = '#065f46';
+    } else if (st.includes('cancel') || st.includes('huỷ') || st.includes('huy')) {
+        statusText = '❌ ' + statusText; statusBg = 'rgba(254,202,202,.5)'; statusColor = '#991b1b';
+    } else if (st.includes('return') || st.includes('trả') || st.includes('tra')) {
+        statusText = '↩️ ' + statusText; statusBg = 'rgba(253,186,116,.35)'; statusColor = '#92400e';
+    }
+    if (statusBanner) {
+        statusBanner.textContent = statusText;
+        statusBanner.style.background = statusBg;
+        statusBanner.style.color = statusColor;
+        statusBanner.style.display = 'block';
+    }
 
-        if (url.includes('add_to_cart')) {
-            const isBuyNow = url.includes('is_buy_now=1')
-            const qty = (url.match(/quantity=(\d+)/) || [])[1] || '1'
-            if (isBuyNow) {
-                icon = '✅'
-                action = `<b style="color:#059669">ĐÃ ĐẶT HÀNG</b>`
-                if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`
-                if (storeName) action += ` tại <b>${storeName}</b>`
-                action += ` <span style="background:rgba(16,185,129,.15);color:#065f46;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700">SL: ${qty}</span>`
-                bg = 'rgba(167,243,208,.25)'
-                border = 'rgba(110,231,183,.4)'
-            } else {
-                icon = '➕'
-                action = `Thêm giỏ hàng`
-                if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`
-                if (storeName) action += ` tại <b>${storeName}</b>`
-                action += ` <span style="background:rgba(198,181,255,.2);color:#5b4b8a;border-radius:6px;padding:1px 7px;font-size:10px">SL: ${qty}</span>`
-            }
-        } else if (url.includes('products_screen')) {
-            const term = decodeURIComponent((url.match(/term=([^&]+)/) || [])[1] || '')
-            icon = '🔍'
-            action = `Tìm kiếm <b>"${term}"</b>`
-        } else if (url.includes('detailproduct_screen')) {
-            icon = '👁'
-            action = `Xem sản phẩm`
-            if (productCode && productCode !== '') action += ` <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`
-            else if (productId) action += ` <span style="font-family:monospace;color:#9b8bb4">#${productId}</span>`
-            if (storeName) action += ` tại <b>${storeName}</b>`
+    // ── URL History ──
+    const uhEl = document.getElementById('irUrlHistory');
+    if (uhEl) {
+        if (data.url_history && data.url_history.length > 0) {
+            uhEl.innerHTML = data.url_history.map((item) => {
+                const url = item.url || '';
+                const time = item.time || '';
+                const storeId = (url.match(/store_id=(\d+)/) || [])[1] || '';
+                const storeName = storeId ? (SHOP_ID_NAME[storeId] || `Store #${storeId}`) : '';
+                const productId = (url.match(/product_id=(\d+)/) || [])[1] || '';
+                const productCode = (url.match(/product_code=([^&]+)/) || [])[1] || '';
+
+                let icon = '🔗', action = '', bg = 'rgba(255,255,255,.4)', border = 'rgba(198,181,255,.2)', color = '#4c3f72';
+
+                if (url.includes('add_to_cart')) {
+                    const isBuyNow = url.includes('is_buy_now=1');
+                    const qty = (url.match(/quantity=(\d+)/) || [])[1] || '1';
+                    if (isBuyNow) {
+                        icon = '✅';
+                        action = `<b style="color:#059669">ĐÃ ĐẶT HÀNG</b>`;
+                        if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
+                        if (storeName) action += ` tại <b>${storeName}</b>`;
+                        action += ` <span style="background:rgba(16,185,129,.15);color:#065f46;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700">SL: ${qty}</span>`;
+                        bg = 'rgba(167,243,208,.25)'; border = 'rgba(110,231,183,.4)';
+                    } else {
+                        icon = '➕';
+                        action = `Thêm giỏ hàng`;
+                        if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
+                        if (storeName) action += ` tại <b>${storeName}</b>`;
+                        action += ` <span style="background:rgba(198,181,255,.2);color:#5b4b8a;border-radius:6px;padding:1px 7px;font-size:10px">SL: ${qty}</span>`;
+                    }
+                } else if (url.includes('products_screen')) {
+                    const term = decodeURIComponent((url.match(/term=([^&]+)/) || [])[1] || '');
+                    icon = '🔍';
+                    action = `Tìm kiếm <b>"${term}"</b>`;
+                } else if (url.includes('detailproduct_screen')) {
+                    icon = '👁';
+                    action = `Xem sản phẩm`;
+                    if (productCode) action += ` <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
+                    else if (productId) action += ` <span style="font-family:monospace;color:#9b8bb4">#${productId}</span>`;
+                    if (storeName) action += ` tại <b>${storeName}</b>`;
+                }
+
+                return `<div style="padding:5px 8px;border-radius:8px;margin-bottom:4px;border:1px solid ${border};background:${bg};display:flex;justify-content:space-between;align-items:center;gap:8px;color:${color}">
+                    <span style="font-size:12px">${icon} ${action}</span>
+                    <span style="color:#b0a0c8;font-size:10px;white-space:nowrap;flex-shrink:0">${time}</span>
+                </div>`;
+            }).join('');
+        } else {
+            uhEl.innerHTML = '<span style="color:#c4b5d4">Không có dữ liệu hành trình</span>';
         }
-
-        return `<div style="padding:5px 8px;border-radius:8px;margin-bottom:4px;border:1px solid ${border};background:${bg};display:flex;justify-content:space-between;align-items:center;gap:8px;color:${color}">
-            <span style="font-size:12px">${icon} ${action}</span>
-            <span style="color:#b0a0c8;font-size:10px;white-space:nowrap;flex-shrink:0">${time}</span>
-        </div>`
-    }).join('')
-} else {
-    uhEl.innerHTML = '<span style="color:#c4b5d4">Không có dữ liệu</span>'
-}
+    }
 
     document.getElementById('irSource').textContent  = data.source        || '—';
     document.getElementById('irPayment').textContent  = data.payment       || '—';
