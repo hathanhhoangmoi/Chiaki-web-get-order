@@ -450,6 +450,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
 
         return {
     "order_code":           g("code"),
+    "status":               g("status"),
     "shop_name":            db_shop_name,
     "order_date":           g("verified_time", "create_time"),
     "customer_name":        g("related_user_name", "receiver_name"),
