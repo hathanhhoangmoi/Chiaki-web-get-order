@@ -473,6 +473,15 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         db_order = db.query(Order).filter(
         Order.order_code.like(f"%_{order_code}")
             ).first()
+        db_product   = db_order.product   if db_order else "—"
+        shop_id_from_api = g("store_code", "creator_name")
+        db_shop_name = (
+            SHOP_NAME_MAP.get(shop_id_from_api)
+            or (db_order.shop_name if db_order else None)
+            or shop_id_from_api
+        )
+        db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
+        url_history_parsed = []
         # ── Parse meta_data để lấy danh sách sản phẩm ──
         import json as _json
         products_detail = []
@@ -514,7 +523,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
                     pinfo = pinfos[i] if i < len(pinfos) else {}
                     # Tên shop: ưu tiên SHOPNAMEMAP nếu có shop_id
                     shop_id_str = pinfo.get("shop_id", "")
-                    shop_name_resolved = SHOPNAMEMAP.get(shop_id_str) or pinfo.get("shop_name") or ""
+                    shop_name_resolved = SHOP_NAME_MAP.get(shop_id_str) or pinfo.get("shop_name") or ""
                     products_detail.append({
                         "code":     item.get("code", ""),
                         "name":     pinfo.get("name") or item.get("code", ""),
