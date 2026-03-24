@@ -1397,48 +1397,76 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
     if key not in GETORDER_UNLIMITED_KEYS and GETORDER_KEYS[key] >= GETORDER_KEY_LIMIT:
         return JSONResponse({"error": f"Key đã hết lượt ({GETORDER_KEY_LIMIT}/{GETORDER_KEY_LIMIT})."}, status_code=403)
 
-    # Bước 1: Trích store_code từ URL người dùng nhập
-    # VD: https://chiaki.vn/gian-hang-ST8RBD8N7P → ST8RBD8N7P
     m = re.search(r'gian-hang-([A-Z0-9]+)', shop_url, re.IGNORECASE)
     if not m:
         return JSONResponse({"error": "Link không hợp lệ. VD: https://chiaki.vn/gian-hang-ST****"}, status_code=400)
     store_code = m.group(1).upper()
 
-    # Bước 2: Tìm shop_id số bằng cách duyệt get_shops_map()
-    # get_shops_map() trả về {shop_id_số: (shop_url_có_store_code, shop_name)}
     shops = get_shops_map()
     numeric_shop_id = None
     shop_name = None
-
     for sid, (s_url, s_name) in shops.items():
-        # So khớp store_code trong URL của map
         if store_code.lower() in s_url.lower():
             numeric_shop_id = str(sid)
             shop_name = s_name
             break
 
-    print(f"[shop-orders] store_code={store_code} → numeric_shop_id={numeric_shop_id}, shop_name={shop_name}")
-
     if not numeric_shop_id:
-        return JSONResponse({
-            "error": f"Không tìm thấy gian hàng '{store_code}' trong hệ thống.",
-            "hint": "Kiểm tra lại link gian hàng."
-        }, status_code=404)
+        return JSONResponse({"error": f"Không tìm thấy gian hàng '{store_code}'."}, status_code=404)
 
-    # Bước 3: Query DB theo shop_id số + status chờ lấy hàng / đang giao
+    # ── Debug: lấy tất cả status thực tế của shop này ──
+    from sqlalchemy import func as _func
+    status_stats = (
+        db.query(Order.status, _func.count(Order.id))
+        .filter(Order.shop_id == numeric_shop_id)
+        .group_by(Order.status)
+        .all()
+    )
+    all_statuses = [s for s, _ in status_stats]
+    print(f"[shop-orders] shop_id={numeric_shop_id} | statuses in DB: {status_stats}")
+
+    # ── Khớp linh hoạt: tất cả status chứa từ khoá "chờ", "lấy", "giao", "delivering", "request" ──
+    KEYWORDS = ["request_out", "delivering", "wait", "chờ", "lấy hàng", "đang giao", "pickup"]
+    matched_statuses = [
+        s for s in all_statuses
+        if s and any(kw.lower() in s.lower() for kw in KEYWORDS)
+    ]
+
+    # Nếu không khớp từ khoá nào → lấy tất cả đơn và trả về kèm debug
+    if not matched_statuses:
+        # Trả về 20 đơn gần nhất + thông tin debug để xác định status đúng
+        sample = db.query(Order).filter(Order.shop_id == numeric_shop_id).order_by(Order.order_date.desc()).limit(20).all()
+        return {
+            "shop_name":     shop_name,
+            "shop_id":       numeric_shop_id,
+            "store_code":    store_code,
+            "total":         len(sample),
+            "remaining":     -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key],
+            "debug_statuses": status_stats,  # ← xem field này để biết status thực tế
+            "orders": [{
+                "order_code":    o.order_code,
+                "order_date":    o.order_date,
+                "customer_name": o.customer_name or o.buyer_name,
+                "phone":         o.phone,
+                "product":       o.product,
+                "quantity":      o.quantity,
+                "total":         str(o.total) if o.total else None,
+                "status":        o.status,
+            } for o in sample],
+        }
+
     orders_db = (
         db.query(Order)
         .filter(
             Order.shop_id == numeric_shop_id,
-            Order.status.in_(["request_out", "delivering", "wait"])
+            Order.status.in_(matched_statuses)
         )
         .order_by(Order.order_date.desc())
         .all()
     )
 
-    print(f"[shop-orders] shop_id={numeric_shop_id} → {len(orders_db)} đơn")
+    print(f"[shop-orders] matched_statuses={matched_statuses} → {len(orders_db)} đơn")
 
-    # Ghi lượt dùng key
     GETORDER_KEYS[key] += 1
     remaining = -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key]
     from datetime import timezone as _tz
