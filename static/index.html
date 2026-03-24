@@ -2264,7 +2264,7 @@ const pdfBtn = document.getElementById('btnExportPdf');
 if (pdfBtn) pdfBtn.style.display = 'block';
 document.getElementById('btnExportPdf').style.display = 'block';
     resultEl.classList.add('show');
-  } catch(e) {
+    catch(e) {
     errEl.textContent = 'Lỗi kết nối: ' + e.message;
     errEl.classList.add('show');
   } finally {
