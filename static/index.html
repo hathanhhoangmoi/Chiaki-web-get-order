@@ -2156,20 +2156,6 @@ const SHOP_ID_NAME = {
     document.getElementById('irProduct').textContent  = data.product       || '—';
     document.getElementById('irQuantity').textContent = data.quantity      ?? '—';
 
-    // ── Status banner ──
-    let statusText = data.status || '—';
-    let statusBg = 'rgba(198,181,255,.3)', statusColor = '#5b4b8a';
-    if (st.includes('wait') || st.includes('chờ') || st.includes('cho')) {
-        statusText = '⏳ ' + statusText; statusBg = 'rgba(253,230,138,.4)'; statusColor = '#92400e';
-    } else if (st.includes('delivering') || st.includes('giao')) {
-        statusText = '🚚 ' + statusText; statusBg = 'rgba(147,197,253,.35)'; statusColor = '#1e40af';
-    } else if (st.includes('done') || st.includes('finish') || st.includes('hoàn') || st.includes('hoan')) {
-        statusText = '✅ ' + statusText; statusBg = 'rgba(167,243,208,.4)'; statusColor = '#065f46';
-    } else if (st.includes('cancel') || st.includes('huỷ') || st.includes('huy')) {
-        statusText = '❌ ' + statusText; statusBg = 'rgba(254,202,202,.5)'; statusColor = '#991b1b';
-    } else if (st.includes('return') || st.includes('trả') || st.includes('tra')) {
-        statusText = '↩️ ' + statusText; statusBg = 'rgba(253,186,116,.35)'; statusColor = '#92400e';
-    }
     if (statusBanner) {
         statusBanner.textContent = statusText;
         statusBanner.style.background = statusBg;
