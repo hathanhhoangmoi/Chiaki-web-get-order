@@ -436,7 +436,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             or shop_id_from_api
         )
         db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
-    url_history_parsed = []
+            url_history_parsed = []
         try:
             meta_raw = d.get("meta_data", "{}")
             meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
@@ -445,8 +445,9 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
                 url_history_parsed = [v for _, v in sorted(uh.items(), key=lambda x: int(x[0]))]
             elif isinstance(uh, list):
                 url_history_parsed = uh
-        except:
-            pass
+        except Exception:
+            url_history_parsed = []
+
         return {
     "order_code":           g("code"),
     "shop_name":            db_shop_name,
