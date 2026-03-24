@@ -583,7 +583,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 }
 /* ── Order Info Modal ── */
 .info-modal-bg {
-  position: fixed; inset: 0; z-index: 6000;
+  position: relative; inset: 0; z-index: 6000;
   display: none; align-items: center; justify-content: center;
   background: rgba(60,40,90,.3); backdrop-filter: blur(10px); padding: 16px;
 }
@@ -4230,17 +4230,29 @@ if (checkIdGate()) { init(); }
       <button id="btnExportPdf" class="btn-modal-confirm" onclick="exportShippingLabel()" style="background:#ff6b35;display:none;">📄 IN PHIẾU GIAO HÀNG</button>
     </div>
 
-    <div class="info-btns">
-      <button class="btn-info-cancel" onclick="closeOrderInfoModal()">ĐÓNG</button>
-      <button onclick="openCancelOrderModal()"
-        style="flex:1; padding:11px; background: linear-gradient(135deg, #fecaca, #f87171);
-               color:#fff; border:none; border-radius:12px; font-family:inherit;
-               font-size:13px; font-weight:700; cursor:pointer;
-               box-shadow:0 4px 14px rgba(231,76,60,.3); transition:all .2s;">
-        🚫 HUỶ
-      </button>
-      <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()">TRA CỨU</button>
-    </div>
+    <!-- Nút đóng góc trên trái -->
+<button onclick="closeOrderInfoModal()" style="
+  position:absolute; top:12px; left:14px;
+  background:rgba(198,181,255,.2); border:none; border-radius:50%;
+  width:32px; height:32px; font-size:18px; line-height:1;
+  cursor:pointer; color:#7c6fa0; display:flex;
+  align-items:center; justify-content:center;
+  transition:background .2s;
+" onmouseover="this.style.background='rgba(198,181,255,.4)'"
+  onmouseout="this.style.background='rgba(198,181,255,.2)'">✕</button>
+
+<div class="info-btns">
+  <button onclick="openCancelOrderModal()" style="
+    flex:1; padding:11px;
+    background:linear-gradient(135deg,#fecaca,#f87171);
+    color:#fff; border:none; border-radius:12px;
+    font-family:inherit; font-size:13px; font-weight:700;
+    cursor:pointer; box-shadow:0 4px 14px rgba(231,76,60,.3);
+    transition:all .2s;
+  ">🚫 Xác nhận huỷ đơn</button>
+  <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()" style="flex:1">🔍 Tra cứu đơn hàng</button>
+</div>
+
 
   </div>
 </div>
