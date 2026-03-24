@@ -2091,7 +2091,8 @@ async function fetchOrderInfo() {
     }
 // ── Status banner ──
 const STATUS_MAP = {
-    'request_out':               { text: '📦 Đang chuẩn bị hàng',      bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
+    'request_out':               { text: '✨ Đã nhận đơn hàng',      bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
+    'out_products_in_progress':  { text: '📦 Đã tạo MVĐ/Chờ lấy hàng', bg: 'rgba(253,186,116,.35)', color: '#c2410c' },
     'delivering':                { text: '🚚 Đang giao hàng',           bg: 'rgba(147,197,253,.35)', color: '#1e40af' },
     'done':                      { text: '🎉 Đã giao hàng',                bg: 'rgba(167,243,208,.4)',  color: '#065f46' },
     'cancelled_wo_out_products': { text: '❌ Đã huỷ',                    bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
