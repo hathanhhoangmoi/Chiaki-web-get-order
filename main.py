@@ -30,18 +30,37 @@ import json as _json
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
-    "PHONE-KEY-3265-6216": 0,
-    "PHONE-KEY-1842-7395": 0,
-    "PHONE-KEY-5927-1048": 0,
-    "PHONE-KEY-3371-8864": 0,
-    "PHONE-KEY-7605-2193": 0,
-    "PHONE-KEY-9483-5521": 0,
-    "PHONE-KEY-4017-6738": 0,
-    "PHONE-KEY-8256-1904": 0,
-    "PHONE-KEY-6392-4475": 0,
-    "PHONE-KEY-1578-9036": 0,
-    "PHONE-KEY-2741-6882": 0,
     "ADMIN-UNLIMITED-HOANG": 0,
+    "PHONE-KEY-1472-3891": 0,
+    "PHONE-KEY-5830-2147": 0,
+    "PHONE-KEY-9214-6753": 0,
+    "PHONE-KEY-3768-4512": 0,
+    "PHONE-KEY-6091-8324": 0,
+    "PHONE-KEY-2845-7163": 0,
+    "PHONE-KEY-7539-1086": 0,
+    "PHONE-KEY-4127-9450": 0,
+    "PHONE-KEY-8963-2718": 0,
+    "PHONE-KEY-1604-5937": 0,
+    "PHONE-KEY-5281-3074": 0,
+    "PHONE-KEY-9746-6812": 0,
+    "PHONE-KEY-3019-8265": 0,
+    "PHONE-KEY-6453-1790": 0,
+    "PHONE-KEY-2897-4631": 0,
+    "PHONE-KEY-7162-9048": 0,
+    "PHONE-KEY-4385-2576": 0,
+    "PHONE-KEY-8720-5193": 0,
+    "PHONE-KEY-1938-7402": 0,
+    "PHONE-KEY-5674-3819": 0,
+    "PHONE-KEY-9051-6247": 0,
+    "PHONE-KEY-3492-8760": 0,
+    "PHONE-KEY-6815-1034": 0,
+    "PHONE-KEY-2370-9581": 0,
+    "PHONE-KEY-7643-4208": 0,
+    "PHONE-KEY-4056-7925": 0,
+    "PHONE-KEY-8219-3467": 0,
+    "PHONE-KEY-1587-6140": 0,
+    "PHONE-KEY-5904-2783": 0,
+    "PHONE-KEY-9368-5016": 0,
 }
 KEY_LIMIT = 10
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
@@ -54,12 +73,38 @@ migrate()
 UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
 # ── Key management cho Cancel Order ───────────────────────
 CANCEL_KEYS = {
-    "CANCEL-KEY-1546-3574": 0,
-    "CANCEL-KEY-2837-4651": 0,
-    "CANCEL-KEY-3948-5762": 0,
-    "CANCEL-KEY-4759-6873": 0,
-    "CANCEL-KEY-5660-7984": 0,
     "ADMIN-UNLIMITED-HOANG": 0,
+    "CANCEL-KEY-3821-7045": 0,
+    "CANCEL-KEY-6174-2938": 0,
+    "CANCEL-KEY-9502-5163": 0,
+    "CANCEL-KEY-1847-8320": 0,
+    "CANCEL-KEY-4293-6751": 0,
+    "CANCEL-KEY-7618-3094": 0,
+    "CANCEL-KEY-2056-9482": 0,
+    "CANCEL-KEY-5739-1867": 0,
+    "CANCEL-KEY-8401-4215": 0,
+    "CANCEL-KEY-3164-7590": 0,
+    "CANCEL-KEY-6827-2043": 0,
+    "CANCEL-KEY-9350-5718": 0,
+    "CANCEL-KEY-1493-8261": 0,
+    "CANCEL-KEY-4706-3947": 0,
+    "CANCEL-KEY-7082-6534": 0,
+    "CANCEL-KEY-2915-9170": 0,
+    "CANCEL-KEY-5348-1826": 0,
+    "CANCEL-KEY-8671-4302": 0,
+    "CANCEL-KEY-3209-7654": 0,
+    "CANCEL-KEY-6543-2187": 0,
+    "CANCEL-KEY-9876-5430": 0,
+    "CANCEL-KEY-1230-8976": 0,
+    "CANCEL-KEY-4567-3219": 0,
+    "CANCEL-KEY-7894-6542": 0,
+    "CANCEL-KEY-2341-9875": 0,
+    "CANCEL-KEY-5678-1234": 0,
+    "CANCEL-KEY-8912-4567": 0,
+    "CANCEL-KEY-3456-7891": 0,
+    "CANCEL-KEY-6789-2345": 0,
+    "CANCEL-KEY-9123-5678": 0,
+
 }
 CANCEL_KEY_LIMIT = 10
 CANCEL_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"} 
@@ -1353,40 +1398,83 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
     if key not in GETORDER_UNLIMITED_KEYS and GETORDER_KEYS[key] >= GETORDER_KEY_LIMIT:
         return JSONResponse({"error": f"Key đã hết lượt ({GETORDER_KEY_LIMIT}/{GETORDER_KEY_LIMIT})."}, status_code=403)
 
+    # Bước 1: Trích store_code từ URL (dạng chữ, VD: ST8RBD8N7P)
     m = re.search(r'gian-hang-([A-Z0-9]+)', shop_url, re.IGNORECASE)
     if not m:
         return JSONResponse({"error": "Link không hợp lệ. VD: https://chiaki.vn/gian-hang-ST****"}, status_code=400)
     store_code = m.group(1).upper()
 
-    # Tìm shop_id trong DB
-    meta_shop = db.query(ShopMeta).filter(
-        func.upper(ShopMeta.shop_id) == store_code
-    ).first()
-    shop_id   = meta_shop.shop_id if meta_shop else store_code
-    shop_name = SHOP_NAME_MAP.get(shop_id) or (meta_shop.shop_name if meta_shop else store_code)
+    # Bước 2: Tra SHOP_NAME_MAP (key là store_code chữ) → lấy shop_name
+    shop_name = SHOP_NAME_MAP.get(store_code)
 
+    # Bước 3: Tìm shop_id số trong DB qua ShopMeta hoặc Order.store_code
+    # Thử tìm qua ShopMeta trước
+    numeric_shop_id = None
+
+    # Tìm trong Order: lấy 1 đơn có store_code khớp để lấy shop_id số
+    sample_order = db.query(Order).filter(
+        Order.order_code.like(f"%{store_code}%")
+    ).first()
+    if sample_order:
+        numeric_shop_id = sample_order.shop_id
+        if not shop_name:
+            shop_name = sample_order.shop_name
+
+    # Nếu không tìm được qua order_code, thử ShopMeta
+    if not numeric_shop_id:
+        all_meta = db.query(ShopMeta).all()
+        for m_shop in all_meta:
+            # shop_url trong ShopMeta thường chứa store_code
+            if m_shop.shop_id and store_code.lower() in str(getattr(m_shop, 'shop_url', '') or '').lower():
+                numeric_shop_id = m_shop.shop_id
+                if not shop_name:
+                    shop_name = m_shop.shop_name
+                break
+
+    # Nếu vẫn không tìm được → thử get_shops_map
+    if not numeric_shop_id:
+        shops = get_shops_map()
+        for sid, info in shops.items():
+            url_in_map = info[0] if isinstance(info, (list, tuple)) else str(info)
+            if store_code.lower() in url_in_map.lower():
+                numeric_shop_id = sid
+                if not shop_name:
+                    shop_name = info[1] if isinstance(info, (list, tuple)) and len(info) > 1 else SHOP_NAME_MAP.get(sid, sid)
+                break
+
+    if not numeric_shop_id:
+        return JSONResponse({
+            "error": f"Không tìm thấy gian hàng '{store_code}' trong hệ thống.",
+            "debug_store_code": store_code
+        }, status_code=404)
+
+    # Bước 4: Query DB theo shop_id số + status
     orders_db = (
         db.query(Order)
         .filter(
-            Order.shop_id == shop_id,
+            Order.shop_id == str(numeric_shop_id),
             Order.status.in_(["request_out", "delivering", "wait"])
         )
         .order_by(Order.order_date.desc())
         .all()
     )
 
+    # Ghi key usage
     GETORDER_KEYS[key] += 1
     remaining = -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key]
-
     from datetime import timezone as _tz
     now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
     GETORDER_KEY_HISTORY.setdefault(key, []).append({"shop_url": shop_url, "time": now_vn})
 
+    # Debug log
+    print(f"[shop-orders] store_code={store_code} → numeric_shop_id={numeric_shop_id}, found={len(orders_db)} orders")
+
     return {
-        "shop_name": shop_name,
-        "shop_id":   shop_id,
-        "total":     len(orders_db),
-        "remaining": remaining,
+        "shop_name":  shop_name or store_code,
+        "shop_id":    numeric_shop_id,
+        "store_code": store_code,
+        "total":      len(orders_db),
+        "remaining":  remaining,
         "orders": [{
             "order_code":    o.order_code,
             "order_date":    o.order_date,
