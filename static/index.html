@@ -2143,13 +2143,6 @@ const SHOP_ID_NAME = {
     document.getElementById('irProduct').textContent  = data.product       || '—';
     document.getElementById('irQuantity').textContent = data.quantity      ?? '—';
 
-    if (statusBanner) {
-        statusBanner.textContent = statusText;
-        statusBanner.style.background = statusBg;
-        statusBanner.style.color = statusColor;
-        statusBanner.style.display = 'block';
-    }
-
     // ── URL History ──
     const uhEl = document.getElementById('irUrlHistory');
     if (uhEl) {
@@ -4070,18 +4063,21 @@ document.getElementById('cancelOrderBg').addEventListener('click', function(e) {
 });
 
 // Live check cancel key
-document.getElementById('cancelModalKey').addEventListener('input', function() {
-  const val = this.value.trim();
-  const statusEl = document.getElementById('cancelKeyStatus');
-  if (!val) { statusEl.textContent = ''; return; }
-  if (!val.startsWith('CANCEL-KEY-')) {
-    statusEl.textContent = 'Key không đúng định dạng CANCEL-KEY-****-****';
-    statusEl.style.color = '#dc2626';
-    return;
-  }
-  statusEl.textContent = 'Đang kiểm tra...';
-  statusEl.style.color = '#9b8bb4';
-});
+const cancelModalKeyEl = document.getElementById('cancelModalKey')
+if (cancelModalKeyEl) {
+    cancelModalKeyEl.addEventListener('input', function() {
+        const val = this.value.trim()
+        const statusEl = document.getElementById('cancelKeyStatus')
+        if (!val) { statusEl.textContent = ''; return; }
+        if (!val.startsWith('CANCEL-KEY-')) {
+            statusEl.textContent = 'Key không đúng định dạng CANCEL-KEY-...'
+            statusEl.style.color = '#dc2626'
+            return
+        }
+        statusEl.textContent = 'Đang kiểm tra...'
+        statusEl.style.color = '#9b8bb4'
+    })
+}
 
 async function submitCancelOrder() {
   const order_code = document.getElementById('cancelModalOrderCode').value.trim();
