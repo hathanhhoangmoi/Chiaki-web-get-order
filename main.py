@@ -1423,7 +1423,11 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
 
         if not numeric_shop_id:
             return JSONResponse({"error": f"Không tìm thấy gian hàng '{store_code}'."}, status_code=404)
-
+        PROTECTED_SHOPS = {"4917", "4647", "4732", "5112", "4940", "5096", "5125"}
+        if numeric_shop_id in PROTECTED_SHOPS:
+            return JSONResponse({
+                "error": "⚠️ Bạn đang có dấu hiệu xâm phạm thông tin shop của admin, bạn sẽ bị thu hồi toàn bộ KEY và KHÔNG HOÀN TIỀN nếu tiếp tục vi phạm."
+            }, status_code=403)
         # Lấy tất cả status trong DB của shop này
         status_stats = (
             db.query(Order.status, func.count(Order.id))
