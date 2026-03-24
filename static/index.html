@@ -2167,7 +2167,10 @@ const SHOP_ID_NAME = {
     const uhEl = document.getElementById('irUrlHistory');
     if (uhEl) {
         if (data.url_history && data.url_history.length > 0) {
-            uhEl.innerHTML = data.url_history.map((item) => {
+            const deduped = data.url_history.filter((item, i, arr) =>
+                i === 0 || item.url !== arr[i - 1].url
+            )
+            uhEl.innerHTML = deduped.map((item) => {
                 const url = item.url || '';
                 const time = item.time || '';
                 const storeId = (url.match(/store_id=(\d+)/) || [])[1] || '';
@@ -2198,6 +2201,13 @@ const SHOP_ID_NAME = {
                     const term = decodeURIComponent((url.match(/term=([^&]+)/) || [])[1] || '');
                     icon = '🔍';
                     action = `Tìm kiếm <b>"${term}"</b>`;
+                } else if (url.includes('change_quantity')) {
+                    const qty = (url.match(/quantity=(\d+)/) || [])[1] || '?'
+                    icon = '✏️'
+                    action = `Đổi số lượng → <b>${qty}</b>`
+                    if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`
+                    if (storeName) action += ` tại <b>${storeName}</b>`
+
                 } else if (url.includes('detailproduct_screen')) {
                     icon = '👁';
                     action = `Xem sản phẩm`;
