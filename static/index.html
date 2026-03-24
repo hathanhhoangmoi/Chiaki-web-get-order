@@ -2097,6 +2097,33 @@ async function fetchOrderInfo() {
     document.getElementById('irEmail').textContent   = data.email         || '—';
     document.getElementById('irAddress').textContent = data.address       || '—';
     document.getElementById('irProduct').textContent  = data.product        || '—';
+    document.getElementById('irQuantity').textContent = data.quantity ?? '—';
+    // Render hành trình mua hàng
+  const uhEl = document.getElementById('irUrlHistory')
+  if (data.url_history && data.url_history.length > 0) {
+      uhEl.innerHTML = data.url_history.map((item, i) => {
+          const url = item.url || ''
+          const time = item.time || ''
+          let action = '🔗 Truy cập'
+          if (url.includes('add_to_cart')) {
+              const isBuyNow = url.includes('is_buy_now=1')
+              const qty = (url.match(/quantity=(\d+)/) || [])[1] || '1'
+              action = isBuyNow ? `🛒 Mua ngay (SL: ${qty})` : `➕ Thêm giỏ (SL: ${qty})`
+          } else if (url.includes('products_screen')) {
+              const term = decodeURIComponent((url.match(/term=([^&]+)/) || [])[1] || '')
+              action = `🔍 Tìm kiếm "${term}"`
+          } else if (url.includes('detailproduct_screen')) {
+              const pid = (url.match(/product_id=(\d+)/) || [])[1] || ''
+              action = `👁 Xem sản phẩm #${pid}`
+          }
+          return `<div style="padding:4px 0;border-bottom:1px solid rgba(198,181,255,.15);display:flex;justify-content:space-between;gap:8px">
+              <span>${action}</span>
+              <span style="color:#b0a0c8;font-size:11px;white-space:nowrap">${time}</span>
+        </div>`
+      }).join('')
+  } else {
+    uhEl.innerHTML = '<span style="color:#c4b5d4">Không có dữ liệu</span>'
+  }
     document.getElementById('irSource').textContent  = data.source        || '—';
     document.getElementById('irPayment').textContent  = data.payment       || '—';
     document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
@@ -4083,6 +4110,9 @@ if (checkIdGate()) { init(); }
       <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="irEmail">—</span></div>
       <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
       <div class="info-row"><span class="info-label">Sản phẩm</span><span class="info-value" id="irProduct">—</span></div>
+      <div class="info-row"><span class="info-label">Số lượng</span><span class="info-value" id="irQuantity"></span></div>
+      <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin:12px 0 8px">HÀNH TRÌNH MUA HÀNG</div>
+      <div id="irUrlHistory" style="font-size:12px;color:#4c3f72;line-height:1.8;"></div>
       <div class="info-row"><span class="info-label">Nguồn đơn hàng</span><span class="info-value" id="irSource">—</span></div>
       <div class="info-row"><span class="info-label">Thanh toán</span><span class="info-value" id="irPayment">—</span></div>
       <div class="info-row"><span class="info-label">Số tiền TT</span><span class="info-value" id="irPrepaid">—</span></div>
