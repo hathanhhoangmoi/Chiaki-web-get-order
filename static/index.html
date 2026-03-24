@@ -2157,7 +2157,6 @@ const SHOP_ID_NAME = {
     document.getElementById('irQuantity').textContent = data.quantity      ?? '—';
 
     // ── Status banner ──
-    const st = (data.status || '').toLowerCase();
     let statusText = data.status || '—';
     let statusBg = 'rgba(198,181,255,.3)', statusColor = '#5b4b8a';
     if (st.includes('wait') || st.includes('chờ') || st.includes('cho')) {
