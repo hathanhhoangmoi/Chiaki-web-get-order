@@ -64,6 +64,35 @@ CANCEL_KEYS = {
 CANCEL_KEY_LIMIT = 10
 CANCEL_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"} 
 CANCEL_KEY_HISTORY: dict = {k: [] for k in CANCEL_KEYS}
+# ── GETORDER KEY ──
+GETORDER_KEYS = {
+    "GETORDER-KEY-1234-5678": 0,
+    "GETORDER-KEY-8765-4321": 0,
+    "GETORDER-KEY-1798-1820": 0,
+    "GETORDER-KEY-5307-5294": 0,
+    "GETORDER-KEY-6682-4366": 0,
+    "GETORDER-KEY-2422-1762": 0,
+    "GETORDER-KEY-9373-9617": 0,
+    "GETORDER-KEY-4393-7851": 0,
+    "GETORDER-KEY-2553-6631": 0,
+    "GETORDER-KEY-4570-1679": 0,
+    "GETORDER-KEY-7842-7049": 0,
+    "GETORDER-KEY-8631-3272": 0,
+    "GETORDER-KEY-3181-7097": 0,
+    "GETORDER-KEY-5801-6373": 0,
+    "GETORDER-KEY-3097-7233": 0,
+    "GETORDER-KEY-6608-3640": 0,
+    "GETORDER-KEY-7555-9096": 0,
+    "GETORDER-KEY-2161-1064": 0,
+    "GETORDER-KEY-6003-8995": 0,
+    "GETORDER-KEY-9679-7130": 0,
+    "GETORDER-KEY-4630-3698": 0,
+    "GETORDER-KEY-9001-8597": 0,
+    "ADMIN-UNLIMITED-HOANG":  0,
+}
+GETORDER_KEY_LIMIT      = 20
+GETORDER_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
+GETORDER_KEY_HISTORY    = {k: [] for k in GETORDER_KEYS}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1295,4 +1324,77 @@ async def check_cancel_key(body: dict):
         "remaining": -1 if is_unlimited else CANCEL_KEY_LIMIT - used,
         "limit": -1 if is_unlimited else CANCEL_KEY_LIMIT,
         "unlimited": is_unlimited
+    }
+@app.post("/api/shop-orders/check-key")
+async def check_getorder_key(body: dict):
+    key = body.get("key", "").strip()
+    if key not in GETORDER_KEYS:
+        return JSONResponse({"error": "GETORDER-KEY không hợp lệ."}, status_code=403)
+    used = GETORDER_KEYS[key]
+    is_unlimited = key in GETORDER_UNLIMITED_KEYS
+    return {
+        "used": used,
+        "remaining": -1 if is_unlimited else GETORDER_KEY_LIMIT - used,
+        "limit": -1 if is_unlimited else GETORDER_KEY_LIMIT,
+        "unlimited": is_unlimited,
+    }
+
+
+@app.post("/api/shop-orders")
+async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
+    import re
+    shop_url = body.get("shop_url", "").strip()
+    key      = body.get("key", "").strip()
+
+    if not shop_url or not key:
+        return JSONResponse({"error": "Thiếu link gian hàng hoặc key."}, status_code=400)
+    if key not in GETORDER_KEYS:
+        return JSONResponse({"error": "GETORDER-KEY không hợp lệ."}, status_code=403)
+    if key not in GETORDER_UNLIMITED_KEYS and GETORDER_KEYS[key] >= GETORDER_KEY_LIMIT:
+        return JSONResponse({"error": f"Key đã hết lượt ({GETORDER_KEY_LIMIT}/{GETORDER_KEY_LIMIT})."}, status_code=403)
+
+    m = re.search(r'gian-hang-([A-Z0-9]+)', shop_url, re.IGNORECASE)
+    if not m:
+        return JSONResponse({"error": "Link không hợp lệ. VD: https://chiaki.vn/gian-hang-ST****"}, status_code=400)
+    store_code = m.group(1).upper()
+
+    # Tìm shop_id trong DB
+    meta_shop = db.query(ShopMeta).filter(
+        func.upper(ShopMeta.shop_id) == store_code
+    ).first()
+    shop_id   = meta_shop.shop_id if meta_shop else store_code
+    shop_name = SHOP_NAME_MAP.get(shop_id) or (meta_shop.shop_name if meta_shop else store_code)
+
+    orders_db = (
+        db.query(Order)
+        .filter(
+            Order.shop_id == shop_id,
+            Order.status.in_(["request_out", "delivering", "wait"])
+        )
+        .order_by(Order.order_date.desc())
+        .all()
+    )
+
+    GETORDER_KEYS[key] += 1
+    remaining = -1 if key in GETORDER_UNLIMITED_KEYS else GETORDER_KEY_LIMIT - GETORDER_KEYS[key]
+
+    from datetime import timezone as _tz
+    now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
+    GETORDER_KEY_HISTORY.setdefault(key, []).append({"shop_url": shop_url, "time": now_vn})
+
+    return {
+        "shop_name": shop_name,
+        "shop_id":   shop_id,
+        "total":     len(orders_db),
+        "remaining": remaining,
+        "orders": [{
+            "order_code":    o.order_code,
+            "order_date":    o.order_date,
+            "customer_name": o.customer_name or o.buyer_name,
+            "phone":         o.phone,
+            "product":       o.product,
+            "quantity":      o.quantity,
+            "total":         str(o.total) if o.total else None,
+            "status":        o.status,
+        } for o in orders_db],
     }
