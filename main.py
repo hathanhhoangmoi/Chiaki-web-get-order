@@ -453,7 +453,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         except:
             pass
 
-        source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or
+        source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
         return {
     "order_code":           g("code"),
     "status":               g("status"),
