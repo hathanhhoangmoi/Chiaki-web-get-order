@@ -44,9 +44,9 @@ async def fetch_shop_name(shop_url: str) -> str:
                 return shop_url
 
             patterns = [
-                r'<span[^>]*class=["\\']store-title["\\'][^>]*>(.*?)</span>',
-                r'class=["\\']store-title["\\'][^>]*>(.*?)<',
-                r'store-title["\\']>(.*?)<',
+                r'<span[^>]*class=["\']store-title["\'][^>]*>(.*?)</span>',
+                r'class=["\']store-title["\'][^>]*>(.*?)<',
+                r'store-title["\']>(.*?)<',
             ]
             for pattern in patterns:
                 m = re.search(pattern, res.text, re.IGNORECASE | re.DOTALL)
