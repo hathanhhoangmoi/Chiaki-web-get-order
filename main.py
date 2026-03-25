@@ -7,7 +7,7 @@ from sqlalchemy import desc, func, or_
 from database import engine, get_db, migrate
 from models import Base, Order, ShopMeta
 from shops_config import get_shops_map, BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN
-from fetcher import sync_shop
+from fetcher import sync_shop, parse_excel
 from datetime import datetime, timedelta
 from io import BytesIO
 import urllib.parse
@@ -26,6 +26,7 @@ from fastapi.responses import HTMLResponse
 from shops_config import SHOP_NAME_MAP
 import json as _json
 from fastapi import UploadFile, File, Form
+
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
     "ADMIN-UNLIMITED-HOANG": 0,
@@ -1527,37 +1528,49 @@ async def sync_upload(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    shops = get_shops_map()
-    if shop_id not in shops:
-        return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
+    try:
+        shops = get_shops_map()
+        if shop_id not in shops:
+            return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
 
-    shop_url, shop_name = shops[shop_id]
-    content = await file.read()
+        shop_url, shop_name = shops[shop_id]
+        content = await file.read()
 
-    # Kiểm tra có phải Excel không
-    if len(content) < 100 or content[:4] not in [b'PK\x03\x04', b'\xd0\xcf\x11\xe0']:
-        return JSONResponse({"error": "File không hợp lệ, không phải Excel"}, status_code=422)
+        # Kiểm tra có phải Excel không (magic bytes PK = xlsx)
+        if len(content) < 100:
+            return JSONResponse({"error": "File quá nhỏ, không hợp lệ"}, status_code=422)
 
-    orders = parse_excel(content, shop_id, shop_name)
-    if not orders:
-        return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel"}, status_code=422)
+        orders = parse_excel(content, shop_id, shop_name)
+        if not orders:
+            return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel. Kiểm tra lại cột header."}, status_code=422)
 
-    deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
-    for o in orders:
-        db.add(Order(**o))
-    db.commit()
+        deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
+        for o in orders:
+            db.add(Order(**o))
+        db.commit()
 
-    meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
-    if meta:
-        meta.shop_name   = shop_name
-        meta.last_sync   = datetime.now()
-        meta.order_count = len(orders)
-    else:
-        db.add(ShopMeta(
-            shop_id=shop_id, shop_name=shop_name,
-            shop_url=shop_url, last_sync=datetime.now(),
-            order_count=len(orders)
-        ))
-    db.commit()
+        meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+        if meta:
+            meta.shop_name   = shop_name
+            meta.last_sync   = datetime.now()
+            meta.order_count = len(orders)
+        else:
+            db.add(ShopMeta(
+                shop_id=shop_id, shop_name=shop_name,
+                shop_url=shop_url, last_sync=datetime.now(),
+                order_count=len(orders)
+            ))
+        db.commit()
 
-    return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": len(orders), "deleted": deleted}
+        return {
+            "ok": True,
+            "shop_id": shop_id,
+            "shop_name": shop_name,
+            "synced": len(orders),
+            "deleted": deleted
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
