@@ -4439,7 +4439,7 @@ function updateChiakiLink() {
   const fmt = d => `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
   const range = `${fmt(since)}+-+${fmt(today)}`;
 
-  link.href = `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&page_index=1&page_size=500&status=all&range_date=${range}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
+  link.href = `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&page_index=1&page_size=500&status=receive_wating&range_date=${range}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
 let syncFile = null;
 function handleSyncDrop(event) {
