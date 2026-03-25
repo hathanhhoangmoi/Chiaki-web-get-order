@@ -2,11 +2,15 @@ from curl_cffi.requests import AsyncSession
 import io
 import json
 import re
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from models import Order, ShopMeta
 from shops_config import SELLER_ID, SELLER_TOKEN
 from openpyxl import load_workbook
+
+# ✅ THÊM: URL Cloudflare Worker proxy
+CHIAKI_PROXY = "chiakicl.hathanhhoang-edu.workers.dev"
 
 
 def build_api_url(shop_id: str) -> str:
@@ -15,13 +19,16 @@ def build_api_url(shop_id: str) -> str:
     since = today - timedelta(days=14)
     def fmt(d): return d.strftime("%d/%m/%Y").replace("/", "%2F")
     range_str = f"{fmt(since)}%20-%20{fmt(today)}"
-    return (
+
+    # ✅ SỬA: build direct_url trước, sau đó wrap qua proxy
+    direct_url = (
         f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
         f"?source=seller&page_index=1&page_size=500&status=receive_wating"
         f"&range_date={range_str}"
         f"&date_type=created_at&order=create-desc"
         f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
     )
+    return f"{CHIAKI_PROXY}?url={urllib.parse.quote(direct_url, safe='')}"
 
 
 async def fetch_shop_name(shop_url: str) -> str:
@@ -33,13 +40,13 @@ async def fetch_shop_name(shop_url: str) -> str:
             headers={"User-Agent": "Mozilla/5.0"}
         ) as client:
             res = await client.get(shop_url)
-            if not res.is_success:  # fix: res.ok → res.is_success
+            if not res.is_success:
                 return shop_url
 
             patterns = [
-                r'<span[^>]*class=["\']store-title["\'][^>]*>(.*?)</span>',
-                r'class=["\']store-title["\'][^>]*>(.*?)<',
-                r'store-title["\']>(.*?)<',
+                r'<span[^>]*class=["\\']store-title["\\'][^>]*>(.*?)</span>',
+                r'class=["\\']store-title["\\'][^>]*>(.*?)<',
+                r'store-title["\\']>(.*?)<',
             ]
             for pattern in patterns:
                 m = re.search(pattern, res.text, re.IGNORECASE | re.DOTALL)
@@ -65,7 +72,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
             return []
 
         headers = [str(c).strip() if c else "" for c in rows[0]]
-        print(f"[parse] headers: {headers}")  # debug header
+        print(f"[parse] headers: {headers}")
 
         def find_col(keywords):
             for kw in keywords:
@@ -128,13 +135,10 @@ async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) ->
     print(f"[fetch] {shop_id} → {url}")
 
     try:
-        async with AsyncSession(impersonate="chrome120") as client:
-            res = await client.get(url, headers={
-                "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-                "Accept":          "application/json, text/plain, */*",
-                "Accept-Language": "vi-VN,vi;q=0.9",
-                "Referer":         "https://chiaki.vn/",
-            })
+        # ✅ SỬA: dùng httpx thay vì curl_cffi vì request đến Workers (không bị Cloudflare chặn)
+        import httpx
+        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+            res = await client.get(url)
             print(f"[fetch] {shop_id} status={res.status_code} size={len(res.content)} bytes")
             if res.status_code != 200:
                 print(f"[fetch] {shop_id} FAILED: {res.text[:200]}")
@@ -169,5 +173,3 @@ async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) ->
 
     print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {len(orders)} đơn")
     return len(orders)
-
-
