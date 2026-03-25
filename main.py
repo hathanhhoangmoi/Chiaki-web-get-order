@@ -1601,3 +1601,15 @@ async def sync_manual(body: dict, db: Session = Depends(get_db)):
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+@app.get("/api/shops-list")
+def get_shops_list():
+    from shops_config import get_shops_map, SHOP_NAME_MAP
+    shops = get_shops_map()
+    result = []
+    for shop_id, (shop_url, shop_name) in shops.items():
+        result.append({
+            "shop_id": shop_id,
+            "shop_name": shop_name,
+            "shop_url": shop_url
+        })
+    return sorted(result, key=lambda x: x["shop_name"])
