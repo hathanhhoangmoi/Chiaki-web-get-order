@@ -4441,13 +4441,6 @@ function updateChiakiLink() {
 
   link.href = `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&page_index=1&page_size=500&status=receive_wating&range_date=${range}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
-let syncFile = null;
-function handleSyncDrop(event) {
-  event.preventDefault();
-  document.getElementById('syncDropzone').classList.remove('dragover');
-  const file = event.dataTransfer.files[0];
-  if (file) handleSyncFile(file);
-}
 
 function handleSyncFile(file) {
   if (!file) return;
@@ -4456,6 +4449,14 @@ function handleSyncFile(file) {
   document.getElementById('btnSync').disabled = false;
 }
 
+let syncFile = null;
+function handleSyncDrop(event) {
+  event.preventDefault();
+  document.getElementById('syncDropzone').classList.remove('dragover');
+  const file = event.dataTransfer.files[0];
+  if (file) handleSyncFile(file);
+}
+ 
 async function doSyncUpload() {
   const shopId = document.getElementById('syncShopId').value.trim();
   const btn    = document.getElementById('btnSync');
