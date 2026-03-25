@@ -1563,40 +1563,52 @@ async def upload_excel(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    from fetcher import parse_excel
-    from shops_config import get_shops_map
+    try:
+        from fetcher import parse_excel
+        from shops_config import get_shops_map
 
-    shops = get_shops_map()
-    if shop_id not in shops:
-        return JSONResponse({"error": "Shop không tồn tại."}, status_code=404)
+        shops = get_shops_map()
+        print(f"[upload] shop_id={shop_id}, file={file.filename}, shops_count={len(shops)}")
 
-    _, shop_name = shops[shop_id]
-    content = await file.read()
+        if shop_id not in shops:
+            return JSONResponse({"error": f"Shop '{shop_id}' không tồn tại trong config."}, status_code=404)
 
-    orders = parse_excel(content, shop_id, shop_name)
-    if not orders:
-        return JSONResponse({"error": "Không đọc được đơn hàng từ file Excel."}, status_code=400)
+        _, shop_name = shops[shop_id]
+        content = await file.read()
+        print(f"[upload] đọc file OK, size={len(content)} bytes")
 
-    db.query(Order).filter(Order.shop_id == shop_id).delete()
-    for o in orders:
-        db.add(Order(**o))
-    db.commit()
+        orders = parse_excel(content, shop_id, shop_name)
+        print(f"[upload] parse_excel → {len(orders)} đơn")
 
-    meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
-    now_vn = datetime.now(timezone(timedelta(hours=7)))
-    if meta:
-        meta.shop_name   = shop_name
-        meta.last_sync   = now_vn
-        meta.order_count = len(orders)
-    else:
-        db.add(ShopMeta(
-            shop_id=shop_id, shop_name=shop_name,
-            shop_url="", last_sync=now_vn, order_count=len(orders)
-        ))
-    db.commit()
+        if not orders:
+            return JSONResponse({"error": "Không đọc được đơn hàng từ file. Kiểm tra lại định dạng Excel."}, status_code=400)
 
-    return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": len(orders)}
-    
+        db.query(Order).filter(Order.shop_id == shop_id).delete()
+        for o in orders:
+            db.add(Order(**o))
+        db.commit()
+
+        now_vn = datetime.now(timezone(timedelta(hours=7)))
+        meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+        if meta:
+            meta.shop_name   = shop_name
+            meta.last_sync   = now_vn
+            meta.order_count = len(orders)
+        else:
+            db.add(ShopMeta(
+                shop_id=shop_id, shop_name=shop_name,
+                shop_url="", last_sync=now_vn, order_count=len(orders)
+            ))
+        db.commit()
+
+        return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": len(orders)}
+
+    except Exception as e:
+        import traceback
+        print(f"[upload] EXCEPTION: {e}")
+        traceback.print_exc()
+        return JSONResponse({"error": f"Lỗi server: {str(e)}"}, status_code=500)
+
 @app.get("/api/shops-list")
 def get_shops_list():
     from shops_config import SHOPS, extract_id
