@@ -1596,7 +1596,8 @@ async def upload_excel(
     db.commit()
 
     return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": len(orders)}
-    @app.get("/api/shops-list")
+    
+@app.get("/api/shops-list")
 def get_shops_list():
     from shops_config import SHOPS, extract_id
     result = []
