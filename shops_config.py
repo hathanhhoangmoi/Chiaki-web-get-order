@@ -54,6 +54,7 @@ SHOPS = [
     ("https://chiaki.vn/gian-hang-st3218", "Bảo Lâm Anh", "STPNJGJTR5"),
     ("https://chiaki.vn/gian-hang-st2557", "XUAN MINH PHARMACY", "STSV6MW0BI"),
     ("https://chiaki.vn/gian-hang-st2025", "Cali-Goods", "STKT8L8BFD"),
+    ("https://chiaki.vn/gian-hang-st5114", "Lixibox Hill", "STTHSM375S"),
 ]
 def extract_id(url: str) -> str | None:
     m = re.search(r'-st(\d+)', url, re.IGNORECASE)
