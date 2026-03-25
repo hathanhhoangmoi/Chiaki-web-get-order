@@ -1,5 +1,4 @@
 import asyncio
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -7,7 +6,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_
 from database import engine, get_db, migrate
 from models import Base, Order, ShopMeta
-from scheduler import start_scheduler, sync_all_shops
 from shops_config import get_shops_map, BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN
 from fetcher import sync_shop
 from datetime import datetime, timedelta
@@ -139,14 +137,7 @@ GETORDER_KEY_LIMIT      = 20
 GETORDER_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
 GETORDER_KEY_HISTORY    = {k: [] for k in GETORDER_KEYS}
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Sync ngay khi khởi động
-    asyncio.create_task(sync_all_shops())
-    start_scheduler()
-    yield
-
-app = FastAPI(title="Chiaki Order Dashboard", lifespan=lifespan)
+app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ── Helper functions ───────────────────────────────────────
@@ -1492,115 +1483,7 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
         import traceback
         traceback.print_exc()
         return JSONResponse({"error": f"Lỗi server: {str(e)}"}, status_code=500)
-@app.post("/api/sync-manual")
-async def sync_manual(body: dict, db: Session = Depends(get_db)):
-    shop_id   = body.get("shop_id", "").strip()
-    cf_chl_tk = body.get("cf_chl_tk", "").strip()
-    cf_clearance = body.get("cf_clearance", "").strip()
 
-    if not shop_id:
-        return JSONResponse({"error": "Thiếu shop_id"}, status_code=400)
-
-    # Lấy tên shop từ config
-    from shops_config import get_shops_map
-    shops = get_shops_map()
-    if shop_id not in shops:
-        return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
-
-    shop_url, shop_name = shops[shop_id]
-
-    # Build URL với 14 ngày
-    today = datetime.now()
-    since = today - timedelta(days=14)
-    def fmt(d): return d.strftime("%d/%m/%Y").replace("/", "%2F")
-    range_str = f"{fmt(since)}%20-%20{fmt(today)}"
-
-    api_url = (
-        f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
-        f"?source=seller&page_index=1&page_size=500&status=receive_wating"
-        f"&range_date={range_str}"
-        f"&date_type=created_at&order=create-desc"
-        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
-        f"&__cf_chl_tk={cf_chl_tk}"
-    )
-
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "accept-language": "vi,en-US;q=0.9,en;q=0.8",
-        "cache-control": "max-age=0",
-        "referer": api_url,
-        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
-        "sec-ch-ua-arch": "",
-        "sec-ch-ua-bitness": '"64"',
-        "sec-ch-ua-full-version": '"146.0.7680.154"',
-        "sec-ch-ua-full-version-list": '"Chromium";v="146.0.7680.154", "Not-A.Brand";v="24.0.0.0", "Google Chrome";v="146.0.7680.154"',
-        "sec-ch-ua-mobile": "?1",
-        "sec-ch-ua-model": '"Nexus 5"',
-        "sec-ch-ua-platform": '"Android"',
-        "sec-ch-ua-platform-version": '"6.0"',
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "same-origin",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36",
-        "cookie": f"cf_clearance={cf_clearance}"
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            res = await client.get(api_url, headers=headers)
-
-        if res.status_code != 200:
-            return JSONResponse(
-                {"error": f"API Chiaki lỗi HTTP {res.status_code}"},
-                status_code=502
-            )
-
-        content_type = res.headers.get("content-type", "")
-        if "html" in content_type or "json" in content_type:
-            return JSONResponse(
-                {"error": "Cloudflare vẫn chặn, cf_clearance hoặc __cf_chl_tk không hợp lệ"},
-                status_code=403
-            )
-
-        # Parse Excel
-        from fetcher import parse_excel
-        orders = parse_excel(res.content, shop_id, shop_name)
-
-        if not orders:
-            return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel"}, status_code=422)
-
-        # Xóa đơn cũ, insert mới
-        deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
-        for o in orders:
-            db.add(Order(**o))
-        db.commit()
-
-        # Cập nhật shop_meta
-        meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
-        if meta:
-            meta.last_sync = datetime.now()
-            meta.order_count = len(orders)
-            meta.shop_name = shop_name
-        else:
-            db.add(ShopMeta(
-                shop_id=shop_id, shop_name=shop_name,
-                shop_url=shop_url, last_sync=datetime.now(),
-                order_count=len(orders)
-            ))
-        db.commit()
-
-        return {
-            "ok": True,
-            "shop_id": shop_id,
-            "shop_name": shop_name,
-            "synced": len(orders),
-            "deleted": deleted
-        }
-
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
 @app.get("/api/shops-list")
 def get_shops_list():
     from shops_config import get_shops_map, SHOP_NAME_MAP
@@ -1613,3 +1496,27 @@ def get_shops_list():
             "shop_url": shop_url
         })
     return sorted(result, key=lambda x: x["shop_name"])
+
+@app.post("/api/sync")
+async def sync_now(body: dict, db: Session = Depends(get_db)):
+    shop_id     = body.get("shop_id", "").strip()
+    cf_chl_tk   = body.get("cf_chl_tk", "").strip()
+    cf_clearance = body.get("cf_clearance", "").strip()
+
+    if not shop_id:
+        return JSONResponse({"error": "Thiếu shop_id"}, status_code=400)
+    if not cf_chl_tk or not cf_clearance:
+        return JSONResponse({"error": "Thiếu cf_chl_tk hoặc cf_clearance"}, status_code=400)
+
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
+
+    shop_url, shop_name = shops[shop_id]
+
+    try:
+        synced = await sync_shop(shop_id, shop_url, shop_name, db,
+                                 cf_chl_tk=cf_chl_tk, cf_clearance=cf_clearance)
+        return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": synced}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=502)
