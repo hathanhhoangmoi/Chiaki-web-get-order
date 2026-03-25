@@ -4330,21 +4330,33 @@ async function doCancelSide() {
   document.getElementById('syncDateTo').textContent   = fmt(today);
 
   // Load danh sách shop từ API summary
-  fetch('/api/summary')
-    .then(r => r.json())
-    .then(data => {
-      const sel = document.getElementById('syncShopSelect');
-      (data.shops || [])
-        .sort((a,b) => a.shop_name.localeCompare(b.shop_name))
-        .forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.shop_id;
-          opt.textContent = `${s.shop_name} (${s.shop_id})`;
-          opt.style.background = '#1a2a4a';
-          sel.appendChild(opt);
-        });
-    })
-    .catch(() => {});
+  fetch('/api/shops-list')
+  .then(r => r.json())
+  .then(data => {
+    const sel = document.getElementById('syncShopSelect');
+    if (!Array.isArray(data) || data.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = '⚠️ Không có dữ liệu';
+      opt.disabled = true;
+      sel.appendChild(opt);
+      return;
+    }
+    data.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.shop_id;
+      opt.textContent = `${s.shop_name} (${s.shop_id})`;
+      opt.style.background = '#1a2a4a';
+      sel.appendChild(opt);
+    });
+  })
+  .catch(err => {
+    console.error('[syncPanel] load shops lỗi:', err);
+    const sel = document.getElementById('syncShopSelect');
+    const opt = document.createElement('option');
+    opt.textContent = '❌ Lỗi tải danh sách';
+    opt.disabled = true;
+    sel.appendChild(opt);
+  });
 })();
 
 // ── Xử lý SYNC NOW ──────────────────────────────────────
