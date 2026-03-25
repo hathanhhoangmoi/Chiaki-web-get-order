@@ -10,7 +10,7 @@ from shops_config import SELLER_ID, SELLER_TOKEN
 from openpyxl import load_workbook
 
 # ✅ THÊM: URL Cloudflare Worker proxy
-CHIAKI_PROXY = "chiakicl.hathanhhoang-edu.workers.dev"
+CHIAKI_PROXY = "https://chiakicl.hathanhhoang-edu.workers.dev"
 
 
 def build_api_url(shop_id: str) -> str:
