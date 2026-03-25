@@ -2,7 +2,7 @@ import httpx
 import io
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from models import Order, ShopMeta
 from shops_config import SELLER_ID, SELLER_TOKEN
@@ -10,7 +10,8 @@ from openpyxl import load_workbook
 
 
 def build_api_url(shop_id: str) -> str:
-    today = datetime.now()
+    VN_TZ = timezone(timedelta(hours=7))
+    today = datetime.now(VN_TZ)
     since = today - timedelta(days=30)
     def fmt(d): return d.strftime("%d/%m/%Y").replace("/", "%2F")
     range_str = f"{fmt(since)}%20-%20{fmt(today)}"
