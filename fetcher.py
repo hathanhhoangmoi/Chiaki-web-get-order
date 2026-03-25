@@ -9,22 +9,8 @@ from shops_config import SELLER_ID, SELLER_TOKEN
 from openpyxl import load_workbook
 
 
-def build_api_url(shop_id: str) -> str:
-    today = datetime.now()
-    since = today - timedelta(days=30)
-    def fmt(d): return d.strftime("%d/%m/%Y").replace("/", "%2F")
-    range_str = f"{fmt(since)}%20-%20{fmt(today)}"
-    return (
-        f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
-        f"?source=seller&page_index=1&page_size=500&status=receive_wating"
-        f"&range_date={range_str}"
-        f"&date_type=created_at&order=create-desc"
-        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
-    )
-
-
 async def fetch_shop_name(shop_url: str) -> str:
-    """Giữ lại cho /api/test-shopname, không dùng trong sync nữa"""
+    """Giữ lại cho /api/test-shopname"""
     try:
         async with httpx.AsyncClient(
             timeout=10,
@@ -32,24 +18,20 @@ async def fetch_shop_name(shop_url: str) -> str:
             headers={"User-Agent": "Mozilla/5.0"}
         ) as client:
             res = await client.get(shop_url)
-            if not res.is_success:  # fix: res.ok → res.is_success
+            if not res.is_success:
                 return shop_url
-
-            patterns = [
-                r'<span[^>]*class=["\']store-title["\'][^>]*>(.*?)</span>',
-                r'class=["\']store-title["\'][^>]*>(.*?)<',
-                r'store-title["\']>(.*?)<',
-            ]
-            for pattern in patterns:
-                m = re.search(pattern, res.text, re.IGNORECASE | re.DOTALL)
-                if m:
-                    name = m.group(1).strip()
-                    if name:
-                        print(f"[fetch_name] {shop_url} → {name}")
-                        return name
-
-            print(f"[fetch_name] Không tìm thấy tên: {shop_url}")
-            return shop_url
+        patterns = [
+            r']*class=["\']store-title["\'][^>]*>(.*?)',
+            r'class=["\']store-title["\'][^>]*>(.*?)<',
+            r'store-title["\']>(.*?)<',
+        ]
+        for pattern in patterns:
+            m = re.search(pattern, res.text, re.IGNORECASE | re.DOTALL)
+            if m:
+                name = m.group(1).strip()
+                if name:
+                    return name
+        return shop_url
     except Exception as e:
         print(f"[fetch_name] Error {shop_url}: {e}")
         return shop_url
@@ -64,7 +46,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
             return []
 
         headers = [str(c).strip() if c else "" for c in rows[0]]
-        print(f"[parse] headers: {headers}")  # debug header
+        print(f"[parse] headers: {headers}")
 
         def find_col(keywords):
             for kw in keywords:
@@ -94,8 +76,8 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
             code = f"{shop_id}_{val(row, col_code)}" if val(row, col_code) else f"{shop_id}_{i}"
             if not code or code == "None": continue
             try:
-                qty   = int(float(val(row, col_qty)))  if val(row, col_qty)   else 0
-                total = float(val(row, col_total))      if val(row, col_total) else 0.0
+                qty   = int(float(val(row, col_qty)))   if val(row, col_qty)   else 0
+                total = float(val(row, col_total))       if val(row, col_total) else 0.0
             except:
                 qty, total = 0, 0.0
             orders.append({
@@ -122,29 +104,71 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         return []
 
 
-async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) -> int:
-    # fix: thêm shop_name vào signature, bỏ fetch_shop_name()
-    url = build_api_url(shop_id)
-    print(f"[fetch] {shop_id} → {url}")
+async def sync_shop(
+    shop_id: str,
+    shop_url: str,
+    shop_name: str,
+    db: Session,
+    cf_chl_tk: str = "",
+    cf_clearance: str = "",
+) -> int:
+    today = datetime.now()
+    since = today - timedelta(days=14)
+    def fmt(d): return d.strftime("%d/%m/%Y").replace("/", "%2F")
+    range_str = f"{fmt(since)}%20-%20{fmt(today)}"
 
+    url = (
+        f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
+        f"?source=seller&page_index=1&page_size=500&status=all"
+        f"&range_date={range_str}"
+        f"&date_type=created_at&order=create-desc"
+        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+        f"&__cf_chl_tk={cf_chl_tk}"
+    )
+
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-language": "vi,en-US;q=0.9,en;q=0.8",
+        "cache-control": "max-age=0",
+        "referer": url,
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-arch": '""',
+        "sec-ch-ua-bitness": '"64"',
+        "sec-ch-ua-full-version": '"146.0.7680.154"',
+        "sec-ch-ua-full-version-list": '"Chromium";v="146.0.7680.154", "Not-A.Brand";v="24.0.0.0", "Google Chrome";v="146.0.7680.154"',
+        "sec-ch-ua-mobile": "?1",
+        "sec-ch-ua-model": '"Nexus 5"',
+        "sec-ch-ua-platform": '"Android"',
+        "sec-ch-ua-platform-version": '"6.0"',
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36",
+        "cookie": f"cf_clearance={cf_clearance}",
+    }
+
+    print(f"[fetch] {shop_id} → {url}")
     try:
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            res = await client.get(url)
-            print(f"[fetch] {shop_id} status={res.status_code} size={len(res.content)} bytes")
-            if res.status_code != 200:
-                print(f"[fetch] {shop_id} FAILED: {res.text[:200]}")
-                return 0
-            content = res.content
+            res = await client.get(url, headers=headers)
+        print(f"[fetch] {shop_id} status={res.status_code} size={len(res.content)} bytes")
+        if res.status_code != 200:
+            raise Exception(f"HTTP {res.status_code}: {res.text[:200]}")
+        content_type = res.headers.get("content-type", "")
+        if "html" in content_type or "json" in content_type:
+            raise Exception("Cloudflare chặn — cf_clearance hoặc __cf_chl_tk không hợp lệ")
+        content = res.content
     except Exception as e:
         print(f"[fetch] {shop_id} exception: {e}")
-        return 0
+        raise
 
     orders = parse_excel(content, shop_id, shop_name)
-    print(f"[parse] {shop_id} → {len(orders)} đơn đọc được từ Excel")
+    print(f"[parse] {shop_id} → {len(orders)} đơn")
 
     deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
-    print(f"[delete] {shop_id} → đã xoá {deleted} đơn cũ")
-
+    print(f"[delete] {shop_id} → xoá {deleted} đơn cũ")
     for o in orders:
         db.add(Order(**o))
     db.commit()
@@ -162,5 +186,5 @@ async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) ->
         ))
     db.commit()
 
-    print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {len(orders)} đơn")
+    print(f"[sync] {shop_name} ({shop_id}): → {len(orders)} đơn")
     return len(orders)
