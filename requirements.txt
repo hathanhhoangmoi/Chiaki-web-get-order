@@ -9,3 +9,4 @@ python-dotenv==1.0.1
 openpyxl
 reportlab
 curl_cffi
+python-multipart
