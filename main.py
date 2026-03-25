@@ -1492,3 +1492,67 @@ async def get_shop_orders(body: dict, db: Session = Depends(get_db)):
         import traceback
         traceback.print_exc()
         return JSONResponse({"error": f"Lỗi server: {str(e)}"}, status_code=500)
+@app.get("/api/cf-check")
+async def cf_check():
+    """Kiểm tra xem server có bị Cloudflare chặn không"""
+    results = {}
+    
+    test_urls = {
+        "chiaki_api":   "https://api.chiaki.vn/api/health",
+        "megaads_api":  "https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=1",
+        "chiaki_web":   "https://chiaki.vn",
+    }
+    
+    async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+        for name, url in test_urls.items():
+            try:
+                r = await client.get(url, headers={
+                    "User-Agent":  "chiakiApp3.6.2",
+                    "platform":    "ios",
+                    "Accept":      "application/json, text/plain, */*",
+                })
+                ct = r.headers.get("content-type", "")
+                cf_ray = r.headers.get("cf-ray", "")
+                
+                # Phát hiện bị chặn
+                is_blocked = False
+                block_reason = ""
+                
+                if r.status_code == 403:
+                    is_blocked = True
+                    block_reason = "HTTP 403 Forbidden"
+                elif r.status_code == 503:
+                    is_blocked = True
+                    block_reason = "HTTP 503 - Cloudflare challenge"
+                elif r.status_code == 429:
+                    is_blocked = True
+                    block_reason = "HTTP 429 - Rate limit"
+                elif "html" in ct and r.status_code == 200:
+                    body = r.text[:500].lower()
+                    if "just a moment" in body or "checking your browser" in body or "enable javascript" in body:
+                        is_blocked = True
+                        block_reason = "Cloudflare JS Challenge"
+                    elif "error 1020" in body or "access denied" in body:
+                        is_blocked = True
+                        block_reason = "Cloudflare Error 1020 - IP bị blacklist"
+                
+                results[name] = {
+                    "url":         url,
+                    "status":      r.status_code,
+                    "blocked":     is_blocked,
+                    "reason":      block_reason if is_blocked else "OK",
+                    "cf_ray":      cf_ray,        # có ray = đi qua Cloudflare
+                    "content_type": ct,
+                }
+            except httpx.TimeoutException:
+                results[name] = {"url": url, "status": 0, "blocked": True, "reason": "Timeout - có thể bị chặn"}
+            except Exception as e:
+                results[name] = {"url": url, "status": 0, "blocked": True, "reason": str(e)}
+    
+    overall = all(not v["blocked"] for v in results.values())
+    return {
+        "ok":      overall,
+        "summary": "✅ Server không bị chặn" if overall else "⚠️ Một số endpoint bị chặn",
+        "details": results,
+        "server_ip": "Check tại https://api.ipify.org"
+    }
