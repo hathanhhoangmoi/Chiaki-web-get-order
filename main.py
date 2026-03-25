@@ -27,6 +27,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.responses import HTMLResponse
 from shops_config import SHOP_NAME_MAP
 import json as _json
+from fastapi import File, UploadFile, Form
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
@@ -1556,3 +1557,42 @@ async def cf_check():
         "details": results,
         "server_ip": "Check tại https://api.ipify.org"
     }
+@app.post("/api/upload-excel")
+async def upload_excel(
+    shop_id: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    from fetcher import parse_excel
+    from shops_config import get_shops_map
+
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": "Shop không tồn tại."}, status_code=404)
+
+    _, shop_name = shops[shop_id]
+    content = await file.read()
+
+    orders = parse_excel(content, shop_id, shop_name)
+    if not orders:
+        return JSONResponse({"error": "Không đọc được đơn hàng từ file Excel."}, status_code=400)
+
+    db.query(Order).filter(Order.shop_id == shop_id).delete()
+    for o in orders:
+        db.add(Order(**o))
+    db.commit()
+
+    meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+    now_vn = datetime.now(timezone(timedelta(hours=7)))
+    if meta:
+        meta.shop_name   = shop_name
+        meta.last_sync   = now_vn
+        meta.order_count = len(orders)
+    else:
+        db.add(ShopMeta(
+            shop_id=shop_id, shop_name=shop_name,
+            shop_url="", last_sync=now_vn, order_count=len(orders)
+        ))
+    db.commit()
+
+    return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": len(orders)}
