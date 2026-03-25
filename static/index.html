@@ -1102,58 +1102,160 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   📤 Upload Excel
 </button>
 
-<!-- Popup upload -->
-<div id="uploadModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;padding:28px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
-    <h3 style="margin:0 0 18px;font-size:16px;color:#1e1b4b;">📤 Upload Excel đơn hàng</h3>
+<!-- Nút mở popup upload — đặt trong sidebar trái -->
+<button onclick="openUploadModal()"
+  style="width:100%;margin-top:10px;padding:10px 0;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.3px;box-shadow:0 2px 8px rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;gap:6px;">
+  <span>📤</span> Upload Excel
+</button>
 
-    <label style="font-size:13px;font-weight:600;color:#374151;">Chọn gian hàng</label>
-    <select id="uploadShopId" style="width:100%;margin:6px 0 14px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
-      <option value="">-- Đang tải danh sách --</option>
-    </select>
+<!-- Overlay -->
+<div id="uploadModal" style="display:none;position:fixed;inset:0;background:rgba(15,10,40,.55);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px 26px 22px;width:400px;max-width:92vw;box-shadow:0 16px 48px rgba(0,0,0,.22);animation:fadeUp .2s ease;">
+    
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">📤</div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#1e1b4b;">Upload Excel đơn hàng</div>
+          <div style="font-size:12px;color:#9ca3af;">Thay thế đồng bộ tự động</div>
+        </div>
+      </div>
+      <button onclick="closeUploadModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;line-height:1;">✕</button>
+    </div>
 
-    <label style="font-size:13px;font-weight:600;color:#374151;">Chọn file Excel (.xlsx)</label>
-    <input type="file" id="uploadFile" accept=".xlsx"
-      style="width:100%;margin:6px 0 18px;padding:7px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+    <!-- Chọn gian hàng -->
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:700;color:#6b21a8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Gian hàng</label>
+      <div style="position:relative;">
+        <input id="uploadShopSearch" placeholder="🔍 Tìm tên shop..." oninput="filterUploadShops(this.value)"
+          style="width:100%;padding:9px 12px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;box-sizing:border-box;outline:none;background:#faf5ff;color:#1e1b4b;"
+          onfocus="document.getElementById('uploadShopDropdown').style.display='block'"
+        />
+        <div id="uploadShopDropdown"
+          style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #e9d5ff;border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.1);">
+        </div>
+      </div>
+      <input type="hidden" id="uploadShopId" />
+      <div id="uploadShopSelected" style="display:none;margin-top:6px;padding:7px 10px;background:#f3e8ff;border-radius:7px;font-size:12px;color:#7c3aed;font-weight:600;"></div>
+    </div>
 
-    <div id="uploadStatus" style="font-size:13px;color:#6b7280;margin-bottom:12px;min-height:20px;"></div>
+    <!-- Chọn file -->
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:12px;font-weight:700;color:#6b21a8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">File Excel (.xlsx)</label>
+      <label id="uploadFileLabel" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px dashed #c4b5fd;border-radius:8px;cursor:pointer;background:#faf5ff;transition:border-color .2s;">
+        <span style="font-size:22px;">📄</span>
+        <span id="uploadFileName" style="font-size:13px;color:#6b7280;">Bấm để chọn file...</span>
+        <input type="file" id="uploadFile" accept=".xlsx" style="display:none;" onchange="onFileSelected(this)">
+      </label>
+    </div>
 
+    <!-- Status -->
+    <div id="uploadStatus" style="min-height:22px;font-size:13px;margin-bottom:14px;padding:0 2px;"></div>
+
+    <!-- Buttons -->
     <div style="display:flex;gap:10px;">
       <button onclick="doUploadExcel()"
-        style="flex:1;padding:9px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+        style="flex:1;padding:11px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(124,58,237,.3);">
         ✅ Upload & Sync
       </button>
-      <button onclick="document.getElementById('uploadModal').style.display='none'"
-        style="flex:1;padding:9px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:14px;">
+      <button onclick="closeUploadModal()"
+        style="padding:11px 18px;background:#f3f4f6;color:#6b7280;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;">
         Huỷ
       </button>
     </div>
   </div>
 </div>
 
+<style>
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+#uploadShopDropdown::-webkit-scrollbar { width:5px; }
+#uploadShopDropdown::-webkit-scrollbar-thumb { background:#c4b5fd; border-radius:4px; }
+#uploadFileLabel:hover { border-color:#7c3aed; background:#f3e8ff; }
+</style>
+
 <script>
-// Load danh sách shop vào dropdown
-(async function loadUploadShops() {
-  try {
-    const res = await fetch('/api/summary');
-    const data = await res.json();
-    const sel = document.getElementById('uploadShopId');
-    sel.innerHTML = '<option value="">-- Chọn gian hàng --</option>';
-    (data.shops || []).forEach(s => {
-      sel.innerHTML += `<option value="${s.shop_id}">${s.shop_name} (${s.shop_id})</option>`;
-    });
-  } catch(e) {}
-})();
+let _uploadShops = [];
+
+async function openUploadModal() {
+  document.getElementById('uploadModal').style.display = 'flex';
+  document.getElementById('uploadShopId').value = '';
+  document.getElementById('uploadShopSearch').value = '';
+  document.getElementById('uploadShopSelected').style.display = 'none';
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('uploadFileName').textContent = 'Bấm để chọn file...';
+  document.getElementById('uploadFile').value = '';
+
+  if (_uploadShops.length === 0) {
+    try {
+      const res = await fetch('/api/shops-list');
+      _uploadShops = await res.json();
+    } catch(e) {}
+  }
+  renderUploadDropdown(_uploadShops);
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').style.display = 'none';
+  document.getElementById('uploadShopDropdown').style.display = 'none';
+}
+
+function renderUploadDropdown(shops) {
+  const dd = document.getElementById('uploadShopDropdown');
+  dd.innerHTML = shops.map(s =>
+    `<div onclick="selectUploadShop('${s.shop_id}','${s.shop_name.replace(/'/g,"&#39;")}')"
+      style="padding:9px 12px;font-size:13px;cursor:pointer;color:#1e1b4b;border-bottom:1px solid #f3e8ff;"
+      onmouseover="this.style.background='#faf5ff'" onmouseout="this.style.background=''"
+    >${s.shop_name} <span style="color:#9ca3af;font-size:11px;">#${s.shop_id}</span></div>`
+  ).join('') || '<div style="padding:10px 12px;color:#9ca3af;font-size:13px;">Không tìm thấy</div>';
+  dd.style.display = 'block';
+}
+
+function filterUploadShops(q) {
+  const filtered = _uploadShops.filter(s =>
+    s.shop_name.toLowerCase().includes(q.toLowerCase()) || s.shop_id.includes(q)
+  );
+  renderUploadDropdown(filtered);
+}
+
+function selectUploadShop(id, name) {
+  document.getElementById('uploadShopId').value = id;
+  document.getElementById('uploadShopSearch').value = '';
+  document.getElementById('uploadShopDropdown').style.display = 'none';
+  const sel = document.getElementById('uploadShopSelected');
+  sel.textContent = `✅ ${name} (#${id})`;
+  sel.style.display = 'block';
+}
+
+function onFileSelected(input) {
+  const f = input.files[0];
+  document.getElementById('uploadFileName').textContent = f ? f.name : 'Bấm để chọn file...';
+}
+
+// Đóng dropdown khi click ngoài
+document.addEventListener('click', e => {
+  const dd = document.getElementById('uploadShopDropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'uploadShopSearch') {
+    dd.style.display = 'none';
+  }
+});
 
 async function doUploadExcel() {
   const shopId = document.getElementById('uploadShopId').value;
   const fileInput = document.getElementById('uploadFile');
   const status = document.getElementById('uploadStatus');
 
-  if (!shopId) { status.textContent = '⚠️ Vui lòng chọn gian hàng.'; return; }
-  if (!fileInput.files[0]) { status.textContent = '⚠️ Vui lòng chọn file Excel.'; return; }
+  if (!shopId) {
+    status.innerHTML = '<span style="color:#dc2626;">⚠️ Vui lòng chọn gian hàng.</span>'; return;
+  }
+  if (!fileInput.files[0]) {
+    status.innerHTML = '<span style="color:#dc2626;">⚠️ Vui lòng chọn file Excel.</span>'; return;
+  }
 
-  status.textContent = '⏳ Đang upload...';
+  status.innerHTML = '<span style="color:#7c3aed;">⏳ Đang upload và xử lý...</span>';
 
   const form = new FormData();
   form.append('shop_id', shopId);
@@ -1163,22 +1265,17 @@ async function doUploadExcel() {
     const res = await fetch('/api/upload-excel', { method: 'POST', body: form });
     const data = await res.json();
     if (data.ok) {
-      status.style.color = '#16a34a';
-      status.textContent = `✅ Đã sync ${data.synced} đơn cho ${data.shop_name}`;
-      setTimeout(() => {
-        document.getElementById('uploadModal').style.display = 'none';
-        location.reload(); // reload lại bảng
-      }, 1500);
+      status.innerHTML = `<span style="color:#16a34a;">✅ Đã sync <b>${data.synced}</b> đơn cho <b>${data.shop_name}</b></span>`;
+      setTimeout(() => { closeUploadModal(); location.reload(); }, 1800);
     } else {
-      status.style.color = '#dc2626';
-      status.textContent = '❌ ' + (data.error || 'Lỗi không xác định');
+      status.innerHTML = `<span style="color:#dc2626;">❌ ${data.error || 'Lỗi không xác định'}</span>`;
     }
   } catch(e) {
-    status.style.color = '#dc2626';
-    status.textContent = '❌ Lỗi kết nối: ' + e.message;
+    status.innerHTML = `<span style="color:#dc2626;">❌ Lỗi kết nối: ${e.message}</span>`;
   }
 }
 </script>
+
 
 <!-- Bảng tải đơn Excel - luôn hiển thị bên trái -->
 <div class="download-panel">
@@ -1221,8 +1318,6 @@ async function doUploadExcel() {
                 padding:8px 10px;border-radius:8px;line-height:1.6;"></div>
   </div>
 </div>
-
-
 
 <div class="container">
 
