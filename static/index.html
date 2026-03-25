@@ -1017,7 +1017,64 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   }
   @page { size: 4in 6in; margin: 0; }
 }
-
+.sync-panel {
+  display: none;
+  position: fixed;
+  left: 24px; top: 92px;
+  z-index: 7000;
+  width: 300px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(198,181,255,.35);
+  border-radius: 20px;
+  padding: 18px 16px 16px;
+  box-shadow: 0 8px 32px rgba(139,92,246,.15);
+}
+.sync-panel.visible { display: block; }
+.sync-panel-title {
+  font-size: 13px; font-weight: 700; color: #3b3551;
+  margin-bottom: 14px;
+}
+.sync-label {
+  font-size: 10px; font-weight: 700; color: #9b8bb4;
+  letter-spacing: .4px; text-transform: uppercase;
+  display: block; margin-bottom: 4px; margin-top: 10px;
+}
+.sync-input {
+  width: 100%; padding: 9px 12px;
+  border: 1.5px solid rgba(198,181,255,.5);
+  border-radius: 12px; font-size: 12px;
+  background: rgba(255,255,255,.6); color: #3b3551;
+  outline: none; transition: border .2s;
+  box-sizing: border-box; font-family: monospace;
+}
+.sync-input:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167,139,250,.15);
+}
+select.sync-input { font-family: inherit; cursor: pointer; }
+.btn-sync {
+  width: 100%; margin-top: 14px; padding: 11px;
+  border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #d8b4fe, #a78bfa);
+  color: #fff; font-family: inherit; font-size: 13px;
+  font-weight: 700; cursor: pointer; transition: all .2s;
+  box-shadow: 0 4px 14px rgba(167,139,250,.4);
+}
+.btn-sync:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(167,139,250,.5); }
+.btn-sync:disabled {
+  background: rgba(200,190,220,.4); color: rgba(100,80,140,.4);
+  box-shadow: none; cursor: not-allowed; transform: none;
+}
+.sync-msg {
+  margin-top: 10px; font-size: 11px; text-align: center;
+  padding: 7px 10px; border-radius: 8px; display: none; line-height: 1.5;
+}
+.sync-msg.ok { display: block; background: rgba(167,243,208,.4); color: #065f46; }
+.sync-msg.err { display: block; background: rgba(254,202,202,.4); color: #dc2626; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -1070,7 +1127,83 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
         <button class="btn-change-id" onclick="changeId()">Đổi ID</button>
       </div>
     </div>
-    
+<!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
+<div class="sync-panel" id="syncPanel">
+  <div class="sync-panel-title">🔄 Sync danh sách đơn</div>
+
+  <label class="sync-label">Chọn gian hàng</label>
+  <select class="sync-input" id="syncShopId">
+    <option value="">-- Chọn shop --</option>
+    <option value="2732">2732 · Min Duty</option>
+    <option value="4299">4299 · HADES Shop</option>
+    <option value="3522">3522 · ShipnhanhStore</option>
+    <option value="4337">4337 · TH Cosmetic</option>
+    <option value="3684">3684 · Hoya Life</option>
+    <option value="3540">3540 · Rongcon</option>
+    <option value="3783">3783 · Đẹp & Khoẻ 365</option>
+    <option value="1489">1489 · Beauty & Healthy</option>
+    <option value="4036">4036 · Kitty House</option>
+    <option value="635">635 · Trang Perfume</option>
+    <option value="1498">1498 · Kho Dược TPCN</option>
+    <option value="5090">5090 · Mason House Store</option>
+    <option value="5091">5091 · Gia Phương Shop</option>
+    <option value="4339">4339 · PINASAGO Pin Sài Gòn</option>
+    <option value="4961">4961 · Kalos Việt Nam</option>
+    <option value="4872">4872 · Green House</option>
+    <option value="4917">4917 · Moss Skincare</option>
+    <option value="4647">4647 · XXIV Store</option>
+    <option value="4732">4732 · Ken Perfume</option>
+    <option value="5112">5112 · MoiThom - Mèo bán nước hoa</option>
+    <option value="2292">2292 · Thế Giới Hàng Auth 88</option>
+    <option value="4940">4940 · Mint- Skin Beauty & Cosmetics</option>
+    <option value="5096">5096 · The Senté Hill</option>
+    <option value="1164">1164 · O2 PHARMACY</option>
+    <option value="3612">3612 · NGUYENKIM</option>
+    <option value="5092">5092 · Thế Giới Son</option>
+    <option value="5125">5125 · Felice Beauty Garden</option>
+    <option value="1600">1600 · ChoychoyStore</option>
+    <option value="2423">2423 · Peony Cosmetics</option>
+    <option value="4965">4965 · nhathuocsuckhoe2</option>
+    <option value="4365">4365 · Nana Beauty & More</option>
+    <option value="1729">1729 · MHDMART</option>
+    <option value="4360">4360 · SnapshopVN</option>
+    <option value="5094">5094 · Shop Snap TPHCM</option>
+    <option value="1602">1602 · Winny Shop</option>
+    <option value="1105">1105 · MjuMju</option>
+    <option value="4294">4294 · Life Healthy</option>
+    <option value="3009">3009 · QuangNgoc1976</option>
+    <option value="1414">1414 · Dược Phẩm Tâm An</option>
+    <option value="2573">2573 · MiMi Beauty</option>
+    <option value="2225">2225 · T&T Japan shop</option>
+    <option value="3047">3047 · GREENBOX</option>
+    <option value="3864">3864 · Hàng ngoại giá tốt</option>
+    <option value="3852">3852 · Baby Grow Shop</option>
+    <option value="1273">1273 · NHÀ THUỐC MINH TÂM</option>
+    <option value="3300">3300 · Mayya Hàng Nội Địa Nhật</option>
+    <option value="1258">1258 · Shop Adam</option>
+    <option value="3337">3337 · Shop Sài Gòn</option>
+    <option value="4342">4342 · Sản Phẩm Hỗ Trợ</option>
+    <option value="1015">1015 · Green Healthy & Beauty</option>
+    <option value="3218">3218 · Bảo Lâm Anh</option>
+    <option value="2557">2557 · XUAN MINH PHARMACY</option>
+    <option value="2025">2025 · Cali-Goods</option>
+  </select>
+
+  <label class="sync-label">__cf_chl_tk</label>
+  <input class="sync-input" id="syncCfChlTk" type="text"
+         placeholder="Dán __cf_chl_tk vào đây..."
+         onkeydown="if(event.key==='Enter') doSync()" />
+
+  <label class="sync-label">cf_clearance</label>
+  <input class="sync-input" id="syncCfClearance" type="text"
+         placeholder="Dán cf_clearance vào đây..."
+         onkeydown="if(event.key==='Enter') doSync()" />
+
+  <button class="btn-sync" id="btnSync" onclick="doSync()">
+    🔄 SYNC NOW
+  </button>
+  <div class="sync-msg" id="syncMsg"></div>
+</div>    
 <button class="btn btn-primary" id="btnGetPhone" onclick="toggleOrderInfoModal()">
   🔍 XỬ LÝ ĐƠN HÀNG
 </button>
@@ -4200,7 +4333,58 @@ async function doCancelSide() {
     btn.innerHTML = '🚫 Gửi yêu cầu huỷ đơn';
   }
 }
+function toggleSyncPanel() {
+  document.getElementById('syncPanel').classList.toggle('visible');
+}
 
+async function doSync() {
+  const shopId      = document.getElementById('syncShopId').value.trim();
+  const cfChlTk     = document.getElementById('syncCfChlTk').value.trim();
+  const cfClearance = document.getElementById('syncCfClearance').value.trim();
+  const btn         = document.getElementById('btnSync');
+  const msg         = document.getElementById('syncMsg');
+
+  msg.className = 'sync-msg';
+  msg.style.display = 'none';
+
+  if (!shopId) {
+    msg.textContent = 'Vui lòng chọn gian hàng.';
+    msg.className = 'sync-msg err'; return;
+  }
+  if (!cfChlTk || !cfClearance) {
+    msg.textContent = 'Vui lòng điền đủ __cf_chl_tk và cf_clearance.';
+    msg.className = 'sync-msg err'; return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang sync...';
+
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shop_id: shopId, cf_chl_tk: cfChlTk, cf_clearance: cfClearance })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.textContent = `✅ ${data.shop_name}: đã sync ${data.synced} đơn`;
+      msg.className = 'sync-msg ok';
+      // Reload bảng đơn hàng
+      currentPage = 1;
+      await loadOrders();
+      await loadSummary();
+    } else {
+      msg.textContent = `❌ ${data.error || 'Lỗi không xác định'}`;
+      msg.className = 'sync-msg err';
+    }
+  } catch (e) {
+    msg.textContent = `❌ Lỗi kết nối: ${e.message}`;
+    msg.className = 'sync-msg err';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 SYNC NOW';
+  }
+}
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
 </script>
