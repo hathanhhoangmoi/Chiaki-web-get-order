@@ -1,4 +1,4 @@
-import httpx
+from curl_cffi.requests import AsyncSession
 import io
 import json
 import re
@@ -124,13 +124,17 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
 
 
 async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) -> int:
-    # fix: thêm shop_name vào signature, bỏ fetch_shop_name()
     url = build_api_url(shop_id)
     print(f"[fetch] {shop_id} → {url}")
 
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            res = await client.get(url)
+        async with AsyncSession(impersonate="chrome120") as client:
+            res = await client.get(url, headers={
+                "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+                "Accept":          "application/json, text/plain, */*",
+                "Accept-Language": "vi-VN,vi;q=0.9",
+                "Referer":         "https://chiaki.vn/",
+            })
             print(f"[fetch] {shop_id} status={res.status_code} size={len(res.content)} bytes")
             if res.status_code != 200:
                 print(f"[fetch] {shop_id} FAILED: {res.text[:200]}")
@@ -153,16 +157,17 @@ async def sync_shop(shop_id: str, shop_url: str, shop_name: str, db: Session) ->
     meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
     if meta:
         meta.shop_name   = shop_name
-        meta.last_sync   = datetime.now()
+        meta.last_sync   = datetime.now(timezone(timedelta(hours=7)))
         meta.order_count = len(orders)
     else:
         db.add(ShopMeta(
             shop_id=shop_id, shop_name=shop_name,
-            shop_url=shop_url, last_sync=datetime.now(),
+            shop_url=shop_url, last_sync=datetime.now(timezone(timedelta(hours=7))),
             order_count=len(orders)
         ))
     db.commit()
 
     print(f"[sync] {shop_name} ({shop_id}): đã thay thế → {len(orders)} đơn")
     return len(orders)
+
 
