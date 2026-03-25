@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 def build_api_url(shop_id: str) -> str:
     VN_TZ = timezone(timedelta(hours=7))
     today = datetime.now(VN_TZ)
-    since = today - timedelta(days=30)
+    since = today - timedelta(days=14)
     def fmt(d): return d.strftime("%d/%m/%Y").replace("/", "%2F")
     range_str = f"{fmt(since)}%20-%20{fmt(today)}"
     return (
