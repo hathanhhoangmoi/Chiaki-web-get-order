@@ -1355,14 +1355,6 @@ async function doUploadExcel() {
     <div class="stat-sub" id="revWaitingCount">Đang tính...</div>
   </div>
 
-  <!-- Đơn đang giao -->
-  <div class="stat-card" style="border-left:4px solid #f59e0b;">
-    <div class="stat-label" style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#7c6fa0;">
-      🚚 Doanh thu gộp — Đang giao
-    </div>
-    <div class="stat-value" id="revDelivering" style="font-size:24px;margin-top:6px;">—</div>
-    <div class="stat-sub" id="revDeliveringCount">Đang tính...</div>
-  </div>
 </div>
   
   <div class="stats-row">
@@ -1396,29 +1388,6 @@ async function doUploadExcel() {
     </div>
 
   </div>
-<!-- Stats row đơn ĐANG GIAO -->
-<div class="stats-row" id="deliveringStatsRow" style="margin-bottom:16px;">
-  <div class="stat-card">
-    <div class="stat-label">🚚 Tổng đang giao</div>
-    <div class="stat-value" id="dlvTotal">—</div>
-    <div class="stat-sub">Đơn đang trên đường giao</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">🏪 Số gian hàng</div>
-    <div class="stat-value" id="dlvShops">—</div>
-    <div class="stat-sub">Gian hàng có đơn đang giao</div>
-  </div>
-  <div class="stat-card clickable" id="dlvHanoiCard" onclick="toggleDlvHanoiPanel()">
-    <div class="stat-label">📍 Đang giao tại Hà Nội</div>
-    <div class="stat-value" id="dlvHanoiCount">—</div>
-    <div class="stat-sub" id="dlvHanoiSub">Click để xem danh sách</div>
-  </div>
-  <div class="stat-card clickable" id="dlvNuocHoaCard" onclick="toggleDlvNuocHoaPanel()">
-    <div class="stat-label">🌸 Đang giao nước hoa</div>
-    <div class="stat-value" id="dlvNuocHoaCount">—</div>
-    <div class="stat-sub" id="dlvNuocHoaSub">Click để xem danh sách</div>
-  </div>
-</div>
 
   <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
   <div class="shop-tabs" id="shopTabs">
@@ -1454,12 +1423,6 @@ async function doUploadExcel() {
            font-weight:700;font-size:12px;font-family:inherit;
            box-shadow:0 3px 12px rgba(167,139,250,.35);">
     📦 Chờ lấy hàng
-  </button>
-  <button id="tabDelivering" onclick="switchOrderTab('delivering')"
-    style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
-           background:rgba(255,255,255,.4);color:#7c6fa0;
-           font-weight:700;font-size:12px;font-family:inherit;">
-    🚚 Đang giao hàng
   </button>
 </div>
 
@@ -1563,49 +1526,6 @@ async function doUploadExcel() {
           </tr>
         </thead>
         <tbody id="tbodyNuocHoa"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<!-- Panel Hà Nội ĐANG GIAO -->
-<div id="panelDlvHanoi" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">🚚 Đơn đang giao tại Hà Nội</div>
-      <div class="table-count" id="dlvHanoiTableCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyDlvHanoi">
-          <tr><td colspan="9" class="empty"><div class="empty-icon">🚚</div><div>Chưa tải dữ liệu</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Panel Nước hoa ĐANG GIAO -->
-<div id="panelDlvNuocHoa" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">🌸 Đơn đang giao nước hoa</div>
-      <div class="table-count" id="dlvNuocHoaTableCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyDlvNuocHoa">
-          <tr><td colspan="9" class="empty"><div class="empty-icon">🌸</div><div>Chưa tải dữ liệu</div></td></tr>
-        </tbody>
       </table>
     </div>
   </div>
