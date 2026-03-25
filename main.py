@@ -25,7 +25,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.responses import HTMLResponse
 from shops_config import SHOP_NAME_MAP
 import json as _json
-
+from fastapi import UploadFile, File, Form
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
     "ADMIN-UNLIMITED-HOANG": 0,
@@ -1520,3 +1520,44 @@ async def sync_now(body: dict, db: Session = Depends(get_db)):
         return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": synced}
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
+
+@app.post("/api/sync-upload")
+async def sync_upload(
+    shop_id: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
+
+    shop_url, shop_name = shops[shop_id]
+    content = await file.read()
+
+    # Kiểm tra có phải Excel không
+    if len(content) < 100 or content[:4] not in [b'PK\x03\x04', b'\xd0\xcf\x11\xe0']:
+        return JSONResponse({"error": "File không hợp lệ, không phải Excel"}, status_code=422)
+
+    orders = parse_excel(content, shop_id, shop_name)
+    if not orders:
+        return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel"}, status_code=422)
+
+    deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
+    for o in orders:
+        db.add(Order(**o))
+    db.commit()
+
+    meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+    if meta:
+        meta.shop_name   = shop_name
+        meta.last_sync   = datetime.now()
+        meta.order_count = len(orders)
+    else:
+        db.add(ShopMeta(
+            shop_id=shop_id, shop_name=shop_name,
+            shop_url=shop_url, last_sync=datetime.now(),
+            order_count=len(orders)
+        ))
+    db.commit()
+
+    return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": len(orders), "deleted": deleted}
