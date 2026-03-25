@@ -1070,7 +1070,126 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
         <button class="btn-change-id" onclick="changeId()">Đổi ID</button>
       </div>
     </div>
-    
+<!-- ══ PANEL ĐỒNG BỘ ══ -->
+<div id="syncPanel" style="
+  position: fixed; top: 80px; left: 16px; z-index: 999;
+  width: 300px;
+  background: rgba(15, 25, 50, 0.75);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+">
+  <!-- Header panel -->
+  <div style="
+    padding: 14px 16px 10px;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: space-between;
+  ">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:15px;">🔄</span>
+      <span style="font-size:12px;font-weight:700;letter-spacing:0.5px;color:#fff;text-transform:uppercase;">
+        Đồng bộ danh sách chờ lấy hàng
+      </span>
+    </div>
+    <button onclick="document.getElementById('syncPanel').style.display='none'"
+      style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;line-height:1;">✕</button>
+  </div>
+
+  <!-- Body panel -->
+  <div style="padding: 14px 16px; display:flex; flex-direction:column; gap:12px;">
+
+    <!-- Chọn shop -->
+    <div>
+      <label style="font-size:10px;font-weight:600;letter-spacing:0.7px;text-transform:uppercase;color:rgba(255,255,255,0.4);display:block;margin-bottom:6px;">
+        🏪 Gian hàng
+      </label>
+      <select id="syncShopSelect" style="
+        width:100%; padding:9px 10px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 10px; color:#fff;
+        font-size:12.5px; outline:none; cursor:pointer;
+      ">
+        <option value="" style="background:#1a2a4a;">-- Chọn gian hàng --</option>
+      </select>
+    </div>
+
+    <!-- __cf_chl_tk -->
+    <div>
+      <label style="font-size:10px;font-weight:600;letter-spacing:0.7px;text-transform:uppercase;color:rgba(255,255,255,0.4);display:block;margin-bottom:6px;">
+        🔑 __cf_chl_tk
+      </label>
+      <input type="text" id="syncChlTk" placeholder="Dán __cf_chl_tk vào đây" style="
+        width:100%; padding:9px 10px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 10px; color:#fff;
+        font-size:11.5px; outline:none; font-family:monospace;
+      "/>
+    </div>
+
+    <!-- cf_clearance -->
+    <div>
+      <label style="font-size:10px;font-weight:600;letter-spacing:0.7px;text-transform:uppercase;color:rgba(255,255,255,0.4);display:block;margin-bottom:6px;">
+        🛡️ cf_clearance
+      </label>
+      <input type="text" id="syncClearance" placeholder="Dán cf_clearance vào đây" style="
+        width:100%; padding:9px 10px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 10px; color:#fff;
+        font-size:11.5px; outline:none; font-family:monospace;
+      "/>
+    </div>
+
+    <!-- Date range hiển thị -->
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px;text-align:center;">
+        <div style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.5px;">Từ ngày</div>
+        <div id="syncDateFrom" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:2px;">—</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px;text-align:center;">
+        <div style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.5px;">Đến ngày</div>
+        <div id="syncDateTo" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:2px;">—</div>
+      </div>
+    </div>
+
+    <!-- Button SYNC NOW -->
+    <button id="btnSyncNow" onclick="doSyncNow()" style="
+      width:100%; padding:12px;
+      background: linear-gradient(135deg, rgba(100,165,255,0.3), rgba(150,100,255,0.3));
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 12px;
+      color:#fff; font-size:13px; font-weight:700;
+      letter-spacing:0.5px; cursor:pointer;
+      box-shadow: 0 4px 18px rgba(100,165,255,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: all .2s;
+    ">
+      ⚡ SYNC NOW
+    </button>
+
+    <!-- Status -->
+    <div id="syncStatus" style="
+      display:none; padding:10px 12px;
+      border-radius:10px; font-size:12px; text-align:center;
+    "></div>
+
+  </div>
+</div>
+
+<!-- Nút mở lại panel nếu bị đóng -->
+<button onclick="document.getElementById('syncPanel').style.display='block'" style="
+  position:fixed; top:80px; left:16px; z-index:998;
+  background:rgba(100,165,255,0.2);
+  border:1px solid rgba(100,165,255,0.35);
+  border-radius:10px; color:#fff; font-size:12px;
+  padding:8px 12px; cursor:pointer; backdrop-filter:blur(10px);
+  display:none;
+" id="syncOpenBtn">🔄 Đồng bộ</button>  
 <button class="btn btn-primary" id="btnGetPhone" onclick="toggleOrderInfoModal()">
   🔍 XỬ LÝ ĐƠN HÀNG
 </button>
@@ -4200,7 +4319,112 @@ async function doCancelSide() {
     btn.innerHTML = '🚫 Gửi yêu cầu huỷ đơn';
   }
 }
+<script>
+// ── Khởi tạo panel đồng bộ ──────────────────────────────
+(function initSyncPanel() {
+  // Hiển thị ngày
+  function fmt(d) {
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+  const today = new Date();
+  const from  = new Date(today); from.setDate(today.getDate() - 14);
+  document.getElementById('syncDateFrom').textContent = fmt(from);
+  document.getElementById('syncDateTo').textContent   = fmt(today);
 
+  // Load danh sách shop từ API summary
+  fetch('/api/summary')
+    .then(r => r.json())
+    .then(data => {
+      const sel = document.getElementById('syncShopSelect');
+      (data.shops || [])
+        .sort((a,b) => a.shop_name.localeCompare(b.shop_name))
+        .forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.shop_id;
+          opt.textContent = `${s.shop_name} (${s.shop_id})`;
+          opt.style.background = '#1a2a4a';
+          sel.appendChild(opt);
+        });
+    })
+    .catch(() => {});
+})();
+
+// ── Xử lý SYNC NOW ──────────────────────────────────────
+async function doSyncNow() {
+  const shopId      = document.getElementById('syncShopSelect').value.trim();
+  const cfChlTk     = document.getElementById('syncChlTk').value.trim();
+  const cfClearance = document.getElementById('syncClearance').value.trim();
+  const btn         = document.getElementById('btnSyncNow');
+  const statusEl    = document.getElementById('syncStatus');
+
+  if (!shopId) {
+    showSyncStatus('warning', '⚠️ Vui lòng chọn gian hàng');
+    return;
+  }
+  if (!cfChlTk) {
+    showSyncStatus('warning', '⚠️ Vui lòng nhập __cf_chl_tk');
+    return;
+  }
+  if (!cfClearance) {
+    showSyncStatus('warning', '⚠️ Vui lòng nhập cf_clearance');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang đồng bộ...';
+  showSyncStatus('loading', '🔄 Đang gọi API Chiaki...');
+
+  try {
+    const res  = await fetch('/api/sync-manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shop_id:      shopId,
+        cf_chl_tk:    cfChlTk,
+        cf_clearance: cfClearance
+      })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      showSyncStatus('success',
+        `✅ Đồng bộ thành công!<br><b>${data.shop_name}</b><br>${data.synced} đơn mới · xoá ${data.deleted} đơn cũ`
+      );
+      // Reload bảng đơn hàng nếu đang xem shop này
+      if (typeof loadOrders === 'function') loadOrders();
+    } else {
+      showSyncStatus('error', `❌ ${data.error || 'Lỗi không xác định'}`);
+    }
+  } catch (e) {
+    showSyncStatus('error', `❌ ${e.message}`);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⚡ SYNC NOW';
+}
+
+function showSyncStatus(type, html) {
+  const el = document.getElementById('syncStatus');
+  el.style.display = 'block';
+  el.innerHTML = html;
+  const styles = {
+    loading: 'rgba(100,165,255,0.1)',
+    success: 'rgba(60,200,100,0.12)',
+    error:   'rgba(255,80,60,0.12)',
+    warning: 'rgba(255,180,50,0.12)'
+  };
+  const borders = {
+    loading: 'rgba(100,165,255,0.3)',
+    success: 'rgba(60,200,100,0.3)',
+    error:   'rgba(255,80,60,0.3)',
+    warning: 'rgba(255,180,50,0.3)'
+  };
+  el.style.background   = styles[type]  || styles.loading;
+  el.style.border       = `1px solid ${borders[type] || borders.loading}`;
+  el.style.color        = '#fff';
+  el.style.lineHeight   = '1.6';
+}
+</script>
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
 </script>
