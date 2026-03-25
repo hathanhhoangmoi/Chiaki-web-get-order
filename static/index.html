@@ -1159,7 +1159,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 <div class="sync-panel" id="syncPanel">
   <div class="sync-panel-title">🔄 Sync danh sách đơn</div>
   <label class="sync-label">Chọn gian hàng</label>
-  <select class="sync-input" id="syncShopId">
+  <select class="sync-input" id="syncShopId" onchange="updateChiakiLink()">
     <option value="">-- Chọn shop --</option>
     <select class="sync-input" id="syncShopId">
     <option value="">-- Chọn shop --</option>
@@ -4429,11 +4429,6 @@ async function doSync() {
     btn.textContent = '🔄 SYNC NOW';
   }
 }
-
-// Cập nhật link Chiaki khi chọn shop
-document.getElementById('syncShopId').addEventListener('change', function() {
-  updateChiakiLink();
-});
 
 function updateChiakiLink() {
   const shopId = document.getElementById('syncShopId').value;
