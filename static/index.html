@@ -1289,6 +1289,123 @@ select.sync-input { font-family: inherit; cursor: pointer; }
          style="display:none;margin-top:8px;font-size:11px;
                 padding:8px 10px;border-radius:8px;line-height:1.6;"></div>
   </div>
+<!-- TRA CỨU ĐƠN HÀNG -->
+<div style="margin-top:16px;border-top:1px solid rgba(198,181,255,.25);padding-top:14px;">
+  <div class="download-panel-title" style="display:flex;align-items:center;gap:7px;">
+    🔍 Tra cứu đơn hàng
+  </div>
+
+  <label style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.4px;text-transform:uppercase;display:block;margin-bottom:5px;">
+    Mã đơn hàng
+  </label>
+  <input class="download-input" id="sideInfoOrderCode" type="text"
+         placeholder="VD: R123456789"
+         onkeydown="if(event.key==='Enter') fetchSideOrderInfo()" />
+
+  <label style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.4px;text-transform:uppercase;display:block;margin-bottom:5px;margin-top:8px;">
+    Key tra cứu
+  </label>
+  <input class="download-input" id="sideInfoKey" type="text"
+         placeholder="PHONE-KEY-XXXX-XXXX"
+         onkeydown="if(event.key==='Enter') fetchSideOrderInfo()" />
+
+  <button class="btn-download" id="btnSideInfo" onclick="fetchSideOrderInfo()">
+    <span>🔍</span> Tra cứu
+  </button>
+
+  <div id="sideInfoError" style="display:none;margin-top:8px;font-size:11px;
+       padding:7px 10px;border-radius:8px;background:rgba(254,202,202,.4);color:#dc2626;"></div>
+
+  <!-- Kết quả -->
+  <div id="sideInfoResult" style="display:none;margin-top:10px;">
+
+    <div id="sideStatusBanner" style="padding:7px 12px;border-radius:10px;
+         font-size:12px;font-weight:700;text-align:center;margin-bottom:10px;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">MÃ ĐƠN</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="sideIrCode" style="font-family:monospace;font-size:12px;color:#3b3551;font-weight:700;"></span>
+          <button class="btn-copy" onclick="copyField('sideIrCode',this)">Copy</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">GIAN HÀNG</span>
+        <span id="sideIrShop" style="font-size:11px;color:#3b3551;font-weight:600;text-align:right;max-width:160px;"></span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">NGÀY ĐẶT</span>
+        <span id="sideIrDate" style="font-size:11px;color:#3b3551;"></span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">KHÁCH HÀNG</span>
+        <span id="sideIrName" style="font-size:11px;color:#3b3551;font-weight:600;"></span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">SĐT</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="sideIrPhone" style="font-family:monospace;font-size:12px;color:#3b3551;font-weight:700;"></span>
+          <button class="btn-copy" onclick="copyField('sideIrPhone',this)">Copy</button>
+        </div>
+      </div>
+
+      <div style="padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;display:block;margin-bottom:4px;">ĐỊA CHỈ</span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
+          <span id="sideIrAddress" style="font-size:11px;color:#3b3551;line-height:1.5;flex:1;"></span>
+          <button class="btn-copy" onclick="copyField('sideIrAddress',this)">Copy</button>
+        </div>
+      </div>
+
+      <div style="padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;display:block;margin-bottom:4px;">SẢN PHẨM</span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
+          <span id="sideIrProduct" style="font-size:11px;color:#3b3551;line-height:1.5;flex:1;"></span>
+          <button class="btn-copy" onclick="copyField('sideIrProduct',this)">Copy</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">TỔNG TIỀN</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="sideIrTotal" style="font-size:13px;color:#3b3551;font-weight:700;"></span>
+          <button class="btn-copy" onclick="copyField('sideIrTotal',this)">Copy</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;
+           padding:6px 10px;background:rgba(255,255,255,.5);border-radius:9px;
+           border:1px solid rgba(198,181,255,.2);">
+        <span style="font-size:10px;font-weight:700;color:#9b8bb4;">MÃ VẬN ĐƠN</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="sideIrShipping" style="font-family:monospace;font-size:11px;color:#3b3551;"></span>
+          <button class="btn-copy" onclick="copyField('sideIrShipping',this)">Copy</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 </div>
 
 <div class="container">
@@ -5079,7 +5196,92 @@ async function doComboSync() {
   await loadOrders();
   await loadSummary();
 }
+async function fetchSideOrderInfo() {
+  const code = document.getElementById('sideInfoOrderCode').value.trim();
+  const key  = document.getElementById('sideInfoKey').value.trim();
+  const errEl = document.getElementById('sideInfoError');
+  const resultEl = document.getElementById('sideInfoResult');
+  const btn = document.getElementById('btnSideInfo');
 
+  errEl.style.display = 'none';
+  resultEl.style.display = 'none';
+
+  if (!code) { errEl.textContent = 'Vui lòng nhập mã đơn hàng.'; errEl.style.display = 'block'; return; }
+  if (!key)  { errEl.textContent = 'Vui lòng nhập key tra cứu.'; errEl.style.display = 'block'; return; }
+
+  // Lưu key để lần sau tự điền
+  localStorage.setItem('lastInfoKey', key);
+  // Tự điền vào ô key bên modal nếu có
+  const modalKey = document.getElementById('infoKey');
+  if (modalKey && !modalKey.value) modalKey.value = key;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Đang tra cứu...';
+
+  try {
+    const res  = await fetch('/api/order-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ordercode: code, key })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // Status banner
+    const STATUSMAP = {
+      'requestout':              { text: 'Đã nhận đơn hàng',        bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
+      'outproductsinprogress':   { text: 'Đang MVC - Chờ lấy hàng', bg: 'rgba(253,186,116,.35)', color: '#c2410c' },
+      'delivering':              { text: 'Đang giao hàng',           bg: 'rgba(147,197,253,.35)', color: '#1e40af' },
+      'done':                    { text: 'Đã giao hàng',             bg: 'rgba(167,243,208,.4)',  color: '#065f46' },
+      'cancelledwooutproducts':  { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
+      'cancelled':               { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
+      'rein':                    { text: 'Giao thất bại - Hoàn hàng',bg: 'rgba(253,186,116,.35)', color: '#92400e' },
+      'requestin':               { text: 'Chờ xác nhận',             bg: 'rgba(216,180,254,.3)',  color: '#5b4b8a' },
+    };
+    const banner = document.getElementById('sideStatusBanner');
+    const raw    = (data.status || '').trim();
+    const matched = STATUSMAP[raw] || { text: raw, bg: 'rgba(198,181,255,.25)', color: '#5b4b8a' };
+    banner.textContent       = matched.text;
+    banner.style.background  = matched.bg;
+    banner.style.color       = matched.color;
+
+    // Điền dữ liệu
+    document.getElementById('sideIrCode').textContent     = data.ordercode    || '—';
+    document.getElementById('sideIrShop').textContent     = data.shopname     || '—';
+    document.getElementById('sideIrDate').textContent     = data.orderdate    || '—';
+    document.getElementById('sideIrName').textContent     = data.customername || '—';
+    document.getElementById('sideIrPhone').textContent    = data.phone        || '—';
+    document.getElementById('sideIrAddress').textContent  = data.address      || '—';
+    document.getElementById('sideIrProduct').textContent  = data.product      || '—';
+    document.getElementById('sideIrTotal').textContent    = data.prepaidamount
+      ? Number(data.prepaidamount).toLocaleString('vi') + ' đ'
+      : (data.total ? Number(data.total).toLocaleString('vi') + ' đ' : '—');
+    document.getElementById('sideIrShipping').textContent = data.shippingcode || '—';
+
+    resultEl.style.display = 'block';
+
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🔍</span> Tra cứu';
+  }
+}
+
+// Tự điền key đã lưu khi load trang
+document.addEventListener('DOMContentLoaded', () => {
+  const savedKey = localStorage.getItem('lastInfoKey');
+  if (savedKey) {
+    const el = document.getElementById('sideInfoKey');
+    if (el) el.value = savedKey;
+  }
+});
 // Khởi tạo khi load trang
 initComboRows();
 // Gọi khi load trang
