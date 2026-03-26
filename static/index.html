@@ -4978,6 +4978,7 @@ function initComboRows() {
     </div>
   `).join('');
 }
+  
 function handleComboFile(index, file) {
   if (!file) return;
   comboFileMap[index] = file;
@@ -5010,7 +5011,7 @@ function openAllComboLinks() {
   links.forEach((url, i) => {
     setTimeout(() => window.open(url, '_blank'), i * 300);
   });
-
+}
 async function doComboSync() {
   const mode = document.getElementById('comboMode').value;
   const btn  = document.getElementById('btnComboSync');
