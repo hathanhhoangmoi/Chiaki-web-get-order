@@ -1176,7 +1176,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <body>
-
 <!-- ID Gate -->
 <div class="id-gate" id="idGate">
   <div class="id-box">
@@ -1227,7 +1226,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   🔍 XỬ LÝ ĐƠN HÀNG
 </button>
 <button class="btn btn-primary" onclick="toggleSyncPanel()">
-  🔄 SYNC NOW
+  🔄 ĐỒNG BỘ ĐƠN HÀNG
 </button>
 <button class="btn btn-primary" onclick="toggleShopInfoModal()">
   🏪 NHÀ BÁN
@@ -1811,7 +1810,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()" style="flex:1">🔍 Tra cứu đơn hàng</button>
 </div>
 
-
   </div>
 </div>
 <!-- Modal Thông tin gian hàng -->
@@ -2058,7 +2056,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 </div>
 <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
 <div class="sync-panel" id="syncPanel">
-  <div class="sync-panel-title">🔄 Sync danh sách đơn</div>
+  <div class="sync-panel-title">🔄 Đồng bộ đơn hàng</div>
   <label class="sync-label">Chọn gian hàng</label>
   <select class="sync-input" id="syncShopId" onchange="updateChiakiLink()">
     <option value="">-- Chọn shop --</option>
@@ -2144,33 +2142,33 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   </button>
   <div class="sync-msg" id="syncMsg"></div>
 <!-- SYNC COMBO -->
-<div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
-  <div class="sync-panel-title">⚡ Sync Combo (nhiều shop)</div>
+  <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
+    <div class="sync-panel-title">⚡ Sync Combo (nhiều shop)</div>
 
-  <label class="sync-label">Loại đơn hàng</label>
-  <select class="sync-input" id="comboMode">
-    <option value="waiting">Chờ lấy hàng</option>
-    <option value="delivering">Đang giao</option>
-  </select>
+    <label class="sync-label">Loại đơn hàng</label>
+    <select class="sync-input" id="comboMode">
+      <option value="waiting">Chờ lấy hàng</option>
+      <option value="delivering">Đang giao</option>
+    </select>
 
-  <!-- Các hàng shop: link trái, upload phải -->
-  <div id="comboRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-    <!-- render bằng JS -->
+    <!-- Các hàng shop: link trái, upload phải -->
+    <div id="comboRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+      <!-- render bằng JS -->
+    </div>
+
+    <button class="btn-sync"
+            style="margin-top:10px;background:linear-gradient(135deg,#bfdbfe,#60a5fa);color:#1e3a5f;"
+            onclick="openAllComboLinks()">
+      🔗 Mở tất cả link tải Excel
+    </button>
+
+    <button class="btn-sync" id="btnComboSync"
+            style="margin-top:8px;background:linear-gradient(135deg,#fde68a,#f59e0b);color:#78350f;"
+            onclick="doComboSync()">
+      ⚡ SYNC ALL
+    </button>
+    <div class="sync-msg" id="comboMsg"></div>
   </div>
-
-  <button class="btn-sync"
-          style="margin-top:10px;background:linear-gradient(135deg,#bfdbfe,#60a5fa);color:#1e3a5f;"
-          onclick="openAllComboLinks()">
-    🔗 Mở tất cả link tải Excel
-  </button>
-
-  <button class="btn-sync" id="btnComboSync"
-          style="margin-top:8px;background:linear-gradient(135deg,#fde68a,#f59e0b);color:#78350f;"
-          onclick="doComboSync()">
-    ⚡ SYNC COMBO
-  </button>
-  <div class="sync-msg" id="comboMsg"></div>
-</div>
 </div>
 <script>
 let currentShop = '';
@@ -4954,7 +4952,6 @@ function buildChiakiUrl(shopId, mode) {
     `&date_type=created_at&order=create-desc` +
     `&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
-
 function initComboRows() {
   const shopOptions = COMBO_SHOPS.map(s =>
     `<option value="${s.id}">${s.id} · ${s.name}</option>`
@@ -4981,7 +4978,6 @@ function initComboRows() {
     </div>
   `).join('');
 }
-
 function handleComboFile(index, file) {
   if (!file) return;
   comboFileMap[index] = file;
