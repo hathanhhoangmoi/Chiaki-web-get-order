@@ -1103,6 +1103,47 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   margin-top: 8px; font-size: 11px; color: #065f46;
   text-align: center; font-weight: 700; min-height: 16px;
 }
+.combo-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+.combo-row select {
+  padding: 7px 8px;
+  border: 1.5px solid rgba(198,181,255,.5);
+  border-radius: 10px;
+  font-size: 11px;
+  font-family: inherit;
+  background: rgba(255,255,255,.6);
+  color: #3b3551;
+  cursor: pointer;
+  width: 100%;
+}
+.combo-upload-btn {
+  padding: 7px 10px;
+  border: 1.5px dashed rgba(167,139,250,.5);
+  border-radius: 10px;
+  background: rgba(255,255,255,.4);
+  color: #7c6fa0;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  text-align: center;
+  min-width: 80px;
+}
+.combo-upload-btn:hover {
+  border-color: #a78bfa;
+  background: rgba(167,139,250,.1);
+}
+.combo-upload-btn.has-file {
+  border-color: #6ee7b7;
+  background: rgba(167,243,208,.2);
+  color: #065f46;
+  font-weight: 700;
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -2076,6 +2117,34 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     🔄 SYNC NOW
   </button>
   <div class="sync-msg" id="syncMsg"></div>
+<!-- SYNC COMBO -->
+<div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
+  <div class="sync-panel-title">⚡ Sync Combo (nhiều shop)</div>
+
+  <label class="sync-label">Loại đơn hàng</label>
+  <select class="sync-input" id="comboMode">
+    <option value="waiting">Chờ lấy hàng</option>
+    <option value="delivering">Đang giao</option>
+  </select>
+
+  <!-- Các hàng shop: link trái, upload phải -->
+  <div id="comboRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+    <!-- render bằng JS -->
+  </div>
+
+  <button class="btn-sync"
+          style="margin-top:10px;background:linear-gradient(135deg,#bfdbfe,#60a5fa);color:#1e3a5f;"
+          onclick="openAllComboLinks()">
+    🔗 Mở tất cả link tải Excel
+  </button>
+
+  <button class="btn-sync" id="btnComboSync"
+          style="margin-top:8px;background:linear-gradient(135deg,#fde68a,#f59e0b);color:#78350f;"
+          onclick="doComboSync()">
+    ⚡ SYNC COMBO
+  </button>
+  <div class="sync-msg" id="comboMsg"></div>
+</div>
 </div>
 <script>
 let currentShop = '';
@@ -4812,7 +4881,175 @@ async function doSyncUpload() {
     btn.disabled = !syncFile;
     btn.textContent = '🔄 SYNC NOW';
   }
-}  
+}
+// ── SYNC COMBO ──────────────────────────────────────────────
+
+const COMBO_SHOPS = [
+  {id:'2732',name:'Min Duty'},{id:'4299',name:'HADES Shop'},
+  {id:'3522',name:'ShipnhanhStore'},{id:'4337',name:'TH Cosmetic'},
+  {id:'3684',name:'Hoya Life'},{id:'3540',name:'Rongcon'},
+  {id:'3783',name:'Đẹp & Khoẻ 365'},{id:'1489',name:'Beauty & Healthy'},
+  {id:'4036',name:'Kitty House'},{id:'635',name:'Trang Perfume'},
+  {id:'1498',name:'Kho Dược TPCN'},{id:'5090',name:'Mason House Store'},
+  {id:'5091',name:'Gia Phương Shop'},{id:'4339',name:'PINASAGO Pin Sài Gòn'},
+  {id:'4961',name:'Kalos Việt Nam'},{id:'4872',name:'Green House'},
+  {id:'4917',name:'Moss Skincare'},{id:'4647',name:'XXIV Store'},
+  {id:'4732',name:'Ken Perfume'},{id:'5112',name:'MoiThom'},
+  {id:'2292',name:'Thế Giới Hàng Auth 88'},{id:'4940',name:'Mint Skin Beauty'},
+  {id:'5096',name:'The Senté Hill'},{id:'1164',name:'O2 PHARMACY'},
+  {id:'3612',name:'NGUYENKIM'},{id:'5092',name:'Thế Giới Son'},
+  {id:'5125',name:'Felice Beauty Garden'},{id:'1600',name:'ChoychoyStore'},
+  {id:'2423',name:'Peony Cosmetics'},{id:'4965',name:'nhathuocsuckhoe2'},
+  {id:'4365',name:'Nana Beauty & More'},{id:'1729',name:'MHDMART'},
+  {id:'4360',name:'SnapshopVN'},{id:'5094',name:'Shop Snap TPHCM'},
+  {id:'1602',name:'Winny Shop'},{id:'1105',name:'MjuMju'},
+  {id:'4294',name:'Life Healthy'},{id:'3009',name:'QuangNgoc1976'},
+  {id:'1414',name:'Dược Phẩm Tâm An'},{id:'2573',name:'MiMi Beauty'},
+  {id:'2225',name:'T&T Japan shop'},{id:'3047',name:'GREENBOX'},
+  {id:'3864',name:'Hàng ngoại giá tốt'},{id:'3852',name:'Baby Grow Shop'},
+  {id:'1273',name:'NHÀ THUỐC MINH TÂM'},{id:'3300',name:'Mayya Hàng Nội Địa Nhật'},
+  {id:'1258',name:'Shop Adam'},{id:'3337',name:'Shop Sài Gòn'},
+  {id:'4342',name:'Sản Phẩm Hỗ Trợ'},{id:'1015',name:'Green Healthy & Beauty'},
+  {id:'3218',name:'Bảo Lâm Anh'},{id:'2557',name:'XUAN MINH PHARMACY'},
+  {id:'2025',name:'Cali-Goods'}
+];
+
+const COMBO_ROW_COUNT = 5;
+let comboFileMap = {}; // index → File
+
+function buildChiakiUrl(shopId, mode) {
+  const status = mode === 'delivering' ? 'delivering' : 'all';
+  const today = new Date(), since = new Date(today);
+  since.setDate(since.getDate() - 14);
+  const fmt = d =>
+    `${String(d.getDate()).padStart(2,'0')}%2F` +
+    `${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
+  return `https://api.chiaki.vn/api/${shopId}/export-excel-order` +
+    `?source=seller&page_index=1&page_size=500&status=${status}` +
+    `&range_date=${fmt(since)}+-+${fmt(today)}` +
+    `&date_type=created_at&order=create-desc` +
+    `&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
+}
+
+function initComboRows() {
+  const shopOptions = COMBO_SHOPS.map(s =>
+    `<option value="${s.id}">${s.id} · ${s.name}</option>`
+  ).join('');
+
+  const container = document.getElementById('comboRows');
+  container.innerHTML = Array.from({length: COMBO_ROW_COUNT}, (_, i) => `
+    <div class="combo-row">
+      <select id="comboShop_${i}">
+        <option value="">-- Shop ${i+1} --</option>
+        ${shopOptions}
+      </select>
+      <div class="combo-upload-btn" id="comboUploadBtn_${i}"
+           onclick="document.getElementById('comboInput_${i}').click()">
+        📎 Chọn file
+      </div>
+      <input type="file" id="comboInput_${i}" accept=".xlsx,.xls"
+             style="display:none"
+             onchange="handleComboFile(${i}, this.files[0])"/>
+    </div>
+  `).join('');
+}
+
+function handleComboFile(index, file) {
+  if (!file) return;
+  comboFileMap[index] = file;
+  const btn = document.getElementById(`comboUploadBtn_${index}`);
+  // Hiện tên file ngắn gọn tối đa 12 ký tự
+  const shortName = file.name.length > 14 ? file.name.slice(0,12) + '…' : file.name;
+  btn.textContent = `✅ ${shortName}`;
+  btn.classList.add('has-file');
+}
+
+function openAllComboLinks() {
+  const mode = document.getElementById('comboMode').value;
+  let opened = 0;
+  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
+    const shopId = document.getElementById(`comboShop_${i}`)?.value;
+    if (!shopId) continue;
+    window.open(buildChiakiUrl(shopId, mode), '_blank');
+    opened++;
+  }
+  if (!opened) {
+    const msg = document.getElementById('comboMsg');
+    msg.textContent = 'Vui lòng chọn ít nhất 1 shop.';
+    msg.className = 'sync-msg err';
+  }
+}
+
+async function doComboSync() {
+  const mode = document.getElementById('comboMode').value;
+  const btn  = document.getElementById('btnComboSync');
+  const msg  = document.getElementById('comboMsg');
+
+  // Gom các hàng có đủ shop + file
+  const rows = [];
+  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
+    const shopId = document.getElementById(`comboShop_${i}`)?.value;
+    const file   = comboFileMap[i];
+    if (shopId && file) rows.push({ shopId, file });
+  }
+
+  if (!rows.length) {
+    msg.textContent = 'Vui lòng chọn shop và upload file cho ít nhất 1 hàng.';
+    msg.className = 'sync-msg err';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = `⏳ Đang sync 0/${rows.length}...`;
+  msg.className = 'sync-msg';
+
+  const results = [];
+  for (let i = 0; i < rows.length; i++) {
+    const { shopId, file } = rows[i];
+    btn.textContent = `⏳ Đang sync ${i+1}/${rows.length}...`;
+
+    const formData = new FormData();
+    formData.append('shop_id', shopId);
+    formData.append('mode', mode);
+    formData.append('file', file);
+
+    try {
+      const res  = await fetch('/api/sync-upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.ok) {
+        results.push(`✅ ${data.shop_name}: ${data.synced} đơn`);
+      } else {
+        results.push(`❌ Shop ${shopId}: ${data.error}`);
+      }
+    } catch (e) {
+      results.push(`❌ Shop ${shopId}: lỗi kết nối`);
+    }
+  }
+
+  msg.innerHTML = results.join('<br>');
+  msg.className = 'sync-msg ok';
+  btn.disabled = false;
+  btn.textContent = '⚡ SYNC COMBO';
+
+  // Reset file
+  comboFileMap = {};
+  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
+    const uploadBtn = document.getElementById(`comboUploadBtn_${i}`);
+    if (uploadBtn) {
+      uploadBtn.textContent = '📎 Chọn file';
+      uploadBtn.classList.remove('has-file');
+    }
+    const input = document.getElementById(`comboInput_${i}`);
+    if (input) input.value = '';
+  }
+
+  currentPage = 1;
+  await loadOrders();
+  await loadSummary();
+}
+
+// Khởi tạo khi load trang
+initComboRows();
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
 </script>
