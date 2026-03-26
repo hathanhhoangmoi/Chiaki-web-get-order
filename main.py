@@ -60,6 +60,7 @@ VALID_KEYS = {
     "PHONE-KEY-1587-6140": 0,
     "PHONE-KEY-5904-2783": 0,
     "PHONE-KEY-9368-5016": 0,
+    "PHONE-KEY-PHUONG2000": 0,
 }
 KEY_LIMIT = 10
 # Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
@@ -69,7 +70,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
+UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG", "PHONE-KEY-PHUONG2000"}
 # ── Key management cho Cancel Order ───────────────────────
 CANCEL_KEYS = {
     "ADMIN-UNLIMITED-HOANG": 0,
