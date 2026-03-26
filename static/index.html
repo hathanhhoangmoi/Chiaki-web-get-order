@@ -5197,6 +5197,10 @@ async function doComboSync() {
   await loadSummary();
 }
 async function fetchSideOrderInfo() {
+  if (!errEl || !resultEl || !btn) {
+    alert('Lỗi DOM: thiếu element. Kiểm tra lại HTML.');
+    return;
+  }
   const code = document.getElementById('sideInfoOrderCode').value.trim();
   const key  = document.getElementById('sideInfoKey').value.trim();
   const errEl = document.getElementById('sideInfoError');
