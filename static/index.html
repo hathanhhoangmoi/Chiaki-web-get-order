@@ -4964,19 +4964,26 @@ function handleComboFile(index, file) {
 
 function openAllComboLinks() {
   const mode = document.getElementById('comboMode').value;
-  let opened = 0;
+  const links = [];
+
   for (let i = 0; i < COMBO_ROW_COUNT; i++) {
     const shopId = document.getElementById(`comboShop_${i}`)?.value;
     if (!shopId) continue;
-    window.open(buildChiakiUrl(shopId, mode), '_blank');
-    opened++;
+    links.push(buildChiakiUrl(shopId, mode));
   }
-  if (!opened) {
+
+  if (!links.length) {
     const msg = document.getElementById('comboMsg');
     msg.textContent = 'Vui lòng chọn ít nhất 1 shop.';
     msg.className = 'sync-msg err';
+    return;
   }
-}
+
+  // Mở tab đầu tiên ngay lập tức (trong user gesture)
+  // Các tab sau delay nhỏ để tránh bị trình duyệt chặn
+  links.forEach((url, i) => {
+    setTimeout(() => window.open(url, '_blank'), i * 300);
+  });
 
 async function doComboSync() {
   const mode = document.getElementById('comboMode').value;
