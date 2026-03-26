@@ -1143,7 +1143,33 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   color: #065f46;
   font-weight: 700;
 }
-
+.combo-drop-cell {
+  border: 2px dashed rgba(167,139,250,.4);
+  border-radius: 10px;
+  padding: 6px 10px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255,255,255,.4);
+  color: #7c6fa0;
+  font-size: 11px;
+  min-width: 90px;
+  transition: all .2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.combo-drop-cell:hover,
+.combo-drop-cell.dragover {
+  border-color: #a78bfa;
+  background: rgba(167,139,250,.1);
+}
+.combo-drop-cell.has-file {
+  border-color: #6ee7b7;
+  background: rgba(167,243,208,.2);
+  color: #065f46;
+  font-weight: 700;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -4912,7 +4938,7 @@ const COMBO_SHOPS = [
   {id:'2025',name:'Cali-Goods'}
 ];
 
-const COMBO_ROW_COUNT = 5;
+const COMBO_ROW_COUNT = 10;
 let comboFileMap = {}; // index → File
 
 function buildChiakiUrl(shopId, mode) {
@@ -4941,9 +4967,13 @@ function initComboRows() {
         <option value="">-- Shop ${i+1} --</option>
         ${shopOptions}
       </select>
-      <div class="combo-upload-btn" id="comboUploadBtn_${i}"
-           onclick="document.getElementById('comboInput_${i}').click()">
-        📎 Chọn file
+      <div class="combo-drop-cell"
+           id="comboUploadBtn_${i}"
+           onclick="document.getElementById('comboInput_${i}').click()"
+           ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dragover')"
+           ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
+           ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dragover'); handleComboFile(${i}, event.dataTransfer.files[0])">
+        📎 Thả file
       </div>
       <input type="file" id="comboInput_${i}" accept=".xlsx,.xls"
              style="display:none"
