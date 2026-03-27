@@ -1348,7 +1348,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       letter-spacing:.04em;
       text-transform:uppercase;
     ">
-      ⚙️ CURL HUỶ ĐƠN
+      ⚙️ cUrl tại đây
     </div>
 
     <div id="curlResultOrderInfo" style="
@@ -5237,7 +5237,7 @@ curl -s -X POST "https://api.chiaki.vn/api/order/request-cancel" \\
   | python3 -m json.tool`;
 
   window._generatedCurl = curlText;
-  document.getElementById('curlResultOrderInfo').textContent = `Mã đơn: ${code}  →  order_id: ${orderId}`;
+  document.getElementById('curlResultOrderInfo').textContent = `Mã đơn hàng: ${code}`;
   document.getElementById('curlResultText').textContent = curlText;
   document.getElementById('copyCurlMsg').textContent = '';
   document.getElementById('copyCurlBtn').textContent = '📋 Copy';
@@ -5252,8 +5252,8 @@ function copyCurlResult() {
   const text = window._generatedCurl;
   if (!text) return;
   const doSuccess = () => {
-    document.getElementById('copyCurlBtn').textContent = '✅ Đã copy!';
-    document.getElementById('copyCurlMsg').textContent = '✅ Đã copy — paste vào terminal để chạy!';
+    document.getElementById('copyCurlBtn').textContent = '💾 Đã copy!';
+    document.getElementById('copyCurlMsg').textContent = '🪣 Huỷ đơn thành công';
     setTimeout(() => {
       document.getElementById('copyCurlBtn').textContent = '📋 Copy';
       document.getElementById('copyCurlMsg').textContent = '';
@@ -5266,7 +5266,6 @@ function copyCurlResult() {
     document.body.removeChild(el); doSuccess();
   });
 }
-// ═══ END CURL HUỶ ĐƠN ═══
 
 // Khởi tạo khi load trang
 initComboRows();
