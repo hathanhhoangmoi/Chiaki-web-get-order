@@ -1226,7 +1226,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 <div class="download-panel">
   <div class="download-panel-title">🔍 Tìm kiếm đơn hàng</div>
   <input class="download-input" id="dlOrderCode" type="text"
-         placeholder="Nhập mã đơn (R123456789)..."
+         placeholder="Nhập mã đơn..."
          onkeydown="if(event.key==='Enter') searchOrder()">
   <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
   <div class="download-msg" id="dlMsg"></div>
@@ -1240,11 +1240,10 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div style="font-size:13px;font-weight:800;color:#3b3551">🛠️ Tạo cUrl huỷ đơn</div>
     </div>
-
     <div id="curlCardBody">
-      <label style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.4px">MÃ ĐƠN HÀNG</label>
+      <label style="font-family:monospace;font-size:11px;font-weight:700;color:#3b3551;letter-spacing:.5px">MÃ ĐƠN HÀNG</label>
       <input id="curlOrderInput" type="text"
-        placeholder="VD: R1234567890"
+        placeholder="Nhập mã đơn hàng...."
         onkeydown="if(event.key==='Enter') generateCancelCurl()"
         oninput="previewCurlOrderId()"
         style="
