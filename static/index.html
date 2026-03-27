@@ -957,6 +957,15 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   outline: none; transition: border .2s;
   box-sizing: border-box; margin-bottom: 10px;
 }
+.curlOrderInput {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid rgba(198,181,255,.5);
+  border-radius: 12px; font-size: 12px;
+  font-family: monospace; letter-spacing: .5px;
+  background: rgba(255,255,255,.6); color: #3b3551;
+  outline: none; transition: border .2s;
+  box-sizing: border-box; margin-bottom: 10px;
+}
 .download-input:focus {
   border-color: #a78bfa;
   box-shadow: 0 0 0 3px rgba(167,139,250,.15);
@@ -1241,7 +1250,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <div style="font-size:13px;font-weight:800;color:#3b3551">🛠️ Tạo cUrl huỷ đơn</div>
     </div>
     <div id="curlCardBody">
-      <label style="font-family:monospace;font-size:11px;font-weight:700;color:#3b3551;letter-spacing:.5px">MÃ ĐƠN HÀNG</label>
       <input id="curlOrderInput" type="text"
         placeholder="Nhập mã đơn hàng...."
         onkeydown="if(event.key==='Enter') generateCancelCurl()"
@@ -1320,7 +1328,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
 <div class="sync-panel" id="syncPanel">
-  <div class="sync-panel-title">🔄 Đồng bộ đơn hàng</div>
+  <div class="sync-panel-title">🗂️ Tải danh sách đơn hàng</div>
   <label class="sync-label">Chọn gian hàng</label>
   <select class="sync-input" id="syncShopId" onchange="updateChiakiLink()">
     <option value="">-- Chọn shop --</option>
@@ -1390,7 +1398,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <div class="sync-msg" id="syncMsg"></div>
 <!-- SYNC COMBO -->
   <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
-    <div class="sync-panel-title">Đồng bộ nhiều gian hàng</div>
+    <div class="sync-panel-title">📎 Đồng bộ đơn hàng</div>
 
     <label class="sync-label">Phân loại</label>
     <select class="sync-input" id="comboMode">
@@ -1872,7 +1880,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <div class="info-modal-title">Tra cứu/huỷ đơn hàng</div>
     <div class="info-modal-sub">Nhập mã đơn và PHONE/KEY để lấy thông tin chi tiết</div>
     <input class="info-input" id="infoOrderCode" type="text"
-      placeholder="Mã đơn hàng (VD: R1234567890)"
+      placeholder="Nhập mã đơn..."
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
     <input class="info-input" id="infoKey" type="text"
   placeholder="Nhập key (VD: PHONE-KEY-****-****)"
