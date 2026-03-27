@@ -2386,9 +2386,7 @@ const SHOP_ID_NAME = {
   } else {
       irProduct.textContent = data.product || '—';
   }
-
     document.getElementById('irQuantity').textContent = data.quantity      ?? '—';
-
     // ── URL History ──
     const uhEl = document.getElementById('irUrlHistory');
     if (uhEl) {
@@ -2410,7 +2408,7 @@ const SHOP_ID_NAME = {
                     const isBuyNow = url.includes('is_buy_now=1');
                     const qty = (url.match(/quantity=(\d+)/) || [])[1] || '1';
                     if (isBuyNow) {
-                        icon = '✅';
+                        icon = '📦';
                         action = `<b style="color:#059669">ĐÃ ĐẶT HÀNG</b>`;
                         if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
                         if (storeName) action += ` tại <b>${storeName}</b>`;
@@ -2473,7 +2471,7 @@ const SHOP_ID_NAME = {
     document.getElementById('irPayment').textContent  = data.payment       || '—';
     document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
     document.getElementById('irShippingCode').textContent    = data.shipping_code         || '—';
-    document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✅ Đã giao thành công' : (data.delivery_status || '—');
+    document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✨ Đã giao thành công' : (data.delivery_status || '—');
     document.getElementById('irShipperReceive').textContent  = data.shipper_receive_time  || '—';
 
     window.currentInfoData = {
