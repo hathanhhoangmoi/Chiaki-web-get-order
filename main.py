@@ -153,7 +153,6 @@ def serialize_order(o, mask=False):
         "shop_name":     o.shop_name,  # ✅ luôn hiện tên shop
         "buyer_name":    M if mask else o.buyer_name,
         "customer_name": M if mask else o.customer_name,
-        "phone":         M if mask else o.phone,
         "address":       M if mask else o.address,
         "product":       M if mask else o.product,
         "quantity":      M if mask else o.quantity,
@@ -237,7 +236,6 @@ def get_orders(
             "shop_id":       o.shop_id,
             "buyer_name":    M if mask else o.buyer_name,
             "customer_name": M if mask else o.customer_name,
-            "phone":         M if mask else o.phone,
             "address":       M if mask else o.address,
             "product":       M if mask else o.product,
             "quantity":      M if mask else o.quantity,
