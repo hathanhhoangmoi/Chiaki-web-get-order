@@ -1018,22 +1018,18 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   @page { size: 4in 6in; margin: 0; }
 }
 .sync-panel {
-  display: none;
-  position: fixed;
-  left: 24px; top: 92px;
-  z-index: 7000;
-  width: 360px;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  background: rgba(255,255,255,.88);
-  backdrop-filter: blur(30px) saturate(200%);
-  -webkit-backdrop-filter: blur(30px) saturate(200%);
-  border: 1px solid rgba(198,181,255,.35);
-  border-radius: 20px;
-  padding: 18px 16px 16px;
-  box-shadow: 0 8px 32px rgba(139,92,246,.15);
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  max-height: none;
+  overflow-y: visible;
+  backdrop-filter: none;
 }
-.sync-panel.visible { display: block; }
+
 .sync-panel-title {
   font-size: 13px; font-weight: 700; color: #3b3551;
   margin-bottom: 14px;
@@ -1209,7 +1205,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <div class="logo">☁️</div>
     <div>
       <div style="font-size:17px;font-weight:700;color:#3b3551">Bán hàng Chiaki cùng Chang ✨</div>
-      <div class="header-sub">Tổng hợp đơn hàng theo gian hàng · Tự động cập nhật sau 45 phút</div>
+      <div class="header-sub">Đồng bộ, xử lý đơn hàng Chiaki</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
@@ -1218,35 +1214,12 @@ select.sync-input { font-family: inherit; cursor: pointer; }
         🔑 <span id="maskedId">—</span>
         &nbsp;·&nbsp;
         ⏱ <span id="expireCountdown" style="font-family:monospace">--:--:--</span>
-        <button class="btn-change-id" onclick="changeId()">Đổi ID</button>
+        <button class="btn-change-id" onclick="changeId()">Sign Out</button>
       </div>
     </div>
-    
 <button class="btn btn-primary" id="btnGetPhone" onclick="toggleOrderInfoModal()">
   🔍 XỬ LÝ ĐƠN HÀNG
 </button>
-<button class="btn btn-primary" onclick="toggleSyncPanel()">
-  🔄 ĐỒNG BỘ ĐƠN HÀNG
-</button>
-<button class="btn btn-primary" onclick="toggleShopInfoModal()">
-  🏪 NHÀ BÁN
-</button>
-<button class="btn btn-primary" onclick="toggleCustomerInfoModal()">
-  👤 KHÁCH HÀNG
-</button>
-<button class="btn btn-primary" onclick="toggleChatInfoModal()">
-  💬 TRÒ CHUYỆN
-</button>
-
-<button class="btn btn-primary" onclick="toggleRevModal()">
-  💰 GMV
-  <span style="font-size:10px;background:rgba(255,255,255,.3);padding:1px 6px;border-radius:10px">30 ngày</span>
-</button>
-<button class="btn btn-primary" onclick="toggleNetRevenueModal()">
-  📊 NVM Pending
-  <span style="font-size:10px;background:rgba(255,255,255,.3);padding:1px 6px;border-radius:10px">14 ngày</span>
-</button>
-    <div class="sync-info">Cập nhật gần nhất:<br><b id="lastSyncTime">—</b></div>
   </div>
 </div>
 
@@ -1257,6 +1230,116 @@ select.sync-input { font-family: inherit; cursor: pointer; }
          onkeydown="if(event.key==='Enter') searchOrder()">
   <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
   <div class="download-msg" id="dlMsg"></div>
+  <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
+  <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
+<div class="sync-panel" id="syncPanel">
+  <div class="sync-panel-title">🔄 Đồng bộ đơn hàng</div>
+  <label class="sync-label">Chọn gian hàng</label>
+  <select class="sync-input" id="syncShopId" onchange="updateChiakiLink()">
+    <option value="">-- Chọn shop --</option>
+    <option value="2732">2732 · Min Duty</option>
+    <option value="4299">4299 · HADES Shop</option>
+    <option value="3522">3522 · ShipnhanhStore</option>
+    <option value="4337">4337 · TH Cosmetic</option>
+    <option value="3684">3684 · Hoya Life</option>
+    <option value="3540">3540 · Rongcon</option>
+    <option value="3783">3783 · Đẹp & Khoẻ 365</option>
+    <option value="1489">1489 · Beauty & Healthy</option>
+    <option value="4036">4036 · Kitty House</option>
+    <option value="635">635 · Trang Perfume</option>
+    <option value="1498">1498 · Kho Dược TPCN</option>
+    <option value="5090">5090 · Mason House Store</option>
+    <option value="5091">5091 · Gia Phương Shop</option>
+    <option value="4339">4339 · PINASAGO Pin Sài Gòn</option>
+    <option value="4961">4961 · Kalos Việt Nam</option>
+    <option value="4872">4872 · Green House</option>
+    <option value="4917">4917 · Moss Skincare</option>
+    <option value="4647">4647 · XXIV Store</option>
+    <option value="4732">4732 · Ken Perfume</option>
+    <option value="5112">5112 · MoiThom - Mèo bán nước hoa</option>
+    <option value="2292">2292 · Thế Giới Hàng Auth 88</option>
+    <option value="4940">4940 · Mint- Skin Beauty & Cosmetics</option>
+    <option value="5096">5096 · The Senté Hill</option>
+    <option value="1164">1164 · O2 PHARMACY</option>
+    <option value="3612">3612 · NGUYENKIM</option>
+    <option value="5092">5092 · Thế Giới Son</option>
+    <option value="5125">5125 · Felice Beauty Garden</option>
+    <option value="1600">1600 · ChoychoyStore</option>
+    <option value="2423">2423 · Peony Cosmetics</option>
+    <option value="4965">4965 · nhathuocsuckhoe2</option>
+    <option value="4365">4365 · Nana Beauty & More</option>
+    <option value="1729">1729 · MHDMART</option>
+    <option value="4360">4360 · SnapshopVN</option>
+    <option value="5094">5094 · Shop Snap TPHCM</option>
+    <option value="1602">1602 · Winny Shop</option>
+    <option value="1105">1105 · MjuMju</option>
+    <option value="4294">4294 · Life Healthy</option>
+    <option value="3009">3009 · QuangNgoc1976</option>
+    <option value="1414">1414 · Dược Phẩm Tâm An</option>
+    <option value="2573">2573 · MiMi Beauty</option>
+    <option value="2225">2225 · T&T Japan shop</option>
+    <option value="3047">3047 · GREENBOX</option>
+    <option value="3864">3864 · Hàng ngoại giá tốt</option>
+    <option value="3852">3852 · Baby Grow Shop</option>
+    <option value="1273">1273 · NHÀ THUỐC MINH TÂM</option>
+    <option value="3300">3300 · Mayya Hàng Nội Địa Nhật</option>
+    <option value="1258">1258 · Shop Adam</option>
+    <option value="3337">3337 · Shop Sài Gòn</option>
+    <option value="4342">4342 · Sản Phẩm Hỗ Trợ</option>
+    <option value="1015">1015 · Green Healthy & Beauty</option>
+    <option value="3218">3218 · Bảo Lâm Anh</option>
+    <option value="2557">2557 · XUAN MINH PHARMACY</option>
+    <option value="2025">2025 · Cali-Goods</option>
+    <option value="5114">5114 · LixiBox Hill</option>
+  </select>
+
+  <label class="sync-label">Tải file Excel từ Chiaki</label>
+  <a class="btn-chiaki-link" id="chiakiLink" href="#" target="_blank">
+    🔗 Mở link tải Excel
+  </a>
+  <div class="sync-hint">
+    Bấm link trên → trình duyệt tải file Excel → kéo file vào đây
+  </div>
+
+  <div class="sync-dropzone" id="syncDropzone"
+       ondragover="event.preventDefault(); this.classList.add('dragover')"
+       ondragleave="this.classList.remove('dragover')"
+       ondrop="handleSyncDrop(event)"
+       onclick="document.getElementById('syncFileInput').click()">
+    <div class="sync-drop-icon">📂</div>
+    <div>Kéo thả file Excel vào đây<br><span style="font-size:10px;color:#b0a0c8">hoặc click để chọn file</span></div>
+  </div>
+  <input type="file" id="syncFileInput" accept=".xlsx,.xls"
+         style="display:none" onchange="handleSyncFile(this.files[0])"/>
+
+  <div class="sync-file-name" id="syncFileName"></div>
+
+  <button class="btn-sync" id="btnSync" onclick="doSyncUpload()" disabled>
+    🔄 SYNC NOW
+  </button>
+  <div class="sync-msg" id="syncMsg"></div>
+<!-- SYNC COMBO -->
+  <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
+    <div class="sync-panel-title">⚡ Sync Combo (nhiều shop)</div>
+
+    <label class="sync-label">Loại đơn hàng</label>
+    <select class="sync-input" id="comboMode">
+      <option value="waiting">Chờ lấy hàng</option>
+      <option value="delivering">Đang giao</option>
+    </select>
+
+    <!-- Các hàng shop: link trái, upload phải -->
+    <div id="comboRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+      <!-- render bằng JS -->
+    </div>
+    <button class="btn-sync" id="btnComboSync"
+            style="margin-top:8px;background: linear-gradient(135deg, #bfdbfe, #60a5fa); color: #1e3a5f;"
+            onclick="doComboSync()">
+      ⚡ SYNC ALL
+    </button>
+    <div class="sync-msg" id="comboMsg"></div>
+  </div>
+</div>
 </div>
 
 <div class="container">
@@ -2020,115 +2103,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
              cursor:pointer; transition:opacity .2s; box-shadow:0 3px 12px rgba(231,76,60,0.25);">
       HUỶ
     </button>
-  </div>
-</div>
-<!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
-<div class="sync-panel" id="syncPanel">
-  <div class="sync-panel-title">🔄 Đồng bộ đơn hàng</div>
-  <label class="sync-label">Chọn gian hàng</label>
-  <select class="sync-input" id="syncShopId" onchange="updateChiakiLink()">
-    <option value="">-- Chọn shop --</option>
-    <option value="2732">2732 · Min Duty</option>
-    <option value="4299">4299 · HADES Shop</option>
-    <option value="3522">3522 · ShipnhanhStore</option>
-    <option value="4337">4337 · TH Cosmetic</option>
-    <option value="3684">3684 · Hoya Life</option>
-    <option value="3540">3540 · Rongcon</option>
-    <option value="3783">3783 · Đẹp & Khoẻ 365</option>
-    <option value="1489">1489 · Beauty & Healthy</option>
-    <option value="4036">4036 · Kitty House</option>
-    <option value="635">635 · Trang Perfume</option>
-    <option value="1498">1498 · Kho Dược TPCN</option>
-    <option value="5090">5090 · Mason House Store</option>
-    <option value="5091">5091 · Gia Phương Shop</option>
-    <option value="4339">4339 · PINASAGO Pin Sài Gòn</option>
-    <option value="4961">4961 · Kalos Việt Nam</option>
-    <option value="4872">4872 · Green House</option>
-    <option value="4917">4917 · Moss Skincare</option>
-    <option value="4647">4647 · XXIV Store</option>
-    <option value="4732">4732 · Ken Perfume</option>
-    <option value="5112">5112 · MoiThom - Mèo bán nước hoa</option>
-    <option value="2292">2292 · Thế Giới Hàng Auth 88</option>
-    <option value="4940">4940 · Mint- Skin Beauty & Cosmetics</option>
-    <option value="5096">5096 · The Senté Hill</option>
-    <option value="1164">1164 · O2 PHARMACY</option>
-    <option value="3612">3612 · NGUYENKIM</option>
-    <option value="5092">5092 · Thế Giới Son</option>
-    <option value="5125">5125 · Felice Beauty Garden</option>
-    <option value="1600">1600 · ChoychoyStore</option>
-    <option value="2423">2423 · Peony Cosmetics</option>
-    <option value="4965">4965 · nhathuocsuckhoe2</option>
-    <option value="4365">4365 · Nana Beauty & More</option>
-    <option value="1729">1729 · MHDMART</option>
-    <option value="4360">4360 · SnapshopVN</option>
-    <option value="5094">5094 · Shop Snap TPHCM</option>
-    <option value="1602">1602 · Winny Shop</option>
-    <option value="1105">1105 · MjuMju</option>
-    <option value="4294">4294 · Life Healthy</option>
-    <option value="3009">3009 · QuangNgoc1976</option>
-    <option value="1414">1414 · Dược Phẩm Tâm An</option>
-    <option value="2573">2573 · MiMi Beauty</option>
-    <option value="2225">2225 · T&T Japan shop</option>
-    <option value="3047">3047 · GREENBOX</option>
-    <option value="3864">3864 · Hàng ngoại giá tốt</option>
-    <option value="3852">3852 · Baby Grow Shop</option>
-    <option value="1273">1273 · NHÀ THUỐC MINH TÂM</option>
-    <option value="3300">3300 · Mayya Hàng Nội Địa Nhật</option>
-    <option value="1258">1258 · Shop Adam</option>
-    <option value="3337">3337 · Shop Sài Gòn</option>
-    <option value="4342">4342 · Sản Phẩm Hỗ Trợ</option>
-    <option value="1015">1015 · Green Healthy & Beauty</option>
-    <option value="3218">3218 · Bảo Lâm Anh</option>
-    <option value="2557">2557 · XUAN MINH PHARMACY</option>
-    <option value="2025">2025 · Cali-Goods</option>
-    <option value="5114">5114 · LixiBox Hill</option>
-  </select>
-
-  <label class="sync-label">Tải file Excel từ Chiaki</label>
-  <a class="btn-chiaki-link" id="chiakiLink" href="#" target="_blank">
-    🔗 Mở link tải Excel
-  </a>
-  <div class="sync-hint">
-    Bấm link trên → trình duyệt tải file Excel → kéo file vào đây
-  </div>
-
-  <div class="sync-dropzone" id="syncDropzone"
-       ondragover="event.preventDefault(); this.classList.add('dragover')"
-       ondragleave="this.classList.remove('dragover')"
-       ondrop="handleSyncDrop(event)"
-       onclick="document.getElementById('syncFileInput').click()">
-    <div class="sync-drop-icon">📂</div>
-    <div>Kéo thả file Excel vào đây<br><span style="font-size:10px;color:#b0a0c8">hoặc click để chọn file</span></div>
-  </div>
-  <input type="file" id="syncFileInput" accept=".xlsx,.xls"
-         style="display:none" onchange="handleSyncFile(this.files[0])"/>
-
-  <div class="sync-file-name" id="syncFileName"></div>
-
-  <button class="btn-sync" id="btnSync" onclick="doSyncUpload()" disabled>
-    🔄 SYNC NOW
-  </button>
-  <div class="sync-msg" id="syncMsg"></div>
-<!-- SYNC COMBO -->
-  <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
-    <div class="sync-panel-title">⚡ Sync Combo (nhiều shop)</div>
-
-    <label class="sync-label">Loại đơn hàng</label>
-    <select class="sync-input" id="comboMode">
-      <option value="waiting">Chờ lấy hàng</option>
-      <option value="delivering">Đang giao</option>
-    </select>
-
-    <!-- Các hàng shop: link trái, upload phải -->
-    <div id="comboRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-      <!-- render bằng JS -->
-    </div>
-    <button class="btn-sync" id="btnComboSync"
-            style="margin-top:8px;background: linear-gradient(135deg, #bfdbfe, #60a5fa); color: #1e3a5f;"
-            onclick="doComboSync()">
-      ⚡ SYNC ALL
-    </button>
-    <div class="sync-msg" id="comboMsg"></div>
   </div>
 </div>
 
@@ -3122,7 +3096,7 @@ function renderChart(mode) {
 
   } else {
     // By shop — doughnut
-    const raw    = (chartRawData.by_shop || []).slice(0, 10);
+    const raw    = (chartRawData.by_shop || []).slice(0, 55);
     const labels = raw.map(d => d.shop || 'Unknown');
     const values = raw.map(d => d.count);
 
@@ -4734,9 +4708,6 @@ async function doCancelSide() {
     btn.disabled = false;
     btn.innerHTML = '🚫 Gửi yêu cầu huỷ đơn';
   }
-}
-function toggleSyncPanel() {
-  document.getElementById('syncPanel').classList.toggle('visible');
 }
 
 async function doSync() {
