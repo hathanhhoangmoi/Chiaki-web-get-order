@@ -2394,16 +2394,6 @@ function toggleOrderInfoModal() {
   setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
 }
 
-
-function closeOrderInfoModal() {
-  document.getElementById('orderInfoBg').classList.remove('show');
-  document.getElementById('infoResult').classList.remove('show');
-  document.getElementById('infoError').classList.remove('show');
-  document.getElementById('infoOrderCode').value = '';
-  document.getElementById('infoKeyStatus').textContent = '';
-
-}
-
 async function fetchOrderInfo() {
   const code = document.getElementById('infoOrderCode').value.trim();
   const key  = document.getElementById('infoKey').value.trim();
