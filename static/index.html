@@ -5220,7 +5220,7 @@ if (checkIdGate()) { init(); }
     position:fixed;bottom:20px;left:20px;z-index:4000;
     background:rgba(255,255,255,.95);
     border:1.5px solid rgba(167,139,250,.35);
-    border-radius:16px;padding:16px 18px;width:280px;
+    border-radius:16px;padding:16px 18px;width:360px;
     box-shadow:0 4px 18px rgba(107,33,168,.15);
     backdrop-filter:blur(12px);font-family:inherit;
   ">
@@ -5263,26 +5263,34 @@ if (checkIdGate()) { init(); }
     align-items:center;justify-content:center;
   " onclick="if(event.target===this) closeCurlModal()">
     <div style="
-      background:#1e1b2e;border-radius:20px;
-      padding:24px 22px;max-width:680px;width:95%;
-      box-shadow:0 16px 48px rgba(0,0,0,.4);
-      position:relative;font-family:inherit;
-      border:1.5px solid rgba(167,139,250,.3);
-    ">
+        background:linear-gradient(135deg,rgba(186,230,255,.18) 0%,rgba(147,210,255,.12) 50%,rgba(186,230,255,.18) 100%);
+        backdrop-filter:blur(28px) saturate(180%);
+        -webkit-backdrop-filter:blur(28px) saturate(180%);
+        border-radius:24px;
+        padding:24px 22px;max-width:680px;width:95%;
+        box-shadow:
+          0 8px 32px rgba(56,189,248,.18),
+          0 2px 8px rgba(56,189,248,.12),
+          inset 0 1.5px 0 rgba(255,255,255,.45),
+          inset 0 -1px 0 rgba(147,210,255,.2);
+        position:relative;font-family:inherit;
+        border:1.5px solid rgba(186,230,255,.45);
+      ">
+
       <button onclick="closeCurlModal()" style="
         position:absolute;top:12px;right:14px;
-        background:rgba(255,255,255,.1);border:none;
+        background:rgba(186,230,255,.3);border:none;
         border-radius:50%;width:30px;height:30px;
-        font-size:16px;cursor:pointer;color:#c4b5fd;
+        font-size:16px;cursor:pointer;color:#0369a1;
       ">✕</button>
-      <div style="font-size:13px;font-weight:800;color:#c4b5fd;margin-bottom:4px">⚙️ CURL HUỶ ĐƠN</div>
-      <div id="curlResultOrderInfo" style="font-size:11px;color:#7c6fa0;margin-bottom:14px"></div>
+      <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:4px">⚙️ CURL HUỶ ĐƠN</div>
+      <div id="curlResultOrderInfo" style="font-size:11px;color:#0284c7;margin-bottom:14px"></div>
       <div style="position:relative">
         <pre id="curlResultText" style="
-          background:rgba(0,0,0,.4);
-          border:1px solid rgba(167,139,250,.2);
+          background:rgba(2,132,199,.12);
+          border:1px solid rgba(147,210,255,.35);
           border-radius:12px;padding:16px;
-          font-size:11px;color:#e2d9f3;
+          font-size:11px;color:#0c4a6e;
           font-family:'Courier New',monospace;
           white-space:pre-wrap;word-break:break-all;
           max-height:420px;overflow-y:auto;
@@ -5290,14 +5298,14 @@ if (checkIdGate()) { init(); }
         "></pre>
         <button id="copyCurlBtn" onclick="copyCurlResult()" style="
           position:absolute;top:10px;right:10px;
-          background:rgba(167,139,250,.25);
-          border:1px solid rgba(167,139,250,.4);
+          background:rgba(186,230,255,.35);
+          border:1px solid rgba(56,189,248,.5);
           border-radius:8px;padding:5px 12px;
-          font-size:11px;font-weight:700;color:#c4b5fd;
+          font-size:11px;font-weight:700;color:#0369a1;
           cursor:pointer;font-family:inherit;
         ">📋 Copy</button>
       </div>
-      <div id="copyCurlMsg" style="font-size:12px;color:#6ee7b7;min-height:18px;margin-top:10px;text-align:center;"></div>
+      <div id="copyCurlMsg" style="font-size:12px;color:#0369a1;min-height:18px;margin-top:10px;text-align:center;"></div>
     </div>
   </div>
   <!-- ═══ END CURL HUỶ ĐƠN ═══ -->
