@@ -410,20 +410,15 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         url_history_parsed = []
         try:
             meta_raw = d.get("meta_data", "{}")
-            meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+            meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else (meta_raw or {})
             uh = meta.get("url_history", {})
             if isinstance(uh, dict):
                 url_history_parsed = [v for _, v in sorted(uh.items(), key=lambda x: int(x[0]))]
             elif isinstance(uh, list):
                 url_history_parsed = uh
         except Exception:
-                url_history_parsed = []
-        meta = {}
-        try:
-            meta = json.loads(g("meta_data") or "{}")
-        except:
-            pass
-
+            meta = {}
+            url_history_parsed = []
         source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
         return {
     "order_code":           g("code"),
