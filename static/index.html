@@ -1319,10 +1319,10 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 <div class="info-modal-bg" id="orderInfoBg" style="display:flex">
   <div class="info-modal">
     <div class="info-modal-icon">🔍</div>
-    <div class="info-modal-title">Order information</div>
-    <div class="info-modal-sub">Input order code/key....</div>
+    <div class="info-modal-title">Thông tin đơn hàng</div>
+    <div class="info-modal-sub">Điền mã đơn và key để nhận thông tin đơn hàng</div>
     <input class="info-input" id="infoOrderCode" type="text"
-      placeholder="Order code..."
+      placeholder="Mã đơn..."
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
     <input class="info-input" id="infoKey" type="text"
   placeholder="Key..."
@@ -1363,35 +1363,31 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   </div>
 </div>
   <!-- ═══ CURL HUỶ ĐƠN ═══ -->
-  <div id="curlFixedCard" style="
-  margin-top:16px;
-  border-top:1px solid rgba(198,181,255,.3);
-  padding-top:16px;
-  font-family:inherit;
-">
-  <div class="download-panel-title">🛠️ Create cUrl</div>
+<div class="info-modal" style="margin-top: 16px;">
+  <div class="info-modal-icon">🛠️</div>
+  <div class="info-modal-title">Tạo mã cURL</div>
+  <div class="info-modal-sub">Nhập mã đơn để tạo mã huỷ đơn</div>
 
   <input
-    class="download-input"
+    class="info-input"
     id="curlOrderInput"
     type="text"
-    placeholder="Order code..."
+    placeholder="Mã đơn..."
     onkeydown="if(event.key==='Enter') generateCancelCurl()"
     oninput="previewCurlOrderId()"
   />
 
   <div id="curlOrderPreview" style="
-    font-size:11px;color:#9b8bb4;
-    display:none;margin:4px 0 6px;
-    padding-left:2px;
+    font-size: 11px; color: #7c3aed;
+    display: none; margin: -6px 0 10px;
+    padding-left: 2px; font-family: monospace;
   "></div>
 
-  <button
-    class="btn-download"
-    onclick="generateCancelCurl()"
-  >⚙️ Create cURL</button>
+  <button class="btn-info-search" onclick="generateCancelCurl()">
+    ⚙️ Tạo mã cURL
+  </button>
 
-  <div id="curlCardMsg" class="download-msg"></div>
+  <div id="curlCardMsg" class="info-error" style="margin-top:10px"></div>
 </div>
 
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
