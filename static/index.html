@@ -826,25 +826,23 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 .history-panel {
   display: none;
   position: fixed;
-  right: 24px;                                    /* lề phải */
-  top: 92px;                                      /* cách header */
-  bottom: 24px;                                   /* lề dưới */
+  right: 24px;
+  top: 72px;
+  bottom: 24px;
   z-index: 8000;
   width: 360px;
-  background: rgba(255, 255, 255, .88);
+  background: rgba(255,255,255,.88);
   backdrop-filter: blur(30px) saturate(200%);
   -webkit-backdrop-filter: blur(30px) saturate(200%);
-  border: 1px solid rgba(198, 181, 255, .35);
-  border-radius: 20px;                            /* bo cong góc */
+  border: 1px solid rgba(198,181,255,.35);
+  border-radius: 20px;
   flex-direction: column;
   overflow: hidden;
-}
-.history-panel.open {
-  display: flex;
+  box-shadow: 0 16px 48px rgba(160,130,200,.25);
 }
 
 .history-panel.open {
-  display: flex;                        /* hiện khi có class .open */
+  display: flex;
 }
 
 .history-panel.open { transform: translateX(0); }
@@ -1266,6 +1264,29 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       </div>
     </div>
   </div>
+  <button
+  id="historyToggleBtn"
+  onclick="toggleHistoryPanel()"
+  style="
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(198,181,255,.4);
+    background: rgba(255,255,255,.4);
+    color: #7c6fa0;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  "
+  onmouseover="this.style.background='rgba(255,255,255,.7)'"
+  onmouseout="this.style.background='rgba(255,255,255,.4)'"
+>
+  🕓 Log track
+</button>
 </div>
 
 <div class="download-panel">
@@ -2029,6 +2050,15 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 <div class="history-panel" id="historyPanel">
   <div class="history-header">
     <div class="history-header-title">📋 Lịch sử</div>
+    <button
+      onclick="toggleHistoryPanel()"
+      style="
+        width:28px; height:28px; border-radius:50%;
+        border:none; background:rgba(198,181,255,.3);
+        color:#7c6fa0; font-size:14px; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+      "
+    >✕</button>
     
   </div>
   <div class="history-tabs">
@@ -4007,9 +4037,6 @@ function initHistoryBtn() {
   const toggleBtn = document.getElementById('historyToggleBtn');
 
   if (uid === 'Chang2000') {
-    if (panel) {
-      panel.classList.add('open');   // panel hiện
-    }
     if (toggleBtn) {
       toggleBtn.classList.add('visible'); // nút tròn hiện
     }
