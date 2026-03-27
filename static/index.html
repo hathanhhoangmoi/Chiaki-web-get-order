@@ -1482,22 +1482,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <div class="table-count" id="tableCount"></div>
   </div>
 </div>
-<!-- Tab chờ lấy hàng / đang giao -->
-<div id="orderTabBar" style="display:flex;gap:8px;margin-bottom:12px;">
-  <button id="tabWaiting" onclick="switchOrderTab('waiting')"
-    style="padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;
-           background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;
-           font-weight:700;font-size:12px;font-family:inherit;
-           box-shadow:0 3px 12px rgba(167,139,250,.35);">
-    📦 Chờ lấy hàng
-  </button>
-  <button id="tabDelivering" onclick="switchOrderTab('delivering')"
-    style="padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;
-           background:rgba(255,255,255,.4);color:#7c6fa0;
-           font-weight:700;font-size:12px;font-family:inherit;">
-    🚚 Đang giao hàng
-  </button>
-</div>
 
   <!-- Panel đơn thường -->
   <div id="panelMain">
