@@ -5276,11 +5276,180 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.value = savedKey;
   }
 });
+// ═══ CURL HUỶ ĐƠN ═══
+let curlCardExpanded = true;
+
+function toggleCurlCard() {
+  curlCardExpanded = !curlCardExpanded;
+  document.getElementById('curlCardBody').style.display = curlCardExpanded ? 'block' : 'none';
+  document.getElementById('curlCardToggler').textContent  = curlCardExpanded ? 'Thu gọn ▲' : 'Mở rộng ▼';
+  document.getElementById('curlFixedCard').style.width    = curlCardExpanded ? '280px' : 'auto';
+}
+
+function previewCurlOrderId() {
+  const val  = document.getElementById('curlOrderInput').value.trim();
+  const prev = document.getElementById('curlOrderPreview');
+  if (val.length >= 9) {
+    prev.textContent = `🔢 order_id: ${val.slice(2, 9)}`;
+    prev.style.color = '#7c3aed';
+  } else if (val.length > 0) {
+    prev.textContent = '⚠️ Mã đơn cần ≥ 9 ký tự';
+    prev.style.color = '#f59e0b';
+  } else {
+    prev.textContent = '';
+  }
+}
+
+function generateCancelCurl() {
+  const code = document.getElementById('curlOrderInput').value.trim();
+  if (!code || code.length < 9) {
+    document.getElementById('curlOrderPreview').textContent = '⚠️ Mã đơn không hợp lệ!';
+    document.getElementById('curlOrderPreview').style.color = '#ef4444';
+    return;
+  }
+  const orderId = code.slice(2, 9);
+  const curlText =
+`ORDER_ID="${orderId}" && \\
+SYNC_ID=$(curl -s "https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=$ORDER_ID" \\
+  -H 'Accept: application/json, text/plain, */*' \\
+  -H 'platform: ios' \\
+  -H 'Cookie: laravel_session=eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D' \\
+  -H 'User-Agent: chiakiApp/3.6.2' \\
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['sync_id'])") && \\
+echo "✅ sync_id: $SYNC_ID" && \\
+curl -s -X POST "https://api.chiaki.vn/api/order/request-cancel" \\
+  -H "Accept: application/json, text/plain, */*" \\
+  -H "Accept-Encoding: gzip, deflate" \\
+  -H "Content-Type: application/json" \\
+  -H "token: YjYTQY7fP4vExhg0a8itBqBEFKzZlmcKWBoxkwc91XNyF3zpCi" \\
+  -H "User-Agent: chiakiApp/3.6.2" \\
+  --compressed \\
+  -d "{\\"sync_id\\":\\"$SYNC_ID\\",\\"order_id\\":\\"$ORDER_ID\\",\\"cancel_code\\":\\"change_item_order\\",\\"cancel_reason\\":\\"Thay đổi đơn hàng (màu sắc, kích thước, thêm mã giảm giá,...)\\"}" \\
+  | python3 -m json.tool`;
+
+  window._generatedCurl = curlText;
+  document.getElementById('curlResultOrderInfo').textContent = `Mã đơn: ${code}  →  order_id: ${orderId}`;
+  document.getElementById('curlResultText').textContent = curlText;
+  document.getElementById('copyCurlMsg').textContent = '';
+  document.getElementById('copyCurlBtn').textContent = '📋 Copy';
+  document.getElementById('curlResultBg').style.display = 'flex';
+}
+
+function closeCurlModal() {
+  document.getElementById('curlResultBg').style.display = 'none';
+}
+
+function copyCurlResult() {
+  const text = window._generatedCurl;
+  if (!text) return;
+  const doSuccess = () => {
+    document.getElementById('copyCurlBtn').textContent = '✅ Đã copy!';
+    document.getElementById('copyCurlMsg').textContent = '✅ Đã copy — paste vào terminal để chạy!';
+    setTimeout(() => {
+      document.getElementById('copyCurlBtn').textContent = '📋 Copy';
+      document.getElementById('copyCurlMsg').textContent = '';
+    }, 3000);
+  };
+  navigator.clipboard?.writeText(text).then(doSuccess).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = text; document.body.appendChild(el);
+    el.select(); document.execCommand('copy');
+    document.body.removeChild(el); doSuccess();
+  });
+}
+// ═══ END CURL HUỶ ĐƠN ═══
 
 // Khởi tạo khi load trang
 initComboRows();
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
 </script>
+  <!-- ═══ CURL HUỶ ĐƠN - GÓC DƯỚI TRÁI ═══ -->
+  <div id="curlFixedCard" style="
+    position:fixed;bottom:20px;left:20px;z-index:4000;
+    background:rgba(255,255,255,.95);
+    border:1.5px solid rgba(167,139,250,.35);
+    border-radius:16px;padding:16px 18px;width:280px;
+    box-shadow:0 4px 18px rgba(107,33,168,.15);
+    backdrop-filter:blur(12px);font-family:inherit;
+  ">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:800;color:#5b4b8a">🛠️ TẠO CURL HUỶ ĐƠN</div>
+      <span id="curlCardToggler" onclick="toggleCurlCard()" style="
+        font-size:11px;color:#b0a0c8;cursor:pointer;
+        text-decoration:underline;white-space:nowrap;margin-left:8px;
+      ">Thu gọn ▲</span>
+    </div>
+
+    <div id="curlCardBody">
+      <label style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.4px">MÃ ĐƠN HÀNG</label>
+      <input id="curlOrderInput" type="text"
+        placeholder="VD: R1234567890"
+        onkeydown="if(event.key==='Enter') generateCancelCurl()"
+        oninput="previewCurlOrderId()"
+        style="
+          width:100%;box-sizing:border-box;margin-top:5px;
+          padding:9px 12px;border:1.5px solid rgba(167,139,250,.4);
+          border-radius:10px;font-size:13px;font-family:monospace;
+          letter-spacing:1px;outline:none;color:#3b3551;
+        "
+      />
+      <div id="curlOrderPreview" style="font-size:11px;color:#9b8bb4;min-height:16px;margin:5px 0 12px"></div>
+      <button onclick="generateCancelCurl()" style="
+        width:100%;padding:10px;
+        background:linear-gradient(135deg,#a78bfa,#7c3aed);
+        color:#fff;border:none;border-radius:10px;
+        font-size:13px;font-weight:800;cursor:pointer;
+        font-family:inherit;box-shadow:0 3px 12px rgba(124,58,237,.3);
+      ">⚙️ TẠO CURL</button>
+    </div>
+  </div>
+
+  <!-- Popup hiển thị curl kết quả -->
+  <div id="curlResultBg" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.55);z-index:9999;
+    align-items:center;justify-content:center;
+  " onclick="if(event.target===this) closeCurlModal()">
+    <div style="
+      background:#1e1b2e;border-radius:20px;
+      padding:24px 22px;max-width:680px;width:95%;
+      box-shadow:0 16px 48px rgba(0,0,0,.4);
+      position:relative;font-family:inherit;
+      border:1.5px solid rgba(167,139,250,.3);
+    ">
+      <button onclick="closeCurlModal()" style="
+        position:absolute;top:12px;right:14px;
+        background:rgba(255,255,255,.1);border:none;
+        border-radius:50%;width:30px;height:30px;
+        font-size:16px;cursor:pointer;color:#c4b5fd;
+      ">✕</button>
+      <div style="font-size:13px;font-weight:800;color:#c4b5fd;margin-bottom:4px">⚙️ CURL HUỶ ĐƠN</div>
+      <div id="curlResultOrderInfo" style="font-size:11px;color:#7c6fa0;margin-bottom:14px"></div>
+      <div style="position:relative">
+        <pre id="curlResultText" style="
+          background:rgba(0,0,0,.4);
+          border:1px solid rgba(167,139,250,.2);
+          border-radius:12px;padding:16px;
+          font-size:11px;color:#e2d9f3;
+          font-family:'Courier New',monospace;
+          white-space:pre-wrap;word-break:break-all;
+          max-height:420px;overflow-y:auto;
+          line-height:1.7;margin:0;
+        "></pre>
+        <button id="copyCurlBtn" onclick="copyCurlResult()" style="
+          position:absolute;top:10px;right:10px;
+          background:rgba(167,139,250,.25);
+          border:1px solid rgba(167,139,250,.4);
+          border-radius:8px;padding:5px 12px;
+          font-size:11px;font-weight:700;color:#c4b5fd;
+          cursor:pointer;font-family:inherit;
+        ">📋 Copy</button>
+      </div>
+      <div id="copyCurlMsg" style="font-size:12px;color:#6ee7b7;min-height:18px;margin-top:10px;text-align:center;"></div>
+    </div>
+  </div>
+  <!-- ═══ END CURL HUỶ ĐƠN ═══ -->
+
 </body>
 </html>
