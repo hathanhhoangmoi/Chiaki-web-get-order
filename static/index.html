@@ -1385,7 +1385,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     padding-left: 2px; font-family: monospace;
   "></div>
 
-  <button class="btn-info-search" onclick="generateCancelCurl()">
+  <button class="btn-info-search" onclick="generateCancelCurl()" style="width:100%">
     ⚙️ Tạo mã cURL
   </button>
 
@@ -1475,8 +1475,8 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <div id="comboRows" style="display:flex;flex-direction:column;gap:8px;"></div>
       <button class="btn-info-search" id="btnComboSync"
               style="margin-top:12px;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
-              onclick="doComboSync()">
-        🔁 ĐỒNG BỘ NGAY
+              onclick="doComboSync()" style="width:100%">
+        🔁 SYNC
       </button>
       <div class="info-error" id="comboMsg" style="margin-top:8px"></div>
     </div>
