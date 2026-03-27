@@ -1218,7 +1218,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       </div>
     </div>
 <button class="btn btn-primary" id="btnGetPhone" onclick="toggleOrderInfoModal()">
-  🔍 XỬ LÝ ĐƠN HÀNG
+  🔍 Tra cứu đơn hàng
 </button>
   </div>
 </div>
@@ -1230,7 +1230,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
          onkeydown="if(event.key==='Enter') searchOrder()">
   <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
   <div class="download-msg" id="dlMsg"></div>
-  <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- ═══ CURL HUỶ ĐƠN - GÓC DƯỚI TRÁI ═══ -->
   <div id="curlFixedCard" style="
     margin-top:16px;
@@ -1239,7 +1238,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     font-family:inherit;
   ">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:#5b4b8a">🛠️ TẠO CURL HUỶ ĐƠN</div>
+      <div style="font-size:13px;font-weight:800;color:#3b3551">🛠️ Tạo cUrl huỷ đơn</div>
     </div>
 
     <div id="curlCardBody">
@@ -1258,11 +1257,11 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <div id="curlOrderPreview" style="font-size:11px;color:#9b8bb4;min-height:16px;margin:5px 0 12px"></div>
       <button onclick="generateCancelCurl()" style="
         width:100%;padding:10px;
-        background:linear-gradient(135deg,#a78bfa,#7c3aed);
+        background: linear-gradient(135deg, #c8b4fa, #a78bfa);
         color:#fff;border:none;border-radius:10px;
         font-size:13px;font-weight:800;cursor:pointer;
         font-family:inherit;box-shadow:0 3px 12px rgba(124,58,237,.3);
-      ">⚙️ TẠO CURL</button>
+      ">⚙️ Tạo cUrl</button>
     </div>
   </div>
 
