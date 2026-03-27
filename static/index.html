@@ -1166,6 +1166,54 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   color: #065f46;
   font-weight: 700;
 }
+/* Highlight khi hover */
+.order-row {
+  transition: all .2s ease;
+  cursor: pointer;
+}
+.order-row:hover {
+  background: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 2px 12px rgba(255,255,255,0.1);
+  transform: scale(1.002);
+}
+
+/* Button copy */
+.copy-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(100,165,255,0.25);
+  border: 1px solid rgba(100,165,255,0.5);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 11px;
+  padding: 3px 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all .2s;
+  font-weight: 600;
+  font-family: inherit;
+  box-shadow: 0 2px 6px rgba(100,165,255,0.2);
+}
+.order-row:hover .copy-btn {
+  opacity: 1;
+}
+.copy-btn:hover {
+  background: rgba(100,165,255,0.4);
+  box-shadow: 0 4px 10px rgba(100,165,255,0.3);
+}
+
+/* Hiệu ứng copy thành công */
+.copy-btn.copied {
+  background: rgba(60,200,100,0.4) !important;
+  border-color: rgba(60,200,100,0.6) !important;
+  animation: pulse 1s ease-out;
+}
+@keyframes pulse {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.05); }
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -1221,23 +1269,23 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 </div>
 
 <div class="download-panel">
-  <div class="download-panel-title">🔍 Tìm kiếm đơn hàng</div>
+  <div class="download-panel-title">🔍 Search Order</div>
   <input class="download-input" id="dlOrderCode" type="text"
          placeholder="Nhập mã đơn..."
          onkeydown="if(event.key==='Enter') searchOrder()">
-  <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
+  <button class="btn-download" id="dlBtn" onclick="searchOrder()">Search</button>
   <div class="download-msg" id="dlMsg"></div>
   <!-- Modal Thông tin đơn hàng -->
 <div class="info-modal-bg" id="orderInfoBg">
   <div class="info-modal">
     <div class="info-modal-icon">🔍</div>
-    <div class="info-modal-title">Tra cứu/huỷ đơn hàng</div>
-    <div class="info-modal-sub">Nhập mã đơn và PHONE/KEY để lấy thông tin chi tiết</div>
+    <div class="info-modal-title">Order information</div>
+    <div class="info-modal-sub">Input order code/key....</div>
     <input class="info-input" id="infoOrderCode" type="text"
-      placeholder="Nhập mã đơn..."
+      placeholder="Order code..."
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
     <input class="info-input" id="infoKey" type="text"
-  placeholder="Nhập key (VD: PHONE-KEY-****-****)"
+  placeholder="Key..."
   onkeydown="if(event.key==='Enter') fetchOrderInfo()"
   style="margin-bottom:12px;font-family:monospace;letter-spacing:1px" />
 <div id="infoKeyStatus" style="font-size:11px;color:#9b8bb4;margin-bottom:4px;min-height:16px"></div>
@@ -1282,13 +1330,13 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   padding-top:16px;
   font-family:inherit;
 ">
-  <div class="download-panel-title">🛠️ Tạo cURL huỷ đơn</div>
+  <div class="download-panel-title">🛠️ Create cUrl</div>
 
   <input
     class="download-input"
     id="curlOrderInput"
     type="text"
-    placeholder="Nhập mã đơn VD: R1234567890..."
+    placeholder="Order code..."
     onkeydown="if(event.key==='Enter') generateCancelCurl()"
     oninput="previewCurlOrderId()"
   />
@@ -1302,7 +1350,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <button
     class="btn-download"
     onclick="generateCancelCurl()"
-  >⚙️ Tạo cURL</button>
+  >⚙️ Create cURL</button>
 
   <div id="curlCardMsg" class="download-msg"></div>
 </div>
@@ -4902,7 +4950,7 @@ async function doComboSync() {
   for (let i = 0; i < COMBO_ROW_COUNT; i++) {
     const uploadBtn = document.getElementById(`comboUploadBtn_${i}`);
     if (uploadBtn) {
-      uploadBtn.textContent = '📎 Chọn file';
+      uploadBtn.textContent = '🔗 Upload Files';
       uploadBtn.classList.remove('has-file');
     }
     const input = document.getElementById(`comboInput_${i}`);
