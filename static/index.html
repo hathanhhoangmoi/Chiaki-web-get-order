@@ -1409,6 +1409,15 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <button class="btn-info-search" onclick="generateCancelCurl()" style="width:100%">
     ⚙️ Tạo mã cURL
   </button>
+  <div id="cancelCurlResult" style="display:none;margin-top:12px">
+  <div id="curlMsg" style="font-size:12px;color:#9b8bb4;margin-bottom:6px"></div>
+  <div id="curlResult" style="background:rgba(255,255,255,.5);border-radius:10px;padding:12px">
+    <code id="curlCode"
+          style="font-family:monospace;font-size:11px;word-break:break-all;white-space:pre-wrap;color:#3b3551"></code>
+    <div id="curlOutput"
+         style="font-family:monospace;font-size:11px;word-break:break-all;white-space:pre-wrap;color:#3b3551"></div>
+  </div>
+</div>
 </div>
 
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
