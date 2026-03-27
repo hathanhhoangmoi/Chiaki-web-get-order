@@ -1888,10 +1888,9 @@ async function init() {
 async function loadSummary() {
   try {
     const data = await fetch('/api/summary').then(r => r.json());
-    const el = id => document.getElementById(id);
-    el('totalOrders') && (el('totalOrders').textContent = data.total_orders.toLocaleString('vi'));
-    el('totalShops')  && (el('totalShops').textContent  = data.total_shops);
-    el('tabAll')      && (el('tabAll').textContent      = data.total_orders.toLocaleString('vi'));
+    document.getElementById('totalOrders').textContent = data.total_orders.toLocaleString('vi');
+    document.getElementById('totalShops').textContent  = data.total_shops;
+    document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
 
     const latestSync = data.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
     if (latestSync)
@@ -2268,13 +2267,21 @@ function confirmPass() {
 }  
 
 function toggleOrderInfoModal() {
-  document.getElementById('orderInfoBg').classList.add('show');
   // Tự điền key lần trước
   const savedKey = localStorage.getItem('lastInfoKey');
   if (savedKey && !document.getElementById('infoKey').value) {
     document.getElementById('infoKey').value = savedKey;
   }
   setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
+}
+
+function closeOrderInfoModal() {
+  document.getElementById('orderInfoBg').classList.remove('show');
+  document.getElementById('infoResult').classList.remove('show');
+  document.getElementById('infoError').classList.remove('show');
+  document.getElementById('infoOrderCode').value = '';
+  document.getElementById('infoKeyStatus').textContent = '';
+
 }
 
 async function fetchOrderInfo() {
@@ -2354,15 +2361,13 @@ const SHOP_ID_NAME = {
     "3218": "Bảo Lâm Anh", "2557": "XUAN MINH PHARMACY"
 }
 
-    const s = id => document.getElementById(id);
-    s('sideIrCode')     && (s('sideIrCode').textContent     = data.ordercode);
-    s('sideIrShop')     && (s('sideIrShop').textContent     = data.shopname);
-    s('sideIrDate')     && (s('sideIrDate').textContent     = data.orderdate);
-    s('sideIrName')     && (s('sideIrName').textContent     = data.customername);
-    s('sideIrPhone')    && (s('sideIrPhone').textContent    = data.phone);
-    s('sideIrAddress')  && (s('sideIrAddress').textContent  = data.address);
-    s('sideIrProduct')  && (s('sideIrProduct').textContent  = data.product);
-    s('sideIrShipping') && (s('sideIrShipping').textContent = data.shippingcode);
+    document.getElementById('irCode').textContent     = data.order_code    || '—';
+    document.getElementById('irShop').textContent     = data.shop_name     || '—';
+    document.getElementById('irDate').textContent     = data.order_date    || '—';
+    document.getElementById('irName').textContent     = data.customer_name || '—';
+    document.getElementById('irPhone').textContent    = data.phone         || '—';
+    document.getElementById('irEmail').textContent    = data.email         || '—';
+    document.getElementById('irAddress').textContent  = data.address       || '—';
     // Hiển thị danh sách sản phẩm
   const irProduct = document.getElementById('irProduct');
   if (data.products && data.products.length > 0) {
