@@ -1230,14 +1230,14 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <!-- Modal Thông tin đơn hàng -->
 <div class="info-modal-bg" id="orderInfoBg">
   <div class="info-modal">
-    <div class="info-modal-icon">🔑</div>
-    <div class="info-modal-title">Tra cứu thông tin đơn hàng</div>
-    <div class="info-modal-sub">Nhập mã đơn và PHONE-KEY để lấy thông tin chi tiết</div>
+    <div class="info-modal-icon">🔍</div>
+    <div class="info-modal-title">Tra cứu/huỷ đơn hàng</div>
+    <div class="info-modal-sub">Nhập mã đơn và PHONE/KEY để lấy thông tin chi tiết</div>
     <input class="info-input" id="infoOrderCode" type="text"
       placeholder="Nhập mã đơn..."
       onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
     <input class="info-input" id="infoKey" type="text"
-  placeholder="Nhập key..."
+  placeholder="Nhập key (VD: PHONE-KEY-****-****)"
   onkeydown="if(event.key==='Enter') fetchOrderInfo()"
   style="margin-bottom:12px;font-family:monospace;letter-spacing:1px" />
 <div id="infoKeyStatus" style="font-size:11px;color:#9b8bb4;margin-bottom:4px;min-height:16px"></div>
@@ -1263,12 +1263,15 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <div style="font-size:11px;font-weight:800;color:#9b8bb4;letter-spacing:.5px;margin:12px 0 8px">VẬN CHUYỂN</div>
       <div class="info-row"><span class="info-label">Mã vận đơn</span><span class="info-value" id="irShippingCode">—</span></div>
       <div class="info-row"><span class="info-label">Trạng thái giao</span><span class="info-value" id="irDeliveryStatus">—</span></div>
-      <div class="info-row"><span class="info-label">Thời gian lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
+      <div class="info-row"><span class="info-label">Shipper lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
     </div>
     <!-- Button Export PDF 4x6 inch -->
     <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
       <button id="btnExportPdf" class="btn-modal-confirm" onclick="exportShippingLabel()" style="background:#ff6b35;display:none;">📄 IN PHIẾU GIAO HÀNG</button>
     </div>
+
+    <!-- Nút đóng góc trên trái -->
+
 <div class="info-btns">
   <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()" style="flex:1">🔍 Tra cứu đơn hàng</button>
 </div>
@@ -1883,6 +1886,26 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <button class="btn-close-success" onclick="closeSuccessModal()">📦 Hoàn thành đơn hàng</button>
   </div>
 </div>
+<!-- ── Panel Đơn đã lấy ── -->
+<div class="taken-panel" id="takenPanel">
+  <div class="taken-panel-header">
+    <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
+    </div>
+  </div>
+  <div class="taken-panel-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px 18px 4px;border-bottom:1px solid rgba(198,181,255,.15)">
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px">MÃ ĐƠN</div>
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:center">KEY LẤY ĐƠN</div>
+      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:right">THỜI GIAN</div>
+    </div>
+    <div id="takenList">
+      <div class="taken-empty">📭 Chưa có đơn nào được lấy</div>
+    </div>
+  </div>
+</div>
+
 <canvas id="fireworksCanvas"></canvas>
 <audio id="successSound" preload="auto">
   <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_8cb749c041.mp3" type="audio/mpeg">
@@ -1924,6 +1947,158 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     </div>
   </div>
 </div>
+<!-- Modal Thông tin khách hàng -->
+<div class="info-modal-bg" id="customerInfoBg" style="z-index:7000">
+  <div class="info-modal">
+    <div class="info-modal-icon">👤</div>
+    <div class="info-modal-title">Tra cứu thông tin khách hàng</div>
+    <div class="info-modal-sub">Nhập ID khách hàng để xem thông tin</div>
+    <input class="info-input" id="customerIdInput" type="text"
+      placeholder="VD: 69b0ce646d0c65d1f2935ddb"
+      onkeydown="if(event.key==='Enter') fetchCustomerInfo()"
+      style="margin-bottom:12px" />
+    <div class="info-error" id="customerError"></div>
+    <div class="info-result" id="customerResult">
+      <div style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">THÔNG TIN KHÁCH HÀNG</div>
+      <div class="info-row"><span class="info-label">Tên khách hàng</span><span class="info-value" id="crName">—</span></div>
+      <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="crPhone">—</span></div>
+      <div class="info-row"><span class="info-label">API Token</span><span class="info-value" id="crToken" style="font-family:monospace;font-size:11px;word-break:break-all">—</span></div>
+      <div class="info-row"><span class="info-label">Tạo tài khoản vào</span><span class="info-value" id="crCreated">—</span></div>
+    </div>
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-info-cancel" onclick="closeCustomerInfoModal()">Đóng</button>
+      <button class="btn-info-search" id="customerSearchBtn" onclick="fetchCustomerInfo()">👤 Tra cứu</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Doanh thu từng shop -->
+<div class="info-modal-bg" id="revModalBg" style="z-index:6200">
+  <div class="info-modal" style="max-width:520px">
+    <div class="info-modal-icon">💰</div>
+    <div class="info-modal-title">Doanh thu gộp 30 ngày</div>
+    <div class="info-modal-sub" id="revModalSub">Chọn gian hàng để xem doanh thu</div>
+
+    <!-- Danh sách shop -->
+    <div id="revShopList" class="rev-shop-list"></div>
+
+    <!-- Kết quả -->
+    <div id="revResult" style="display:none">
+      <div class="rev-result-header">
+        <button class="rev-back-btn" onclick="revGoBack()">← Quay lại</button>
+        <div class="rev-shop-title" id="revShopTitle"></div>
+      </div>
+      <div id="revLoading" class="rev-loading">
+        <div class="spinner"></div>
+        <div>Đang tải dữ liệu...</div>
+      </div>
+      <div id="revData" style="display:none">
+        <div class="rev-section">Thông tin ngân hàng</div>
+        <div class="rev-row"><span class="rev-row-label">Chủ tài khoản</span><span class="rev-row-value" id="rvChuTk">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Ngân hàng</span><span class="rev-row-value" id="rvNganHang">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Số tài khoản</span><span class="rev-row-value" id="rvStk">—</span></div>
+        <div class="rev-section">Doanh thu gộp</div>
+        <div class="rev-row"><span class="rev-row-label">Giá gốc</span><span class="rev-row-value positive" id="rvGiaGoc">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Hoàn lại</span><span class="rev-row-value positive" id="rvHoanLai">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Trợ giá Chiaki</span><span class="rev-row-value positive" id="rvTroGia">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Mã ưu đãi NB chịu</span><span class="rev-row-value" id="rvMaUuDai">—</span></div>
+        <div class="rev-row" style="border-top:1px solid rgba(167,139,250,.3);margin-top:4px;padding-top:10px">
+          <span class="rev-row-label" style="font-weight:700;color:#5b4b8a">Tổng doanh thu gộp</span>
+          <span class="rev-row-value positive" id="rvGop" style="font-size:15px">—</span>
+        </div>
+        <div class="rev-section">Khấu trừ</div>
+        <div class="rev-row"><span class="rev-row-label">Phí sàn</span><span class="rev-row-value negative" id="rvPhiSan">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Phí quảng cáo</span><span class="rev-row-value negative" id="rvPhiQc">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Thuế GTGT</span><span class="rev-row-value negative" id="rvGtgt">—</span></div>
+        <div class="rev-row"><span class="rev-row-label">Thuế TNCN</span><span class="rev-row-value negative" id="rvTncn">—</span></div>
+        <div class="rev-row" style="border-top:1px solid rgba(167,139,250,.3);margin-top:4px;padding-top:10px">
+          <span class="rev-row-label" style="font-weight:700;color:#5b4b8a">Doanh thu thuần</span>
+          <span class="rev-row-value positive" id="rvThuan" style="font-size:15px">—</span>
+        </div>
+      </div>
+      <div class="info-error" id="revError"></div>
+    </div>
+
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-info-cancel" onclick="closeRevModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Đoạn chat -->
+<div class="info-modal-bg" id="chatInfoBg" style="z-index:7100">
+  <div class="info-modal" style="max-width:560px">
+    <div class="info-modal-icon">💬</div>
+    <div class="info-modal-title">Tra cứu đoạn chat</div>
+    <div class="info-modal-sub">Nhập ID gian hàng để xem các cuộc hội thoại</div>
+    <input class="info-input" id="chatSellerIdInput" type="text"
+      placeholder="VD: 69b0ce646d0c65d1f2935ddb"
+      onkeydown="if(event.key==='Enter') fetchChatInfo()"
+      style="margin-bottom:12px" />
+    <div class="info-error" id="chatError"></div>
+    <div id="chatResult" style="display:none;margin-top:12px">
+      <div class="chat-conv-count" id="chatCount"></div>
+      <div id="chatList"></div>
+    </div>
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-info-cancel" onclick="closeChatInfoModal()">Đóng</button>
+      <button class="btn-info-search" id="chatSearchBtn" onclick="fetchChatInfo()">💬 Tra cứu</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Doanh thu thuần -->
+<div class="info-modal-bg" id="netRevModalBg" style="z-index:6300">
+  <div class="info-modal" style="max-width:500px">
+    <div class="info-modal-icon">📊</div>
+    <div class="info-modal-title">Doanh thu chưa đối soát</div>
+    <div class="info-modal-sub" id="netRevSub">Chọn gian hàng để tính doanh thu thuần</div>
+
+    <!-- Danh sách shop -->
+    <div id="netRevShopList" class="rev-shop-list"></div>
+
+    <!-- Kết quả -->
+    <div id="netRevResult" style="display:none">
+      <div class="rev-result-header">
+        <button class="rev-back-btn" onclick="netRevGoBack()">← Quay lại</button>
+        <div class="rev-shop-title" id="netRevShopTitle"></div>
+      </div>
+      <div id="netRevLoading" class="rev-loading">
+        <div class="spinner"></div>
+        <div>Đang tải và xử lý...</div>
+      </div>
+      <div id="netRevData" style="display:none">
+        <div class="rev-section">Kết quả tính toán</div>
+        <div class="rev-row">
+          <span class="rev-row-label">Khoảng thời gian</span>
+          <span class="rev-row-value" id="nrDateRange" style="font-size:11px">—</span>
+        </div>
+        <div class="rev-row">
+          <span class="rev-row-label">Số đơn chưa đối soát</span>
+          <span class="rev-row-value" id="nrRowCount">—</span>
+        </div>
+        <div class="rev-row">
+          <span class="rev-row-label">Tổng tiền</span>
+          <span class="rev-row-value positive" id="nrTongTien">—</span>
+        </div>
+        <div class="rev-row">
+          <span class="rev-row-label">Tổng phụ phí</span>
+          <span class="rev-row-value negative" id="nrPhuPhi">—</span>
+        </div>
+        <div class="rev-row" style="border-top:1px solid rgba(167,139,250,.3);margin-top:4px;padding-top:12px">
+          <span class="rev-row-label" style="font-weight:700;color:#5b4b8a;font-size:13px">💰 Doanh thu thuần</span>
+          <span class="rev-row-value positive" id="nrThuan" style="font-size:18px">—</span>
+        </div>
+        <div style="font-size:10px;color:#b0a0c8;margin-top:10px;text-align:center">
+          * Chỉ tính các đơn <b>chưa đối soát</b> 
+        </div>
+      </div>
+      <div class="info-error" id="netRevError"></div>
+    </div>
+
+    <div class="info-btns" style="margin-top:16px">
+      <button class="btn-info-cancel" onclick="closeNetRevenueModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- Panel lịch sử -->
 <div class="history-panel" id="historyPanel">
@@ -1941,7 +2116,43 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   </div>
   <div class="history-body" id="historyBody"></div>
 </div>
+<!-- ── MODAL HUỶ ĐƠN HÀNG ── -->
+<div id="cancelOrderBg" style="display:none; position:fixed; inset:0;
+     background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:16px; padding:32px 28px; max-width:420px; width:92%;
+              box-shadow:0 8px 32px rgba(0,0,0,0.22); position:relative;">
+    <button onclick="closeCancelOrderModal()" style="position:absolute; top:12px; right:16px;
+            background:none; border:none; font-size:22px; cursor:pointer; color:#888;">✕</button>
+    <div style="font-size:28px; text-align:center; margin-bottom:8px;">🚫</div>
+    <h2 style="margin:0 0 6px; color:#c0392b; font-size:18px; text-align:center;">Huỷ đơn hàng</h2>
+    <p style="margin:0 0 20px; color:#888; font-size:12px; text-align:center;">
+      Nhập thông tin để xác nhận yêu cầu huỷ đơn.
+    </p>
 
+    <label style="font-size:12px; font-weight:700; color:#5b4b8a; letter-spacing:.4px;">MÃ ĐƠN HÀNG</label>
+    <input id="cancelModalOrderCode" type="text" placeholder="VD: R8547883114"
+      style="width:100%; box-sizing:border-box; margin:6px 0 14px; padding:10px 14px;
+             border:1.5px solid #ddd; border-radius:8px; font-size:13px; font-family:monospace;
+             outline:none; letter-spacing:1px;" />
+
+    <label style="font-size:12px; font-weight:700; color:#5b4b8a; letter-spacing:.4px;">CANCEL KEY</label>
+    <input id="cancelModalKey" type="text" placeholder="VD: CANCEL-KEY-****-****"
+      style="width:100%; box-sizing:border-box; margin:6px 0 4px; padding:10px 14px;
+             border:1.5px solid #ddd; border-radius:8px; font-size:13px; font-family:monospace;
+             outline:none; letter-spacing:1px;"
+      onkeydown="if(event.key==='Enter') submitCancelOrder()" />
+    <div id="cancelKeyStatus" style="font-size:11px; color:#9b8bb4; min-height:16px; margin-bottom:14px;"></div>
+
+    <div id="cancelResultMsg" style="font-size:13px; min-height:20px; margin-bottom:14px; text-align:center;"></div>
+
+    <button id="btnSubmitCancelOrder" onclick="submitCancelOrder()"
+      style="width:100%; padding:12px; background:linear-gradient(135deg,#e74c3c,#c0392b);
+             color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700;
+             cursor:pointer; transition:opacity .2s; box-shadow:0 3px 12px rgba(231,76,60,0.25);">
+      HUỶ
+    </button>
+  </div>
+</div>
 
 <script>
 let currentShop = '';
