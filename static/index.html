@@ -1246,6 +1246,28 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   border-color: rgba(110,231,183,.4);
   color: #065f46;
 }
+/* Thanh cuộn tổng thể */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* Nền thanh cuộn */
+::-webkit-scrollbar-track {
+  background: rgba(198, 181, 255, .15);
+  border-radius: 10px;
+}
+
+/* Phần kéo */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c8b4fa, #a78bfa);
+  border-radius: 10px;
+}
+
+/* Hover vào phần kéo */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a78bfa, #7c3aed);
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
