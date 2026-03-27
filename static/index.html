@@ -1212,6 +1212,34 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   0%, 100% { transform: translateY(-50%) scale(1); }
   50% { transform: translateY(-50%) scale(1.05); }
 }
+.btn-copy-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(198,181,255,.4);
+  background: rgba(255,255,255,.5);
+  color: #9b8bb4;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .15s;
+  margin-left: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.btn-copy-code:hover {
+  background: rgba(216,180,254,.3);
+  border-color: rgba(167,139,250,.5);
+  color: #7c3aed;
+  transform: scale(1.1);
+}
+.btn-copy-code.copied {
+  background: rgba(110,231,183,.3);
+  border-color: rgba(110,231,183,.4);
+  color: #065f46;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -1567,7 +1595,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
               <th>Ngày đặt</th>
               <th>Gian hàng</th>
               <th>Tên khách hàng</th>
-              <th>SĐT</th>
               <th>Địa chỉ</th>
               <th>Sản phẩm</th>
               <th>Số lượng</th>
@@ -5026,14 +5053,14 @@ async function fetchSideOrderInfo() {
 
     // Status banner
     const STATUSMAP = {
-      'requestout':              { text: 'Đã nhận đơn hàng',        bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
-      'outproductsinprogress':   { text: 'Đang MVC - Chờ lấy hàng', bg: 'rgba(253,186,116,.35)', color: '#c2410c' },
+      'request_out':              { text: 'Đã nhận đơn hàng',        bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
+      'out_products_in_progress':   { text: 'Đang MVC - Chờ lấy hàng', bg: 'rgba(253,186,116,.35)', color: '#c2410c' },
       'delivering':              { text: 'Đang giao hàng',           bg: 'rgba(147,197,253,.35)', color: '#1e40af' },
       'done':                    { text: 'Đã giao hàng',             bg: 'rgba(167,243,208,.4)',  color: '#065f46' },
-      'cancelledwooutproducts':  { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
+      'cancelled_wo_out_products':  { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
       'cancelled':               { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
       'rein':                    { text: 'Giao thất bại - Hoàn hàng',bg: 'rgba(253,186,116,.35)', color: '#92400e' },
-      'requestin':               { text: 'Chờ xác nhận',             bg: 'rgba(216,180,254,.3)',  color: '#5b4b8a' },
+      'request_in':               { text: 'Chờ xác nhận',             bg: 'rgba(216,180,254,.3)',  color: '#5b4b8a' },
     };
     const banner = document.getElementById('sideStatusBanner');
     const raw    = (data.status || '').trim();
@@ -5156,7 +5183,34 @@ function copyCurlResult() {
     document.body.removeChild(el); doSuccess();
   });
 }
+function copyOrderCode(btn, fullCode) {
+  // Lấy phần sau ký tự _ cuối cùng
+  const parts = fullCode.split('_')
+  const codeToCopy = parts.length > 1 ? parts[parts.length - 1] : fullCode
 
+  navigator.clipboard.writeText(codeToCopy).then(() => {
+    btn.textContent = '✓'
+    btn.classList.add('copied')
+    setTimeout(() => {
+      btn.textContent = '⎘'
+      btn.classList.remove('copied')
+    }, 1500)
+  }).catch(() => {
+    // fallback cho trình duyệt cũ
+    const el = document.createElement('textarea')
+    el.value = codeToCopy
+    document.body.appendChild(el)
+    el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+    btn.textContent = '✓'
+    btn.classList.add('copied')
+    setTimeout(() => {
+      btn.textContent = '⎘'
+      btn.classList.remove('copied')
+    }, 1500)
+  })
+}
 // Khởi tạo khi load trang
 initComboRows();
 // Gọi khi load trang
