@@ -1057,8 +1057,8 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 select.sync-input { font-family: inherit; cursor: pointer; }
 .btn-sync {
   width: 100%; margin-top: 14px; padding: 11px;
-  border: none; border-radius: 12px;
-  background: linear-gradient(135deg, #d8b4fe, #a78bfa);
+  border: none; border-radius: 50px;
+  background: linear-gradient(135deg, #FBD3E9, #BB377D);
   color: #fff; font-family: inherit; font-size: 13px;
   font-weight: 700; cursor: pointer; transition: all .2s;
   box-shadow: 0 4px 14px rgba(167,139,250,.4);
@@ -1393,11 +1393,17 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
-<div class="sync-panel" id="syncPanel">
-  <div class="sync-panel-title">🗂️ Tải danh sách đơn hàng</div>
-  <label class="sync-label">Chọn gian hàng</label>
-  <select class="sync-input" id="syncShopId" onchange="updateChiakiLink()">
-    <option value="">-- Chọn shop --</option>
+<div class="info-modal-bg" id="syncPanel" style="display:flex">
+  <div class="info-modal">
+
+    <div class="info-modal-icon">🗂️</div>
+    <div class="info-modal-title">Tải danh sách đơn hàng</div>
+    <div class="info-modal-sub">Chọn gian hàng và tải file từ Chiaki</div>
+
+    <label class="sync-label">Chọn gian hàng</label>
+    <select class="info-input" id="syncShopId" onchange="updateChiakiLink()"
+            style="cursor:pointer">
+      <option value="">-- Chọn shop --</option>
     <option value="2732">2732 · Min Duty</option>
     <option value="4299">4299 · HADES Shop</option>
     <option value="3522">3522 · ShipnhanhStore</option>
@@ -1454,27 +1460,25 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <option value="5114">5114 · LixiBox Hill</option>
   </select>
 
-  <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
-  <a class="btn-chiaki-link" id="chiakiLink" href="#" target="_blank">
-    🔗 Tải về
-  </a>
-  <input type="file" id="syncFileInput" accept=".xlsx,.xls"
-         style="display:none" onchange="handleSyncFile(this.files[0])"/>
-  <div class="sync-file-name" id="syncFileName"></div>
-  <div class="sync-msg" id="syncMsg"></div>
-<!-- SYNC COMBO -->
-  <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
-    <div class="sync-panel-title">📎 Đồng bộ đơn hàng</div>
-
-    <div id="comboRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-      <!-- render bằng JS -->
+  <label class="sync-label" style="margin-top:12px">Tải file đơn hàng từ Chiaki</label>
+    <a class="btn-info-search" id="chiakiLink" href="#" target="_blank"
+       style="display:block;text-align:center;text-decoration:none;padding:11px;margin-bottom:8px">
+      🔗 Tải về ngay
+    </a>
+    <input type="file" id="syncFileInput" accept=".xlsx,.xls"
+           style="display:none" onchange="handleSyncFile(this.files[0])"/>
+    <div class="sync-file-name" id="syncFileName"></div>
+    <div class="info-error" id="syncMsg" style="margin-top:6px"></div>
+    <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
+      <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng</div>
+      <div id="comboRows" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <button class="btn-info-search" id="btnComboSync"
+              style="margin-top:12px;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
+              onclick="doComboSync()">
+        🔁 ĐỒNG BỘ NGAY
+      </button>
+      <div class="info-error" id="comboMsg" style="margin-top:8px"></div>
     </div>
-    <button class="btn-sync" id="btnComboSync"
-            style="margin-top:8px;background: linear-gradient(to right, #ffc3a0, #ffafbd); color: #1e3a5f;"
-            onclick="doComboSync()">
-      🔁 ĐỒNG BỘ NGAY
-    </button>
-    <div class="sync-msg" id="comboMsg"></div>
   </div>
 </div>
 </div>
