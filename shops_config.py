@@ -64,13 +64,7 @@ SELLER_ID    = "4647"
 SELLER_TOKEN = "ebf7e96d976f74aa77b2b874b7a087ef"
 SHOP_NAME_MAP = {code: name for _, name, code in SHOPS}
 BLOCKED_SHOPS = {
-    "4917",  # Moss Skincare
-    "4647",  # XXIV Store
-    "4732",  # Ken Perfume
-    "5112",  # MoiThom - Mèo bán nước hoa
-    "4940",  # Mint- Skin Beauty & Cosmetics
-    "5096",  # The Senté Hill
-    "5125",  # Felice Beauty Garden
+    "0001",
 }
 SHOP_ID_NAME_MAP = {
     extract_id(url): name
