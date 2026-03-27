@@ -1231,6 +1231,99 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <button class="btn-download" id="dlBtn" onclick="searchOrder()">Tìm kiếm</button>
   <div class="download-msg" id="dlMsg"></div>
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
+  <!-- ═══ CURL HUỶ ĐƠN - GÓC DƯỚI TRÁI ═══ -->
+  <div id="curlFixedCard" style="
+    margin-top:16px;
+    border-top:1px solid rgba(167,139,250,.25);
+    padding-top:16px;
+    font-family:inherit;
+  ">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:800;color:#5b4b8a">🛠️ TẠO CURL HUỶ ĐƠN</div>
+      <span id="curlCardToggler" onclick="toggleCurlCard()" style="
+        font-size:11px;color:#b0a0c8;cursor:pointer;
+        text-decoration:underline;white-space:nowrap;margin-left:8px;
+      ">Thu gọn ▲</span>
+    </div>
+
+    <div id="curlCardBody">
+      <label style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.4px">MÃ ĐƠN HÀNG</label>
+      <input id="curlOrderInput" type="text"
+        placeholder="VD: R1234567890"
+        onkeydown="if(event.key==='Enter') generateCancelCurl()"
+        oninput="previewCurlOrderId()"
+        style="
+          width:100%;box-sizing:border-box;margin-top:5px;
+          padding:9px 12px;border:1.5px solid rgba(167,139,250,.4);
+          border-radius:10px;font-size:13px;font-family:monospace;
+          letter-spacing:1px;outline:none;color:#3b3551;
+        "
+      />
+      <div id="curlOrderPreview" style="font-size:11px;color:#9b8bb4;min-height:16px;margin:5px 0 12px"></div>
+      <button onclick="generateCancelCurl()" style="
+        width:100%;padding:10px;
+        background:linear-gradient(135deg,#a78bfa,#7c3aed);
+        color:#fff;border:none;border-radius:10px;
+        font-size:13px;font-weight:800;cursor:pointer;
+        font-family:inherit;box-shadow:0 3px 12px rgba(124,58,237,.3);
+      ">⚙️ TẠO CURL</button>
+    </div>
+  </div>
+
+  <!-- Popup hiển thị curl kết quả -->
+  <div id="curlResultBg" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.55);z-index:9999;
+    align-items:center;justify-content:center;
+  " onclick="if(event.target===this) closeCurlModal()">
+    <div style="
+        background:linear-gradient(135deg,rgba(186,230,255,.18) 0%,rgba(147,210,255,.12) 50%,rgba(186,230,255,.18) 100%);
+        backdrop-filter:blur(28px) saturate(180%);
+        -webkit-backdrop-filter:blur(28px) saturate(180%);
+        border-radius:24px;
+        padding:24px 22px;max-width:680px;width:95%;
+        box-shadow:
+          0 8px 32px rgba(56,189,248,.18),
+          0 2px 8px rgba(56,189,248,.12),
+          inset 0 1.5px 0 rgba(255,255,255,.45),
+          inset 0 -1px 0 rgba(147,210,255,.2);
+        position:relative;font-family:inherit;
+        border:1.5px solid rgba(186,230,255,.45);
+      ">
+
+      <button onclick="closeCurlModal()" style="
+        position:absolute;top:12px;right:14px;
+        background:rgba(186,230,255,.3);border:none;
+        border-radius:50%;width:30px;height:30px;
+        font-size:16px;cursor:pointer;color:#0369a1;
+      ">✕</button>
+      <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:4px">⚙️ CURL HUỶ ĐƠN</div>
+      <div id="curlResultOrderInfo" style="font-size:11px;color:#0284c7;margin-bottom:14px"></div>
+      <div style="position:relative">
+        <pre id="curlResultText" style="
+          background:rgba(2,132,199,.12);
+          border:1px solid rgba(147,210,255,.35);
+          border-radius:12px;padding:16px;
+          font-size:11px;color:#0c4a6e;
+          font-family:'Courier New',monospace;
+          white-space:pre-wrap;word-break:break-all;
+          max-height:420px;overflow-y:auto;
+          line-height:1.7;margin:0;
+        "></pre>
+        <button id="copyCurlBtn" onclick="copyCurlResult()" style="
+          position:absolute;top:10px;right:10px;
+          background:rgba(186,230,255,.35);
+          border:1px solid rgba(56,189,248,.5);
+          border-radius:8px;padding:5px 12px;
+          font-size:11px;font-weight:700;color:#0369a1;
+          cursor:pointer;font-family:inherit;
+        ">📋 Copy</button>
+      </div>
+      <div id="copyCurlMsg" style="font-size:12px;color:#0369a1;min-height:18px;margin-top:10px;text-align:center;"></div>
+    </div>
+  </div>
+  <!-- ═══ END CURL HUỶ ĐƠN ═══ -->
+  <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
 <div class="sync-panel" id="syncPanel">
   <div class="sync-panel-title">🔄 Đồng bộ đơn hàng</div>
@@ -4867,9 +4960,10 @@ const COMBO_SHOPS = [
   {id:'4342',name:'Sản Phẩm Hỗ Trợ'},{id:'1015',name:'Green Healthy & Beauty'},
   {id:'3218',name:'Bảo Lâm Anh'},{id:'2557',name:'XUAN MINH PHARMACY'},
   {id:'2025',name:'Cali-Goods'}
+  {id:'5114',name:'LixiBox Hill'}
 ];
 
-const COMBO_ROW_COUNT = 10;
+const COMBO_ROW_COUNT = 55;
 let comboFileMap = {}; // index → File
 
 function buildChiakiUrl(shopId, mode) {
@@ -5186,100 +5280,5 @@ initComboRows();
 // Gọi khi load trang
 if (checkIdGate()) { init(); }
 </script>
-  <!-- ═══ CURL HUỶ ĐƠN - GÓC DƯỚI TRÁI ═══ -->
-  <div id="curlFixedCard" style="
-    position:fixed;bottom:20px;left:20px;z-index:4000;
-    background:rgba(255,255,255,.95);
-    border:1.5px solid rgba(167,139,250,.35);
-    border-radius:16px;padding:16px 18px;width:360px;
-    box-shadow:0 4px 18px rgba(107,33,168,.15);
-    backdrop-filter:blur(12px);font-family:inherit;
-  ">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:#5b4b8a">🛠️ TẠO CURL HUỶ ĐƠN</div>
-      <span id="curlCardToggler" onclick="toggleCurlCard()" style="
-        font-size:11px;color:#b0a0c8;cursor:pointer;
-        text-decoration:underline;white-space:nowrap;margin-left:8px;
-      ">Thu gọn ▲</span>
-    </div>
-
-    <div id="curlCardBody">
-      <label style="font-size:11px;font-weight:700;color:#9b8bb4;letter-spacing:.4px">MÃ ĐƠN HÀNG</label>
-      <input id="curlOrderInput" type="text"
-        placeholder="VD: R1234567890"
-        onkeydown="if(event.key==='Enter') generateCancelCurl()"
-        oninput="previewCurlOrderId()"
-        style="
-          width:100%;box-sizing:border-box;margin-top:5px;
-          padding:9px 12px;border:1.5px solid rgba(167,139,250,.4);
-          border-radius:10px;font-size:13px;font-family:monospace;
-          letter-spacing:1px;outline:none;color:#3b3551;
-        "
-      />
-      <div id="curlOrderPreview" style="font-size:11px;color:#9b8bb4;min-height:16px;margin:5px 0 12px"></div>
-      <button onclick="generateCancelCurl()" style="
-        width:100%;padding:10px;
-        background:linear-gradient(135deg,#a78bfa,#7c3aed);
-        color:#fff;border:none;border-radius:10px;
-        font-size:13px;font-weight:800;cursor:pointer;
-        font-family:inherit;box-shadow:0 3px 12px rgba(124,58,237,.3);
-      ">⚙️ TẠO CURL</button>
-    </div>
-  </div>
-
-  <!-- Popup hiển thị curl kết quả -->
-  <div id="curlResultBg" style="
-    display:none;position:fixed;inset:0;
-    background:rgba(0,0,0,.55);z-index:9999;
-    align-items:center;justify-content:center;
-  " onclick="if(event.target===this) closeCurlModal()">
-    <div style="
-        background:linear-gradient(135deg,rgba(186,230,255,.18) 0%,rgba(147,210,255,.12) 50%,rgba(186,230,255,.18) 100%);
-        backdrop-filter:blur(28px) saturate(180%);
-        -webkit-backdrop-filter:blur(28px) saturate(180%);
-        border-radius:24px;
-        padding:24px 22px;max-width:680px;width:95%;
-        box-shadow:
-          0 8px 32px rgba(56,189,248,.18),
-          0 2px 8px rgba(56,189,248,.12),
-          inset 0 1.5px 0 rgba(255,255,255,.45),
-          inset 0 -1px 0 rgba(147,210,255,.2);
-        position:relative;font-family:inherit;
-        border:1.5px solid rgba(186,230,255,.45);
-      ">
-
-      <button onclick="closeCurlModal()" style="
-        position:absolute;top:12px;right:14px;
-        background:rgba(186,230,255,.3);border:none;
-        border-radius:50%;width:30px;height:30px;
-        font-size:16px;cursor:pointer;color:#0369a1;
-      ">✕</button>
-      <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:4px">⚙️ CURL HUỶ ĐƠN</div>
-      <div id="curlResultOrderInfo" style="font-size:11px;color:#0284c7;margin-bottom:14px"></div>
-      <div style="position:relative">
-        <pre id="curlResultText" style="
-          background:rgba(2,132,199,.12);
-          border:1px solid rgba(147,210,255,.35);
-          border-radius:12px;padding:16px;
-          font-size:11px;color:#0c4a6e;
-          font-family:'Courier New',monospace;
-          white-space:pre-wrap;word-break:break-all;
-          max-height:420px;overflow-y:auto;
-          line-height:1.7;margin:0;
-        "></pre>
-        <button id="copyCurlBtn" onclick="copyCurlResult()" style="
-          position:absolute;top:10px;right:10px;
-          background:rgba(186,230,255,.35);
-          border:1px solid rgba(56,189,248,.5);
-          border-radius:8px;padding:5px 12px;
-          font-size:11px;font-weight:700;color:#0369a1;
-          cursor:pointer;font-family:inherit;
-        ">📋 Copy</button>
-      </div>
-      <div id="copyCurlMsg" style="font-size:12px;color:#0369a1;min-height:18px;margin-top:10px;text-align:center;"></div>
-    </div>
-  </div>
-  <!-- ═══ END CURL HUỶ ĐƠN ═══ -->
-
 </body>
 </html>
