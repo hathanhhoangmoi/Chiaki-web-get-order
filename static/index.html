@@ -1484,20 +1484,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 </div>
 
 <div class="container">
-  <!-- Disclaimer -->
-  <div style="background:rgba(255,200,100,.18);border:1px solid rgba(255,180,60,.35);border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)">
-    <span style="font-size:16px;margin-top:2px">⚠️</span>
-    <div>
-      <div style="font-size:11px;font-weight:700;color:#92400e;letter-spacing:.4px;margin-bottom:6px">THÔNG BÁO MIỄN TRỪ TRÁCH NHIỆM</div>
-      <div style="font-size:11px;color:#78350f;line-height:1.7;display:flex;flex-direction:column;gap:5px">
-        <p>Công cụ này được xây dựng dựa trên các nguồn dữ liệu công khai từ Chiaki.vn</p>
-        <p> Chúng tôi không sở hữu cũng như không chịu trách nhiệm về nội dung gốc.</p>
-        <p>Nghiêm cấm mọi hành vi sử dụng dữ liệu cho các mục đích gian lận, trái phép hoặc vi phạm quyền riêng tư, quyền sở hữu trí tuệ và các quy định pháp luật liên quan.</p>
-        <p>Mọi hoạt động đều có thể được ghi nhận và lưu lại. Trong trường hợp phát hiện vi phạm, chúng tôi có quyền cung cấp thông tin cho cơ quan chức năng.</p>
-        <p style="font-weight:600;color:#92400e">Bằng việc nhập KEY ID và tiếp tục sử dụng, bạn xác nhận đã đọc, hiểu và đồng ý với các điều khoản nêu trên.</p>
-      </div>
-    </div>
-  </div>
 <!-- ── Chart Section ── -->
 <div class="chart-card">
   <div class="chart-toolbar">
@@ -2240,9 +2226,6 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
           <td style="font-size:11px;color:#9b8bb4">${R ? M() : (o.order_date || '—')}</td>
           <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
           <td>${R ? M() : (o.customer_name || o.buyer_name || '—')}</td>
-          <td style="font-family:monospace">
-  ${R ? M() : (o.phone ? `<span class="phone-blur">${o.phone}</span>` : '—')}
-</td>
           <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.address || '—')}</td>
           <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.product || '—')}</td>
           <td style="text-align:center">${R ? M() : (o.quantity || '—')}</td>
@@ -2291,11 +2274,6 @@ function renderHanoiTable(data) {
       <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
       <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
       <td>${o.customer_name || o.buyer_name || '—'}</td>
-      <td style="font-family:monospace">
-        ${o.restricted
-          ? `<span class="restricted-mask">••••••••</span>`
-          : (o.phone ? `<span class="phone-blur" title="Lấy đơn để xem SĐT">${o.phone}</span>` : '—')}
-      </td>
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
       <td style="text-align:center">${o.quantity || '—'}</td>
@@ -2341,11 +2319,6 @@ function renderNuocHoaTable(data) {
       <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
       <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
       <td>${o.customer_name || o.buyer_name || '—'}</td>
-      <td style="font-family:monospace">
-        ${o.restricted
-          ? `<span class="restricted-mask">••••••••</span>`
-          : (o.phone ? `<span class="phone-blur" title="Lấy đơn để xem SĐT">${o.phone}</span>` : '—')}
-      </td>
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
       <td style="text-align:center">${o.quantity || '—'}</td>
@@ -4465,11 +4438,6 @@ function renderMienBacTable(data) {
     <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
     <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
     <td>${o.customer_name || o.buyer_name || '—'}</td>
-    <td style="font-family:monospace">
-      ${o.restricted
-        ? `<span class="restricted-mask">••••••••</span>`
-        : (o.phone ? `<span class="phone-blur" title="Lấy đơn để xem SĐT">${o.phone}</span>` : '—')}
-    </td>
     <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
     <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
     <td style="text-align:center">${o.quantity || '—'}</td>
