@@ -1020,83 +1020,133 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
 .sync-panel {
   display: block;
   width: 100%;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+  backdrop-filter: blur(20px);
   max-height: none;
   overflow-y: visible;
-  backdrop-filter: none;
 }
 
 .sync-panel-title {
-  font-size: 13px; font-weight: 700; color: #3b3551;
+  font-size: 13px; font-weight: 700; 
+  color: rgba(255,255,255,0.95);
   margin-bottom: 14px;
+  letter-spacing: -0.02em;
 }
+
 .sync-label {
-  font-size: 10px; font-weight: 700; color: #9b8bb4;
-  letter-spacing: .4px; text-transform: uppercase;
+  font-size: 10px; font-weight: 600; 
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.8px; text-transform: uppercase;
   display: block; margin-bottom: 4px; margin-top: 10px;
 }
+
 .sync-input {
-  width: 100%; padding: 9px 12px;
-  border: 1.5px solid rgba(198,181,255,.5);
-  border-radius: 12px; font-size: 12px;
-  background: rgba(255,255,255,.6); color: #3b3551;
-  outline: none; transition: border .2s;
-  box-sizing: border-box; font-family: monospace;
+  width: 100%; padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px; font-size: 12.5px;
+  background: rgba(255,255,255,0.07); 
+  color: #fff;
+  outline: none; transition: all .2s;
+  box-sizing: border-box; font-family: inherit;
 }
 .sync-input:focus {
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 3px rgba(167,139,250,.15);
+  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
 }
-select.sync-input { font-family: inherit; cursor: pointer; }
+select.sync-input { 
+  font-family: inherit; cursor: pointer;
+  color: #fff; background: rgba(255,255,255,0.1);
+}
+select.sync-input option {
+  background: #1e1b4b; color: #fff;
+}
+
 .btn-sync {
-  width: 100%; margin-top: 14px; padding: 11px;
-  border: none; border-radius: 12px;
-  background: linear-gradient(135deg, #d8b4fe, #a78bfa);
+  width: 100%; margin-top: 14px; padding: 12px;
+  border: 1px solid rgba(255,255,255,0.2); 
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
   color: #fff; font-family: inherit; font-size: 13px;
   font-weight: 700; cursor: pointer; transition: all .2s;
-  box-shadow: 0 4px 14px rgba(167,139,250,.4);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  letter-spacing: -0.02em;
 }
-.btn-sync:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(167,139,250,.5); }
+.btn-sync:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.1));
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+.btn-sync:active { transform: translateY(0); }
 .btn-sync:disabled {
-  background: rgba(200,190,220,.4); color: rgba(100,80,140,.4);
-  box-shadow: none; cursor: not-allowed; transform: none;
+  background: rgba(255,255,255,0.04); 
+  color: rgba(255,255,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: not-allowed; transform: none;
 }
+
 .sync-msg {
-  margin-top: 10px; font-size: 11px; text-align: center;
-  padding: 7px 10px; border-radius: 8px; display: none; line-height: 1.5;
+  margin-top: 10px; font-size: 11.5px; text-align: center;
+  padding: 9px 12px; border-radius: 10px; display: none; line-height: 1.6;
+  backdrop-filter: blur(12px);
 }
-.sync-msg.ok { display: block; background: rgba(167,243,208,.4); color: #065f46; }
-.sync-msg.err { display: block; background: rgba(254,202,202,.4); color: #dc2626; }
+.sync-msg.ok { 
+  display: block; 
+  background: rgba(255,255,255,0.1); 
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.95); 
+}
+.sync-msg.err { 
+  display: block; 
+  background: rgba(255,255,255,0.08); 
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.7); 
+}
+
 .btn-chiaki-link {
   display: block; width: 100%; padding: 9px 12px;
-  background: rgba(167,243,208,.3); border: 1.5px solid rgba(110,231,183,.4);
-  border-radius: 12px; color: #065f46; font-size: 12px; font-weight: 700;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px; 
+  color: rgba(255,255,255,0.9); 
+  font-size: 12px; font-weight: 600;
   text-align: center; text-decoration: none; box-sizing: border-box;
   margin-top: 6px; transition: all .2s;
+  backdrop-filter: blur(12px);
 }
-.btn-chiaki-link:hover { background: rgba(167,243,208,.5); }
+.btn-chiaki-link:hover { 
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+
 .sync-hint {
-  font-size: 10px; color: #9b8bb4; text-align: center;
+  font-size: 10px; color: rgba(255,255,255,0.35); 
+  text-align: center;
   margin: 6px 0 10px; line-height: 1.5;
 }
+
 .sync-dropzone {
-  border: 2px dashed rgba(167,139,250,.4);
+  border: 1px dashed rgba(255,255,255,0.25);
   border-radius: 14px; padding: 20px 12px;
   text-align: center; cursor: pointer;
-  background: rgba(255,255,255,.4); color: #7c6fa0;
+  background: rgba(255,255,255,0.04); 
+  color: rgba(255,255,255,0.5);
   font-size: 12px; line-height: 1.6; transition: all .2s;
+  backdrop-filter: blur(12px);
 }
 .sync-dropzone:hover, .sync-dropzone.dragover {
-  border-color: #a78bfa;
-  background: rgba(167,139,250,.08);
+  border-color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.08);
 }
 .sync-drop-icon { font-size: 24px; margin-bottom: 6px; }
 .sync-file-name {
-  margin-top: 8px; font-size: 11px; color: #065f46;
+  margin-top: 8px; font-size: 11px; 
+  color: rgba(255,255,255,0.85);
   text-align: center; font-weight: 700; min-height: 16px;
 }
 .combo-row {
