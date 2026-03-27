@@ -1915,14 +1915,6 @@ async function loadSummary() {
     document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
 
     const latestSync = data.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
-    if (latestSync)
-      document.getElementById('lastSyncTime').textContent =
-        new Date(latestSync).toLocaleString('vi-VN', {
-          timeZone: 'Asia/Ho_Chi_Minh', hour12: false,
-          day: '2-digit', month: '2-digit', year: 'numeric',
-          hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
-
     // Giữ lại đúng 1 phần tử: tab "Tất cả"
     const tabs = document.getElementById('shopTabs');
     while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
@@ -1941,8 +1933,6 @@ async function loadSummary() {
       .then(statsRes => {
         const waitItem = statsRes.by_status?.find(s =>
           s.status && s.status.toLowerCase().includes('wait'));
-        const elWait = document.getElementById('waitCount');
-        if (elWait) elWait.textContent = waitItem ? waitItem.count.toLocaleString('vi') : '0';
       })
       .catch(() => {})
 
