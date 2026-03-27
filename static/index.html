@@ -1269,16 +1269,13 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
       <button id="btnExportPdf" class="btn-modal-confirm" onclick="exportShippingLabel()" style="background:#ff6b35;display:none;">📄 IN PHIẾU GIAO HÀNG</button>
     </div>
-
-    <!-- Nút đóng góc trên trái -->
-
 <div class="info-btns">
   <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()" style="flex:1">🔍 Tra cứu đơn hàng</button>
 </div>
 
   </div>
 </div>
-  <!-- ═══ CURL HUỶ ĐƠN - GÓC DƯỚI TRÁI ═══ -->
+  <!-- ═══ CURL HUỶ ĐƠN ═══ -->
   <div id="curlFixedCard" style="
   margin-top:16px;
   border-top:1px solid rgba(198,181,255,.3);
@@ -1311,58 +1308,98 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 </div>
 
   <!-- Popup hiển thị curl kết quả -->
-  <div id="curlResultBg" style="
-    display:none;position:fixed;inset:0;
-    background:rgba(0,0,0,.55);z-index:9999;
-    align-items:center;justify-content:center;
-  " onclick="if(event.target===this) closeCurlModal()">
-    <div style="
-        background:linear-gradient(135deg,rgba(186,230,255,.18) 0%,rgba(147,210,255,.12) 50%,rgba(186,230,255,.18) 100%);
-        backdrop-filter:blur(28px) saturate(180%);
-        -webkit-backdrop-filter:blur(28px) saturate(180%);
-        border-radius:24px;
-        padding:24px 22px;max-width:680px;width:95%;
-        box-shadow:
-          0 8px 32px rgba(56,189,248,.18),
-          0 2px 8px rgba(56,189,248,.12),
-          inset 0 1.5px 0 rgba(255,255,255,.45),
-          inset 0 -1px 0 rgba(147,210,255,.2);
-        position:relative;font-family:inherit;
-        border:1.5px solid rgba(186,230,255,.45);
-      ">
+<div id="curlResultBg" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(15,23,42,.55);
+  z-index:9999;
+  align-items:center;justify-content:center;
+" onclick="if(event.target===this) closeCurlModal()">
+  <div style="
+    background:linear-gradient(135deg,#e0f2ff 0%,#cbe7ff 40%,#e8f4ff 100%);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border-radius:24px;
+    padding:24px 22px;
+    max-width:680px;width:95%;
+    box-shadow:
+      0 18px 45px rgba(56,189,248,.32),
+      0 4px 14px rgba(37,99,235,.22),
+      inset 0 1.5px 0 rgba(255,255,255,.85),
+      inset 0 -1px 0 rgba(148,163,184,.4);
+    position:relative;font-family:inherit;
+    border:1.5px solid rgba(191,219,254,.9);
+  ">
 
-      <button onclick="closeCurlModal()" style="
-        position:absolute;top:12px;right:14px;
-        background:rgba(186,230,255,.3);border:none;
-        border-radius:50%;width:30px;height:30px;
-        font-size:16px;cursor:pointer;color:#0369a1;
-      ">✕</button>
-      <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:4px">⚙️ CURL HUỶ ĐƠN</div>
-      <div id="curlResultOrderInfo" style="font-size:11px;color:#0284c7;margin-bottom:14px"></div>
-      <div style="position:relative">
-        <pre id="curlResultText" style="
-          background:rgba(2,132,199,.12);
-          border:1px solid rgba(147,210,255,.35);
-          border-radius:12px;padding:16px;
-          font-size:11px;color:#0c4a6e;
-          font-family:'Courier New',monospace;
-          white-space:pre-wrap;word-break:break-all;
-          max-height:420px;overflow-y:auto;
-          line-height:1.7;margin:0;
-        "></pre>
-        <button id="copyCurlBtn" onclick="copyCurlResult()" style="
-          position:absolute;top:10px;right:10px;
-          background:rgba(186,230,255,.35);
-          border:1px solid rgba(56,189,248,.5);
-          border-radius:8px;padding:5px 12px;
-          font-size:11px;font-weight:700;color:#0369a1;
-          cursor:pointer;font-family:inherit;
-        ">📋 Copy</button>
-      </div>
-      <div id="copyCurlMsg" style="font-size:12px;color:#0369a1;min-height:18px;margin-top:10px;text-align:center;"></div>
+    <button onclick="closeCurlModal()" style="
+      position:absolute;top:12px;right:14px;
+      background:rgba(255,255,255,.9);
+      border:none;
+      border-radius:999px;
+      width:30px;height:30px;
+      font-size:16px;cursor:pointer;
+      color:#0f172a;
+      box-shadow:0 2px 6px rgba(15,23,42,.18);
+    ">✕</button>
+
+    <div style="
+      font-size:13px;font-weight:800;
+      color:#0f172a;
+      margin-bottom:4px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    ">
+      ⚙️ CURL HUỶ ĐƠN
     </div>
+
+    <div id="curlResultOrderInfo" style="
+      font-size:11px;
+      color:#1d4ed8;
+      margin-bottom:14px;
+    "></div>
+
+    <div style="position:relative">
+      <pre id="curlResultText" style="
+        background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);
+        border:1px solid rgba(129,140,248,.5);
+        border-radius:14px;
+        padding:16px 40px 16px 16px;
+        font-size:11px;
+        color:#0f172a;
+        font-family:'SF Mono','JetBrains Mono','Courier New',monospace;
+        white-space:pre-wrap;
+        word-break:break-all;
+        max-height:420px;
+        overflow-y:auto;
+        line-height:1.7;
+        margin:0;
+      "></pre>
+
+      <button id="copyCurlBtn" onclick="copyCurlResult()" style="
+        position:absolute;top:10px;right:10px;
+        background:linear-gradient(135deg,#38bdf8,#60a5fa);
+        border:1px solid rgba(37,99,235,.85);
+        border-radius:999px;
+        padding:5px 14px;
+        font-size:11px;
+        font-weight:700;
+        color:#f9fafb;
+        cursor:pointer;
+        font-family:inherit;
+        box-shadow:0 4px 10px rgba(37,99,235,.35);
+      ">
+        📋 Copy
+      </button>
+    </div>
+
+    <div id="copyCurlMsg" style="
+      font-size:12px;
+      color:#1d4ed8;
+      min-height:18px;
+      margin-top:10px;
+      text-align:center;
+    "></div>
   </div>
-  <!-- ═══ END CURL HUỶ ĐƠN ═══ -->
+</div>
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
 <div class="sync-panel" id="syncPanel">
