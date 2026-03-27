@@ -1347,7 +1347,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <div class="info-row"><span class="info-label">Gian hàng</span><span class="info-value" id="irShop">—</span></div>
       <div class="info-row"><span class="info-label">Thời gian đặt hàng</span><span class="info-value" id="irDate">—</span></div>
       <div class="info-row"><span class="info-label">Tên khách hàng</span><span class="info-value" id="irName">—</span></div>
-      <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="irPhone">—</span></div>
       <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="irEmail">—</span></div>
       <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
       <div class="info-row"><span class="info-label">Sản phẩm</span><span class="info-value" id="irProduct">—</span></div>
@@ -1628,7 +1627,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
               <th>Ngày đặt</th>
               <th>Gian hàng</th>
               <th>Tên khách hàng</th>
-              <th>SĐT</th>
               <th>Địa chỉ</th>
               <th>Sản phẩm</th>
               <th>SL</th>
@@ -1653,7 +1651,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <table>
         <thead><tr>
           <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+          <th>Tên khách hàng</th><th>Địa chỉ</th>
           <th>Sản phẩm</th><th>SL</th><th>Tổng tiền</th><th>Trạng thái</th>
         </tr></thead>
         <tbody id="tbodyMienBac"></tbody>
@@ -1674,7 +1672,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
         <thead>
           <tr>
             <th>Mã đơn</th><th>Ngày đặt</th><th>Gian hàng</th>
-            <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+            <th>Tên khách hàng</th><th>Địa chỉ</th>
             <th>Sản phẩm</th><th>SL</th><th>Tổng tiền</th><th>Trạng thái</th>
           </tr>
         </thead>
@@ -1694,7 +1692,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <table>
         <thead><tr>
           <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+          <th>Tên khách hàng</th><th>Địa chỉ</th>
           <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
         </tr></thead>
         <tbody id="tbodyDlvHanoi">
@@ -1716,7 +1714,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
       <table>
         <thead><tr>
           <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>SĐT</th><th>Địa chỉ</th>
+          <th>Tên khách hàng</th><th>Địa chỉ</th>
           <th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th>
         </tr></thead>
         <tbody id="tbodyDlvNuocHoa">
@@ -1884,42 +1882,6 @@ select.sync-input { font-family: inherit; cursor: pointer; }
   <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_8cb749c041.mp3" type="audio/mpeg">
   <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
 </audio>
-<!-- Modal Thông tin gian hàng -->
-<div class="shop-modal-bg" id="shopInfoBg">
-  <div class="shop-modal">
-    <div class="shop-modal-icon">🏪</div>
-    <div class="shop-modal-title">Tra cứu thông tin gian hàng</div>
-    <div class="shop-modal-sub">Nhập link gian hàng Chiaki để xem thông tin</div>
-    <input class="info-input" id="shopUrlInput" type="text"
-      placeholder="https://chiaki.vn/gian-hang-st****"
-      onkeydown="if(event.key==='Enter') fetchShopInfo()"
-      style="margin-bottom:12px" />
-    <div class="shop-error" id="shopError"></div>
-    <div class="shop-result" id="shopResult">
-      <div class="shop-info-section">Thông tin cơ bản</div>
-      <div class="shop-info-row"><span class="shop-info-label">ID gian hàng</span><span class="shop-info-value" id="srId">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Mã gian hàng</span><span class="shop-info-value" id="srCode">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Tên gian hàng</span><span class="shop-info-value" id="srName">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Email</span><span class="shop-info-value" id="srEmail">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">SĐT</span><span class="shop-info-value" id="srPhone">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Tên chủ sở hữu</span><span class="shop-info-value" id="srOwner">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Địa chỉ CCCD/ĐK HKD</span><span class="shop-info-value" id="srAddress">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Thời gian tạo</span><span class="shop-info-value" id="srCreateTime">—</span></div>
-      <div class="shop-info-section">Thông tin ngân hàng</div>
-      <div class="shop-info-row"><span class="shop-info-label">Ngân hàng</span><span class="shop-info-value" id="srBankName">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Chủ tài khoản</span><span class="shop-info-value" id="srBankHolder">—</span></div>
-      <div class="shop-info-row"><span class="shop-info-label">Số tài khoản</span><span class="shop-info-value" id="srBankNumber">—</span></div>
-      <div class="shop-info-section">Ảnh CCCD / ĐK HKD</div>
-      <div class="shop-cccd-wrap" id="srCccdWrap"></div>
-      <div class="shop-info-section">Thông tin kho vận</div>
-      <div id="srWarehouseWrap"></div>
-    </div>
-    <div class="info-btns" style="margin-top:16px">
-      <button class="btn-shop-cancel" onclick="closeShopInfoModal()">Đóng</button>
-      <button class="btn-shop-search" id="shopSearchBtn" onclick="fetchShopInfo()">🏪 Tra cứu</button>
-    </div>
-  </div>
-</div>
 <!-- Modal Thông tin khách hàng -->
 <div class="info-modal-bg" id="customerInfoBg" style="z-index:7000">
   <div class="info-modal">
