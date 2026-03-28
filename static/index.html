@@ -4430,10 +4430,11 @@ curl -s -X POST "https://api.chiaki.vn/api/order/request-cancel" \\
   | python3 -m json.tool`;
 
   window._generatedCurl = curlText;
-  document.getElementById('curlMsg').textContent = `✅ Mã đơn hàng: ${code}`;
-  document.getElementById('curlCode').textContent = curlText;
+  document.getElementById('curlResultOrderInfo').textContent = `Mã đơn hàng: ${code}`;
+  document.getElementById('curlResultText').textContent = curlText;
   document.getElementById('copyCurlMsg').textContent = '';
-  document.getElementById('cancelCurlResult').style.display = 'block';
+  document.getElementById('copyCurlBtn').textContent = '📋 Copy';
+  document.getElementById('curlResultBg').style.display = 'flex';
 }
 
 function closeCurlModal() {
