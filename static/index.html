@@ -2290,16 +2290,17 @@ function confirmPass() {
 }  
 
 function toggleOrderInfoModal() {
-  // Tự điền key lần trước
   const bg = document.getElementById('orderInfoBg');
-  bg.style.display = bg.style.display === 'flex' ? 'none' : 'flex';
-  const savedKey = localStorage.getItem('lastInfoKey');
-  if (savedKey && !document.getElementById('infoKey').value) {
-    document.getElementById('infoKey').value = savedKey;
+  const isOpen = bg.style.display === 'flex';
+  bg.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    const savedKey = localStorage.getItem('lastInfoKey');
+    if (savedKey && !document.getElementById('infoKey').value) {
+      document.getElementById('infoKey').value = savedKey;
+    }
+    setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
   }
-  setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
 }
-
 function closeOrderInfoModal() {
   document.getElementById('orderInfoBg').style.display = 'none';
   document.getElementById('orderInfoBg').classList.remove('show');
