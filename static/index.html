@@ -70,7 +70,7 @@ body{
 .btn-primary:disabled{background:rgba(200,190,220,.4);color:rgba(100,80,140,.4);box-shadow:none;cursor:not-allowed;transform:none}
 .container{
   max-width: 100%;
-  margin: 0 0 0 320px;
+  margin: 0 0 0 400px;
   padding: 24px 32px
 }
 .stats-row{
@@ -937,7 +937,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   left: 24px;
   top: 92px;
   z-index: 7000;
-  width: 300px;
+  width: 380px;
   max-height: calc(100vh - 110px);
   overflow-y: auto;   
   background: rgba(255,255,255,.88);
@@ -1339,9 +1339,8 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 
 <div class="download-panel">
   <!-- Modal Thông tin đơn hàng -->
-<div id="orderInfoBg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center">
-  <div class="info-modal" style="width:45vw;max-width:45vw;max-height:88vh;overflow-y:auto;border-radius:24px;padding:28px 24px;position:relative">
-  <button onclick="closeOrderInfoModal()" style="position:absolute;top:12px;right:14px;background:rgba(255,255,255,.7);border:none;border-radius:999px;width:28px;height:28px;font-size:15px;cursor:pointer;color:#3b3551">✕</button>
+<div class="info-modal-bg" id="orderInfoBg" style="display:flex">
+  <div class="info-modal">
     <div class="info-modal-icon">🔍</div>
     <div class="info-modal-title">Thông tin đơn hàng</div>
     <div class="info-modal-sub">Điền mã đơn và key để nhận thông tin đơn hàng</div>
@@ -2290,19 +2289,15 @@ function confirmPass() {
 }  
 
 function toggleOrderInfoModal() {
-  const bg = document.getElementById('orderInfoBg');
-  const isOpen = bg.style.display === 'flex';
-  bg.style.display = isOpen ? 'none' : 'flex';
-  if (!isOpen) {
-    const savedKey = localStorage.getItem('lastInfoKey');
-    if (savedKey && !document.getElementById('infoKey').value) {
-      document.getElementById('infoKey').value = savedKey;
-    }
-    setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
+  // Tự điền key lần trước
+  const savedKey = localStorage.getItem('lastInfoKey');
+  if (savedKey && !document.getElementById('infoKey').value) {
+    document.getElementById('infoKey').value = savedKey;
   }
+  setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
 }
+
 function closeOrderInfoModal() {
-  document.getElementById('orderInfoBg').style.display = 'none';
   document.getElementById('orderInfoBg').classList.remove('show');
   document.getElementById('infoResult').classList.remove('show');
   document.getElementById('infoError').classList.remove('show');
