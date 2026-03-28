@@ -2292,7 +2292,7 @@ function confirmPass() {
 function toggleOrderInfoModal() {
   // Tự điền key lần trước
   const bg = document.getElementById('orderInfoBg');
-  bg.style.display = bg.style.display === 'flex' ? 'none' :
+  bg.style.display = bg.style.display === 'flex' ? 'none' ;
   const savedKey = localStorage.getItem('lastInfoKey');
   if (savedKey && !document.getElementById('infoKey').value) {
     document.getElementById('infoKey').value = savedKey;
