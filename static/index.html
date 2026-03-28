@@ -2518,7 +2518,9 @@ const SHOP_ID_NAME = {
     
     // Hiện lượt còn lại
     document.getElementById('infoKeyStatus').textContent =
-      `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
+      data.remaining === -1 || data.remaining === null
+      ? '✅ Key không giới hạn lượt'
+      : `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
 const pdfBtn = document.getElementById('btnExportPdf');
 if (pdfBtn) pdfBtn.style.display = 'block';
 document.getElementById('btnExportPdf').style.display = 'block';
@@ -2552,8 +2554,11 @@ document.addEventListener('DOMContentLoaded', () => {
           statusEl.textContent = '❌ ' + d.error;
           statusEl.style.color = '#dc2626';
         } else {
-          statusEl.textContent = `✅ Key hợp lệ — còn ${d.remaining}/${d.limit} lượt`;
-          statusEl.style.color = d.remaining > 0 ? '#059669' : '#dc2626';
+          const unlimited = d.remaining === -1 || d.limit === -1;
+          statusEl.textContent = unlimited
+            ? '✅ Key không giới hạn lượt'
+            : `✅ Key hợp lệ — còn ${d.remaining}/${d.limit} lượt`;
+          statusEl.style.color = (unlimited || d.remaining > 0) ? '#059669' : '#dc2626';
         }
       } catch { statusEl.textContent = ''; }
     }, 600);
