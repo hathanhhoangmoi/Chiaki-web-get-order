@@ -1430,79 +1430,15 @@ select.sync-input { font-family: inherit; cursor: pointer; }
     <div class="info-modal-icon">🗂️</div>
     <div class="info-modal-title">Tải danh sách đơn hàng</div>
     <div class="info-modal-sub">Chọn gian hàng và tải file từ Chiaki</div>
-
-    <label class="sync-label">Chọn gian hàng</label>
-    <select class="info-input" id="syncShopId" onchange="updateChiakiLink()"
-            style="cursor:pointer">
-      <option value="">Mời chọn</option>
-    <option value="2732">2732 · Min Duty</option>
-    <option value="4299">4299 · HADES Shop</option>
-    <option value="3522">3522 · ShipnhanhStore</option>
-    <option value="4337">4337 · TH Cosmetic</option>
-    <option value="3684">3684 · Hoya Life</option>
-    <option value="3540">3540 · Rongcon</option>
-    <option value="3783">3783 · Đẹp & Khoẻ 365</option>
-    <option value="1489">1489 · Beauty & Healthy</option>
-    <option value="4036">4036 · Kitty House</option>
-    <option value="635">635 · Trang Perfume</option>
-    <option value="1498">1498 · Kho Dược TPCN</option>
-    <option value="5090">5090 · Mason House Store</option>
-    <option value="5091">5091 · Gia Phương Shop</option>
-    <option value="4339">4339 · PINASAGO Pin Sài Gòn</option>
-    <option value="4961">4961 · Kalos Việt Nam</option>
-    <option value="4872">4872 · Green House</option>
-    <option value="4917">4917 · Moss Skincare</option>
-    <option value="4647">4647 · XXIV Store</option>
-    <option value="4732">4732 · Ken Perfume</option>
-    <option value="5112">5112 · MoiThom - Mèo bán nước hoa</option>
-    <option value="2292">2292 · Thế Giới Hàng Auth 88</option>
-    <option value="4940">4940 · Mint- Skin Beauty & Cosmetics</option>
-    <option value="5096">5096 · The Senté Hill</option>
-    <option value="1164">1164 · O2 PHARMACY</option>
-    <option value="3612">3612 · NGUYENKIM</option>
-    <option value="5092">5092 · Thế Giới Son</option>
-    <option value="5125">5125 · Felice Beauty Garden</option>
-    <option value="1600">1600 · ChoychoyStore</option>
-    <option value="2423">2423 · Peony Cosmetics</option>
-    <option value="4965">4965 · nhathuocsuckhoe2</option>
-    <option value="4365">4365 · Nana Beauty & More</option>
-    <option value="1729">1729 · MHDMART</option>
-    <option value="4360">4360 · SnapshopVN</option>
-    <option value="5094">5094 · Shop Snap TPHCM</option>
-    <option value="1602">1602 · Winny Shop</option>
-    <option value="1105">1105 · MjuMju</option>
-    <option value="4294">4294 · Life Healthy</option>
-    <option value="3009">3009 · QuangNgoc1976</option>
-    <option value="1414">1414 · Dược Phẩm Tâm An</option>
-    <option value="2573">2573 · MiMi Beauty</option>
-    <option value="2225">2225 · T&T Japan shop</option>
-    <option value="3047">3047 · GREENBOX</option>
-    <option value="3864">3864 · Hàng ngoại giá tốt</option>
-    <option value="3852">3852 · Baby Grow Shop</option>
-    <option value="1273">1273 · NHÀ THUỐC MINH TÂM</option>
-    <option value="3300">3300 · Mayya Hàng Nội Địa Nhật</option>
-    <option value="1258">1258 · Shop Adam</option>
-    <option value="3337">3337 · Shop Sài Gòn</option>
-    <option value="4342">4342 · Sản Phẩm Hỗ Trợ</option>
-    <option value="1015">1015 · Green Healthy & Beauty</option>
-    <option value="3218">3218 · Bảo Lâm Anh</option>
-    <option value="2557">2557 · XUAN MINH PHARMACY</option>
-    <option value="2025">2025 · Cali-Goods</option>
-    <option value="5114">5114 · LixiBox Hill</option>
-  </select>
-
-  <label class="sync-label" style="margin-top:12px">Tải file đơn hàng từ Chiaki</label>
-    <a class="btn-info-search" id="chiakiLink" href="#" target="_blank"
-       style="display:block;text-align:center;text-decoration:none;padding:11px;margin-bottom:8px">
-      🔗 Tải về ngay
-    </a>
-    <input type="file" id="syncFileInput" accept=".xlsx,.xls"
-           style="display:none" onchange="handleSyncFile(this.files[0])"/>
-    <div class="sync-file-name" id="syncFileName"></div>
+    <button class="btn-info-search" onclick="downloadAllShops()"
+      style="width:100%;margin-bottom:16px;background:linear-gradient(135deg,#6ee7b7,#34d399);color:#065f46;box-shadow:0 4px 14px rgba(52,211,153,.35)">
+      📥 TẢI FILE ĐỒNG BỘ
+    </button>
     <div class="info-error" id="syncMsg" style="margin-top:6px"></div>
+    
     <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
       <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng</div>
-      <div id="comboRows" style="display:flex;border-radius:50px;flex-direction:column;gap:8px;"></div>
+      <div id="comboRows" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;padding-right:4px"></div>
       <button class="btn-info-search" id="btnComboSync"
               style="margin-top:12px;width:100%;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
               onclick="doComboSync()">
@@ -4060,84 +3996,7 @@ async function doSync() {
   }
 }
 
-function updateChiakiLink() {
-  const shopId = document.getElementById('syncShopId').value;
-  const link = document.getElementById('chiakiLink');
-  if (!shopId) { link.href = '#'; return; }
 
-  const today = new Date();
-  const since = new Date(today);
-  since.setDate(since.getDate() - 14);
-  const fmt = d => `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  const range = `${fmt(since)}+-+${fmt(today)}`;
-
-  link.href = `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&page_index=1&page_size=500&status=receive_wating&range_date=${range}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
-}
-let syncFile = null;
-function handleSyncDrop(event) {
-  event.preventDefault();
-  document.getElementById('syncDropzone').classList.remove('dragover');
-  const file = event.dataTransfer.files[0];
-  if (file) handleSyncFile(file);
-}
-  
-function handleSyncFile(file) {
-  if (!file) return;
-  syncFile = file;
-  document.getElementById('syncFileName').textContent = `📄 ${file.name}`;
-  document.getElementById('btnSync').disabled = false;
-}
- 
-async function doSyncUpload() {
-  const shopId = document.getElementById('syncShopId').value.trim();
-  const btn    = document.getElementById('btnSync');
-  const msg    = document.getElementById('syncMsg');
-
-  msg.className = 'sync-msg';
-
-  if (!shopId) {
-    msg.textContent = 'Vui lòng chọn gian hàng.';
-    msg.className = 'sync-msg err'; return;
-  }
-  if (!syncFile) {
-    msg.textContent = 'Vui lòng chọn file Excel.';
-    msg.className = 'sync-msg err'; return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang upload & parse...';
-
-  const formData = new FormData();
-  formData.append('shop_id', shopId);
-  formData.append('file', syncFile);
-
-  try {
-    const res = await fetch('/api/sync-upload', { method: 'POST', body: formData });
-    const data = await res.json();
-    if (data.ok) {
-      msg.textContent = `✅ ${data.shop_name}: sync ${data.synced} đơn thành công`;
-      msg.className = 'sync-msg ok';
-      // Reset file
-      syncFile = null;
-      document.getElementById('syncFileName').textContent = '';
-      document.getElementById('syncFileInput').value = '';
-      btn.disabled = true;
-      // Reload bảng
-      currentPage = 1;
-      await loadOrders();
-      await loadSummary();
-    } else {
-      msg.textContent = `❌ ${data.error || 'Lỗi không xác định'}`;
-      msg.className = 'sync-msg err';
-    }
-  } catch (e) {
-    msg.textContent = `❌ Lỗi kết nối: ${e.message}`;
-    msg.className = 'sync-msg err';
-  } finally {
-    btn.disabled = !syncFile;
-    btn.textContent = '🔄 SYNC NOW';
-  }
-}
 // ── SYNC COMBO ──────────────────────────────────────────────
 
 const COMBO_SHOPS = [
@@ -4213,82 +4072,7 @@ function initComboRows() {
     </div>
   `).join('');
 }
-  
-function handleComboFile(index, file) {
-  if (!file) return;
-  comboFileMap[index] = file;
-  const btn = document.getElementById(`comboUploadBtn_${index}`);
-  // Hiện tên file ngắn gọn tối đa 12 ký tự
-  const shortName = file.name.length > 14 ? file.name.slice(0,12) + '…' : file.name;
-  btn.textContent = `✅ ${shortName}`;
-  btn.classList.add('has-file');
-}
 
-async function doComboSync() {
-  const btn  = document.getElementById('btnComboSync');
-  const msg  = document.getElementById('comboMsg');
-
-  // Gom các hàng có đủ shop + file
-  const rows = [];
-  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
-    const shopId = document.getElementById(`comboShop_${i}`)?.value;
-    const file   = comboFileMap[i];
-    if (shopId && file) rows.push({ shopId, file });
-  }
-
-  if (!rows.length) {
-    msg.textContent = 'Vui lòng chọn shop và upload file cho ít nhất 1 hàng.';
-    msg.className = 'sync-msg err';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = `⏳ Đang sync 0/${rows.length}...`;
-  msg.className = 'sync-msg';
-
-  const results = [];
-  for (let i = 0; i < rows.length; i++) {
-    const { shopId, file } = rows[i];
-    btn.textContent = `⏳ Đang sync ${i+1}/${rows.length}...`;
-
-    const formData = new FormData();
-    formData.append('shop_id', shopId);
-    formData.append('file', file);
-
-    try {
-      const res  = await fetch('/api/sync-upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.ok) {
-        results.push(`✅ ${data.shop_name}: ${data.synced} đơn`);
-      } else {
-        results.push(`❌ Shop ${shopId}: ${data.error}`);
-      }
-    } catch (e) {
-      results.push(`❌ Shop ${shopId}: lỗi kết nối`);
-    }
-  }
-
-  msg.innerHTML = results.join('<br>');
-  msg.className = 'sync-msg ok';
-  btn.disabled = false;
-  btn.textContent = '⚡ SYNC COMBO';
-
-  // Reset file
-  comboFileMap = {};
-  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
-    const uploadBtn = document.getElementById(`comboUploadBtn_${i}`);
-    if (uploadBtn) {
-      uploadBtn.textContent = '🔗 Upload Files';
-      uploadBtn.classList.remove('has-file');
-    }
-    const input = document.getElementById(`comboInput_${i}`);
-    if (input) input.value = '';
-  }
-
-  currentPage = 1;
-  await loadOrders();
-  await loadSummary();
-}
 async function fetchSideOrderInfo() {
   const code = document.getElementById('sideInfoOrderCode').value.trim();
   const key  = document.getElementById('sideInfoKey').value.trim();
@@ -4367,6 +4151,162 @@ async function fetchSideOrderInfo() {
   }
 }
 
+const SHOP_LIST = [
+  { id: "2732", name: "Min Duty",                    token: "STZ88CLWVL" },
+  { id: "4299", name: "HADES Shop",                  token: "STPU7XXLRO" },
+  { id: "3522", name: "ShipnhanhStore",               token: "ST8RBD8N7P" },
+  { id: "4337", name: "TH Cosmetic",                  token: "STK635OPNG" },
+  { id: "3684", name: "Hoya Life",                    token: "STF4CAHSA3" },
+  { id: "3540", name: "Rongcon",                      token: "ST0FB63UNK" },
+  { id: "3783", name: "Đẹp & Khoẻ 365",              token: "ST52DPRAAQ" },
+  { id: "1489", name: "Beauty & Healthy",             token: "STYL4YS4G4" },
+  { id: "4036", name: "Kitty House",                  token: "STXSHR33MD" },
+  { id: "635",  name: "Trang Perfume",                token: "STMVBWFASC" },
+  { id: "1498", name: "Kho Dược TPCN",               token: "STIOAQZBW3" },
+  { id: "5090", name: "Mason House Store",            token: "ST6UI8IKUZ" },
+  { id: "5091", name: "Gia Phương Shop",              token: "ST5V3Z9EZ0" },
+  { id: "4339", name: "PINASAGO Pin Sài Gòn",        token: "STBCBL0Q2J" },
+  { id: "4961", name: "Kalos Việt Nam",               token: "ST7A4S1NMX" },
+  { id: "4872", name: "Green House",                  token: "STFXBK1K2R" },
+  { id: "4917", name: "Moss Skincare",                token: "STMXKJHF9Q" },
+  { id: "4647", name: "XXIV Store",                   token: "ST1O3RWF9U" },
+  { id: "4732", name: "Ken Perfume",                  token: "ST8VBX0YDU" },
+  { id: "5112", name: "MoiThom - Mèo bán nước hoa", token: "STA0D5B480" },
+  { id: "2292", name: "Thế Giới Hàng Auth 88",       token: "STD3YL1TSI" },
+  { id: "4940", name: "Mint- Skin Beauty & Cosmetics",token: "STIBP1581Z" },
+  { id: "5096", name: "The Senté Hill",               token: "STUAT0DIPC" },
+  { id: "1164", name: "O2 PHARMACY",                  token: "ST62778NKR" },
+  { id: "3612", name: "NGUYENKIM",                    token: "STYKS36NRV" },
+  { id: "5092", name: "Thế Giới Son",                 token: "STICBF43TU" },
+  { id: "5125", name: "Felice Beauty Garden",         token: "STNAHLO6A2" },
+  { id: "1600", name: "ChoychoyStore",                token: "ST8TO6BBH6" },
+  { id: "2423", name: "Peony Cosmetics",              token: "STMDTS134P" },
+  { id: "4965", name: "nhathuocsuckhoe2",             token: "STD14EBRRV" },
+  { id: "4365", name: "Nana Beauty & More",           token: "ST8IXXEWFP" },
+  { id: "1729", name: "MHDMART",                      token: "ST0TQGJL1P" },
+  { id: "4360", name: "SnapshopVN",                   token: "STC2LLEPG1" },
+  { id: "5094", name: "Shop Snap TPHCM",              token: "STC211TCK1" },
+  { id: "1602", name: "Winny Shop",                   token: "ST7VUHBQ2S" },
+  { id: "1105", name: "MjuMju",                       token: "STX77TCAQJ" },
+  { id: "4294", name: "Life Healthy",                 token: "ST2V1HXT04" },
+  { id: "3009", name: "QuangNgoc1976",                token: "STHT5W6Q1I" },
+  { id: "1414", name: "Dược Phẩm Tâm An",            token: "STUK6KK02F" },
+  { id: "2573", name: "MiMi Beauty",                  token: "STODIB4140" },
+  { id: "2225", name: "T&T Japan shop",               token: "ST0RHGMRT1" },
+  { id: "3047", name: "GREENBOX",                     token: "STF86PB7X5" },
+  { id: "3864", name: "Hàng ngoại giá tốt",          token: "STJIBLAFNM" },
+  { id: "3852", name: "Baby Grow Shop",               token: "STIT1BWG3G" },
+  { id: "1273", name: "NHÀ THUỐC MINH TÂM",         token: "STTYOFL1AL" },
+  { id: "3300", name: "Mayya Hàng Nội Địa Nhật",    token: "STAIXRWW85" },
+  { id: "1258", name: "Shop Adam",                    token: "STAFZIGJ52" },
+  { id: "3337", name: "Shop Sài Gòn",                token: "STNNQQ9VM4" },
+  { id: "4342", name: "Sản Phẩm Hỗ Trợ",            token: "STHK74IIOX" },
+  { id: "1015", name: "Green Healthy & Beauty",      token: "STZM5MDWT0" },
+  { id: "3218", name: "Bảo Lâm Anh",                 token: "STPNJGJTR5" },
+  { id: "2557", name: "XUAN MINH PHARMACY",          token: "STSV6MW0BI" },
+  { id: "2025", name: "Cali-Goods",                   token: "STKT8L8BFD" },
+  { id: "5114", name: "LixiBox Hill",                 token: "STTHSM375S" },
+];
+
+// ── Build URL tải file cho 1 shop ──
+function buildChiakiUrl(shop) {
+  const today = new Date();
+  const since = new Date(today);
+  since.setDate(since.getDate() - 14);
+  const fmt = d =>
+    `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
+  return `https://api.chiaki.vn/api/${shop.id}/export-excel-order?source=seller&pageindex=1&pagesize=500&status=receivewating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Sellerid=${shop.id}&Sellertoken=${shop.token}`;
+}
+
+// ── Mở lần lượt tất cả cửa sổ tải file, delay 10s mỗi shop ──
+function downloadAllShops() {
+  const msg = document.getElementById('syncMsg');
+  msg.textContent = `Đang mở ${SHOP_LIST.length} cửa sổ tải... (10s/shop)`;
+  msg.className = 'info-error show';
+  SHOP_LIST.forEach((shop, i) => {
+    setTimeout(() => {
+      window.open(buildChiakiUrl(shop), '_blank');
+      if (i === SHOP_LIST.length - 1) {
+        msg.textContent = `✅ Đã mở đủ ${SHOP_LIST.length} cửa sổ tải!`;
+      }
+    }, i * 10000);
+  });
+}
+
+// ── Render danh sách hàng combo (tên shop cố định, chỉ upload file) ──
+const comboFileMap = {};
+
+function renderComboRows() {
+  const container = document.getElementById('comboRows');
+  container.innerHTML = SHOP_LIST.map((shop, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(198,181,255,.15)">
+      <span style="font-size:11px;font-weight:600;color:#3b3551;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shop.name}</span>
+      <label style="cursor:pointer">
+        <input type="file" accept=".xlsx,.xls" style="display:none"
+          onchange="handleComboFile(${i}, this.files[0], this)">
+        <span id="comboUploadBtn${i}" style="
+          padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;
+          background:rgba(198,181,255,.25);color:#6b21a8;
+          border:1px solid rgba(198,181,255,.4);white-space:nowrap;cursor:pointer">
+          📎 Chọn file
+        </span>
+      </label>
+    </div>
+  `).join('');
+}
+
+function handleComboFile(index, file, input) {
+  if (!file) return;
+  comboFileMap[index] = file;
+  const btn = document.getElementById(`comboUploadBtn${index}`);
+  const shortName = file.name.length > 16 ? file.name.slice(0,14) + '…' : file.name;
+  btn.textContent = '✅ ' + shortName;
+  btn.style.background = 'rgba(110,231,183,.3)';
+  btn.style.color = '#065f46';
+  btn.style.borderColor = 'rgba(110,231,183,.5)';
+}
+
+// ── Đồng bộ tất cả file đã upload ──
+async function doComboSync() {
+  const btn = document.getElementById('btnComboSync');
+  const msg = document.getElementById('comboMsg');
+  const entries = Object.entries(comboFileMap);
+  if (!entries.length) {
+    msg.textContent = 'Vui lòng upload ít nhất 1 file.';
+    msg.className = 'info-error show'; return;
+  }
+  btn.disabled = true;
+  msg.className = 'info-error';
+  const results = [];
+  for (let k = 0; k < entries.length; k++) {
+    const [i, file] = entries[k];
+    const shop = SHOP_LIST[i];
+    btn.textContent = `🔁 Đang sync ${k+1}/${entries.length}...`;
+    const formData = new FormData();
+    formData.append('shopid', shop.id);
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/sync-upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      results.push(data.ok
+        ? `✅ ${shop.name}: ${data.synced} đơn`
+        : `❌ ${shop.name}: ${data.error}`);
+    } catch(e) {
+      results.push(`❌ ${shop.name}: lỗi kết nối`);
+    }
+    // Reset UI hàng đó
+    const uploadBtn = document.getElementById(`comboUploadBtn${i}`);
+    if (uploadBtn) { uploadBtn.textContent = '📎 Chọn file'; uploadBtn.style.cssText = ''; }
+  }
+  for (const k in comboFileMap) delete comboFileMap[k];
+  msg.innerHTML = results.join('<br>');
+  msg.className = 'info-error show';
+  btn.disabled = false;
+  btn.textContent = '🔁 SYNC';
+  currentPage = 1;
+  await loadOrders(); await loadSummary();
+}  
+  
 // Tự điền key đã lưu khi load trang
 document.addEventListener('DOMContentLoaded', () => {
   const savedKey = localStorage.getItem('lastInfoKey');
