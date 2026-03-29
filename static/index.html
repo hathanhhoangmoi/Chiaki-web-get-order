@@ -1205,6 +1205,23 @@ select.sync-input{font-family:inherit;cursor:pointer}
   </button>
   <div id="addCartCurlMsg" style="font-size:12px;color:#9b8bb4;margin-top:8px;text-align:center;min-height:16px"></div>
 </div>
+
+<div class="info-modal" style="margin-top: 16px;">
+  <div class="info-modal-icon">🔁</div>
+  <div class="info-modal-title">Tạo mã cUrl chuyển đơn</div>
+  <div class="info-modal-sub">Nhập đơn cũ và sản phẩm mới để tạo script chuyển đơn</div>
+
+  <input class="info-input" id="transferOldOrderCode" type="text" placeholder="Mã đơn hàng cũ" />
+  <input class="info-input" id="transferNewProductCode" type="text" placeholder="Mã sản phẩm mới" />
+  <input class="info-input" id="transferNewProductId" type="text" placeholder="ID sản phẩm mới" />
+  <input class="info-input" id="transferQuantity" type="number" min="1" step="1" placeholder="Số lượng" />
+  <input class="info-input" id="transferTargetShopId" type="text" placeholder="ID Shop nhận đơn" />
+
+  <button class="btn-info-search" onclick="generateTransferOrderCurl()" style="width:100%">
+    🔁 Tạo mã chuyển đơn
+  </button>
+  <div id="transferCurlMsg" style="font-size:12px;color:#9b8bb4;margin-top:8px;text-align:center;min-height:16px"></div>
+</div>
 </div>
 
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
@@ -1744,6 +1761,85 @@ select.sync-input{font-family:inherit;cursor:pointer}
       "></pre>
 
       <button id="copyAddCartCurlBtn" onclick="copyAddToCartCurlResult()" style="
+        position:absolute;top:10px;right:10px;
+        background:linear-gradient(135deg,#38bdf8,#60a5fa);
+        border:1px solid rgba(37,99,235,.85);
+        border-radius:999px;
+        padding:5px 14px;
+        font-size:11px;
+        font-weight:700;
+        color:#f9fafb;
+        cursor:pointer;
+        font-family:inherit;
+        box-shadow:0 4px 10px rgba(37,99,235,.35);
+      ">
+        📋 Sao chép
+      </button>
+    </div>
+  </div>
+</div>
+<div id="transferCurlResultBg" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(15,23,42,.55);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+" onclick="if(event.target===this) closeTransferCurlModal()">
+  <div style="
+    background:linear-gradient(135deg,#e0f2ff 0%,#cbe7ff 40%,#e8f4ff 100%);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border-radius:24px;
+    padding:24px 22px;
+    max-width:760px;width:95%;
+    position:relative;font-family:inherit;
+    border:1.5px solid rgba(191,219,254,.9);
+  ">
+    <button onclick="closeTransferCurlModal()" style="
+      position:absolute;top:12px;right:14px;
+      background:rgba(255,255,255,.9);
+      border:none;
+      border-radius:999px;
+      width:30px;height:30px;
+      font-size:16px;cursor:pointer;
+      color:#0f172a;
+      box-shadow:0 2px 6px rgba(15,23,42,.18);
+    ">✕</button>
+
+    <div style="
+      font-size:13px;font-weight:800;
+      color:#0f172a;
+      margin-bottom:4px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    ">
+      🔁 Mã chuyển đơn
+    </div>
+
+    <div id="transferCurlResultInfo" style="
+      font-size:11px;
+      color:#1d4ed8;
+      margin-bottom:14px;
+    "></div>
+
+    <div style="position:relative">
+      <pre id="transferCurlResultText" style="
+        background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);
+        border:1px solid rgba(129,140,248,.5);
+        border-radius:14px;
+        padding:12px;
+        font-size:11px;
+        color:#0f172a;
+        font-family:'SF Mono','JetBrains Mono','Courier New',monospace;
+        white-space:pre-wrap;
+        word-break:break-all;
+        max-height:440px;
+        overflow-y:auto;
+        line-height:1.7;
+        margin:0;
+      "></pre>
+
+      <button id="copyTransferCurlBtn" onclick="copyTransferCurlResult()" style="
         position:absolute;top:10px;right:10px;
         background:linear-gradient(135deg,#38bdf8,#60a5fa);
         border:1px solid rgba(37,99,235,.85);
@@ -4003,6 +4099,196 @@ function copyAddToCartCurlResult() {
     document.getElementById('copyAddCartCurlBtn').textContent = '💾 Đã sao chép!';
     setTimeout(() => {
       document.getElementById('copyAddCartCurlBtn').textContent = '📋 Sao chép';
+    }, 3000);
+  };
+  navigator.clipboard?.writeText(text).then(doSuccess).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    doSuccess();
+  });
+}
+
+function escapeForShellDoubleQuotes(value) {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\$/g, '\\$')
+    .replace(/`/g, '\\`');
+}
+
+async function generateTransferOrderCurl() {
+  const oldOrderCode = document.getElementById('transferOldOrderCode').value.trim();
+  const newProductCode = document.getElementById('transferNewProductCode').value.trim();
+  const newProductId = document.getElementById('transferNewProductId').value.trim();
+  const quantity = document.getElementById('transferQuantity').value.trim();
+  const targetShopId = document.getElementById('transferTargetShopId').value.trim();
+  const msg = document.getElementById('transferCurlMsg');
+  const key = (localStorage.getItem('lastInfoKey') || document.getElementById('infoKey')?.value || '').trim();
+
+  if (!oldOrderCode || !newProductCode || !newProductId || !quantity || !targetShopId) {
+    msg.textContent = '⚠️ Vui lòng điền đủ 5 trường.';
+    msg.style.color = '#ef4444';
+    return;
+  }
+  if (!/^\d+$/.test(newProductId) || !/^\d+$/.test(quantity) || !/^\d+$/.test(targetShopId)) {
+    msg.textContent = '⚠️ ID sản phẩm mới, số lượng và ID Shop nhận đơn phải là số.';
+    msg.style.color = '#ef4444';
+    return;
+  }
+  if (!key) {
+    msg.textContent = '⚠️ Chưa có key tra cứu. Hãy tra cứu đơn hàng ít nhất một lần để lưu key.';
+    msg.style.color = '#ef4444';
+    return;
+  }
+
+  msg.textContent = '⏳ Đang lấy thông tin đơn hàng cũ...';
+  msg.style.color = '#7c3aed';
+
+  try {
+    const res = await fetch('/api/order-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_code: oldOrderCode, key })
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    const userId = String(data.customer_id || '').trim();
+    const deliveryLocationId = String(data.delivery_location_id || '').trim();
+    const districtDeliveryId = String(data.district_delivery_id || '').trim();
+    const communeDeliveryId = String(data.commune_delivery_id || '').trim();
+    const orderTime = String(data.order_date || '').trim();
+    const address = data.address === '—' ? '' : String(data.address || '').trim();
+    const fullName = data.customer_name === '—' ? '' : String(data.customer_name || '').trim();
+    const email = data.email === '—' ? '' : String(data.email || '').trim();
+    const phone = data.phone === '—' ? '' : String(data.phone || '').trim();
+
+    if (!userId || !deliveryLocationId || !districtDeliveryId || !communeDeliveryId) {
+      throw new Error('Thiếu dữ liệu giao hàng hoặc customer_id từ đơn hàng cũ.');
+    }
+
+    const encodedTime = encodeURIComponent(orderTime);
+    const addToCartPayload = JSON.stringify({
+      product_id: Number(newProductId),
+      product_code: newProductCode,
+      quantity: Number(quantity),
+      is_buy_now: 0,
+      store_id: Number(targetShopId),
+      user_id: Number(userId)
+    });
+
+    const checkoutPayload = JSON.stringify({
+      user_id: Number(userId),
+      delivery_location_id: Number(deliveryLocationId),
+      district_delivery_id: Number(districtDeliveryId),
+      commune_delivery_id: Number(communeDeliveryId),
+      delivery_address: address,
+      earn: 0,
+      full_name: fullName,
+      email,
+      phone,
+      phone2: '',
+      payment_type: 'home',
+      prepaid_code: '',
+      related_user_id: Number(userId),
+      related_user_name: 'Nguyên',
+      require_call_back: 0,
+      campaign_id: '',
+      order_cookie: '',
+      from: '',
+      affiliate_id: '',
+      custom_id: '',
+      point: 0,
+      ads_id: '',
+      ip: '192.168.1.241',
+      platform: 'ios',
+      from_flow: '',
+      email_id: '',
+      tracking: '',
+      affiliate_type: '',
+      affiliate_url: '',
+      banner_id: '',
+      flash_sale: '',
+      product_sync: '',
+      delivery_time: '',
+      url_history: JSON.stringify([{
+        url: `https://chiaki.vn/add_to_cart?is_buy_now=0&product_code=${encodeURIComponent(newProductCode)}&product_id=${newProductId}&quantity=${quantity}&store_id=${targetShopId}&time=${encodedTime}&user_id=${userId}&version=3.6.2`,
+        time: orderTime
+      }]),
+      current_warehouse_product: 'empty',
+      delivery_note: 'other',
+      description: '',
+      promotion_code_used: {},
+      delivery_shipping_mode: 'normal',
+      source: 'chiaki-app',
+      device: 'ios',
+      clicker_data: { source: null, sources: '', trackingData: null },
+      browser: ' ',
+      user_device: 'Mobile',
+      payment_value: JSON.stringify({ bank_code: 'home' }),
+      is_hide_product_name: 0
+    });
+
+    const curlText =
+`curl 'https://api.chiaki.vn/api/v2/cart_item/push' \\
+-X POST \\
+-H 'Host: api.chiaki.vn' \\
+-H 'Accept: application/json, text/plain, */*' \\
+-H 'baggage: sentry-environment=production,sentry-public_key=418f1affd8b5477baa885b6b4da50b79,sentry-trace_id=7f3084679f1944b2ae6208a09319a66b' \\
+-H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \\
+-H 'Cache-Control: no-cache' \\
+-H 'platform: ios' \\
+-H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
+-H 'User-Agent: chiakiApp/3.6.2' \\
+-H 'sentry-trace: 7f3084679f1944b2ae6208a09319a66b-a1c86e53db19d505' \\
+-H 'Connection: keep-alive' \\
+-H 'Content-Type: application/json' \\
+--data-raw "${escapeForShellDoubleQuotes(addToCartPayload)}" \\
+| python3 -m json.tool
+
+sleep 10
+
+curl 'https://api.chiaki.vn/api/checkout' \\
+-X POST \\
+-H 'platform: ios' \\
+-H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
+-H 'User-Agent: chiakiApp/3.6.2' \\
+-H 'Accept: application/json, text/plain, */*' \\
+-H 'Content-Type: application/json' \\
+--data-raw "${escapeForShellDoubleQuotes(checkoutPayload)}" \\
+| python3 -m json.tool`;
+
+    window._generatedTransferCurl = curlText;
+    msg.textContent = '';
+    document.getElementById('transferCurlResultInfo').textContent =
+      `Đơn cũ: ${oldOrderCode} · User ID: ${userId} · SP mới: ${newProductCode} · Shop nhận: ${targetShopId}`;
+    document.getElementById('transferCurlResultText').textContent = curlText;
+    document.getElementById('copyTransferCurlBtn').textContent = '📋 Sao chép';
+    document.getElementById('transferCurlResultBg').style.display = 'flex';
+  } catch (e) {
+    msg.textContent = `❌ ${e.message}`;
+    msg.style.color = '#ef4444';
+  }
+}
+
+function closeTransferCurlModal() {
+  document.getElementById('transferCurlResultBg').style.display = 'none';
+}
+
+function copyTransferCurlResult() {
+  const text = window._generatedTransferCurl;
+  if (!text) return;
+  const doSuccess = () => {
+    document.getElementById('copyTransferCurlBtn').textContent = '💾 Đã sao chép!';
+    setTimeout(() => {
+      document.getElementById('copyTransferCurlBtn').textContent = '📋 Sao chép';
     }, 3000);
   };
   navigator.clipboard?.writeText(text).then(doSuccess).catch(() => {
