@@ -937,7 +937,7 @@ tbody td{padding:11px 14px;font-size:12px;color:#4c3f72;vertical-align:middle}
   left: 24px;
   top: 92px;
   z-index: 7000;
-  width: 420px;
+  width: 25%;
   max-height: calc(100vh - 110px);
   overflow-y: auto;   
   background: rgba(255,255,255,.88);
@@ -1772,7 +1772,7 @@ select.sync-input { font-family: inherit; cursor: pointer; }
 <!-- ── MODAL HUỶ ĐƠN HÀNG ── -->
 <div id="cancelOrderBg" style="display:none; position:fixed; inset:0;
      background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:#fff; border-radius:16px; padding:32px 28px; max-width:420px; width:92%;
+  <div style="background:#fff; border-radius:16px; padding:32px 28px; max-width:25%; width:92%;
               box-shadow:0 8px 32px rgba(0,0,0,0.22); position:relative;">
     <button onclick="closeCancelOrderModal()" style="position:absolute; top:12px; right:16px;
             background:none; border:none; font-size:22px; cursor:pointer; color:#888;">✕</button>
@@ -4139,7 +4139,7 @@ function buildChiakiUrl(shopId) {
   since.setDate(since.getDate() - 14);
   const fmt = d =>
     `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  return `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&pageindex=1&pagesize=500&status=receive_wating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
+  return `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&pageindex=1&pagesize=50&status=receive_wating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
 
 // ── Mở lần lượt tất cả cửa sổ tải file, delay 10s mỗi shop ──
