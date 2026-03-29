@@ -1188,6 +1188,23 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
   <div id="copyCurlMsg" style="font-size:12px;color:#9b8bb4;margin-top:6px;text-align:center"></div>
 </div>
+
+<div class="info-modal" style="margin-top: 16px;">
+  <div class="info-modal-icon">🛒</div>
+  <div class="info-modal-title">Tạo mã thêm sản phẩm vào giỏ hàng</div>
+  <div class="info-modal-sub">Điền thông tin để tạo lệnh thêm sản phẩm vào giỏ hàng</div>
+
+  <input class="info-input" id="cartProductId" type="text" placeholder="ID Sản phẩm" />
+  <input class="info-input" id="cartProductCode" type="text" placeholder="Mã sản phẩm" />
+  <input class="info-input" id="cartQuantity" type="number" min="1" step="1" placeholder="Số lượng" />
+  <input class="info-input" id="cartShopId" type="text" placeholder="ID Shop" />
+  <input class="info-input" id="cartUserId" type="text" placeholder="User ID" />
+
+  <button class="btn-info-search" onclick="generateAddToCartCurl()" style="width:100%">
+    🛒 Tạo mã thêm giỏ hàng
+  </button>
+  <div id="addCartCurlMsg" style="font-size:12px;color:#9b8bb4;margin-top:8px;text-align:center;min-height:16px"></div>
+</div>
 </div>
 
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
@@ -1648,6 +1665,85 @@ select.sync-input{font-family:inherit;cursor:pointer}
       "></pre>
 
       <button id="copyCurlBtn" onclick="copyCurlResult()" style="
+        position:absolute;top:10px;right:10px;
+        background:linear-gradient(135deg,#38bdf8,#60a5fa);
+        border:1px solid rgba(37,99,235,.85);
+        border-radius:999px;
+        padding:5px 14px;
+        font-size:11px;
+        font-weight:700;
+        color:#f9fafb;
+        cursor:pointer;
+        font-family:inherit;
+        box-shadow:0 4px 10px rgba(37,99,235,.35);
+      ">
+        📋 Sao chép
+      </button>
+    </div>
+</div>
+</div>
+<div id="addCartCurlResultBg" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(15,23,42,.55);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+" onclick="if(event.target===this) closeAddToCartCurlModal()">
+  <div style="
+    background:linear-gradient(135deg,#e0f2ff 0%,#cbe7ff 40%,#e8f4ff 100%);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border-radius:24px;
+    padding:24px 22px;
+    max-width:680px;width:95%;
+    position:relative;font-family:inherit;
+    border:1.5px solid rgba(191,219,254,.9);
+  ">
+    <button onclick="closeAddToCartCurlModal()" style="
+      position:absolute;top:12px;right:14px;
+      background:rgba(255,255,255,.9);
+      border:none;
+      border-radius:999px;
+      width:30px;height:30px;
+      font-size:16px;cursor:pointer;
+      color:#0f172a;
+      box-shadow:0 2px 6px rgba(15,23,42,.18);
+    ">✕</button>
+
+    <div style="
+      font-size:13px;font-weight:800;
+      color:#0f172a;
+      margin-bottom:4px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    ">
+      🛒 Mã thêm giỏ hàng
+    </div>
+
+    <div id="addCartCurlResultInfo" style="
+      font-size:11px;
+      color:#1d4ed8;
+      margin-bottom:14px;
+    "></div>
+
+    <div style="position:relative">
+      <pre id="addCartCurlResultText" style="
+        background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);
+        border:1px solid rgba(129,140,248,.5);
+        border-radius:14px;
+        padding:12px 12px 12px 12px;
+        font-size:11px;
+        color:#0f172a;
+        font-family:'SF Mono','JetBrains Mono','Courier New',monospace;
+        white-space:pre-wrap;
+        word-break:break-all;
+        max-height:420px;
+        overflow-y:auto;
+        line-height:1.7;
+        margin:0;
+      "></pre>
+
+      <button id="copyAddCartCurlBtn" onclick="copyAddToCartCurlResult()" style="
         position:absolute;top:10px;right:10px;
         background:linear-gradient(135deg,#38bdf8,#60a5fa);
         border:1px solid rgba(37,99,235,.85);
@@ -3848,6 +3944,76 @@ function copyOrderCode(btn, fullCode) {
       btn.classList.remove('copied')
     }, 1500)
   })
+}
+
+function generateAddToCartCurl() {
+  const productId = document.getElementById('cartProductId').value.trim();
+  const productCode = document.getElementById('cartProductCode').value.trim();
+  const quantity = document.getElementById('cartQuantity').value.trim();
+  const shopId = document.getElementById('cartShopId').value.trim();
+  const userId = document.getElementById('cartUserId').value.trim();
+  const msg = document.getElementById('addCartCurlMsg');
+
+  if (!productId || !productCode || !quantity || !shopId || !userId) {
+    msg.textContent = '⚠️ Vui lòng điền đủ 5 trường.';
+    msg.style.color = '#ef4444';
+    return;
+  }
+  if (!/^\d+$/.test(productId) || !/^\d+$/.test(quantity) || !/^\d+$/.test(shopId) || !/^\d+$/.test(userId)) {
+    msg.textContent = '⚠️ ID Sản phẩm, Số lượng, ID Shop và User ID phải là số.';
+    msg.style.color = '#ef4444';
+    return;
+  }
+
+  const safeProductCode = productCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const curlText =
+`curl 'https://api.chiaki.vn/api/v2/cart_item/push' \\
+-X POST \\
+-H 'Host: api.chiaki.vn' \\
+-H 'Accept: application/json, text/plain, */*' \\
+-H 'baggage: sentry-environment=production,sentry-public_key=418f1affd8b5477baa885b6b4da50b79,sentry-trace_id=7f3084679f1944b2ae6208a09319a66b' \\
+-H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \\
+-H 'Cache-Control: no-cache' \\
+-H 'platform: ios' \\
+-H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
+-H 'User-Agent: chiakiApp/3.6.2' \\
+-H 'sentry-trace: 7f3084679f1944b2ae6208a09319a66b-a1c86e53db19d505' \\
+-H 'Connection: keep-alive' \\
+-H 'Content-Type: application/json' \\
+--data-raw '{"product_id":${productId},"product_code":"${safeProductCode}","quantity":${quantity},"is_buy_now":0,"store_id":${shopId},"user_id":${userId}}' \\
+| python3 -m json.tool`;
+
+  window._generatedAddToCartCurl = curlText;
+  msg.textContent = '';
+  document.getElementById('addCartCurlResultInfo').textContent =
+    `Product ID: ${productId} · Code: ${productCode} · Qty: ${quantity} · Shop: ${shopId} · User: ${userId}`;
+  document.getElementById('addCartCurlResultText').textContent = curlText;
+  document.getElementById('copyAddCartCurlBtn').textContent = '📋 Sao chép';
+  document.getElementById('addCartCurlResultBg').style.display = 'flex';
+}
+
+function closeAddToCartCurlModal() {
+  document.getElementById('addCartCurlResultBg').style.display = 'none';
+}
+
+function copyAddToCartCurlResult() {
+  const text = window._generatedAddToCartCurl;
+  if (!text) return;
+  const doSuccess = () => {
+    document.getElementById('copyAddCartCurlBtn').textContent = '💾 Đã sao chép!';
+    setTimeout(() => {
+      document.getElementById('copyAddCartCurlBtn').textContent = '📋 Sao chép';
+    }, 3000);
+  };
+  navigator.clipboard?.writeText(text).then(doSuccess).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    doSuccess();
+  });
 }
 loadSyncShops();
 if (checkIdGate()) { init(); }
