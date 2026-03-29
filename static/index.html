@@ -4132,13 +4132,13 @@ const SHOP_LIST = [
 ];
 
 // ── Build URL tải file cho 1 shop ──
-function buildChiakiUrl(shop) {
+function buildChiakiUrl(shopId) {
   const today = new Date();
   const since = new Date(today);
   since.setDate(since.getDate() - 14);
   const fmt = d =>
     `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  return `https://api.chiaki.vn/api/${shop.id}/export-excel-order?source=seller&pageindex=1&pagesize=500&status=receivewating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Sellerid=${shop.id}&Sellertoken=${shop.token}`;
+  return `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&pageindex=1&pagesize=500&status=receivewating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Sellerid=4647&Sellertoken=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
 
 // ── Mở lần lượt tất cả cửa sổ tải file, delay 10s mỗi shop ──
@@ -4148,7 +4148,7 @@ function downloadAllShops() {
   msg.className = 'info-error show';
   SHOP_LIST.forEach((shop, i) => {
     setTimeout(() => {
-      window.open(buildChiakiUrl(shop), '_blank');
+      window.open(buildChiakiUrl(shop.id), '_blank');
       if (i === SHOP_LIST.length - 1) {
         msg.textContent = `✅ Đã mở đủ ${SHOP_LIST.length} cửa sổ tải!`;
       }
