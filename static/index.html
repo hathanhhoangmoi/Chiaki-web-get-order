@@ -4139,7 +4139,7 @@ function buildChiakiUrl(shopId) {
   since.setDate(since.getDate() - 14);
   const fmt = d =>
     `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  return `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&pageindex=1&pagesize=50&status=receive_wating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
+  return `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&page_index=1&page_size=50&status=receive_wating&rangedate=${fmt(since)}%20-%20${fmt(today)}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
 
 // ── Mở lần lượt tất cả cửa sổ tải file, delay 10s mỗi shop ──
