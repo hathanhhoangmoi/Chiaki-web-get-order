@@ -3114,29 +3114,6 @@ function searchOrder() {
   openTakeOrder(found);
 }
 
-
-// ── Tab Chờ lấy hàng / Đang giao ──────────────────────────
-let currentOrderTab = 'waiting';
-
-function switchOrderTab(tab) {
-  currentOrderTab = tab;
-  const btnW = document.getElementById('tabWaiting');
-  const btnD = document.getElementById('tabDelivering');
- 
-  const activeStyle = 'padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;font-weight:700;font-size:12px;font-family:inherit;box-shadow:0 3px 12px rgba(167,139,250,.35);';
-  const inactiveStyle = 'padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;background:rgba(255,255,255,.4);color:#7c6fa0;font-weight:700;font-size:12px;font-family:inherit;';
-
-  btnW.style.cssText = tab === 'waiting'    ? activeStyle : inactiveStyle;
-  btnD.style.cssText = tab === 'delivering' ? activeStyle : inactiveStyle;
-  
-  if (tab === 'waiting') {
-    currentPage = 1;
-    loadOrders();
-  } else if (tab === 'delivering') {
-    loadDeliveringOrders();
-  } 
-}
-
 let mienBacVisible = false;
 
 window.mienBacData = [];
@@ -3278,14 +3255,13 @@ const SHOP_LIST = [
   { id: "5114", name: "LixiBox Hill",                 token: "STTHSM375S" },
 ];
 
-// ── Build URL tải file cho 1 shop ──
 function buildChiakiUrl(shop) {
   const today = new Date();
   const since = new Date(today);
   since.setDate(since.getDate() - 14);
   const fmt = d =>
     `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  return `https://api.chiaki.vn/api/${shop.id}/export-excel-order?source=seller&pageindex=1&pagesize=500&status=receivewating&rangedate=${fmt(since)}-${fmt(today)}&datetype=createdat&order=create-desc&Sellerid=${shop.id}&Sellertoken=${shop.token}`;
+  return `https://api.chiaki.vn/api/${shop.id}/export-excel-order?source=seller&page_index=1&page_size=500&status=receive_wating&range_date=${fmt(since)}%20-%20${fmt(today)}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
 }
 
 // ── Mở lần lượt tất cả cửa sổ tải file, delay 10s mỗi shop ──
