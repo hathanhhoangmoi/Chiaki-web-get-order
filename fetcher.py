@@ -37,13 +37,13 @@ async def fetch_shop_name(shop_url: str) -> str:
         return shop_url
 
 
-def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
+def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict] | None:
     try:
         wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
         ws = wb.active
         rows = list(ws.iter_rows(values_only=True))
-        if len(rows) < 2:
-            return []
+        if not rows:
+            return None
 
         headers = [str(c).strip() if c else "" for c in rows[0]]
         print(f"[parse] headers: {headers}")
@@ -66,6 +66,13 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         col_status   = find_col(["trạng thái", "status"])
         col_date     = find_col(["thời gian đặt hàng", "thời gian đặt", "thời gian", "ngày đặt", "ngày tạo", "ngày", "date", "time"])
 
+        recognized_cols = [
+            col_code, col_customer, col_buyer, col_phone, col_address,
+            col_product, col_qty, col_total, col_status, col_date
+        ]
+        if all(idx is None for idx in recognized_cols):
+            return None
+
         def val(row, idx):
             if idx is None or idx >= len(row): return ""
             v = row[idx]
@@ -73,6 +80,8 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
 
         orders = []
         for i, row in enumerate(rows[1:]):
+            if not any(cell is not None and str(cell).strip() for cell in row):
+                continue
             code = f"{shop_id}_{val(row, col_code)}" if val(row, col_code) else f"{shop_id}_{i}"
             if not code or code == "None": continue
             try:
@@ -101,7 +110,7 @@ def parse_excel(content: bytes, shop_id: str, shop_name: str) -> list[dict]:
         return orders
     except Exception as e:
         print(f"[parse_excel] Error shop {shop_id}: {e}")
-        return []
+        return None
 
 
 async def sync_shop(
