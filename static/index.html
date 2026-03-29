@@ -2462,6 +2462,7 @@ document.getElementById('btnExportPdf').style.display = 'block';
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
+  renderComboRows();
   const keyInput = document.getElementById('infoKey');
   if (!keyInput) return;
   let keyTimer;
