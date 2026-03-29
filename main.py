@@ -656,7 +656,7 @@ async def sync_upload(
             return JSONResponse({"error": "File quá nhỏ, không hợp lệ"}, status_code=422)
 
         orders = parse_excel(content, shop_id, shop_name)
-        if not orders:
+        if orders is None:
             return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel. Kiểm tra lại cột header."}, status_code=422)
 
         deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
