@@ -3198,7 +3198,7 @@ function toggleMienBacPanel() {
 }
 
 // ── Danh sách shop theo thứ tự shops_config.py ──
-const SHOP_LIST = [
+const SHOP_SHOPS = [
   { id: "2732", name: "Min Duty",                    token: "STZ88CLWVL" },
   { id: "4299", name: "HADES Shop",                  token: "STPU7XXLRO" },
   { id: "3522", name: "ShipnhanhStore",               token: "ST8RBD8N7P" },
@@ -3383,7 +3383,6 @@ function handleComboFile(index, file) {
   if (!file) return;
   comboFileMap[index] = file;
   const btn = document.getElementById(`comboUploadBtn_${index}`);
-  // Hiện tên file ngắn gọn tối đa 12 ký tự
   const shortName = file.name.length > 14 ? file.name.slice(0,12) + '…' : file.name;
   btn.textContent = `✅ ${shortName}`;
   btn.classList.add('has-file');
