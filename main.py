@@ -596,7 +596,6 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/api/shops-list")
 def get_shops_list():
-    from shops_config import get_shops_map, SHOP_NAME_MAP
     shops = get_shops_map()
     result = []
     for shop_id, (shop_url, shop_name) in shops.items():
@@ -606,6 +605,13 @@ def get_shops_list():
             "shop_url": shop_url
         })
     return sorted(result, key=lambda x: x["shop_name"])
+
+@app.get("/api/sync-config")
+def get_sync_config():
+    return {
+        "seller_id": SELLER_ID,
+        "seller_token": SELLER_TOKEN,
+    }
 
 @app.post("/api/sync")
 async def sync_now(body: dict, db: Session = Depends(get_db)):
