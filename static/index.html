@@ -951,10 +951,18 @@ select.sync-input{font-family:inherit;cursor:pointer}
   display:grid;border-radius:50px;
   grid-template-columns:1fr auto;gap:6px;align-items:center;
 }
-.combo-row select{
-  padding:7px 8px;border:1.5px solid rgba(186,214,253,.5);
-  border-radius:12px;font-size:11px;font-family:inherit;
-  background:rgba(255,255,255,.6);color:#570301;cursor:pointer;width:100%;
+.combo-shop-label{
+  padding:8px 12px;border:1.5px solid rgba(186,214,253,.5);
+  border-radius:14px;background:rgba(255,255,255,.6);color:#570301;
+  display:flex;align-items:center;gap:8px;min-width:0;
+}
+.combo-shop-id{
+  font-size:10px;font-weight:700;color:#7a3040;
+  background:rgba(186,214,253,.25);border-radius:999px;padding:2px 8px;
+  flex-shrink:0;font-family:monospace;
+}
+.combo-shop-name{
+  font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .combo-upload-btn{
   padding:7px 10px;border:1.5px dashed rgba(186,214,253,.5);
@@ -1183,73 +1191,19 @@ select.sync-input{font-family:inherit;cursor:pointer}
 
     <div class="info-modal-icon">🗂️</div>
     <div class="info-modal-title">Tải danh sách đơn hàng</div>
-    <div class="info-modal-sub">Chọn gian hàng và tải file từ Chiaki</div>
+    <div class="info-modal-sub">Tải toàn bộ file shop rồi gửi file vào đúng dòng tương ứng bên dưới</div>
 
-    <label class="sync-label">Chọn gian hàng</label>
+    <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
+    <div class="sync-hint">Nhấn một lần để mở lần lượt tab tải file của toàn bộ shop. Mỗi 10 giây sẽ mở 1 tab mới.</div>
     <select class="info-input" id="syncShopId" onchange="updateChiakiLink()"
-            style="cursor:pointer">
+            style="display:none">
       <option value="">Mời chọn</option>
-    <option value="2732">2732 · Min Duty</option>
-    <option value="4299">4299 · HADES Shop</option>
-    <option value="3522">3522 · ShipnhanhStore</option>
-    <option value="4337">4337 · TH Cosmetic</option>
-    <option value="3684">3684 · Hoya Life</option>
-    <option value="3540">3540 · Rongcon</option>
-    <option value="3783">3783 · Đẹp & Khoẻ 365</option>
-    <option value="1489">1489 · Beauty & Healthy</option>
-    <option value="4036">4036 · Kitty House</option>
-    <option value="635">635 · Trang Perfume</option>
-    <option value="1498">1498 · Kho Dược TPCN</option>
-    <option value="5090">5090 · Mason House Store</option>
-    <option value="5091">5091 · Gia Phương Shop</option>
-    <option value="4339">4339 · PINASAGO Pin Sài Gòn</option>
-    <option value="4961">4961 · Kalos Việt Nam</option>
-    <option value="4872">4872 · Green House</option>
-    <option value="4917">4917 · Moss Skincare</option>
-    <option value="4647">4647 · XXIV Store</option>
-    <option value="4732">4732 · Ken Perfume</option>
-    <option value="5112">5112 · MoiThom - Mèo bán nước hoa</option>
-    <option value="2292">2292 · Thế Giới Hàng Auth 88</option>
-    <option value="4940">4940 · Mint- Skin Beauty & Cosmetics</option>
-    <option value="5096">5096 · The Senté Hill</option>
-    <option value="1164">1164 · O2 PHARMACY</option>
-    <option value="3612">3612 · NGUYENKIM</option>
-    <option value="5092">5092 · Thế Giới Son</option>
-    <option value="5125">5125 · Felice Beauty Garden</option>
-    <option value="1600">1600 · ChoychoyStore</option>
-    <option value="2423">2423 · Peony Cosmetics</option>
-    <option value="4965">4965 · nhathuocsuckhoe2</option>
-    <option value="4365">4365 · Nana Beauty & More</option>
-    <option value="1729">1729 · MHDMART</option>
-    <option value="4360">4360 · SnapshopVN</option>
-    <option value="5094">5094 · Shop Snap TPHCM</option>
-    <option value="1602">1602 · Winny Shop</option>
-    <option value="1105">1105 · MjuMju</option>
-    <option value="4294">4294 · Life Healthy</option>
-    <option value="3009">3009 · QuangNgoc1976</option>
-    <option value="1414">1414 · Dược Phẩm Tâm An</option>
-    <option value="2573">2573 · MiMi Beauty</option>
-    <option value="2225">2225 · T&T Japan shop</option>
-    <option value="3047">3047 · GREENBOX</option>
-    <option value="3864">3864 · Hàng ngoại giá tốt</option>
-    <option value="3852">3852 · Baby Grow Shop</option>
-    <option value="1273">1273 · NHÀ THUỐC MINH TÂM</option>
-    <option value="3300">3300 · Mayya Hàng Nội Địa Nhật</option>
-    <option value="1258">1258 · Shop Adam</option>
-    <option value="3337">3337 · Shop Sài Gòn</option>
-    <option value="4342">4342 · Sản Phẩm Hỗ Trợ</option>
-    <option value="1015">1015 · Green Healthy & Beauty</option>
-    <option value="3218">3218 · Bảo Lâm Anh</option>
-    <option value="2557">2557 · XUAN MINH PHARMACY</option>
-    <option value="2025">2025 · Cali-Goods</option>
-    <option value="5114">5114 · LixiBox Hill</option>
-  </select>
-
-  <label class="sync-label" style="margin-top:12px">Tải file đơn hàng từ Chiaki</label>
-    <a class="btn-info-search" id="chiakiLink" href="#" target="_blank"
-       style="display:block;text-align:center;text-decoration:none;padding:11px;margin-bottom:8px">
-      🔗 Tải về ngay
-    </a>
+    </select>
+    <button class="btn-info-search" id="chiakiLink" type="button"
+       onclick="downloadAllShopFiles()"
+       style="display:block;width:100%;text-align:center;text-decoration:none;padding:11px;margin-bottom:8px">
+      🔗 Tải toàn bộ shop
+    </button>
     <input type="file" id="syncFileInput" accept=".xlsx,.xls"
            style="display:none" onchange="handleSyncFile(this.files[0])"/>
     <div class="sync-file-name" id="syncFileName"></div>
@@ -2126,7 +2080,8 @@ function closeOrderInfoModal() {
   document.getElementById('infoError').classList.remove('show');
   document.getElementById('infoOrderCode').value = '';
   document.getElementById('infoKeyStatus').textContent = '';
-
+  const pdfBtn = document.getElementById('btnExportPdf');
+  if (pdfBtn) pdfBtn.style.display = 'none';
 }
 
 async function fetchOrderInfo() {
@@ -2334,11 +2289,10 @@ const SHOP_ID_NAME = {
       data.remaining === -1 || data.remaining === null
       ? '✅ Key không giới hạn lượt'
       : `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
-const pdfBtn = document.getElementById('btnExportPdf');
-if (pdfBtn) pdfBtn.style.display = 'block';
-document.getElementById('btnExportPdf').style.display = 'block';
+    const pdfBtn = document.getElementById('btnExportPdf');
+    if (pdfBtn) pdfBtn.style.display = 'block';
     resultEl.classList.add('show');
-    } catch(e) {
+  } catch(e) {
     errEl.textContent = 'Lỗi kết nối: ' + e.message;
     errEl.classList.add('show');
   } finally {
@@ -2377,18 +2331,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
   });
 });
-
-function closeOrderInfoModal() {
-  document.getElementById('orderInfoBg').classList.remove('show');
-  document.getElementById('infoResult').classList.remove('show');
-  document.getElementById('infoError').classList.remove('show');
-  document.getElementById('infoOrderCode').value = '';
-  document.getElementById('infoKeyStatus').textContent = '';
-  document.getElementById('btnExportPdf').style.display = 'none'; 
-
-  const pdfBtn = document.getElementById('btnExportPdf');
-  if (pdfBtn) pdfBtn.style.display = 'none';
-}
 
 function selectShop(id) {
   if (hanoiVisible) {
@@ -3242,15 +3184,6 @@ async function loadMienBac() {
     renderMienBacTable(sortData(window.mienBacData));
   } catch(e) { console.error('loadMienBac error', e); }
 }
-function sortData(arr) {
-  const s = document.getElementById('sortSelect').value;
-  const a = [...arr];
-  if (s === 'total_desc') return a.sort((x,y) => (parseFloat(y.total)||0) - (parseFloat(x.total)||0));
-  if (s === 'total_asc')  return a.sort((x,y) => (parseFloat(x.total)||0) - (parseFloat(y.total)||0));
-  if (s === 'date_desc')  return a.sort((x,y) => (y.order_date||'').localeCompare(x.order_date||''));
-  if (s === 'date_asc')   return a.sort((x,y) => (x.order_date||'').localeCompare(y.order_date||''));
-  return arr;
-}
 
 function toggleMienBacPanel() {
   mienBacVisible = !mienBacVisible;
@@ -3334,17 +3267,10 @@ async function doSync() {
 }
 
 function updateChiakiLink() {
-  const shopId = document.getElementById('syncShopId').value;
-  const link = document.getElementById('chiakiLink');
-  if (!shopId) { link.href = '#'; return; }
-
-  const today = new Date();
-  const since = new Date(today);
-  since.setDate(since.getDate() - 14);
-  const fmt = d => `${String(d.getDate()).padStart(2,'0')}%2F${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  const range = `${fmt(since)}+-+${fmt(today)}`;
-
-  link.href = `https://api.chiaki.vn/api/${shopId}/export-excel-order?source=seller&page_index=1&page_size=500&status=receive_wating&range_date=${range}&date_type=created_at&order=create-desc&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
+  const select = document.getElementById('syncShopId');
+  if (select && !select.value && syncShops.length) {
+    select.value = syncShops[0].id;
+  }
 }
 let syncFile = null;
 function handleSyncDrop(event) {
@@ -3412,39 +3338,152 @@ async function doSyncUpload() {
   }
 }
 
-const COMBO_SHOPS = [
-  {id:'2732',name:'Min Duty'},{id:'4299',name:'HADES Shop'},
-  {id:'3522',name:'ShipnhanhStore'},{id:'4337',name:'TH Cosmetic'},
-  {id:'3684',name:'Hoya Life'},{id:'3540',name:'Rongcon'},
-  {id:'3783',name:'Đẹp & Khoẻ 365'},{id:'1489',name:'Beauty & Healthy'},
-  {id:'4036',name:'Kitty House'},{id:'635',name:'Trang Perfume'},
-  {id:'1498',name:'Kho Dược TPCN'},{id:'5090',name:'Mason House Store'},
-  {id:'5091',name:'Gia Phương Shop'},{id:'4339',name:'PINASAGO Pin Sài Gòn'},
-  {id:'4961',name:'Kalos Việt Nam'},{id:'4872',name:'Green House'},
-  {id:'4917',name:'Moss Skincare'},{id:'4647',name:'XXIV Store'},
-  {id:'4732',name:'Ken Perfume'},{id:'5112',name:'MoiThom'},
-  {id:'2292',name:'Thế Giới Hàng Auth 88'},{id:'4940',name:'Mint Skin Beauty'},
-  {id:'5096',name:'The Senté Hill'},{id:'1164',name:'O2 PHARMACY'},
-  {id:'3612',name:'NGUYENKIM'},{id:'5092',name:'Thế Giới Son'},
-  {id:'5125',name:'Felice Beauty Garden'},{id:'1600',name:'ChoychoyStore'},
-  {id:'2423',name:'Peony Cosmetics'},{id:'4965',name:'nhathuocsuckhoe2'},
-  {id:'4365',name:'Nana Beauty & More'},{id:'1729',name:'MHDMART'},
-  {id:'4360',name:'SnapshopVN'},{id:'5094',name:'Shop Snap TPHCM'},
-  {id:'1602',name:'Winny Shop'},{id:'1105',name:'MjuMju'},
-  {id:'4294',name:'Life Healthy'},{id:'3009',name:'QuangNgoc1976'},
-  {id:'1414',name:'Dược Phẩm Tâm An'},{id:'2573',name:'MiMi Beauty'},
-  {id:'2225',name:'T&T Japan shop'},{id:'3047',name:'GREENBOX'},
-  {id:'3864',name:'Hàng ngoại giá tốt'},{id:'3852',name:'Baby Grow Shop'},
-  {id:'1273',name:'NHÀ THUỐC MINH TÂM'},{id:'3300',name:'Mayya Hàng Nội Địa Nhật'},
-  {id:'1258',name:'Shop Adam'},{id:'3337',name:'Shop Sài Gòn'},
-  {id:'4342',name:'Sản Phẩm Hỗ Trợ'},{id:'1015',name:'Green Healthy & Beauty'},
-  {id:'3218',name:'Bảo Lâm Anh'},{id:'2557',name:'XUAN MINH PHARMACY'},
-  {id:'2025',name:'Cali-Goods'},
-  {id:'5114',name:'LixiBox Hill'}
-];
-
-const COMBO_ROW_COUNT = 55;
+let syncShops = [];
+let syncConfig = { sellerId: '', sellerToken: '' };
 let comboFileMap = {}; // index → File
+let syncDownloadTimer = null;
+let syncDownloadRunning = false;
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function populateSyncShopSelect() {
+  const select = document.getElementById('syncShopId');
+  if (!select) return;
+
+  const selected = select.value;
+  const options = syncShops.map(shop =>
+    `<option value="${escapeHtml(shop.id)}">${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}</option>`
+  ).join('');
+
+  select.innerHTML = `<option value="">Mời chọn</option>${options}`;
+  if (syncShops.some(shop => shop.id === selected)) {
+    select.value = selected;
+  }
+  updateChiakiLink();
+}
+
+function getSellerQuery() {
+  const params = new URLSearchParams();
+  if (syncConfig.sellerId) params.set('Seller_id', syncConfig.sellerId);
+  if (syncConfig.sellerToken) params.set('Seller_token', syncConfig.sellerToken);
+  return params.toString();
+}
+
+function setSyncMessage(message, type = '') {
+  const msg = document.getElementById('syncMsg');
+  if (!msg) return;
+  msg.textContent = message;
+  msg.className = type ? `sync-msg ${type}` : 'sync-msg';
+}
+
+function finishDownloadAllShops(message, type = 'ok') {
+  const btn = document.getElementById('chiakiLink');
+  syncDownloadRunning = false;
+  if (syncDownloadTimer) {
+    clearTimeout(syncDownloadTimer);
+    syncDownloadTimer = null;
+  }
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '🔗 Tải toàn bộ shop';
+  }
+  setSyncMessage(message, type);
+}
+
+function downloadAllShopFiles() {
+  const btn = document.getElementById('chiakiLink');
+  if (syncDownloadRunning) return;
+
+  if (!syncShops.length) {
+    setSyncMessage('Chưa tải được danh sách shop để mở file.', 'err');
+    return;
+  }
+  if (!syncConfig.sellerId || !syncConfig.sellerToken) {
+    setSyncMessage('Thiếu cấu hình seller từ backend, chưa thể tạo link tải.', 'err');
+    return;
+  }
+
+  syncDownloadRunning = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang mở tab tải...';
+  }
+
+  const queue = syncShops.map(shop => ({
+    id: shop.id,
+    name: shop.name,
+    url: buildChiakiUrl(shop.id, 'receive_wating').replace('page_size=200', 'page_size=500')
+  }));
+
+  let index = 0;
+  const openNext = () => {
+    const shop = queue[index];
+    const opened = window.open(shop.url, '_blank', 'noopener,noreferrer');
+
+    if (!opened) {
+      finishDownloadAllShops(
+        `Trình duyệt đã chặn popup ở shop ${shop.id} · ${shop.name}. Hãy cho phép popup rồi thử lại.`,
+        'err'
+      );
+      return;
+    }
+
+    index += 1;
+    if (index >= queue.length) {
+      finishDownloadAllShops(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
+      return;
+    }
+
+    if (btn) {
+      btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
+    }
+    setSyncMessage(
+      `Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`,
+      'ok'
+    );
+    syncDownloadTimer = setTimeout(openNext, 10000);
+  };
+
+  setSyncMessage(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
+  openNext();
+}
+
+async function loadSyncShops() {
+  try {
+    const res = await fetch('/api/shops-list', { cache: 'no-store' });
+    const data = await res.json();
+    syncConfig = {
+      sellerId: String(data?.seller_id || '').trim(),
+      sellerToken: String(data?.seller_token || '').trim()
+    };
+    syncShops = Array.isArray(data?.shops)
+      ? data.shops.map(shop => ({
+          id: String(shop.shop_id || '').trim(),
+          name: String(shop.shop_name || shop.shop_id || '').trim()
+        })).filter(shop => shop.id)
+      : [];
+
+    populateSyncShopSelect();
+    initComboRows();
+  } catch (e) {
+    console.error('loadSyncShops error', e);
+    syncConfig = { sellerId: '', sellerToken: '' };
+    syncShops = [];
+    populateSyncShopSelect();
+
+    const container = document.getElementById('comboRows');
+    if (container) {
+      container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
+    }
+  }
+}
 
 function buildChiakiUrl(shopId, mode) {
   const status = mode === 'delivering' ? 'delivering' : 'receive_wating';
@@ -3453,24 +3492,27 @@ function buildChiakiUrl(shopId, mode) {
   const fmt = d =>
     `${String(d.getDate()).padStart(2,'0')}%2F` +
     `${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
+  const sellerQuery = getSellerQuery();
   return `https://api.chiaki.vn/api/${shopId}/export-excel-order` +
     `?source=seller&page_index=1&page_size=200&status=${status}` +
     `&range_date=${fmt(since)}+-+${fmt(today)}` +
     `&date_type=created_at&order=create-desc` +
-    `&Seller_id=4647&Seller_token=ebf7e96d976f74aa77b2b874b7a087ef`;
+    (sellerQuery ? `&${sellerQuery}` : '');
 }
 function initComboRows() {
-  const shopOptions = COMBO_SHOPS.map(s =>
-    `<option value="${s.id}">${s.id} · ${s.name}</option>`
-  ).join('');
-
   const container = document.getElementById('comboRows');
-  container.innerHTML = Array.from({length: COMBO_ROW_COUNT}, (_, i) => `
+  if (!container) return;
+  if (!syncShops.length) {
+    container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không có shop để hiển thị.</div>';
+    return;
+  }
+
+  container.innerHTML = syncShops.map((shop, i) => `
     <div class="combo-row">
-      <select id="comboShop_${i}">
-        <option value="">-- Shop ${i+1} --</option>
-        ${shopOptions}
-      </select>
+      <div class="combo-shop-label" title="${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}">
+        <span class="combo-shop-id">${escapeHtml(shop.id)}</span>
+        <span class="combo-shop-name">${escapeHtml(shop.name)}</span>
+      </div>
       <div class="combo-drop-cell"
            id="comboUploadBtn_${i}"
            onclick="document.getElementById('comboInput_${i}').click()"
@@ -3501,14 +3543,14 @@ async function doComboSync() {
   const msg  = document.getElementById('comboMsg');
 
   const rows = [];
-  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
-    const shopId = document.getElementById(`comboShop_${i}`)?.value;
+  for (let i = 0; i < syncShops.length; i++) {
+    const shopId = syncShops[i]?.id;
     const file   = comboFileMap[i];
     if (shopId && file) rows.push({ shopId, file });
   }
 
   if (!rows.length) {
-    msg.textContent = 'Vui lòng chọn shop và upload file cho ít nhất 1 hàng.';
+    msg.textContent = 'Vui lòng upload file cho ít nhất 1 shop.';
     msg.className = 'sync-msg err';
     return;
   }
@@ -3544,10 +3586,10 @@ async function doComboSync() {
   btn.disabled = false;
 
   comboFileMap = {};
-  for (let i = 0; i < COMBO_ROW_COUNT; i++) {
+  for (let i = 0; i < syncShops.length; i++) {
     const uploadBtn = document.getElementById(`comboUploadBtn_${i}`);
     if (uploadBtn) {
-      uploadBtn.textContent = '🔗 Upload Files';
+      uploadBtn.textContent = '📎 Upload';
       uploadBtn.classList.remove('has-file');
     }
     const input = document.getElementById(`comboInput_${i}`);
@@ -3748,7 +3790,7 @@ function copyOrderCode(btn, fullCode) {
     }, 1500)
   })
 }
-initComboRows();
+loadSyncShops();
 if (checkIdGate()) { init(); }
 </script>
 </body>
