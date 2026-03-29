@@ -1124,6 +1124,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <div class="info-row"><span class="info-label">Gian hàng</span><span class="info-value" id="irShop">—</span></div>
       <div class="info-row"><span class="info-label">Thời gian đặt hàng</span><span class="info-value" id="irDate">—</span></div>
       <div class="info-row"><span class="info-label">Tên khách hàng</span><span class="info-value" id="irName">—</span></div>
+      <div class="info-row"><span class="info-label">Customer ID</span><span class="info-value" id="irCustomerId">—</span></div>
       <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="irPhone">—</span></div>
       <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="irEmail">—</span></div>
       <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
@@ -1135,6 +1136,9 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <div class="info-row"><span class="info-label">Thanh toán</span><span class="info-value" id="irPayment">—</span></div>
       <div class="info-row"><span class="info-label">Số tiền TT</span><span class="info-value" id="irPrepaid">—</span></div>
       <div style="font-size:11px;font-weight:800;color:#9b8bb4;letter-spacing:.5px;margin:12px 0 8px">VẬN CHUYỂN</div>
+      <div class="info-row"><span class="info-label">Delivery Location ID</span><span class="info-value" id="irDeliveryLocationId">—</span></div>
+      <div class="info-row"><span class="info-label">District Delivery ID</span><span class="info-value" id="irDistrictDeliveryId">—</span></div>
+      <div class="info-row"><span class="info-label">Commune Delivery ID</span><span class="info-value" id="irCommuneDeliveryId">—</span></div>
       <div class="info-row"><span class="info-label">Mã vận đơn</span><span class="info-value" id="irShippingCode">—</span></div>
       <div class="info-row"><span class="info-label">Trạng thái giao</span><span class="info-value" id="irDeliveryStatus">—</span></div>
       <div class="info-row"><span class="info-label">Shipper lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
@@ -2165,6 +2169,7 @@ const SHOP_ID_NAME = {
     document.getElementById('irShop').textContent     = data.shop_name     || '—';
     document.getElementById('irDate').textContent     = data.order_date    || '—';
     document.getElementById('irName').textContent     = data.customer_name || '—';
+    document.getElementById('irCustomerId').textContent = data.customer_id || '—';
     document.getElementById('irPhone').textContent    = data.phone         || '—';
     document.getElementById('irEmail').textContent    = data.email         || '—';
     document.getElementById('irAddress').textContent  = data.address       || '—';
@@ -2270,6 +2275,9 @@ const SHOP_ID_NAME = {
     document.getElementById('irSource').textContent  = data.source        || '—';
     document.getElementById('irPayment').textContent  = data.payment       || '—';
     document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
+    document.getElementById('irDeliveryLocationId').textContent = data.delivery_location_id || '—';
+    document.getElementById('irDistrictDeliveryId').textContent = data.district_delivery_id || '—';
+    document.getElementById('irCommuneDeliveryId').textContent  = data.commune_delivery_id || '—';
     document.getElementById('irShippingCode').textContent    = data.shipping_code         || '—';
     document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✨ Đã giao thành công' : (data.delivery_status || '—');
     document.getElementById('irShipperReceive').textContent  = data.shipper_receive_time  || '—';
