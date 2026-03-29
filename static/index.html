@@ -3120,6 +3120,29 @@ function searchOrder() {
   openTakeOrder(found);
 }
 
+
+// ── Tab Chờ lấy hàng / Đang giao ──────────────────────────
+let currentOrderTab = 'waiting';
+
+function switchOrderTab(tab) {
+  currentOrderTab = tab;
+  const btnW = document.getElementById('tabWaiting');
+  const btnD = document.getElementById('tabDelivering');
+ 
+  const activeStyle = 'padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;font-weight:700;font-size:12px;font-family:inherit;box-shadow:0 3px 12px rgba(167,139,250,.35);';
+  const inactiveStyle = 'padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;background:rgba(255,255,255,.4);color:#7c6fa0;font-weight:700;font-size:12px;font-family:inherit;';
+
+  btnW.style.cssText = tab === 'waiting'    ? activeStyle : inactiveStyle;
+  btnD.style.cssText = tab === 'delivering' ? activeStyle : inactiveStyle;
+  
+  if (tab === 'waiting') {
+    currentPage = 1;
+    loadOrders();
+  } else if (tab === 'delivering') {
+    loadDeliveringOrders();
+  } 
+}
+
 let mienBacVisible = false;
 
 window.mienBacData = [];
@@ -3434,18 +3457,32 @@ function downloadAllShopFiles() {
 
 async function loadSyncShops() {
   try {
-    const res = await fetch('/api/shops-list', { cache: 'no-store' });
-    const data = await res.json();
+    const [shopsRes, configRes] = await Promise.allSettled([
+      fetch('/api/shops-list', { cache: 'no-store' }),
+      fetch('/api/sync-config', { cache: 'no-store' })
+    ]);
+
+    const shopsData = shopsRes.status === 'fulfilled'
+      ? await shopsRes.value.json()
+      : [];
+    const configData = configRes.status === 'fulfilled'
+      ? await configRes.value.json()
+      : {};
+
+    const shopsPayload = Array.isArray(shopsData)
+      ? shopsData
+      : Array.isArray(shopsData?.shops)
+        ? shopsData.shops
+        : [];
+
     syncConfig = {
-      sellerId: String(data?.seller_id || '').trim(),
-      sellerToken: String(data?.seller_token || '').trim()
+      sellerId: String(configData?.seller_id || shopsData?.seller_id || '').trim(),
+      sellerToken: String(configData?.seller_token || shopsData?.seller_token || '').trim()
     };
-    syncShops = Array.isArray(data?.shops)
-      ? data.shops.map(shop => ({
+    syncShops = shopsPayload.map(shop => ({
           id: String(shop.shop_id || '').trim(),
           name: String(shop.shop_name || shop.shop_id || '').trim()
-        })).filter(shop => shop.id)
-      : [];
+        })).filter(shop => shop.id);
 
     populateSyncShopSelect();
     initComboRows();
@@ -3471,7 +3508,7 @@ function buildChiakiUrl(shopId, mode) {
     `${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
   const sellerQuery = getSellerQuery();
   return `https://api.chiaki.vn/api/${shopId}/export-excel-order` +
-    `?source=seller&page_index=1&page_size=100&status=${status}` +
+    `?source=seller&page_index=1&page_size=200&status=${status}` +
     `&range_date=${fmt(since)}+-+${fmt(today)}` +
     `&date_type=created_at&order=create-desc` +
     (sellerQuery ? `&${sellerQuery}` : '');
