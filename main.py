@@ -1,31 +1,23 @@
-import asyncio
-from fastapi import FastAPI, Depends, Query
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, func, or_
-from database import engine, get_db, migrate
-from models import Base, Order, ShopMeta
-from shops_config import get_shops_map, BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN
-from fetcher import sync_shop, parse_excel
+import io
+import json as _json
 from datetime import datetime, timedelta
-from io import BytesIO
-import urllib.parse
+
 import httpx
-import openpyxl
-from fastapi import Request
-from fastapi.responses import StreamingResponse
-from reportlab.pdfgen import canvas
+from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from reportlab.lib.pagesizes import inch
+from reportlab.lib.utils import simpleSplit
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.utils import simpleSplit
-import io
-from fastapi.responses import StreamingResponse
-from fastapi.responses import HTMLResponse
-from shops_config import SHOP_NAME_MAP
-import json as _json
-from fastapi import UploadFile, File, Form
+from reportlab.pdfgen import canvas
+from sqlalchemy import desc, func, or_
+from sqlalchemy.orm import Session
+
+from database import engine, get_db, migrate
+from fetcher import sync_shop, parse_excel
+from models import Base, Order, ShopMeta
+from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, get_shops_map
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
@@ -167,10 +159,6 @@ def serialize_order(o, mask=False):
 async def root():
     with open("static/index.html", encoding="utf-8") as f:
         return f.read()
-@app.get("/phone", response_class=HTMLResponse)
-async def phone_page():
-    with open("static/phone.html", encoding="utf-8") as f:
-        return f.read()
 
 @app.get("/api/summary")
 def get_summary(db: Session = Depends(get_db)):
@@ -252,13 +240,6 @@ def get_orders(
         "data": [serialize(o) for o in orders]
     }
 
-
-@app.get("/api/test-shopname")
-async def test_shopname(url: str = Query(...)):
-    from fetcher import fetch_shop_name
-    name = await fetch_shop_name(url)
-    return {"url": url, "name": name}
-
 @app.post("/api/update-shopname")
 def update_shopname(body: dict, db: Session = Depends(get_db)):
     shop_id = body.get("shop_id")
@@ -271,11 +252,6 @@ def update_shopname(body: dict, db: Session = Depends(get_db)):
         db.query(Order).filter(Order.shop_id == shop_id).update({"shop_name": shop_name})
         db.commit()
     return {"ok": True, "shop_id": shop_id, "shop_name": shop_name}
-
-@app.post("/api/admin/clear-orders")
-def clear_orders(body: dict, db: Session = Depends(get_db)):
-    # ✅ Tạm thời disable để tránh xóa nhầm
-    return {"ok": False, "message": "Admin endpoint disabled"}
 
 @app.get("/api/orders/hanoi")
 async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
@@ -426,6 +402,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     "shop_name":            db_shop_name,
     "order_date":           g("verified_time", "create_time"),
     "customer_name":        g("related_user_name", "receiver_name"),
+    "customer_id":          meta.get("customer_id") or d.get("related_user_id"),
     "phone":                phone,
     "email":                g("email_id"),
     "address":              g("delivery_address"),
@@ -435,6 +412,9 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
     "shipping_code":        g("shipping_code"),
     "delivery_status":      g("delivery_status"),
+    "delivery_location_id": g("delivery_location_id"),
+    "district_delivery_id": g("district_delivery_id"),
+    "commune_delivery_id":  g("commune_delivery_id"),
     "shipper_receive_time": g("shipper_receive_time"),
     "product":              db_product,          # ← thêm mới
     "quantity":             d.get("quantity") or (db_order.quantity if db_order else None),
@@ -499,7 +479,6 @@ async def get_login_history(request: Request):
 async def export_order(order_code: str, request: Request, db: Session = Depends(get_db)):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
-    import io
 
     # Tìm đơn trong DB — dùng SQLAlchemy như các endpoint khác
     order = db.query(Order).filter(Order.order_code == order_code).first()
