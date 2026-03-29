@@ -1,4022 +1,670 @@
+import io
+import json as _json
+from datetime import datetime, timedelta
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Bán hàng cùng Chang ✨</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:'Inter',-apple-system,sans-serif;
-  min-height:100vh;
-  background:
-    radial-gradient(ellipse at 15% 15%,rgba(245,186,213,.45) 0%,transparent 50%),
-    radial-gradient(ellipse at 85% 80%,rgba(186,214,253,.4) 0%,transparent 50%),
-    radial-gradient(ellipse at 70% 10%,rgba(247,229,148,.35) 0%,transparent 45%),
-    linear-gradient(145deg,#fce8f3,#eef5ff,#fff8e6,#fdf0f7);
-  color:#570301;
-}
-.glass{
-  background:rgba(255,255,255,.45);
-  backdrop-filter:blur(28px) saturate(200%);
-  -webkit-backdrop-filter:blur(28px) saturate(200%);
-  border:1px solid rgba(255,255,255,.75);
-  box-shadow:0 8px 32px rgba(87,3,1,.1),inset 0 1.5px 0 rgba(255,255,255,.9);
-}
-.header{
-  padding:16px 32px;display:flex;align-items:center;
-  justify-content:space-between;
-  background:rgba(255,255,255,.55);
-  border-bottom:1px solid rgba(255,255,255,.7);
-  backdrop-filter:blur(30px);position:sticky;top:0;z-index:100;
-}
-.header-left{display:flex;align-items:center;gap:12px}
-.logo{
-  width:40px;height:40px;border-radius:13px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  display:flex;align-items:center;justify-content:center;font-size:22px;
-  box-shadow:0 4px 14px rgba(245,186,213,.5);
-}
-.header-sub{font-size:12px;color:#a06070;margin-top:2px}
-.sync-info{font-size:12px;color:#a06070;text-align:right}
-.btn{
-  padding:9px 18px;border:none;border-radius:12px;
-  font-family:inherit;font-size:13px;font-weight:600;
-  cursor:pointer;transition:all .2s;
-}
-.btn-primary{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;
-  box-shadow:0 4px 14px rgba(245,186,213,.4);
-}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(245,186,213,.5)}
-.btn-primary:disabled{background:rgba(220,200,210,.4);color:rgba(87,3,1,.3);box-shadow:none;cursor:not-allowed;transform:none}
-.container{
-  max-width:100%;
-  margin:0 0 0 440px;
-  padding:24px 32px
-}
-.stats-row{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:14px;margin-bottom:24px;
-}
-.stat-card{
-  border-radius:35px;padding:18px 20px;
-  background:rgba(255,255,255,.45);
-  border:1px solid rgba(255,255,255,.75);
-  backdrop-filter:blur(20px);
-  box-shadow:0 4px 20px rgba(87,3,1,.08);
-  transition:all .2s;
-}
-.stat-card.clickable{cursor:pointer}
-.stat-card.clickable:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(87,3,1,.14)}
-.stat-card.clickable.active{
-  background:linear-gradient(135deg,rgba(245,186,213,.4),rgba(186,214,253,.35));
-  border-color:rgba(186,214,253,.6);
-  box-shadow:0 4px 20px rgba(186,214,253,.3);
-}
-.stat-label{font-size:12px;color:#a06070;margin-bottom:6px;font-weight:500}
-.stat-value{font-size:28px;font-weight:700;color:#570301;line-height:1}
-.stat-sub{font-size:11px;color:#c09090;margin-top:4px}
-.shop-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
-.tab{
-  padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;
-  cursor:pointer;border:1px solid rgba(186,214,253,.5);
-  background:rgba(255,255,255,.35);color:#7a3040;
-  transition:all .2s;white-space:nowrap;
-}
-.tab:hover{background:rgba(255,255,255,.6);color:#570301}
-.tab.active{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;border-color:transparent;
-  box-shadow:0 3px 12px rgba(245,186,213,.4);
-}
-.tab .badge{
-  display:inline-block;margin-left:6px;
-  background:rgba(255,255,255,.3);
-  border-radius:10px;padding:1px 7px;font-size:10px;
-}
-.tab.active .badge{background:rgba(255,255,255,.25)}
-.table-wrap{
-  border-radius:35px;overflow:hidden;
-  border:1px solid rgba(255,255,255,.75);
-  box-shadow:0 8px 32px rgba(87,3,1,.08);
-}
-.table-header{
-  padding:14px 20px;
-  background:rgba(255,255,255,.5);
-  border-bottom:1px solid rgba(255,255,255,.6);
-  display:flex;align-items:center;justify-content:space-between;
-}
-.table-title{font-size:14px;font-weight:700;color:#570301}
-.table-count{font-size:12px;color:#a06070}
-table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.3);backdrop-filter:blur(20px)}
-thead th{
-  padding:11px 14px;text-align:left;font-size:11px;font-weight:600;
-  color:#a06070;letter-spacing:.5px;text-transform:uppercase;
-  background:rgba(255,255,255,.35);
-  border-bottom:1px solid rgba(255,255,255,.5);
-}
-tbody tr{border-bottom:1px solid rgba(186,214,253,.2);transition:background .15s}
-tbody tr:hover{background:rgba(247,229,148,.3)}
-tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
-.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
-.tag-wait{background:rgba(247,229,148,.55);color:#7a4500;border:1px solid rgba(247,229,148,.7)}
-.tag-done{background:rgba(167,243,208,.5);color:#065f46;border:1px solid rgba(110,231,183,.4)}
-.tag-cancel{background:rgba(254,202,202,.5);color:#991b1b;border:1px solid rgba(252,165,165,.4)}
-.shop-chip{
-  display:inline-block;padding:3px 10px;border-radius:20px;
-  font-size:10px;font-weight:600;
-  background:rgba(186,214,253,.35);color:#570301;
-  border:1px solid rgba(186,214,253,.6);
-}
-.empty{padding:48px;text-align:center;color:#c09090;background:rgba(255,255,255,.25)}
-.empty-icon{font-size:40px;margin-bottom:10px}
-.pagination{
-  display:flex;justify-content:center;align-items:center;
-  gap:8px;padding:16px;
-  background:rgba(255,255,255,.35);
-  border-top:1px solid rgba(255,255,255,.5);
-}
-.page-btn{
-  width:34px;height:34px;border-radius:10px;border:1px solid rgba(186,214,253,.5);
-  background:rgba(255,255,255,.4);color:#7a3040;font-size:13px;font-weight:600;
-  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;
-}
-.page-btn:hover{background:rgba(255,255,255,.7);color:#570301}
-.page-btn.active{background:linear-gradient(135deg,#F5BAD5,#BAD6FD);color:#570301;border-color:transparent}
-.page-info{font-size:12px;color:#a06070;padding:0 8px}
-.loading-overlay{
-  display:none;position:fixed;inset:0;
-  background:rgba(255,255,255,.4);
-  backdrop-filter:blur(8px);
-  align-items:center;justify-content:center;
-  z-index:999;flex-direction:column;gap:14px;
-}
-.loading-overlay.show{display:flex}
-.spinner{
-  width:44px;height:44px;border-radius:50%;
-  border:3px solid rgba(186,214,253,.4);
-  border-top-color:#BAD6FD;
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.toast{
-  position:fixed;bottom:24px;right:24px;
-  padding:12px 20px;border-radius:14px;
-  background:rgba(255,255,255,.8);
-  backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,.9);
-  box-shadow:0 8px 24px rgba(87,3,1,.12);
-  font-size:13px;font-weight:600;color:#570301;
-  transform:translateY(80px);opacity:0;
-  transition:all .3s;z-index:1000;
-}
-.toast.show{transform:translateY(0);opacity:1}
-.id-gate{
-  position:fixed;inset:0;z-index:2000;
-  display:flex;align-items:center;justify-content:center;
-  background:
-    radial-gradient(ellipse at 15% 15%,rgba(245,186,213,.5) 0%,transparent 50%),
-    radial-gradient(ellipse at 85% 80%,rgba(186,214,253,.45) 0%,transparent 50%),
-    linear-gradient(145deg,#fce8f3,#eef5ff,#fff8e6);
-  padding:20px;
-}
-.id-box{
-  width:100%;max-width:540px;
-  background:rgba(255,255,255,.55);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.8);
-  border-radius:24px;
-  box-shadow:0 20px 60px rgba(87,3,1,.15),inset 0 1.5px 0 rgba(255,255,255,.9);
-  padding:32px;
-}
-.id-logo{
-  width:52px;height:52px;border-radius:16px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  display:flex;align-items:center;justify-content:center;
-  font-size:28px;margin:0 auto 14px;
-  box-shadow:0 4px 16px rgba(245,186,213,.5);
-}
-.id-title{font-size:20px;font-weight:700;color:#570301;text-align:center;margin-bottom:4px}
-.id-sub{font-size:12px;color:#a06070;text-align:center;margin-bottom:20px}
-.id-disclaimer{
-  background:rgba(247,229,148,.25);
-  border:1px solid rgba(247,229,148,.6);
-  border-radius:12px;padding:12px 14px;margin-bottom:20px;
-  font-size:10.5px;color:#7a4500;line-height:1.7;
-}
-.id-disclaimer-title{font-weight:700;color:#7a4500;letter-spacing:.4px;margin-bottom:6px;font-size:11px}
-.id-disclaimer p{margin-bottom:5px}
-.id-disclaimer p:last-child{margin-bottom:0;font-weight:600;color:#570301}
-.id-input{
-  width:100%;padding:12px 16px;
-  border:1.5px solid rgba(186,214,253,.6);
-  border-radius:12px;font-size:13px;font-family:monospace;
-  background:rgba(255,255,255,.6);color:#570301;
-  outline:none;transition:border .2s;margin-bottom:10px;
-  letter-spacing:1px;
-}
-.id-input:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.2)}
-.id-input::placeholder{color:#d0b0b8;font-family:'Inter',sans-serif;letter-spacing:0}
-.id-error{
-  font-size:12px;color:#570301;margin-bottom:10px;
-  display:none;padding:8px 12px;
-  background:rgba(245,186,213,.35);border-radius:8px;
-}
-.id-error.show{display:block}
-.btn-id{
-  width:100%;padding:12px;border:none;border-radius:12px;
-  font-family:inherit;font-size:14px;font-weight:700;
-  cursor:pointer;transition:all .2s;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;box-shadow:0 4px 16px rgba(245,186,213,.45);
-}
-.btn-id:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(186,214,253,.5)}
-.btn-id:disabled{background:rgba(220,200,210,.4);color:rgba(87,3,1,.3);box-shadow:none;cursor:not-allowed;transform:none}
-.id-badge{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:5px 12px;border-radius:20px;
-  background:rgba(186,214,253,.25);
-  border:1px solid rgba(186,214,253,.5);
-  font-size:11px;font-weight:600;color:#570301;
-  font-family:monospace;letter-spacing:.5px;
-}
-.btn-change-id{
-  padding:4px 10px;border:none;border-radius:8px;
-  font-size:10px;font-weight:600;font-family:inherit;
-  background:rgba(186,214,253,.25);color:#570301;
-  cursor:pointer;transition:all .15s;
-}
-.btn-change-id:hover{background:rgba(186,214,253,.45)}
-.chart-card{
-  border-radius:35px;padding:20px 24px;
-  background:rgba(255,255,255,.45);
-  border:1px solid rgba(255,255,255,.75);
-  backdrop-filter:blur(20px);
-  box-shadow:0 4px 20px rgba(87,3,1,.08);
-  margin-bottom:24px;
-}
-.chart-toolbar{
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:10px;margin-bottom:16px;
-}
-.chart-title{font-size:14px;font-weight:700;color:#570301}
-.chart-tabs{display:flex;gap:6px}
-.chart-tab{
-  padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;
-  cursor:pointer;border:1px solid rgba(186,214,253,.4);
-  background:rgba(255,255,255,.35);color:#7a3040;transition:all .2s;
-}
-.chart-tab:hover{background:rgba(255,255,255,.6)}
-.chart-tab.active{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;border-color:transparent;
-  box-shadow:0 3px 10px rgba(245,186,213,.35);
-}
-.chart-wrap{position:relative;height:260px}
-.pass-modal-bg{
-  position:fixed;inset:0;z-index:3000;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(87,3,1,.2);
-  backdrop-filter:blur(8px);
-}
-.pass-modal-bg.show{display:flex}
-.pass-modal{
-  width:100%;max-width:380px;
-  background:rgba(255,255,255,.7);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.85);
-  border-radius:20px;padding:28px;
-  box-shadow:0 20px 50px rgba(87,3,1,.15);
-  text-align:center;
-}
-.pass-modal-icon{font-size:36px;margin-bottom:10px}
-.pass-modal-title{font-size:16px;font-weight:700;color:#570301;margin-bottom:4px}
-.pass-modal-sub{font-size:12px;color:#a06070;margin-bottom:16px}
-.pass-input{
-  width:100%;padding:11px 14px;
-  border:1.5px solid rgba(186,214,253,.6);border-radius:12px;
-  font-size:14px;font-family:monospace;letter-spacing:2px;
-  background:rgba(255,255,255,.6);color:#570301;
-  outline:none;transition:border .2s;margin-bottom:10px;text-align:center;
-}
-.pass-input:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.2)}
-.pass-error{
-  font-size:12px;color:#570301;margin-bottom:10px;
-  display:none;padding:7px 12px;
-  background:rgba(245,186,213,.35);border-radius:8px;
-}
-.pass-error.show{display:block}
-.pass-btns{display:flex;gap:8px}
-.btn-pass-cancel{
-  flex:1;padding:10px;border:1px solid rgba(186,214,253,.4);border-radius:12px;
-  background:rgba(255,255,255,.4);color:#7a3040;
-  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-pass-ok{
-  flex:2;padding:10px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);color:#570301;
-  font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 12px rgba(245,186,213,.4);
-}
-.btn-pass-ok:hover{transform:translateY(-1px)}
-.restricted-mask{
-  color:#BAD6FD;font-family:monospace;font-size:12px;letter-spacing:1px;
-}
-.revenue-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 18px;border-radius:20px;font-size:12px;font-weight:600;
-  cursor:pointer;border:1px solid rgba(186,214,253,.4);
-  background:rgba(255,255,255,.35);color:#7a3040;
-  transition:all .2s;white-space:nowrap;
-}
-.revenue-btn:hover{background:rgba(255,255,255,.6);color:#570301}
-.revenue-btn.active{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;border-color:transparent;
-  box-shadow:0 3px 12px rgba(245,186,213,.35);
-}
-.revenue-date{
-  font-size:11px;color:#a06070;padding:6px 12px;
-  background:rgba(255,255,255,.35);border-radius:10px;
-  border:1px solid rgba(186,214,253,.3);
-}
-.revenue-loading{
-  padding:48px;text-align:center;color:#c09090;
-  display:flex;flex-direction:column;align-items:center;gap:12px;
-}
-.order-modal-bg{
-  position:fixed;inset:0;z-index:4000;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(87,3,1,.2);
-  backdrop-filter:blur(10px);
-  padding:16px;
-}
-.order-modal-bg.show{display:flex}
-.order-modal{
-  width:100%;max-width:460px;
-  background:rgba(255,255,255,.75);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.9);
-  border-radius:22px;padding:28px;
-  box-shadow:0 24px 60px rgba(87,3,1,.15);
-  max-height:90vh;overflow-y:auto;
-}
-.order-modal-icon{font-size:40px;text-align:center;margin-bottom:8px}
-.order-modal-title{font-size:16px;font-weight:700;color:#570301;text-align:center;margin-bottom:4px;}
-.order-modal-sub{font-size:12px;color:#a06070;text-align:center;margin-bottom:18px;}
-.order-info-row{
-  display:flex;align-items:flex-start;justify-content:space-between;
-  gap:8px;padding:10px 0;
-  border-bottom:1px solid rgba(186,214,253,.2);
-}
-.order-info-row:last-of-type{border-bottom:none}
-.order-info-label{font-size:11px;font-weight:600;color:#a06070;min-width:110px;margin-top:1px;}
-.order-info-value{font-size:13px;font-weight:600;color:#570301;flex:1;text-align:right;word-break:break-word;}
-.order-modal-btns{display:flex;gap:8px;margin-top:20px;}
-.btn-modal-cancel{
-  flex:1;padding:11px;border:1px solid rgba(186,214,253,.4);
-  border-radius:12px;background:rgba(255,255,255,.4);
-  color:#7a3040;font-family:inherit;font-size:13px;
-  font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-modal-cancel:hover{background:rgba(255,255,255,.7)}
-.btn-modal-confirm{
-  flex:2;padding:11px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-family:inherit;font-size:13px;
-  font-weight:700;cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(245,186,213,.45);
-}
-.btn-modal-confirm:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(186,214,253,.5)}
-.success-modal-bg{
-  position:fixed;inset:0;z-index:5000;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(87,3,1,.2);
-  backdrop-filter:blur(10px);
-  padding:16px;
-}
-.success-modal-bg.show{display:flex}
-.success-modal{
-  width:100%;max-width:480px;
-  background:rgba(255,255,255,.78);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.9);
-  border-radius:22px;padding:28px;
-  box-shadow:0 24px 60px rgba(87,3,1,.12);
-  max-height:90vh;overflow-y:auto;
-}
-.success-banner{
-  background:linear-gradient(135deg,rgba(247,229,148,.45),rgba(245,186,213,.35));
-  border:1px solid rgba(247,229,148,.6);
-  border-radius:14px;padding:16px;
-  text-align:center;margin-bottom:18px;
-}
-.success-banner-icon{font-size:36px;margin-bottom:6px}
-.success-banner-title{font-size:16px;font-weight:700;color:#570301;margin-bottom:4px}
-.success-banner-sub{font-size:12px;color:#7a4500}
-.success-amount{font-size:22px;font-weight:800;color:#570301;margin-top:6px;}
-.copy-row{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:8px;padding:10px 0;
-  border-bottom:1px solid rgba(186,214,253,.2);
-}
-.copy-row:last-of-type{border-bottom:none}
-.copy-label{font-size:11px;font-weight:600;color:#a06070;min-width:120px}
-.copy-value{font-size:13px;font-weight:600;color:#570301;flex:1;word-break:break-word}
-.btn-copy{
-  padding:5px 12px;border:none;border-radius:8px;
-  background:rgba(186,214,253,.2);color:#570301;
-  font-family:inherit;font-size:11px;font-weight:700;
-  cursor:pointer;transition:all .2s;white-space:nowrap;
-  border:1px solid rgba(186,214,253,.35);
-}
-.btn-copy:hover{background:rgba(186,214,253,.4)}
-.btn-copy.copied{
-  background:rgba(247,229,148,.4);color:#7a4500;
-  border-color:rgba(247,229,148,.6);
-}
-.btn-close-success{
-  width:100%;padding:12px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-family:inherit;font-size:14px;
-  font-weight:700;cursor:pointer;margin-top:18px;
-  box-shadow:0 4px 14px rgba(245,186,213,.4);
-  transition:all .2s;
-}
-.btn-close-success:hover{transform:translateY(-1px)}
-.btn-take-order{
-  padding:5px 14px;border:none;border-radius:10px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-size:11px;font-weight:700;
-  font-family:inherit;cursor:pointer;
-  box-shadow:0 3px 10px rgba(245,186,213,.35);
-  transition:all .2s;white-space:nowrap;
-}
-.btn-take-order:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(186,214,253,.45)}
-.phone-blur{
-  filter:blur(4px);user-select:none;
-  transition:filter .2s;cursor:default;
-  display:inline-block;
-}
-.taken-btn{
-  position:relative;
-  padding:8px 16px;border:1px solid rgba(186,214,253,.4);
-  border-radius:12px;background:rgba(255,255,255,.4);
-  color:#7a3040;font-family:inherit;font-size:12px;
-  font-weight:600;cursor:pointer;transition:all .2s;
-  display:flex;align-items:center;gap:6px;
-}
-.taken-btn:hover{background:rgba(255,255,255,.7)}
-.taken-badge{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;border-radius:20px;padding:1px 8px;
-  font-size:10px;font-weight:700;
-}
-.taken-panel{
-  position:fixed;top:70px;right:24px;
-  width:540px;max-height:70vh;
-  background:rgba(255,255,255,.75);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.85);
-  border-radius:18px;
-  box-shadow:0 16px 48px rgba(87,3,1,.12);
-  z-index:500;overflow:hidden;
-  display:none;flex-direction:column;
-}
-.taken-panel.show{display:flex}
-.taken-panel-header{
-  padding:14px 18px;
-  background:rgba(255,255,255,.5);
-  border-bottom:1px solid rgba(255,255,255,.6);
-  display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;
-}
-.taken-panel-title{font-size:14px;font-weight:700;color:#570301}
-.taken-panel-body{overflow-y:auto;flex:1}
-.taken-empty{padding:36px;text-align:center;color:#c09090;font-size:13px;}
-.taken-item{
-  padding:12px 18px;
-  border-bottom:1px solid rgba(186,214,253,.15);
-  transition:background .15s;
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:6px;align-items:center;
-}
-.taken-item:hover{background:rgba(255,255,255,.4)}
-.taken-item:last-child{border-bottom:none}
-.taken-code{font-family:monospace;font-size:12px;font-weight:700;color:#570301}
-.taken-key{
-  font-size:10px;color:#570301;font-weight:600;
-  background:rgba(186,214,253,.2);
-  border:1px solid rgba(186,214,253,.4);
-  border-radius:8px;padding:2px 8px;
-  text-align:center;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;
-}
-.taken-time{font-size:10px;color:#a06070;text-align:right}
-.btn-clear-taken{
-  padding:4px 12px;border:none;border-radius:8px;
-  background:rgba(245,186,213,.3);color:#570301;
-  font-family:inherit;font-size:11px;font-weight:600;
-  cursor:pointer;transition:all .15s;
-  border:1px solid rgba(245,186,213,.5);
-}
-.btn-clear-taken:hover{background:rgba(245,186,213,.55)}
-#fireworksCanvas{
-  position:fixed;inset:0;
-  width:100vw;height:100vh;
-  pointer-events:none;
-  z-index:9999;
-  display:none;
-}
-.info-modal-bg{
-  display:flex;
-  align-items:flex-start;
-  justify-content:flex-start;
-  padding:0;
-}
-.info-modal-bg.show{display:flex}
-.info-modal{
-  position:relative;
-  width:100%;max-width:100%;
-  background:rgba(255,255,255,.45);
-  backdrop-filter:blur(28px) saturate(200%);
-  -webkit-backdrop-filter:blur(28px) saturate(200%);
-  border:1px solid rgba(255,255,255,.75);
-  border-radius:35px;padding:20px 24px;
-  box-shadow:0 8px 32px rgba(87,3,1,.1);
-  max-height:none;overflow-y:visible;
-}
-.info-modal-icon{font-size:36px;text-align:center;margin-bottom:8px}
-.info-modal-title{font-size:16px;font-weight:700;color:#570301;text-align:center;margin-bottom:4px}
-.info-modal-sub{font-size:12px;color:#a06070;text-align:center;margin-bottom:20px}
-.info-input-row{display:flex;gap:8px;margin-bottom:10px}
-.info-input{
-  width:100%;padding:11px 14px;
-  border:1.5px solid rgba(186,214,253,.5);border-radius:50px;
-  font-size:13px;font-family:inter;letter-spacing:.5px;
-  background:rgba(255,255,255,.6);color:#570301;
-  outline:none;transition:border .2s;margin-bottom:12px;
-}
-.info-input:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
-.info-input::placeholder{color:#d0b0b8;font-family:Inter,sans-serif;letter-spacing:0}
-.info-result{margin-top:16px;display:none;border-top:1px solid rgba(186,214,253,.3);padding-top:16px}
-.info-result.show{display:block}
-.info-row{
-  display:flex;align-items:flex-start;
-  justify-content:space-between;gap:8px;
-  padding:9px 0;border-bottom:1px solid rgba(186,214,253,.15);
-}
-.info-row:last-of-type{border-bottom:none}
-.info-label{font-size:11px;font-weight:600;color:#a06070;min-width:130px;margin-top:1px}
-.info-value{font-size:13px;font-weight:600;color:#570301;flex:1;text-align:right;word-break:break-word}
-.info-error{
-  font-size:12px;color:#570301;margin-top:10px;
-  padding:8px 12px;background:rgba(245,186,213,.35);
-  border-radius:8px;display:none;
-}
-.info-error.show{display:block}
-.info-btns{display:flex;gap:8px;margin-top:20px}
-.btn-info-cancel{
-  flex:1;padding:11px;
-  border:1px solid rgba(186,214,253,.4);border-radius:12px;
-  background:rgba(255,255,255,.4);color:#7a3040;
-  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-info-cancel:hover{background:rgba(255,255,255,.7)}
-.btn-info-search{
-  flex:2;padding:11px;border:none;border-radius:50px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);color:#570301;
-  font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
-  box-shadow:0 4px 14px rgba(245,186,213,.4);transition:all .2s;
-}
-.btn-info-search:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(186,214,253,.5)}
-.btn-info-search:disabled{background:rgba(220,200,210,.4);color:rgba(87,3,1,.3);box-shadow:none;cursor:not-allowed;transform:none}
-.shop-modal-bg{
-  position:fixed;inset:0;z-index:6500;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(87,3,1,.2);backdrop-filter:blur(10px);padding:16px;
-}
-.shop-modal-bg.show{display:flex}
-.shop-modal{
-  width:100%;max-width:520px;
-  background:rgba(255,255,255,.82);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.9);
-  border-radius:22px;padding:28px;
-  box-shadow:0 24px 60px rgba(87,3,1,.15);
-  max-height:90vh;overflow-y:auto;
-}
-.shop-modal-icon{font-size:36px;text-align:center;margin-bottom:8px}
-.shop-modal-title{font-size:16px;font-weight:700;color:#570301;text-align:center;margin-bottom:4px}
-.shop-modal-sub{font-size:12px;color:#a06070;text-align:center;margin-bottom:20px}
-.shop-info-row{
-  display:flex;align-items:flex-start;justify-content:space-between;
-  gap:8px;padding:9px 0;border-bottom:1px solid rgba(186,214,253,.15);
-}
-.shop-info-row:last-of-type{border-bottom:none}
-.shop-info-label{font-size:11px;font-weight:600;color:#a06070;min-width:150px;margin-top:1px}
-.shop-info-value{font-size:13px;font-weight:600;color:#570301;flex:1;text-align:right;word-break:break-word}
-.shop-info-section{font-size:11px;font-weight:700;color:#a06070;letter-spacing:.5px;margin:14px 0 6px;text-transform:uppercase}
-.shop-cccd-wrap{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
-.shop-cccd-wrap img{
-  flex:1;min-width:140px;max-width:100%;
-  border-radius:10px;border:1px solid rgba(186,214,253,.4);
-  cursor:pointer;transition:transform .2s;
-  max-height:180px;object-fit:cover;
-}
-.shop-cccd-wrap img:hover{transform:scale(1.02)}
-.shop-warehouse{
-  background:rgba(186,214,253,.15);border:1px solid rgba(186,214,253,.3);
-  border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:12px;
-}
-.shop-warehouse-name{font-weight:700;color:#570301;margin-bottom:4px}
-.shop-warehouse-detail{color:#7a3040;line-height:1.6}
-.shop-error{
-  font-size:12px;color:#570301;margin-top:10px;
-  padding:8px 12px;background:rgba(245,186,213,.35);
-  border-radius:8px;display:none;
-}
-.shop-error.show{display:block}
-.shop-result{display:none;margin-top:16px;border-top:1px solid rgba(186,214,253,.3);padding-top:16px}
-.shop-result.show{display:block}
-.btn-shop-search{
-  flex:2;padding:11px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);color:#570301;
-  font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
-  box-shadow:0 4px 14px rgba(245,186,213,.4);transition:all .2s;
-}
-.btn-shop-search:hover{transform:translateY(-1px)}
-.btn-shop-search:disabled{background:rgba(220,200,210,.4);color:rgba(87,3,1,.3);box-shadow:none;cursor:not-allowed;transform:none}
-.btn-shop-cancel{
-  flex:1;padding:11px;border:1px solid rgba(186,214,253,.4);border-radius:12px;
-  background:rgba(255,255,255,.4);color:#7a3040;
-  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-shop-cancel:hover{background:rgba(255,255,255,.7)}
-.rev-shop-list{
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;
-  max-height:340px;overflow-y:auto;margin-bottom:4px;
-}
-.rev-shop-item{
-  padding:10px 14px;border-radius:12px;cursor:pointer;
-  border:1px solid rgba(186,214,253,.4);background:rgba(255,255,255,.4);
-  font-size:12px;font-weight:600;color:#570301;
-  transition:all .2s;text-align:left;
-}
-.rev-shop-item:hover{background:rgba(245,186,213,.25);border-color:rgba(186,214,253,.6)}
-.rev-result-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.rev-back-btn{
-  padding:5px 12px;border:1px solid rgba(186,214,253,.4);border-radius:8px;
-  background:rgba(255,255,255,.4);color:#7a3040;
-  font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.rev-back-btn:hover{background:rgba(255,255,255,.7)}
-.rev-shop-title{font-size:14px;font-weight:700;color:#570301}
-.rev-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:8px 0;border-bottom:1px solid rgba(186,214,253,.15);font-size:12px;
-}
-.rev-row:last-of-type{border-bottom:none}
-.rev-row-label{color:#a06070;font-weight:500}
-.rev-row-value{font-weight:700;color:#570301}
-.rev-row-value.positive{color:#059669}
-.rev-row-value.negative{color:#570301}
-.rev-section{font-size:11px;font-weight:700;color:#a06070;letter-spacing:.5px;margin:12px 0 4px}
-.rev-loading{padding:36px;text-align:center;color:#c09090;display:flex;flex-direction:column;align-items:center;gap:12px}
-.chat-conv-item{
-  background:rgba(255,255,255,.45);border:1px solid rgba(186,214,253,.3);
-  border-radius:14px;padding:14px 16px;margin-bottom:12px;
-}
-.chat-conv-header{
-  display:flex;justify-content:space-between;align-items:flex-start;
-  margin-bottom:10px;gap:8px;
-}
-.chat-conv-parties{font-size:12px}
-.chat-conv-party{display:flex;align-items:center;gap:6px;margin-bottom:3px}
-.chat-online-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.chat-online-dot.on{background:#10b981}
-.chat-online-dot.off{background:#d1d5db}
-.chat-conv-name{font-weight:600;color:#570301}
-.chat-conv-role{font-size:10px;color:#a06070;margin-left:2px}
-.chat-unread-badge{
-  background:linear-gradient(135deg,#F5BAD5,#570301);
-  color:#fff;border-radius:20px;padding:2px 8px;
-  font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0;
-}
-.chat-msg-box{
-  background:rgba(186,214,253,.12);border:1px solid rgba(186,214,253,.25);
-  border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;
-}
-.chat-msg-label{font-size:10px;font-weight:700;color:#a06070;letter-spacing:.4px;margin-bottom:6px}
-.chat-order-product{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
-.chat-order-img{width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0}
-.chat-order-detail{font-size:11px;color:#570301;line-height:1.6}
-.chat-order-title{font-weight:600;color:#570301;font-size:12px}
-.chat-order-meta{display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
-.chat-order-meta span{font-size:11px;color:#7a3040}
-.chat-order-meta b{color:#570301}
-.chat-conv-footer{
-  display:grid;grid-template-columns:1fr 1fr;gap:4px;
-  font-size:10px;color:#a06070;margin-top:8px;
-}
-.chat-violation{color:#570301;font-weight:700}
-.chat-conv-count{font-size:12px;color:#a06070;margin-bottom:12px}
-#sortSelect{
-  padding:7px 14px 7px 10px;
-  border-radius:20px;
-  border:1.5px solid rgba(186,214,253,.5);
-  background:linear-gradient(135deg,rgba(186,214,253,.5),rgba(245,186,213,.35));
-  color:#570301;
-  font-size:12px;font-weight:700;font-family:inherit;
-  outline:none;cursor:pointer;
-  box-shadow:0 2px 8px rgba(186,214,253,.2);
-  backdrop-filter:blur(8px);transition:all .2s;
-  appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23570301' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
-}
-#sortSelect:hover{border-color:rgba(186,214,253,.8);box-shadow:0 4px 14px rgba(186,214,253,.3);transform:translateY(-1px)}
-#sortSelect:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
-.history-panel{
-  display:none;position:fixed;right:24px;top:72px;bottom:24px;z-index:8000;
-  width:360px;background:rgba(255,255,255,.88);
-  backdrop-filter:blur(30px) saturate(200%);
-  -webkit-backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(186,214,253,.35);border-radius:35px;
-  flex-direction:column;overflow:hidden;
-  box-shadow:0 16px 48px rgba(87,3,1,.12);
-}
-.history-panel.open{display:flex}
-.history-header{
-  padding:18px 16px 12px;
-  border-bottom:1px solid rgba(186,214,253,.2);
-  display:flex;justify-content:space-between;align-items:center;
-}
-.history-header-title{font-size:14px;font-weight:700;color:#570301}
-.history-close{
-  width:28px;height:28px;border-radius:50%;border:none;
-  background:rgba(186,214,253,.3);color:#7a3040;
-  font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-}
-.history-stats{
-  padding:10px 16px;background:rgba(245,186,213,.1);
-  border-bottom:1px solid rgba(186,214,253,.15);
-  font-size:11px;color:#a06070;display:flex;gap:16px;
-}
-.history-stats b{color:#570301;font-size:13px}
-.history-body{flex:1;overflow-y:auto;padding:10px 12px}
-.history-key-block{margin-bottom:14px}
-.history-key-label{
-  font-size:10px;font-weight:700;color:#a06070;
-  letter-spacing:.4px;margin-bottom:5px;display:flex;justify-content:space-between;
-}
-.history-key-name{
-  font-family:inter;font-size:10px;color:#570301;
-  background:rgba(186,214,253,.2);padding:1px 6px;border-radius:35px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;
-}
-.history-key-used{color:#570301;font-weight:700}
-.history-item{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:6px 10px;border-radius:35px;margin-bottom:3px;
-  background:rgba(255,255,255,.5);border:1px solid rgba(186,214,253,.2);
-  font-size:11px;
-}
-.history-item-code{font-weight:700;color:#570301;font-family:monospace}
-.history-item-time{color:#c09090;font-size:10px}
-.history-empty{text-align:center;color:#d0a0b0;padding:40px 20px;font-size:12px}
-.history-toggle-btn{
-  position:fixed;right:16px;bottom:80px;z-index:7900;
-  width:44px;height:44px;border-radius:35px;border:none;
-  background:linear-gradient(135deg,#F7E594,#f59e0b);
-  color:#570301;font-size:18px;cursor:pointer;
-  box-shadow:0 4px 16px rgba(247,229,148,.5);
-  display:none;align-items:center;justify-content:center;transition:all .2s;
-}
-.history-toggle-btn.visible{display:flex}
-.history-toggle-btn:hover{transform:scale(1.1)}
-.history-tabs{
-  display:flex;gap:6px;padding:10px 12px 0;
-  border-bottom:1px solid rgba(186,214,253,.2);
-}
-.history-tab{
-  flex:1;padding:7px;border:none;border-radius:35px;
-  font-family:inherit;font-size:11px;font-weight:700;
-  cursor:pointer;background:rgba(186,214,253,.15);color:#a06070;transition:all .2s;
-}
-.history-tab.active{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;
-}
-.login-item{
-  display:flex;justify-content:space-between;align-items:flex-start;
-  padding:9px 12px;border-radius:10px;margin-bottom:6px;
-  border:1px solid rgba(186,214,253,.2);font-size:11px;
-}
-.login-item.login-ev{background:rgba(247,229,148,.2);border-color:rgba(247,229,148,.4)}
-.login-item.logout-ev{background:rgba(245,186,213,.2);border-color:rgba(245,186,213,.35)}
-.login-key{font-weight:700;color:#570301;font-size:12px;margin-bottom:2px}
-.login-time{color:#a06070;font-size:10px}
-.login-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
-.login-badge.in{background:rgba(247,229,148,.5);color:#7a4500}
-.login-badge.out{background:rgba(245,186,213,.5);color:#570301}
-.download-panel{
-  display:none;position:fixed;left:24px;top:92px;z-index:7000;
-  width:420px;max-height:calc(100vh - 110px);overflow-y:auto;
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(30px) saturate(200%);
-  -webkit-backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(186,214,253,.35);border-radius:35px;
-  padding:18px 16px 16px;
-}
-.download-panel-title{
-  font-size:13px;font-weight:700;color:#570301;
-  margin-bottom:14px;display:flex;align-items:center;gap:7px;
-}
-.download-input{
-  width:100%;padding:10px 12px;
-  border:1.5px solid rgba(186,214,253,.5);border-radius:12px;font-size:12px;
-  font-family:monospace;letter-spacing:.5px;
-  background:rgba(255,255,255,.6);color:#570301;
-  outline:none;transition:border .2s;box-sizing:border-box;margin-bottom:10px;
-}
-.download-input:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
-.download-input::placeholder{color:#d0b0b8;font-family:Inter,sans-serif;letter-spacing:0}
-.btn-download{
-  width:100%;padding:10px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-family:inherit;font-size:13px;font-weight:700;
-  cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(245,186,213,.4);
-  display:flex;align-items:center;justify-content:center;gap:6px;
-}
-.btn-download:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(186,214,253,.5)}
-.btn-download:disabled{background:rgba(220,200,210,.4);color:rgba(87,3,1,.3);box-shadow:none;cursor:not-allowed;transform:none}
-.download-msg{
-  margin-top:8px;font-size:11px;text-align:center;
-  padding:6px 10px;border-radius:8px;display:none;
-}
-.download-msg.ok{display:block;background:rgba(247,229,148,.35);color:#7a4500}
-.download-msg.err{display:block;background:rgba(245,186,213,.4);color:#570301}
-#btnGetPhone{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  box-shadow:0 4px 18px rgba(245,186,213,.4);
-  color:#570301;font-weight:700;position:relative;overflow:hidden;
-  animation:pulsePhone 2s infinite;
-}
-#btnGetPhone:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(186,214,253,.55)}
-@keyframes pulsePhone{
-  0%,100%{box-shadow:0 4px 18px rgba(245,186,213,.4)}
-  50%{box-shadow:0 4px 28px rgba(186,214,253,.65),0 0 0 6px rgba(186,214,253,.12)}
-}
-#shippingLabelPrint{display:none}
-@media print{
-  body > *:not(#shippingLabelPrint){display:none !important}
-  #shippingLabelPrint{
-    display:block !important;position:fixed !important;inset:0 !important;
-    width:4in !important;height:6in !important;margin:0 !important;
-    padding:0.18in !important;box-sizing:border-box !important;
-    font-family:Arial,Helvetica,sans-serif !important;font-size:10px !important;
-    background:#fff !important;color:#000 !important;
-  }
-  @page{size:4in 6in;margin:0}
-}
-.sync-panel{
-  display:block;width:100%;background:transparent;border:none;
-  border-radius:0;padding:0;box-shadow:none;max-height:none;
-  overflow-y:visible;backdrop-filter:none;
-}
-.sync-panel-title{font-size:13px;font-weight:700;color:#570301;margin-bottom:14px}
-.sync-label{
-  font-size:10px;font-weight:700;color:#a06070;
-  letter-spacing:.4px;text-transform:uppercase;
-  display:block;margin-bottom:4px;margin-top:10px;
-}
-.sync-input{
-  width:100%;padding:9px 12px;
-  border:1.5px solid rgba(186,214,253,.5);
-  border-radius:50px;font-size:12px;
-  background:rgba(255,255,255,.6);color:#570301;
-  outline:none;transition:border .2s;
-  box-sizing:border-box;font-family:monospace;
-}
-.sync-input:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
-select.sync-input{font-family:inherit;cursor:pointer}
-.btn-sync{
-  width:100%;margin-top:14px;padding:11px;border:none;border-radius:50px;
-  background:linear-gradient(135deg,#F5BAD5,#570301);
-  color:#fff;font-family:inherit;font-size:13px;font-weight:700;
-  cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(87,3,1,.25);
-}
-.btn-sync:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(87,3,1,.35)}
-.btn-sync:disabled{background:rgba(220,200,210,.4);color:rgba(87,3,1,.3);box-shadow:none;cursor:not-allowed;transform:none}
-.sync-msg{
-  margin-top:10px;font-size:11px;text-align:center;
-  padding:7px 10px;border-radius:8px;display:none;line-height:1.5;
-}
-.sync-msg.ok{display:block;background:rgba(247,229,148,.35);color:#7a4500}
-.sync-msg.err{display:block;background:rgba(245,186,213,.4);color:#570301}
-.btn-chiaki-link{
-  display:block;width:100%;padding:9px 12px;
-  background:rgba(247,229,148,.3);border:1.5px solid rgba(247,229,148,.5);
-  border-radius:50px;color:#7a4500;font-size:12px;font-weight:700;
-  text-align:center;text-decoration:none;box-sizing:border-box;
-  margin-top:6px;transition:all .2s;
-}
-.btn-chiaki-link:hover{background:rgba(247,229,148,.5)}
-.sync-hint{font-size:10px;color:#a06070;text-align:center;margin:6px 0 10px;line-height:1.5}
-.sync-dropzone{
-  border:2px dashed rgba(186,214,253,.5);
-  border-radius:14px;padding:20px 12px;
-  text-align:center;cursor:pointer;
-  background:rgba(255,255,255,.4);color:#7a3040;
-  font-size:12px;line-height:1.6;transition:all .2s;
-}
-.sync-dropzone:hover,.sync-dropzone.dragover{
-  border-color:#BAD6FD;background:rgba(186,214,253,.1);
-}
-.sync-drop-icon{font-size:24px;margin-bottom:6px}
-.sync-file-name{
-  margin-top:8px;font-size:11px;color:#7a4500;
-  text-align:center;font-weight:700;min-height:16px;
-}
-.combo-row{
-  display:grid;border-radius:50px;
-  grid-template-columns:1fr auto;gap:6px;align-items:center;
-}
-.combo-shop-label{
-  padding:8px 12px;border:1.5px solid rgba(186,214,253,.5);
-  border-radius:14px;background:rgba(255,255,255,.6);color:#570301;
-  display:flex;align-items:center;gap:8px;min-width:0;
-}
-.combo-shop-id{
-  font-size:10px;font-weight:700;color:#7a3040;
-  background:rgba(186,214,253,.25);border-radius:999px;padding:2px 8px;
-  flex-shrink:0;font-family:monospace;
-}
-.combo-shop-name{
-  font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.combo-upload-btn{
-  padding:7px 10px;border:1.5px dashed rgba(186,214,253,.5);
-  border-radius:10px;background:rgba(255,255,255,.4);color:#7a3040;
-  font-size:11px;cursor:pointer;white-space:nowrap;transition:all .2s;
-  text-align:center;min-width:80px;
-}
-.combo-upload-btn:hover{border-color:#BAD6FD;background:rgba(186,214,253,.1)}
-.combo-upload-btn.has-file{
-  border-color:#F7E594;background:rgba(247,229,148,.2);
-  color:#7a4500;font-weight:700;
-}
-.combo-drop-cell{
-  border:2px dashed rgba(186,214,253,.4);border-radius:50px;
-  padding:6px 10px;text-align:center;cursor:pointer;
-  background:rgba(255,255,255,.4);color:#7a3040;
-  font-size:11px;min-width:90px;transition:all .2s;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;
-}
-.combo-drop-cell:hover,.combo-drop-cell.dragover{
-  border-color:#BAD6FD;background:rgba(186,214,253,.1);
-}
-.combo-drop-cell.has-file{
-  border-color:#F7E594;background:rgba(247,229,148,.2);
-  color:#7a4500;font-weight:700;
-}
-.order-row{transition:all .2s ease;cursor:pointer}
-.order-row:hover{
-  background:rgba(247,229,148,0.15) !important;
-  box-shadow:0 2px 12px rgba(186,214,253,0.2);
-  transform:scale(1.002);
-}
-.copy-btn{
-  position:absolute;right:6px;top:50%;transform:translateY(-50%);
-  background:rgba(186,214,253,0.3);border:1px solid rgba(186,214,253,0.55);
-  border-radius:6px;color:#570301;font-size:11px;padding:3px 6px;
-  cursor:pointer;opacity:0;transition:all .2s;font-weight:600;font-family:inherit;
-  box-shadow:0 2px 6px rgba(186,214,253,0.2);
-}
-.order-row:hover .copy-btn{opacity:1}
-.copy-btn:hover{background:rgba(186,214,253,0.5);box-shadow:0 4px 10px rgba(186,214,253,0.3)}
-.copy-btn.copied{
-  background:rgba(247,229,148,0.45) !important;
-  border-color:rgba(247,229,148,0.65) !important;
-  animation:pulse 1s ease-out;
-}
-@keyframes pulse{
-  0%,100%{transform:translateY(-50%) scale(1)}
-  50%{transform:translateY(-50%) scale(1.05)}
-}
-.btn-copy-code{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:22px;height:22px;border-radius:6px;
-  border:1px solid rgba(186,214,253,.4);background:rgba(255,255,255,.5);
-  color:#a06070;font-size:11px;cursor:pointer;transition:all .15s;
-  margin-left:6px;vertical-align:middle;flex-shrink:0;
-}
-.btn-copy-code:hover{
-  background:rgba(245,186,213,.3);border-color:rgba(186,214,253,.6);
-  color:#570301;transform:scale(1.1);
-}
-.btn-copy-code.copied{
-  background:rgba(247,229,148,.35);border-color:rgba(247,229,148,.5);color:#7a4500;
-}
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:rgba(186,214,253,.15);border-radius:10px}
-::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#F5BAD5,#BAD6FD);border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#BAD6FD,#570301)}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-</head>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+import httpx
+from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from reportlab.lib.pagesizes import inch
+from reportlab.lib.utils import simpleSplit
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from sqlalchemy import desc, func, or_
+from sqlalchemy.orm import Session
 
-<body>
-<!-- ID Gate -->
-<div class="id-gate" id="idGate">
-  <div class="id-box">
-    <div class="id-logo">🔐</div>
-    <div class="id-title">Bán hàng cùng bạn Chang ✨</div>
-    <div class="id-sub">Nhập ID đăng nhập để tiếp tục</div>
-    <input class="id-input" id="idInput" type="password"
-           placeholder="LOGIN-KEY-****-****"
-           onkeydown="if(event.key==='Enter') submitId()"/>
-    <div class="id-error" id="idError"></div>
-    <button class="btn-id" id="idBtn" onclick="submitId()">🔓 Xác nhận & Truy cập</button>
-  </div>
-</div>
+from database import engine, get_db, migrate
+from fetcher import sync_shop, parse_excel
+from models import Base, Order, ShopMeta
+from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, get_shops_map
 
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div style="font-size:14px;color:#7c6fa0;font-weight:600">Đang tải dữ liệu...</div>
-</div>
-<div class="toast" id="toast"></div>
-
-<div class="header">
-  <div class="header-left">
-    <div class="logo">☁️</div>
-    <div>
-      <div style="font-size:17px;font-weight:700;color:#3b3551">Bán hàng Chiaki cùng Chang ✨</div>
-      <div class="header-sub">Đồng bộ, xử lý đơn hàng Chiaki</div>
-    </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:12px">
-    <div id="idDisplay" style="display:none">
-      <div class="id-badge">
-        🔑 <span id="maskedId">—</span>
-        &nbsp;·&nbsp;
-        ⏱ <span id="expireCountdown" style="font-family:monospace">--:--:--</span>
-        <button class="btn-change-id" onclick="changeId()">Sign Out</button>
-      </div>
-    </div>
-  </div>
-  <button
-  id="historyToggleBtn"
-  onclick="toggleHistoryPanel()"
-  style="
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid rgba(198,181,255,.4);
-    background: rgba(255,255,255,.4);
-    color: #7c6fa0;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .2s;
-  "
-  onmouseover="this.style.background='rgba(255,255,255,.7)'"
-  onmouseout="this.style.background='rgba(255,255,255,.4)'"
->
-  🕓 Log track
-</button>
-</div>
-
-<div class="download-panel">
-  <!-- Modal Thông tin đơn hàng -->
-<div class="info-modal-bg" id="orderInfoBg" style="display:flex">
-  <div class="info-modal">
-    <div class="info-modal-icon">🔍</div>
-    <div class="info-modal-title">Thông tin đơn hàng</div>
-    <div class="info-modal-sub">Điền mã đơn và key để nhận thông tin đơn hàng</div>
-    <input class="info-input" id="infoOrderCode" type="text"
-      placeholder="Mã đơn..."
-      onkeydown="if(event.key==='Enter') fetchOrderInfo()" />
-    <input class="info-input" id="infoKey" type="text"
-  placeholder="Key..."
-  onkeydown="if(event.key==='Enter') fetchOrderInfo()"
-  style="margin-bottom:12px;font-family:monospace;letter-spacing:1px" />
-<div id="infoKeyStatus" style="font-size:11px;color:#9b8bb4;margin-bottom:4px;min-height:16px"></div>
-
-    <div class="info-error" id="infoError"></div>
-    <div class="info-result" id="infoResult">
-      <div style="font-size:11px;font-weight:800;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">THÔNG TIN ĐƠN HÀNG</div>
-      <div id="irStatusBanner" style="border-radius:12px;padding:10px 14px;text-align:center;font-size:13px;font-weight:700;margin-bottom:14px;display:none"></div>
-      <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value" id="irCode">—</span></div>
-      <div class="info-row"><span class="info-label">Gian hàng</span><span class="info-value" id="irShop">—</span></div>
-      <div class="info-row"><span class="info-label">Thời gian đặt hàng</span><span class="info-value" id="irDate">—</span></div>
-      <div class="info-row"><span class="info-label">Tên khách hàng</span><span class="info-value" id="irName">—</span></div>
-      <div class="info-row"><span class="info-label">Customer ID</span><span class="info-value" id="irCustomerId">—</span></div>
-      <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="irPhone">—</span></div>
-      <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="irEmail">—</span></div>
-      <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="irAddress">—</span></div>
-      <div class="info-row"><span class="info-label">Sản phẩm</span><span class="info-value" id="irProduct">—</span></div>
-      <div class="info-row"><span class="info-label">Số lượng</span><span class="info-value" id="irQuantity"></span></div>
-      <div style="font-size:11px;font-weight:800;color:#9b8bb4;letter-spacing:.5px;margin:12px 0 8px">HÀNH TRÌNH MUA HÀNG</div>
-      <div id="irUrlHistory" style="font-size:12px;color:#4c3f72;line-height:1.8;"></div>
-      <div class="info-row"><span class="info-label">Nguồn đơn hàng</span><span class="info-value" id="irSource">—</span></div>
-      <div class="info-row"><span class="info-label">Thanh toán</span><span class="info-value" id="irPayment">—</span></div>
-      <div class="info-row"><span class="info-label">Số tiền TT</span><span class="info-value" id="irPrepaid">—</span></div>
-      <div style="font-size:11px;font-weight:800;color:#9b8bb4;letter-spacing:.5px;margin:12px 0 8px">VẬN CHUYỂN</div>
-      <div class="info-row"><span class="info-label">Delivery Location ID</span><span class="info-value" id="irDeliveryLocationId">—</span></div>
-      <div class="info-row"><span class="info-label">District Delivery ID</span><span class="info-value" id="irDistrictDeliveryId">—</span></div>
-      <div class="info-row"><span class="info-label">Commune Delivery ID</span><span class="info-value" id="irCommuneDeliveryId">—</span></div>
-      <div class="info-row"><span class="info-label">Mã vận đơn</span><span class="info-value" id="irShippingCode">—</span></div>
-      <div class="info-row"><span class="info-label">Trạng thái giao</span><span class="info-value" id="irDeliveryStatus">—</span></div>
-      <div class="info-row"><span class="info-label">Shipper lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
-    </div>
-    <!-- Button Export PDF 4x6 inch -->
-    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
-      <button id="btnExportPdf" class="btn-modal-confirm" onclick="exportShippingLabel()" style="background:#ff6b35;border-radius:50px;display:none;">📄 IN PHIẾU GIAO HÀNG</button>
-    </div>
-<div class="info-btns">
-  <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()" style="flex:1">🔍 Tra cứu đơn hàng</button>
-</div>
-</div>
-</div>
-  <!-- ═══ CURL HUỶ ĐƠN ═══ -->
-<div id="adminCurlPanel" style="display:none">
-<div class="info-modal" style="margin-top: 16px;">
-  <div class="info-modal-icon">👨🏻‍💻</div>
-  <div class="info-modal-title">Tạo mã cURL</div>
-  <div class="info-modal-sub">Nhập mã đơn để tạo mã huỷ đơn</div>
-
-  <input
-    class="info-input"
-    id="curlOrderInput"
-    type="text"
-    placeholder="Mã đơn..."
-    onkeydown="if(event.key==='Enter') generateCancelCurl()"
-    oninput="previewCurlOrderId()"
-  />
-
-  <div id="curlOrderPreview" style="
-    font-size: 11px; color: #7c3aed;
-    display: none; margin: -6px 0 10px;
-    padding-left: 2px; font-family: monospace;
-  "></div>
-
-  <button class="btn-info-search" onclick="generateCancelCurl()" style="width:100%">
-    ⚙️ Tạo mã cURL
-  </button>
-  <div id="cancelCurlResult" style="display:none;margin-top:12px">
-  <div id="curlMsg" style="font-size:12px;color:#9b8bb4;margin-bottom:6px"></div>
-  <div id="curlResult" style="background:rgba(255,255,255,.5);border-radius:10px;padding:12px">
-    <code id="curlCode"
-          style="font-family:monospace;font-size:11px;word-break:break-all;white-space:pre-wrap;color:#3b3551"></code>
-    <div id="curlOutput"
-         style="font-family:monospace;font-size:11px;word-break:break-all;white-space:pre-wrap;color:#3b3551"></div>
-  </div>
-</div>
-  <div id="copyCurlMsg" style="font-size:12px;color:#9b8bb4;margin-top:6px;text-align:center"></div>
-</div>
-
-<div class="info-modal" style="margin-top: 16px;">
-  <div class="info-modal-icon">🛒</div>
-  <div class="info-modal-title">Tạo mã thêm sản phẩm vào giỏ hàng</div>
-  <div class="info-modal-sub">Điền thông tin để tạo lệnh thêm sản phẩm vào giỏ hàng</div>
-
-  <input class="info-input" id="cartProductId" type="text" placeholder="ID Sản phẩm" />
-  <input class="info-input" id="cartProductCode" type="text" placeholder="Mã sản phẩm" />
-  <input class="info-input" id="cartQuantity" type="number" min="1" step="1" placeholder="Số lượng" />
-  <input class="info-input" id="cartShopId" type="text" placeholder="ID Shop" />
-  <input class="info-input" id="cartUserId" type="text" placeholder="User ID" />
-
-  <button class="btn-info-search" onclick="generateAddToCartCurl()" style="width:100%">
-    🛒 Tạo mã thêm giỏ hàng
-  </button>
-  <div id="addCartCurlMsg" style="font-size:12px;color:#9b8bb4;margin-top:8px;text-align:center;min-height:16px"></div>
-</div>
-</div>
-
-  <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
-  <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
-<div class="info-modal-bg" id="syncPanel" style="display:none">
-  <div class="info-modal">
-
-    <div class="info-modal-icon">🗂️</div>
-    <div class="info-modal-title">Tải danh sách đơn hàng</div>
-    <div class="info-modal-sub">Tải toàn bộ file shop rồi gửi file vào đúng dòng tương ứng bên dưới</div>
-
-    <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
-    <div class="sync-hint">Nhấn một lần để mở lần lượt tab tải file của toàn bộ shop. Mỗi 10 giây sẽ mở 1 tab mới.</div>
-    <select class="info-input" id="syncShopId" onchange="updateChiakiLink()"
-            style="display:none">
-      <option value="">Mời chọn</option>
-    </select>
-    <button class="btn-info-search" id="chiakiLink" type="button"
-       onclick="downloadAllShopFiles()"
-       style="display:block;width:100%;text-align:center;text-decoration:none;padding:11px;margin-bottom:8px">
-      🔗 Tải toàn bộ shop
-    </button>
-    <input type="file" id="syncFileInput" accept=".xlsx,.xls"
-           style="display:none" onchange="handleSyncFile(this.files[0])"/>
-    <div class="sync-file-name" id="syncFileName"></div>
-    <div class="info-error" id="syncMsg" style="margin-top:6px"></div>
-    <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
-      <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng</div>
-      <div id="comboRows" style="display:flex;border-radius:50px;flex-direction:column;gap:8px;"></div>
-      <button class="btn-info-search" id="btnComboSync"
-              style="margin-top:12px;width:100%;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
-              onclick="doComboSync()">
-        🔁 SYNC
-      </button>
-      <div class="info-error" id="comboMsg" style="margin-top:8px"></div>
-    </div>
-  </div>
-</div>
-</div>
-
-<div class="container">
-<!-- ── Chart Section ── -->
-<div class="chart-card">
-  <div class="chart-toolbar">
-    <div class="chart-title">📊 Thống kê đơn hàng tồn kho chưa xuất hàng</div>
-    <div class="chart-tabs">
-      <div class="chart-tab active" id="chartTabDate" onclick="switchChart('date')">📅 Thống kê theo ngày</div>
-      <div class="chart-tab" id="chartTabShop" onclick="switchChart('shop')">🏪 Thống kê theo shop</div>
-    </div>
-  </div>
-  <div class="chart-wrap">
-    <canvas id="mainChart"></canvas>
-  </div>
-</div>
-  
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">📦 Tổng đơn hàng</div>
-      <div class="stat-value" id="totalOrders">—</div>
-      <div class="stat-sub">Đơn hàng đang chờ lấy hàng</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">📎 Tổng gian hàng</div>
-      <div class="stat-value" id="totalShops">—</div>
-      <div class="stat-sub">Gian hàng đang bị theo dõi</div>
-    </div>
-
-    <div class="stat-card clickable" id="hanoiCard" onclick="toggleHanoiPanel()">
-      <div class="stat-label">📍 Đơn tại Hà Nội</div>
-      <div class="stat-value" id="hanoiStatCount">—</div>
-      <div class="stat-sub" id="hanoiCardSub">Click để xem danh sách</div>
-    </div>
-
-    <div class="stat-card clickable" id="mienBacCard" onclick="toggleMienBacPanel()">
-      <div class="stat-label">Đơn miền Bắc</div>
-      <div class="stat-value" id="mienBacStatCount">—</div>
-      <div class="stat-sub" id="mienBacCardSub">Click xem danh sách</div>
-    </div>
-
-    <div class="stat-card clickable" id="nuocHoaCard" onclick="toggleNuocHoaPanel()">
-      <div class="stat-label">🌸 Đơn nước hoa</div>  <!-- ← bỏ "các" -->
-      <div class="stat-value" id="nuocHoaStatCount">16</div>
-      <div class="stat-sub" id="nuocHoaCardSub">Click để xem danh sách</div>
-    </div>
-
-  </div>
-
-  <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
-  <div class="shop-tabs" id="shopTabs">
-    <div class="tab active" data-id="" onclick="selectShop('')">
-      Tất cả <span class="badge" id="tabAll">0</span>
-    </div>
-  </div>
-<div class="table-header" style="
-  background: linear-gradient(135deg, rgba(209,250,229,.6), rgba(167,243,208,.35));
-  border: 1.5px solid rgba(16,185,129,.2);
-  border-radius: 35px;
-  padding: 12px 18px;
-  margin-bottom: 12px;
-">
-  <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
-
-  <div style="display:flex;gap:8px;align-items:center">
-    <select id="sortSelect" onchange="changeSortOrder()">
-      <option value="default">📁 Mặc định</option>
-      <option value="total_desc">💰 Giá trị cao → thấp</option>
-      <option value="total_asc">💰 Giá trị thấp → cao</option>
-      <option value="date_desc">📅 Ngày đặt mới nhất</option>
-      <option value="date_asc">📅 Ngày đặt cũ nhất</option>
-    </select>
-    <div class="table-count" id="tableCount"></div>
-  </div>
-</div>
-
-  <!-- Panel đơn thường -->
-  <div id="panelMain">
-    <div class="table-wrap glass">
-      <div class="table-header">
-        <div class="table-title">📦 Danh sách đơn hàng</div>
-        <div class="table-count" id="tableCount"></div>
-      </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Mã đơn</th>
-              <th>Ngày đặt</th>
-              <th>Gian hàng</th>
-              <th>Tên khách hàng</th>
-              <th>Địa chỉ</th>
-              <th>Sản phẩm</th>
-              <th>Số lượng</th>
-              <th>Tổng tiền</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr><td colspan="10" class="empty">
-              <div class="empty-icon">📭</div>
-              <div>Đang tải dữ liệu...</div>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="pagination" id="pagination"></div>
-    </div>
-  </div>
-
-   <div id="panelHanoi" style="display:none">
-    <div class="table-wrap glass">
-      <div class="table-header">
-        <div class="table-title">📍 Đơn hàng tại Hà Nội</div>
-        <div class="table-count" id="hanoiCount"></div>
-      </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Mã đơn</th>
-              <th>Ngày đặt</th>
-              <th>Gian hàng</th>
-              <th>Tên khách hàng</th>
-              <th>Địa chỉ</th>
-              <th>Sản phẩm</th>
-              <th>SL</th>
-              <th>Tổng tiền</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyHanoi"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Panel Miền Bắc -->
-<div id="panelMienBac" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">Đơn hàng Miền Bắc</div>
-      <div class="table-count" id="mienBacCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Mã đơn</th><th>Ngày tạo</th><th>Gian hàng</th>
-          <th>Tên khách hàng</th><th>Địa chỉ</th>
-          <th>Sản phẩm</th><th>SL</th><th>Tổng tiền</th><th>Trạng thái</th>
-        </tr></thead>
-        <tbody id="tbodyMienBac"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Panel Nước hoa -->
-<div id="panelNuocHoa" style="display:none">
-  <div class="table-wrap glass">
-    <div class="table-header">
-      <div class="table-title">🌸 Đơn hàng Nước hoa</div>
-      <div class="table-count" id="nuocHoaCount"></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Mã đơn</th><th>Ngày đặt</th><th>Gian hàng</th>
-            <th>Tên khách hàng</th><th>Địa chỉ</th>
-            <th>Sản phẩm</th><th>SL</th><th>Tổng tiền</th><th>Trạng thái</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyNuocHoa"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-</div>
-</div><!-- end .container -->
-
-<!-- ── Modal 1: Xác nhận lấy đơn ── -->
-<div class="order-modal-bg" id="orderConfirmBg">
-  <div class="order-modal">
-    <div class="order-modal-icon">📦</div>
-    <div class="order-modal-title">Bạn có muốn tải đơn hàng này không?</div>
-    <div class="order-modal-sub">Kiểm tra lại thông tin đơn hàng trước khi tải về</div>
-
-
-    <div class="order-info-row">
-      <div class="order-info-label">🔖 Mã đơn</div>
-      <div class="order-info-value" id="confirmCode">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">👤 Tên khách hàng</div>
-      <div class="order-info-value" id="confirmName">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">📞 SĐT</div>
-      <div class="order-info-value">
-        <span class="blur-val">Sẽ hiển thị khi xác nhận</span>
-      </div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">📍 Địa chỉ</div>
-      <div class="order-info-value" id="confirmAddress">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">🛍 Sản phẩm</div>
-      <div class="order-info-value" id="confirmProduct">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">💰 Tổng tiền</div>
-      <div class="order-info-value" id="confirmTotal">—</div>
-    </div>
-    
-    <div class="order-modal-btns">
-      <button class="btn-modal-cancel" onclick="closeConfirmModal()">❌ Đóng</button>
-      <button class="btn-modal-confirm" onclick="acceptOrder()">🔽 Tải về</button>
-
-    </div>
-  </div>
-</div>
-
-<!-- ── Modal 2: Nhận đơn thành công ── -->
-<div class="success-modal-bg" id="orderSuccessBg">
-  <div class="success-modal">
-    <div class="success-banner">
-      <div class="success-banner-icon">🎉</div>
-      <div class="success-banner-title">Chúc mừng bạn đã nhận được đơn hàng!</div>
-      <div class="success-banner-sub">Hãy đóng hàng và gửi đi sớm nhé 🚀</div>
-      <div class="success-amount" id="successAmount">—</div>
-    </div>
-
-    <div style="font-size:12px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">
-      THÔNG TIN ĐƠN HÀNG
-    </div>
-
-    <div class="copy-row">
-      <div class="copy-label">🔖 Mã đơn hàng</div>
-      <div class="copy-value" id="successCode">—</div>
-      <button class="btn-copy" onclick="copyField('successCode', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">👤 Tên khách hàng</div>
-      <div class="copy-value" id="successName">—</div>
-      <button class="btn-copy" onclick="copyField('successName', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">📍 Địa chỉ</div>
-      <div class="copy-value" id="successAddress">—</div>
-      <button class="btn-copy" onclick="copyField('successAddress', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">🛍 Sản phẩm</div>
-      <div class="copy-value" id="successProduct">—</div>
-      <button class="btn-copy" onclick="copyField('successProduct', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">💰 Tổng tiền</div>
-      <div class="copy-value" id="successTotal">—</div>
-      <button class="btn-copy" onclick="copyField('successTotal', this)">📋 Copy</button>
-    </div>
-
-    <div style="font-size:11px;color:#9b8bb4;text-align:center;margin-top:14px">
-      Hãy sao chép thông tin rồi ấn đóng cửa sổ này bạn nhé 💜
-    </div>
-    <button class="btn-close-success" onclick="closeSuccessModal()">📦 Hoàn thành đơn hàng</button>
-  </div>
-</div>
-<!-- ── Panel Đơn đã lấy ── -->
-<div class="taken-panel" id="takenPanel">
-  <div class="taken-panel-header">
-    <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
-    </div>
-  </div>
-  <div class="taken-panel-body">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px 18px 4px;border-bottom:1px solid rgba(198,181,255,.15)">
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px">MÃ ĐƠN</div>
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:center">KEY LẤY ĐƠN</div>
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:right">THỜI GIAN</div>
-    </div>
-    <div id="takenList">
-      <div class="taken-empty">📭 Chưa có đơn nào được lấy</div>
-    </div>
-  </div>
-</div>
-
-<canvas id="fireworksCanvas"></canvas>
-<audio id="successSound" preload="auto">
-  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_8cb749c041.mp3" type="audio/mpeg">
-  <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
-</audio>
-
-<!-- Panel lịch sử -->
-<div class="history-panel" id="historyPanel">
-  <div class="history-header">
-    <div class="history-header-title">📋 Lịch sử</div>
-    <button
-      onclick="toggleHistoryPanel()"
-      style="
-        width:28px; height:28px; border-radius:50%;
-        border:none; background:rgba(198,181,255,.3);
-        color:#7c6fa0; font-size:14px; cursor:pointer;
-        display:flex; align-items:center; justify-content:center;
-      "
-    >✕</button>
-    
-  </div>
-  <div class="history-tabs">
-    <button class="history-tab active" id="htabPhone" onclick="switchHistoryTab('phone')">✨ PHONE</button>
-    <button class="history-tab" id="htabLogin" onclick="switchHistoryTab('login')">🔑 LOGIN</button>
-  </div>
-  <div class="history-stats">
-    <div>Tổng: <b id="hsTotalQueries">—</b></div>
-    <div>Keys: <b id="hsTotalKeys">—</b></div>
-  </div>
-  <div class="history-body" id="historyBody"></div>
-</div>
-<!-- ── MODAL HUỶ ĐƠN HÀNG ── -->
-<div id="cancelOrderBg" style="display:none; position:fixed; inset:0;
-     background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:#fff; border-radius:16px; padding:32px 28px; max-width:420px; width:92%;
-              box-shadow:0 8px 32px rgba(0,0,0,0.22); position:relative;">
-    <button onclick="closeCancelOrderModal()" style="position:absolute; top:12px; right:16px;
-            background:none; border:none; font-size:22px; cursor:pointer; color:#888;">✕</button>
-    <div style="font-size:28px; text-align:center; margin-bottom:8px;">🚫</div>
-    <h2 style="margin:0 0 6px; color:#c0392b; font-size:18px; text-align:center;">Huỷ đơn hàng</h2>
-    <p style="margin:0 0 20px; color:#888; font-size:12px; text-align:center;">
-      Nhập thông tin để xác nhận yêu cầu huỷ đơn.
-    </p>
-
-    <label style="font-size:12px; font-weight:700; color:#5b4b8a; letter-spacing:.4px;">MÃ ĐƠN HÀNG</label>
-    <input id="cancelModalOrderCode" type="text" placeholder="VD: R8547883114"
-      style="width:100%; box-sizing:border-box; margin:6px 0 14px; padding:10px 14px;
-             border:1.5px solid #ddd; border-radius:8px; font-size:13px; font-family:monospace;
-             outline:none; letter-spacing:1px;" />
-
-    <label style="font-size:12px; font-weight:700; color:#5b4b8a; letter-spacing:.4px;">CANCEL KEY</label>
-    <input id="cancelModalKey" type="text" placeholder="VD: CANCEL-KEY-****-****"
-      style="width:100%; box-sizing:border-box; margin:6px 0 4px; padding:10px 14px;
-             border:1.5px solid #ddd; border-radius:8px; font-size:13px; font-family:monospace;
-             outline:none; letter-spacing:1px;"
-      onkeydown="if(event.key==='Enter') submitCancelOrder()" />
-    <div id="cancelKeyStatus" style="font-size:11px; color:#9b8bb4; min-height:16px; margin-bottom:14px;"></div>
-
-    <div id="cancelResultMsg" style="font-size:13px; min-height:20px; margin-bottom:14px; text-align:center;"></div>
-
-    <button id="btnSubmitCancelOrder" onclick="submitCancelOrder()"
-      style="width:100%; padding:12px; background:linear-gradient(135deg,#e74c3c,#c0392b);
-             color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700;
-             cursor:pointer; transition:opacity .2s; box-shadow:0 3px 12px rgba(231,76,60,0.25);">
-      HUỶ
-    </button>
-  </div>
-</div>
-  <!-- Popup hiển thị curl kết quả -->
-<div id="curlResultBg" style="
-  display:none;position:fixed;inset:0;
-  background:rgba(15,23,42,.55);
-  z-index:9999;
-  align-items:center;
-  justify-content:center;
-" onclick="if(event.target===this) closeCurlModal()">
-  <div style="
-    background:linear-gradient(135deg,#e0f2ff 0%,#cbe7ff 40%,#e8f4ff 100%);
-    backdrop-filter:blur(28px) saturate(180%);
-    -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border-radius:24px;
-    padding:24px 22px;
-    max-width:680px;width:95%;
-    position:relative;font-family:inherit;
-    border:1.5px solid rgba(191,219,254,.9);
-  ">
-
-    <button onclick="closeCurlModal()" style="
-      position:absolute;top:12px;right:14px;
-      background:rgba(255,255,255,.9);
-      border:none;
-      border-radius:999px;
-      width:30px;height:30px;
-      font-size:16px;cursor:pointer;
-      color:#0f172a;
-      box-shadow:0 2px 6px rgba(15,23,42,.18);
-    ">✕</button>
-
-    <div style="
-      font-size:13px;font-weight:800;
-      color:#0f172a;
-      margin-bottom:4px;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    ">
-      ⚙️ Mã cUrl
-    </div>
-
-    <div id="curlResultOrderInfo" style="
-      font-size:11px;
-      color:#1d4ed8;
-      margin-bottom:14px;
-    "></div>
-
-    <div style="position:relative">
-      <pre id="curlResultText" style="
-        background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);
-        border:1px solid rgba(129,140,248,.5);
-        border-radius:14px;
-        padding:12px 12px 12px 12px;
-        font-size:11px;
-        color:#0f172a;
-        font-family:'SF Mono','JetBrains Mono','Courier New',monospace;
-        white-space:pre-wrap;
-        word-break:break-all;
-        max-height:420px;
-        overflow-y:auto;
-        line-height:1.7;
-        margin:0;
-      "></pre>
-
-      <button id="copyCurlBtn" onclick="copyCurlResult()" style="
-        position:absolute;top:10px;right:10px;
-        background:linear-gradient(135deg,#38bdf8,#60a5fa);
-        border:1px solid rgba(37,99,235,.85);
-        border-radius:999px;
-        padding:5px 14px;
-        font-size:11px;
-        font-weight:700;
-        color:#f9fafb;
-        cursor:pointer;
-        font-family:inherit;
-        box-shadow:0 4px 10px rgba(37,99,235,.35);
-      ">
-        📋 Sao chép
-      </button>
-    </div>
-</div>
-</div>
-<div id="addCartCurlResultBg" style="
-  display:none;position:fixed;inset:0;
-  background:rgba(15,23,42,.55);
-  z-index:9999;
-  align-items:center;
-  justify-content:center;
-" onclick="if(event.target===this) closeAddToCartCurlModal()">
-  <div style="
-    background:linear-gradient(135deg,#e0f2ff 0%,#cbe7ff 40%,#e8f4ff 100%);
-    backdrop-filter:blur(28px) saturate(180%);
-    -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border-radius:24px;
-    padding:24px 22px;
-    max-width:680px;width:95%;
-    position:relative;font-family:inherit;
-    border:1.5px solid rgba(191,219,254,.9);
-  ">
-    <button onclick="closeAddToCartCurlModal()" style="
-      position:absolute;top:12px;right:14px;
-      background:rgba(255,255,255,.9);
-      border:none;
-      border-radius:999px;
-      width:30px;height:30px;
-      font-size:16px;cursor:pointer;
-      color:#0f172a;
-      box-shadow:0 2px 6px rgba(15,23,42,.18);
-    ">✕</button>
-
-    <div style="
-      font-size:13px;font-weight:800;
-      color:#0f172a;
-      margin-bottom:4px;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    ">
-      🛒 Mã thêm giỏ hàng
-    </div>
-
-    <div id="addCartCurlResultInfo" style="
-      font-size:11px;
-      color:#1d4ed8;
-      margin-bottom:14px;
-    "></div>
-
-    <div style="position:relative">
-      <pre id="addCartCurlResultText" style="
-        background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);
-        border:1px solid rgba(129,140,248,.5);
-        border-radius:14px;
-        padding:12px 12px 12px 12px;
-        font-size:11px;
-        color:#0f172a;
-        font-family:'SF Mono','JetBrains Mono','Courier New',monospace;
-        white-space:pre-wrap;
-        word-break:break-all;
-        max-height:420px;
-        overflow-y:auto;
-        line-height:1.7;
-        margin:0;
-      "></pre>
-
-      <button id="copyAddCartCurlBtn" onclick="copyAddToCartCurlResult()" style="
-        position:absolute;top:10px;right:10px;
-        background:linear-gradient(135deg,#38bdf8,#60a5fa);
-        border:1px solid rgba(37,99,235,.85);
-        border-radius:999px;
-        padding:5px 14px;
-        font-size:11px;
-        font-weight:700;
-        color:#f9fafb;
-        cursor:pointer;
-        font-family:inherit;
-        box-shadow:0 4px 10px rgba(37,99,235,.35);
-      ">
-        📋 Sao chép
-      </button>
-    </div>
-  </div>
-</div>
-<script>
-let currentShop = '';
-let currentPage = 1;
-const limit = 200;
-let hanoiVisible = false;
-let currentSort = 'default';
-
-function changeSortOrder() {
-  currentSort = document.getElementById('sortSelect').value;
-  currentPage = 1;
-  loadOrders();
-
-  if (window.hanoiData)   renderHanoiTable(sortData(window.hanoiData));
-  if (window.mienBacData) renderMienBacTable(sortData(window.mienBacData));
-  if (window.nuocHoaData) renderNuocHoaTable(sortData(window.nuocHoaData));
+# ── Key management cho order-info ─────────────────────────
+VALID_KEYS = {
+    "ADMIN-UNLIMITED-HOANG": 0,
+    "PHONE-KEY-1472-3891": 0,
+    "PHONE-KEY-5830-2147": 0,
+    "PHONE-KEY-9214-6753": 0,
+    "PHONE-KEY-3768-4512": 0,
+    "PHONE-KEY-6091-8324": 0,
+    "PHONE-KEY-2845-7163": 0,
+    "PHONE-KEY-7539-1086": 0,
+    "PHONE-KEY-4127-9450": 0,
+    "PHONE-KEY-8963-2718": 0,
+    "PHONE-KEY-1604-5937": 0,
+    "PHONE-KEY-5281-3074": 0,
+    "PHONE-KEY-9746-6812": 0,
+    "PHONE-KEY-3019-8265": 0,
+    "PHONE-KEY-6453-1790": 0,
+    "PHONE-KEY-2897-4631": 0,
+    "PHONE-KEY-7162-9048": 0,
+    "PHONE-KEY-4385-2576": 0,
+    "PHONE-KEY-8720-5193": 0,
+    "PHONE-KEY-1938-7402": 0,
+    "PHONE-KEY-5674-3819": 0,
+    "PHONE-KEY-9051-6247": 0,
+    "PHONE-KEY-3492-8760": 0,
+    "PHONE-KEY-6815-1034": 0,
+    "PHONE-KEY-2370-9581": 0,
+    "PHONE-KEY-7643-4208": 0,
+    "PHONE-KEY-4056-7925": 0,
+    "PHONE-KEY-8219-3467": 0,
+    "PHONE-KEY-1587-6140": 0,
+    "PHONE-KEY-5904-2783": 0,
+    "PHONE-KEY-9368-5016": 0,
+    "PHONE-KEY-PHUONG2000": 0,
 }
-function sortData(arr) {
-  const s = document.getElementById('sortSelect').value;
-  const a = [...arr];
-  if (s === 'total_desc') return a.sort((x,y) => (parseFloat(y.total)||0) - (parseFloat(x.total)||0));
-  if (s === 'total_asc')  return a.sort((x,y) => (parseFloat(x.total)||0) - (parseFloat(y.total)||0));
-  if (s === 'date_desc')  return a.sort((x,y) => (y.order_date||'').localeCompare(x.order_date||''));
-  if (s === 'date_asc')   return a.sort((x,y) => (x.order_date||'').localeCompare(y.order_date||''));
-  return arr; 
+KEY_LIMIT = 10
+# Lưu lịch sử tra cứu: {key: [{"order_code": ..., "time": ...}]}
+KEY_HISTORY: dict = {k: [] for k in VALID_KEYS}
+# Lưu lịch sử đăng nhập: {key: [{"event": "login/logout", "time": ...}]}
+LOGIN_HISTORY: list = []  # [{key, event, time}]
+# Database setup
+Base.metadata.create_all(bind=engine)
+migrate()
+UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG", "PHONE-KEY-PHUONG2000"}
+# ── Key management cho Cancel Order ───────────────────────
+CANCEL_KEYS = {
+    "ADMIN-UNLIMITED-HOANG": 0,
+    "CANCEL-KEY-3821-7045": 0,
+    "CANCEL-KEY-6174-2938": 0,
+    "CANCEL-KEY-9502-5163": 0,
+    "CANCEL-KEY-1847-8320": 0,
+    "CANCEL-KEY-4293-6751": 0,
+    "CANCEL-KEY-7618-3094": 0,
+    "CANCEL-KEY-2056-9482": 0,
+    "CANCEL-KEY-5739-1867": 0,
+    "CANCEL-KEY-8401-4215": 0,
+    "CANCEL-KEY-3164-7590": 0,
+    "CANCEL-KEY-6827-2043": 0,
+    "CANCEL-KEY-9350-5718": 0,
+    "CANCEL-KEY-1493-8261": 0,
+    "CANCEL-KEY-4706-3947": 0,
+    "CANCEL-KEY-7082-6534": 0,
+    "CANCEL-KEY-2915-9170": 0,
+    "CANCEL-KEY-5348-1826": 0,
+    "CANCEL-KEY-8671-4302": 0,
+    "CANCEL-KEY-3209-7654": 0,
+    "CANCEL-KEY-6543-2187": 0,
+    "CANCEL-KEY-9876-5430": 0,
+    "CANCEL-KEY-1230-8976": 0,
+    "CANCEL-KEY-4567-3219": 0,
+    "CANCEL-KEY-7894-6542": 0,
+    "CANCEL-KEY-2341-9875": 0,
+    "CANCEL-KEY-5678-1234": 0,
+    "CANCEL-KEY-8912-4567": 0,
+    "CANCEL-KEY-3456-7891": 0,
+    "CANCEL-KEY-6789-2345": 0,
+    "CANCEL-KEY-9123-5678": 0,
+
 }
-
-async function init() {
-  try {
-    const [summaryData] = await Promise.all([loadSummary(), loadOrders()]);
-    if (summaryData && summaryData.shops) {
-      fetchAndUpdateShopNames(summaryData.shops);
-    }
-    loadHanoi();
-    loadNuocHoa();
-    loadChartData();
-    renderTakenList();
-    initHistoryBtn();
-    loadMienBac();
-  } catch(e) {
-    showLoading(false);
-    console.error('Init error:', e);
-  }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); loadMienBac(); }, 300_000);
+CANCEL_KEY_LIMIT = 10
+CANCEL_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"} 
+CANCEL_KEY_HISTORY: dict = {k: [] for k in CANCEL_KEYS}
+# ── GETORDER KEY ──
+GETORDER_KEYS = {
+    "GETORDER-KEY-1234-5678": 0,
+    "GETORDER-KEY-8765-4321": 0,
+    "GETORDER-KEY-1798-1820": 0,
+    "GETORDER-KEY-5307-5294": 0,
+    "GETORDER-KEY-6682-4366": 0,
+    "GETORDER-KEY-2422-1762": 0,
+    "GETORDER-KEY-9373-9617": 0,
+    "GETORDER-KEY-4393-7851": 0,
+    "GETORDER-KEY-2553-6631": 0,
+    "GETORDER-KEY-4570-1679": 0,
+    "GETORDER-KEY-7842-7049": 0,
+    "GETORDER-KEY-8631-3272": 0,
+    "GETORDER-KEY-3181-7097": 0,
+    "GETORDER-KEY-5801-6373": 0,
+    "GETORDER-KEY-3097-7233": 0,
+    "GETORDER-KEY-6608-3640": 0,
+    "GETORDER-KEY-7555-9096": 0,
+    "GETORDER-KEY-2161-1064": 0,
+    "GETORDER-KEY-6003-8995": 0,
+    "GETORDER-KEY-9679-7130": 0,
+    "GETORDER-KEY-4630-3698": 0,
+    "GETORDER-KEY-9001-8597": 0,
+    "ADMIN-UNLIMITED-HOANG":  0,
 }
+GETORDER_KEY_LIMIT      = 20
+GETORDER_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
+GETORDER_KEY_HISTORY    = {k: [] for k in GETORDER_KEYS}
 
-async function loadSummary() {
-  try {
-    const data = await fetch('/api/summary').then(r => r.json());
-    document.getElementById('totalOrders').textContent = data.total_orders.toLocaleString('vi');
-    document.getElementById('totalShops').textContent  = data.total_shops;
-    document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
+app = FastAPI(title="Chiaki Order Dashboard")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-    const latestSync = data.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
-    const tabs = document.getElementById('shopTabs');
-    while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
-
-    data.shops.forEach(s => {
-      const div = document.createElement('div');
-      div.className = 'tab' + (currentShop === s.shop_id ? ' active' : '');
-      div.dataset.id = s.shop_id;
-      div.onclick = () => selectShop(s.shop_id);
-      div.innerHTML = `${s.shop_name || s.shop_id} <span class="badge">${s.order_count}</span>`;
-      tabs.appendChild(div);
-    });
-
-    fetch('/api/summary')
-      .then(r => r.json())
-      .then(statsRes => {
-        const waitItem = statsRes.by_status?.find(s =>
-          s.status && s.status.toLowerCase().includes('wait'));
-      })
-      .catch(() => {})
-
-    return data;
-  } catch(e) {
-    console.error('Summary error:', e);
-  }
-}
-
-async function loadOrders() {
-  showLoading(true);
-  try {
-    let url = `api/orders?page=${currentPage}&limit=${limit}`;
-if (currentShop) url += `&shop_id=${currentShop}`;
-if (currentSort !== 'default') url += `&sort=${currentSort}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'X-User-ID': localStorage.getItem('chiaki_id') || ''
-      }
-    });
-    const data = await response.json();
-    showLoading(false);
-    if (data.data) {
-  window.allOrders = (window.allOrders || []);
-  // Gộp thêm trang mới vào (tránh mất dữ liệu trang trước)
-  const existingCodes = new Set(window.allOrders.map(o => o.order_code));
-  data.data.forEach(o => {
-    if (!existingCodes.has(o.order_code)) window.allOrders.push(o);
-  });
-}
-    if (data.error) {
-  document.getElementById('tableBody').innerHTML = `
-    <tr><td colspan="10" class="empty">
-      <div class="empty-icon">🔒</div><div>${data.error}</div>
-    </td></tr>`;
-  return;
-} else if (data.blocked) {
-  document.getElementById('tableBody').innerHTML = `
-    <tr><td colspan="10" class="empty">
-      <div class="empty-icon">⚠️</div>
-      <div>${data.message}</div>
-    </td></tr>`;
-  document.getElementById('tableCount').textContent = '0 đơn hàng';
-  document.getElementById('pagination').innerHTML = '';
-  return;
-}
-
-    document.getElementById('tableCount').textContent =
-      `${(data.total || 0).toLocaleString('vi')} đơn hàng`;
-
-    const tbody = document.getElementById('tableBody');
-    if (!data.data || data.data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" class="empty">
-        <div class="empty-icon">📭</div><div>Chưa có đơn hàng nào</div>
-      </td></tr>`;
-      document.getElementById('pagination').innerHTML = '';
-      return;
+# ── Helper functions ───────────────────────────────────────
+def serialize_order(o, mask=False):
+    """Serialize order với mask nếu cần"""
+    M = "••••••••"
+    return {
+        "order_code":    M if mask else o.order_code,
+        "order_date":    M if mask else o.order_date,
+        "shop_id":       o.shop_id,
+        "shop_name":     o.shop_name,  # ✅ luôn hiện tên shop
+        "buyer_name":    M if mask else o.buyer_name,
+        "customer_name": M if mask else o.customer_name,
+        "address":       M if mask else o.address,
+        "product":       M if mask else o.product,
+        "quantity":      M if mask else o.quantity,
+        "total":         None if mask else o.total,
+        "status":        M if mask else o.status,
+        "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+        "restricted":    mask,
     }
 
-    tbody.innerHTML = data.data.map(o => {
-      const M = v => `<span class="restricted-mask">${v || '••••••••'}</span>`;
-      const R = o.restricted;
-      return `
-        <tr>
-          <td><b style="font-family:monospace;font-size:11px">${R ? M('••••••••') : (o.order_code || '—')}</b></td>
-          <td style="font-size:11px;color:#9b8bb4">${R ? M() : (o.order_date || '—')}</td>
-          <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
-          <td>${R ? M() : (o.customer_name || o.buyer_name || '—')}</td>
-          <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.address || '—')}</td>
-          <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.product || '—')}</td>
-          <td style="text-align:center">${R ? M() : (o.quantity || '—')}</td>
-          <td><b>${R ? M() : (o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—')}</b></td>
-          <td>
-            ${R
-              ? `<span class="restricted-mask">••••••••</span>`
-              : (() => {
-                const payload = JSON.stringify(o)
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '&quot;');
-                return `<button class="btn-take-order" onclick="openTakeOrder('${payload}')">📦 GET</button>`;
-                })()
+# ── API Endpoints ──────────────────────────────────────────
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    with open("static/index.html", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/api/summary")
+def get_summary(db: Session = Depends(get_db)):
+    shops = db.query(ShopMeta).all()
+    total = db.query(Order).count()
+    return {
+        "total_orders": total,
+        "total_shops": len(shops),
+        "shops": [
+            {
+                "shop_id": s.shop_id,
+                "shop_name": s.shop_name,
+                "order_count": s.order_count,
+                "last_sync": s.last_sync.isoformat() if s.last_sync else None,
             }
-          </td>
-
-        </tr>`;
-    }).join('');
-
-    renderPagination(data.total);
-  } catch(e) {
-    showLoading(false);
-    console.error('loadOrders error:', e);
-  }
-}
-
-window.hanoiData = [];
-
-function renderHanoiTable(data) {
-  const count = data.length;
-  document.getElementById('hanoiStatCount').textContent = count.toLocaleString('vi');
-  document.getElementById('hanoiCount').textContent = `${count.toLocaleString('vi')} đơn hàng`;
-
-  const tbody = document.getElementById('tbodyHanoi');
-  if (!count) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty">
-      <div class="empty-icon">📭</div><div>Không có đơn nào tại Hà Nội</div>
-    </td></tr>`;
-    return;
-  }
-  tbody.innerHTML = data.map(o => `
-    <tr>
-      <td><b style="font-family:monospace;font-size:11px">${o.order_code || '—'}</b></td>
-      <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
-      <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
-      <td>${o.customer_name || o.buyer_name || '—'}</td>
-      <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
-      <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
-      <td style="text-align:center">${o.quantity || '—'}</td>
-      <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-      <td>
-        ${o.restricted
-          ? `<span class="restricted-mask">••••••••</span>`
-          : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>📦 GET</button>`}
-      </td>
-    </tr>
-  `).join('');
-}
-
-async function loadHanoi() {
-  try {
-    const res  = await fetch('/api/orders/hanoi');
-    const data = await res.json();
-    window.hanoiData = Array.isArray(data) ? data : [];
-    renderHanoiTable(sortData(window.hanoiData));
-  } catch(e) {
-    console.error('loadHanoi error:', e);
-  }
-}
-
-window.nuocHoaData = [];
-
-function renderNuocHoaTable(data) {
-  const count = data.length;
-  document.getElementById('nuocHoaStatCount').textContent = count.toLocaleString('vi');
-  document.getElementById('nuocHoaCount').textContent = `${count.toLocaleString('vi')} đơn hàng`;
-
-  const tbody = document.getElementById('tbodyNuocHoa');
-  if (!count) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty">
-      <div class="empty-icon">📭</div><div>Không có đơn nào Nước hoa</div>
-    </td></tr>`;
-    return;
-  }
-  tbody.innerHTML = data.map(o => `
-    <tr>
-      <td><b style="font-family:monospace;font-size:11px">${o.order_code || '—'}</b></td>
-      <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
-      <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
-      <td>${o.customer_name || o.buyer_name || '—'}</td>
-      <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
-      <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
-      <td style="text-align:center">${o.quantity || '—'}</td>
-      <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-      <td>
-        ${o.restricted
-          ? `<span class="restricted-mask">••••••••</span>`
-          : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`}
-      </td>
-    </tr>
-  `).join('');
-}
-
-let nuocHoaVisible = false;
-
-async function loadNuocHoa() {
-  try {
-    const res  = await fetch('/api/orders/nuochoa');
-    const data = await res.json();
-    window.nuocHoaData = Array.isArray(data) ? data : [];
-    renderNuocHoaTable(sortData(window.nuocHoaData));
-  } catch(e) {
-    console.error('loadNuocHoa error:', e);
-  }
-}
-
-function toggleNuocHoaPanel() {
-  nuocHoaVisible = !nuocHoaVisible;
-  const card         = document.getElementById('nuocHoaCard');
-  const panelNuocHoa = document.getElementById('panelNuocHoa');
-  const panelMain    = document.getElementById('panelMain');
-  const panelHanoi   = document.getElementById('panelHanoi');
-
-  if (nuocHoaVisible) {
- 
-    if (hanoiVisible) {
-      hanoiVisible = false;
-      document.getElementById('hanoiCard').classList.remove('active');
-      document.getElementById('hanoiCardSub').textContent = 'Click để xem danh sách';
-      panelHanoi.style.display = 'none';
-    }
-    card.classList.add('active');
-    document.getElementById('nuocHoaCardSub').textContent = 'Đang hiển thị · Click để ẩn';
-    panelNuocHoa.style.display = 'block';
-    panelMain.style.display    = 'none';
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.tab[data-id=""]').classList.add('active');
-  } else {
-    card.classList.remove('active');
-    document.getElementById('nuocHoaCardSub').textContent = 'Click để xem danh sách';
-    panelNuocHoa.style.display = 'none';
-    panelMain.style.display    = 'block';
-  }
-}
-
-function toggleHanoiPanel() {
-  hanoiVisible = !hanoiVisible;
-  const card = document.getElementById('hanoiCard');
-  const panelHanoi = document.getElementById('panelHanoi');
-  const panelMain  = document.getElementById('panelMain');
-
-  if (hanoiVisible) {
-    card.classList.add('active');
-    document.getElementById('hanoiCardSub').textContent = 'Đang hiển thị · Click để ẩn';
-    panelHanoi.style.display = 'block';
-    panelMain.style.display  = 'none';
-    // Reset shop tab active về Tất cả khi xem Hà Nội
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.tab[data-id=""]').classList.add('active');
-  } else {
-    card.classList.remove('active');
-    document.getElementById('hanoiCardSub').textContent = 'Click để xem danh sách';
-    panelHanoi.style.display = 'none';
-    panelMain.style.display  = 'block';
-  }
-}
-
-async function fetchAndUpdateShopNames(shops) {
-  for (const shop of shops) {
-    if (!shop.shop_url) continue;
-    if (!shop.shop_name.startsWith('http') && !shop.shop_name.startsWith('Shop #')) continue;
-    try {
-      const res  = await fetch(shop.shop_url, { cache: 'no-store' });
-      const html = await res.text();
-      const doc  = new DOMParser().parseFromString(html, 'text/html');
-      const el   = doc.querySelector('span.store-title');
-      if (!el) continue;
-      const name = el.textContent.trim();
-      if (!name) continue;
-      await fetch('/api/update-shopname', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop_id: shop.shop_id, shop_name: name })
-      });
-    } catch(e) {
-      console.warn(`[shopname] Lỗi ${shop.shop_id}:`, e);
-    }
-  }
-}
-
-function statusTag(s) {
-  if (!s || s === 'nan') return '—';
-  const sl = s.toLowerCase();
-  if (sl.includes('wait') || sl.includes('chờ'))
-    return `<span class="tag tag-wait">${s}</span>`;
-  if (sl.includes('done') || sl.includes('hoàn') || sl.includes('giao'))
-    return `<span class="tag tag-done">${s}</span>`;
-  if (sl.includes('cancel') || sl.includes('huỷ'))
-    return `<span class="tag tag-cancel">${s}</span>`;
-  return `<span class="tag" style="background:rgba(198,181,255,.3);color:#5b4b8a">${s}</span>`;
-}
-
-function renderPagination(total) {
-  const totalPages = Math.ceil(total / limit);
-  if (totalPages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
-  let html = '';
-  const start = Math.max(1, currentPage - 2);
-  const end   = Math.min(totalPages, currentPage + 2);
-  if (currentPage > 1)
-    html += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
-  if (start > 1)
-    html += `<button class="page-btn" onclick="goPage(1)">1</button><span class="page-info">...</span>`;
-  for (let i = start; i <= end; i++)
-    html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
-  if (end < totalPages)
-    html += `<span class="page-info">...</span><button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
-  if (currentPage < totalPages)
-    html += `<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
-  html += `<span class="page-info">${currentPage}/${totalPages}</span>`;
-  document.getElementById('pagination').innerHTML = html;
-}
-
-function goPage(p) { currentPage = p; loadOrders(); }
-
-const BLOCKED_SHOPS = new Set(['4647']);
-let unlockedShops      = new Set();
-let pendingShopId      = null;
-
-function isBlocked(shopId) {
-  return BLOCKED_SHOPS.has(String(shopId));
-}
-
-function showPassModal(shopId, shopName) {
-  pendingShopId = shopId;
-  document.getElementById('passModalTitle').textContent = `🔒 ${shopName || shopId}`;
-  document.getElementById('passInput').value = '';
-  document.getElementById('passError').classList.remove('show');
-  document.getElementById('passModalBg').classList.add('show');
-  setTimeout(() => document.getElementById('passInput').focus(), 100);
-}
-
-function cancelPass() {
-  document.getElementById('passModalBg').classList.remove('show');
-  document.querySelectorAll('.tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.id === currentShop));
-  pendingShopId = null;
-}
-
-function confirmPass() {
-  const val = document.getElementById('passInput').value.trim();
-  if (val !== '38241540') {
-    document.getElementById('passError').classList.add('show');
-    document.getElementById('passInput').value = '';
-    document.getElementById('passInput').focus();
-    return;
-  }
-  unlockedShops.add(pendingShopId);
-  document.getElementById('passModalBg').classList.remove('show');
-  const sid = pendingShopId;
-  pendingShopId = null;
-  currentShop = sid; currentPage = 1;
-  document.querySelectorAll('.tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.id === sid));
-  loadOrders();
-}  
-
-function toggleOrderInfoModal() {
-  const savedKey = localStorage.getItem('lastInfoKey');
-  if (savedKey && !document.getElementById('infoKey').value) {
-    document.getElementById('infoKey').value = savedKey;
-  }
-  setTimeout(() => document.getElementById('infoOrderCode').focus(), 100);
-}
-
-function closeOrderInfoModal() {
-  document.getElementById('orderInfoBg').classList.remove('show');
-  document.getElementById('infoResult').classList.remove('show');
-  document.getElementById('infoError').classList.remove('show');
-  document.getElementById('infoOrderCode').value = '';
-  document.getElementById('infoKeyStatus').textContent = '';
-  const pdfBtn = document.getElementById('btnExportPdf');
-  if (pdfBtn) pdfBtn.style.display = 'none';
-}
-
-async function fetchOrderInfo() {
-  const code = document.getElementById('infoOrderCode').value.trim();
-  const key  = document.getElementById('infoKey').value.trim();
-  const errEl    = document.getElementById('infoError');
-  const resultEl = document.getElementById('infoResult');
-  const btn      = document.getElementById('infoSearchBtn');
-
-  errEl.classList.remove('show');
-  resultEl.classList.remove('show');
-
-  if (!code) {
-    errEl.textContent = 'Vui lòng nhập mã đơn hàng.';
-    errEl.classList.add('show'); return;
-  }
-  if (!key) {
-    errEl.textContent = 'Vui lòng nhập key.';
-    errEl.classList.add('show'); return;
-  }
-  localStorage.setItem('lastInfoKey', key);
-  btn.disabled = true;
-  btn.textContent = 'Đang tra cứu...';
-
-  try {
-    const res = await fetch('/api/order-info', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_code: code, key })
-    });
-    const data = await res.json();
-
-    if (data.error) {
-      errEl.textContent = data.error;
-      errEl.classList.add('show'); return;
+            for s in shops
+        ]
     }
 
-const STATUS_MAP = {
-    'request_out':               { text: '✨ Đã nhận đơn hàng',      bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
-    'out_products_in_progress':  { text: '📦 Đã tạo MVĐ/Chờ lấy hàng', bg: 'rgba(253,186,116,.35)', color: '#c2410c' },
-    'delivering':                { text: '🚚 Đang giao hàng',           bg: 'rgba(147,197,253,.35)', color: '#1e40af' },
-    'done':                      { text: '🎉 Đã giao hàng',                bg: 'rgba(167,243,208,.4)',  color: '#065f46' },
-    'cancelled_wo_out_products': { text: '❌ Đã huỷ',                    bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
-    'cancelled':                 { text: '❌ Đã huỷ',                    bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
-    're_in':                     { text: '↩️ Giao thất bại/Hoàn hàng', bg: 'rgba(253,186,116,.35)', color: '#92400e' },
-    'request_in':                { text: '⏳ Chờ xác nhận',              bg: 'rgba(216,180,254,.3)',  color: '#5b4b8a' },
-}
+@app.get("/api/orders")
+def get_orders(
+    request: Request,
+    shop_id: str = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(200, le=200),
+    sort: str = Query("default"),
+    db: Session = Depends(get_db)
+):
+    user_id = request.headers.get('X-User-ID', '')
 
-const statusBanner = document.getElementById('irStatusBanner')
-if (statusBanner) {
-    const rawStatus = (data.status || '').trim()
-    const matched = STATUS_MAP[rawStatus] || { text: '🔵 ' + rawStatus, bg: 'rgba(198,181,255,.25)', color: '#5b4b8a' }
-    statusBanner.textContent = matched.text
-    statusBanner.style.background = matched.bg
-    statusBanner.style.color = matched.color
-    statusBanner.style.display = rawStatus ? 'block' : 'none'
-}
-
-const SHOP_ID_NAME = {
-    "2732": "Min Duty", "4299": "HADES Shop", "3522": "ShipnhanhStore",
-    "4337": "TH Cosmetic", "3684": "Hoya Life", "3540": "Rongcon",
-    "3783": "Đẹp & Khoẻ 365", "1489": "Beauty & Healthy", "4036": "Kitty House",
-    "635": "Trang Perfume", "1498": "Kho Dược TPCN", "5090": "Mason House Store",
-    "5091": "Gia Phương Shop", "4339": "PINASAGO Pin Sài Gòn", "4961": "Kalos Việt Nam",
-    "4872": "Green House", "4917": "Moss Skincare", "4647": "XXIV Store",
-    "4732": "Ken Perfume", "5112": "MoiThom - Mèo bán nước hoa", "2292": "Thế Giới Hàng Auth 88",
-    "4940": "Mint- Skin Beauty & Cosmetics", "5096": "The Senté Hill", "1164": "O2 PHARMACY",
-    "3612": "NGUYENKIM", "5092": "Thế Giới Son", "5125": "Felice Beauty Garden",
-    "1600": "ChoychoyStore", "2423": "Peony Cosmetics", "4965": "nhathuocsuckhoe2",
-    "4365": "Nana Beauty & More", "1729": "MHDMART", "4360": "SnapshopVN",
-    "5094": "Shop Snap TPHCM", "1602": "Winny Shop", "1105": "MjuMju",
-    "4294": "Life Healthy", "3009": "QuangNgoc1976", "1414": "Dược Phẩm Tâm An",
-    "2573": "MiMi Beauty", "2225": "T&T Japan shop", "3047": "GREENBOX",
-    "3864": "Hàng ngoại giá tốt", "3852": "Baby Grow Shop", "1273": "NHÀ THUỐC MINH TÂM",
-    "3300": "Mayya Hàng Nội Địa Nhật", "1258": "Shop Adam", "3337": "Shop Sài Gòn",
-    "4342": "Sản Phẩm Hỗ Trợ", "1015": "Green Healthy & Beauty",
-    "3218": "Bảo Lâm Anh", "2557": "XUAN MINH PHARMACY"
-}
-
-    document.getElementById('irCode').textContent     = data.order_code    || '—';
-    document.getElementById('irShop').textContent     = data.shop_name     || '—';
-    document.getElementById('irDate').textContent     = data.order_date    || '—';
-    document.getElementById('irName').textContent     = data.customer_name || '—';
-    document.getElementById('irCustomerId').textContent = data.customer_id || '—';
-    document.getElementById('irPhone').textContent    = data.phone         || '—';
-    document.getElementById('irEmail').textContent    = data.email         || '—';
-    document.getElementById('irAddress').textContent  = data.address       || '—';
-
-  const irProduct = document.getElementById('irProduct');
-  if (data.products && data.products.length > 0) {
-      irProduct.innerHTML = data.products.map((p, i) =>
-          `<div style="padding:5px 0;border-bottom:1px solid rgba(198,181,255,.15);line-height:1.6">
-              <span style="font-weight:700;color:#3b3551">${i+1}. ${p.name}</span>
-              ${p.shop_name ? `<span style="font-size:10px;background:rgba(167,139,250,.2);color:#5b4b8a;border-radius:10px;padding:1px 7px;margin-left:5px">${p.shop_name}</span>` : ''}
-              <br>
-              <span style="font-size:11px;color:#9b8bb4">
-                  ${p.code ? `Mã: <b style="font-family:monospace">${p.code}</b> &nbsp;` : ''}
-                  SL: <b>${p.quantity}</b>
-                  ${p.price ? ` &nbsp;Giá: <b>${Number(p.price).toLocaleString('vi-VN')}đ</b>` : ''}
-              </span>
-          </div>`
-      ).join('');
-  } else {
-      irProduct.textContent = data.product || '—';
-  }
-    document.getElementById('irQuantity').textContent = data.quantity      ?? '—';
-
-    const uhEl = document.getElementById('irUrlHistory');
-    if (uhEl) {
-        if (data.url_history && data.url_history.length > 0) {
-            const deduped = data.url_history.filter((item, i, arr) =>
-                i === 0 || item.url !== arr[i - 1].url
-            )
-            uhEl.innerHTML = deduped.map((item) => {
-                const url = item.url || '';
-                const time = item.time || '';
-                const storeId = (url.match(/store_id=(\d+)/) || [])[1] || '';
-                const storeName = storeId ? (SHOP_ID_NAME[storeId] || `Store #${storeId}`) : '';
-                const productId = (url.match(/product_id=(\d+)/) || [])[1] || '';
-                const productCode = (url.match(/product_code=([^&]+)/) || [])[1] || '';
-
-                let icon = '🔗', action = '', bg = 'rgba(255,255,255,.4)', border = 'rgba(198,181,255,.2)', color = '#4c3f72';
-
-                if (url.includes('add_to_cart')) {
-                    const isBuyNow = url.includes('is_buy_now=1');
-                    const qty = (url.match(/quantity=(\d+)/) || [])[1] || '1';
-                    if (isBuyNow) {
-                        icon = '📦';
-                        action = `<b style="color:#059669">ĐÃ ĐẶT HÀNG</b>`;
-                        if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
-                        if (storeName) action += ` tại <b>${storeName}</b>`;
-                        action += ` <span style="background:rgba(16,185,129,.15);color:#065f46;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700">SL: ${qty}</span>`;
-                        bg = 'rgba(167,243,208,.25)'; border = 'rgba(110,231,183,.4)';
-                    } else {
-                        icon = '➕';
-                        action = `Thêm giỏ hàng`;
-                        if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
-                        if (storeName) action += ` tại <b>${storeName}</b>`;
-                        action += ` <span style="background:rgba(198,181,255,.2);color:#5b4b8a;border-radius:6px;padding:1px 7px;font-size:10px">SL: ${qty}</span>`;
-                    }
-                } else if (url.includes('products_screen')) {
-                    const term = decodeURIComponent((url.match(/term=([^&]+)/) || [])[1] || '');
-                    icon = '🔍';
-                    action = `Tìm kiếm <b>"${term}"</b>`;
-                } else if (url.includes('change_quantity')) {
-                    const qty = (url.match(/quantity=(\d+)/) || [])[1] || '?'
-                    icon = '✏️'
-                    action = `Đổi số lượng → <b>${qty}</b>`
-                    if (productCode) action += ` — <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`
-                    if (storeName) action += ` tại <b>${storeName}</b>`
-
-                } else if (url.includes('detailproduct_screen')) {
-                    icon = '👁';
-                    action = `Xem sản phẩm`;
-                    if (productCode) action += ` <span style="font-family:monospace;color:#7c3aed">${productCode}</span>`;
-                    else if (productId) action += ` <span style="font-family:monospace;color:#9b8bb4">#${productId}</span>`;
-                    if (storeName) action += ` tại <b>${storeName}</b>`;
-                }
-
-                return `<div style="padding:5px 8px;border-radius:8px;margin-bottom:4px;border:1px solid ${border};background:${bg};display:flex;justify-content:space-between;align-items:center;gap:8px;color:${color}">
-                    <span style="font-size:12px">${icon} ${action}</span>
-                    <span style="color:#b0a0c8;font-size:10px;white-space:nowrap;flex-shrink:0">${time}</span>
-                </div>`;
-            }).join('');
-    } else {
-        const srcFrom = (data.source_from || '').toLowerCase()
-        let reason = ''
-
-        if (srcFrom.includes('facebook')) {
-            reason = '📘 Đơn từ <b>Facebook Ads</b>'
-        } else if (srcFrom.includes('google')) {
-            reason = '🔍 Đơn từ <b>Google Ads</b>'
-        } else if (srcFrom.includes('tiktok')) {
-            reason = '🎵 Đơn từ <b>TikTok Ads</b>'
-        } else if (srcFrom.includes('zalo')) {
-            reason = '💬 Đơn từ <b>Zalo</b>'
-        } else if (srcFrom) {
-            reason = `🔗 Đơn từ <b>${data.source_from}</b>`
-        } else {
-            reason = '📭 Không có dữ liệu hành trình'
+    if shop_id and shop_id in BLOCKED_SHOPS and user_id != 'Chang2000':
+        return {
+            "total": 0, "page": page, "data": [],
+            "blocked": True,
+            "message": "Shop này bị chặn trích xuất đơn hàng"
         }
 
-        uhEl.innerHTML = `<div style="padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.5);border:1px solid rgba(198,181,255,.2);font-size:12px;color:#7c6fa0">${reason}</div>`
+    q = db.query(Order)
+    if shop_id:
+        q = q.filter(Order.shop_id == shop_id)
+    total = q.count()
+
+    # Sắp xếp
+    if sort == "total_desc":
+        q = q.order_by(desc(Order.total))
+    elif sort == "total_asc":
+        q = q.order_by(Order.total)
+    elif sort == "date_desc":
+        q = q.order_by(desc(Order.order_date))
+    elif sort == "date_asc":
+        q = q.order_by(Order.order_date)
+    else:
+        q = q.order_by(desc(Order.fetched_at))
+
+    orders = q.offset((page - 1) * limit).limit(limit).all()
+
+    def serialize(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        M = "••••••••"
+        return {
+            "order_code":    M if mask else o.order_code,
+            "shop_name":     o.shop_name,
+            "shop_id":       o.shop_id,
+            "buyer_name":    M if mask else o.buyer_name,
+            "customer_name": M if mask else o.customer_name,
+            "address":       M if mask else o.address,
+            "product":       M if mask else o.product,
+            "quantity":      M if mask else o.quantity,
+            "total":         M if mask else o.total,
+            "status":        M if mask else o.status,
+            "order_date":    M if mask else o.order_date,
+            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
+            "restricted":    mask,
+        }
+
+    return {
+        "total": total,
+        "page": page,
+        "data": [serialize(o) for o in orders]
     }
-}
 
-    document.getElementById('irSource').textContent  = data.source        || '—';
-    document.getElementById('irPayment').textContent  = data.payment       || '—';
-    document.getElementById('irPrepaid').textContent  = data.prepaid_amount || '—';
-    document.getElementById('irDeliveryLocationId').textContent = data.delivery_location_id || '—';
-    document.getElementById('irDistrictDeliveryId').textContent = data.district_delivery_id || '—';
-    document.getElementById('irCommuneDeliveryId').textContent  = data.commune_delivery_id || '—';
-    document.getElementById('irShippingCode').textContent    = data.shipping_code         || '—';
-    document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✨ Đã giao thành công' : (data.delivery_status || '—');
-    document.getElementById('irShipperReceive').textContent  = data.shipper_receive_time  || '—';
+@app.post("/api/update-shopname")
+def update_shopname(body: dict, db: Session = Depends(get_db)):
+    shop_id = body.get("shop_id")
+    shop_name = body.get("shop_name")
+    if not shop_id or not shop_name:
+        return {"ok": False}
+    meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+    if meta:
+        meta.shop_name = shop_name
+        db.query(Order).filter(Order.shop_id == shop_id).update({"shop_name": shop_name})
+        db.commit()
+    return {"ok": True, "shop_id": shop_id, "shop_name": shop_name}
 
-    window.currentInfoData = {
-  shop_name:      data.shop_name      || '—',
-  shipping_code:  data.shipping_code  || '—',
-  order_code:     data.order_code     || '—',
-  customer_name:  data.customer_name  || '—',
-  address:        data.address        || '—',
-  product:        data.product        || '—',
-  order_date:     data.order_date     || '—',
-  prepaid_amount: data.prepaid_amount || '—'
-};
+@app.get("/api/orders/hanoi")
+async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
+    user_id = request.headers.get('X-User-ID', '')
+    keywords = ["hà nội", "ha noi", " hn", "hanoi", "Hà Nội"]
+    filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
+    orders = db.query(Order).filter(or_(*filters))\
+              .order_by(Order.order_date.desc()).all()
     
-    document.getElementById('infoKeyStatus').textContent =
-      data.remaining === -1 || data.remaining === null
-      ? '✅ Key không giới hạn lượt'
-      : `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
-    const pdfBtn = document.getElementById('btnExportPdf');
-    if (pdfBtn) pdfBtn.style.display = 'block';
-    resultEl.classList.add('show');
-  } catch(e) {
-    errEl.textContent = 'Lỗi kết nối: ' + e.message;
-    errEl.classList.add('show');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🔍 Tra cứu';
-  }
-}
-document.addEventListener('DOMContentLoaded', () => {
-  const keyInput = document.getElementById('infoKey');
-  if (!keyInput) return;
-  let keyTimer;
-  keyInput.addEventListener('input', () => {
-    clearTimeout(keyTimer);
-    const statusEl = document.getElementById('infoKeyStatus');
-    const val = keyInput.value.trim();
-    if (!val) { statusEl.textContent = ''; return; }
-    keyTimer = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/order-info/check-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: val })
-        });
-        const d = await res.json();
-        if (d.error) {
-          statusEl.textContent = '❌ ' + d.error;
-          statusEl.style.color = '#dc2626';
-        } else {
-          const unlimited = d.remaining === -1 || d.limit === -1;
-          statusEl.textContent = unlimited
-            ? '✅ Key không giới hạn lượt'
-            : `✅ Key hợp lệ — còn ${d.remaining}/${d.limit} lượt`;
-          statusEl.style.color = (unlimited || d.remaining > 0) ? '#059669' : '#dc2626';
-        }
-      } catch { statusEl.textContent = ''; }
-    }, 600);
-  });
-});
-
-function selectShop(id) {
-  if (hanoiVisible) {
-    hanoiVisible = false;
-    document.getElementById('hanoiCard').classList.remove('active');
-    document.getElementById('hanoiCardSub').textContent = 'Click để xem danh sách';
-    document.getElementById('panelHanoi').style.display = 'none';
-    document.getElementById('panelMain').style.display  = 'block';
-  }
-  if (nuocHoaVisible) {
-    nuocHoaVisible = false;
-    document.getElementById('nuocHoaCard').classList.remove('active');
-    document.getElementById('nuocHoaCardSub').textContent = 'Click để xem danh sách';
-    document.getElementById('panelNuocHoa').style.display = 'none';
-    document.getElementById('panelMain').style.display    = 'block';
-  }
-
-  if (isBlocked(id)) {
-
-    currentShop = id; currentPage = 1;
-    document.querySelectorAll('.tab').forEach(t =>
-      t.classList.toggle('active', t.dataset.id === id));
-    loadOrders();
-    return;
-  }
-
-  currentShop = id; currentPage = 1;
-  document.querySelectorAll('.tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.id === id));
-  loadOrders();
-  if (currentOrderTab === 'delivering') {
-  loadDeliveringOrders();
-} else {
-  loadOrders();
-}
-}
-function showBlockedNotice(shopId) {
-  const tab = document.querySelector(`.tab[data-id="${shopId}"]`);
-  const shopName = tab ? tab.textContent.trim().split(' ')[0] : shopId;
-  showToast(`⚠️ SHOP ${shopName} BỊ CHẶN TRÍCH XUẤT ĐƠN HÀNG\nHiện tại không thể tải danh sách đơn hàng này, vui lòng thử lại sau!`);
-
-  setTimeout(() => {
-    document.querySelectorAll('.tab').forEach(t =>
-      t.classList.toggle('active', t.dataset.id === ''));
-  }, 3000);
-}
-
-async function manualSync() {
-  const btn = document.getElementById('syncBtn');
-  btn.disabled = true; btn.textContent = '⏳ Đang sync...';
-  await fetch('/api/sync', { method: 'POST' });
-  showToast('🔄 Đang quét toàn bộ gian hàng. Dữ liệu sẽ cập nhật trong 1-2 phút!');
-  setTimeout(() => { loadSummary(); loadOrders(); loadHanoi(); }, 15_000);
-  setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 Sync ngay'; }, 20_000);
-}
-
-function showLoading(v) {
-  document.getElementById('loadingOverlay').classList.toggle('show', v);
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 4000);
-}
-
-const ID_KEY         = 'chiaki_id';
-const ID_EXP         = 'chiaki_id_exp';
-const ID_FIRST_ENTRY = 'chiaki_id_first';
-
-function maskId(id) {
-  return id.split('-').map(seg => seg.length <= 2 ? seg : seg.slice(0,-2)+'xx').join('-');
-}
-
-function isAdminId(id) {
-  return String(id || '').trim() === 'Chang2000';
-}
-
-function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
-  const showAdminPanels = isAdminId(id);
-  const curlPanel = document.getElementById('adminCurlPanel');
-  const syncPanel = document.getElementById('syncPanel');
-  const curlResultBg = document.getElementById('curlResultBg');
-
-  if (curlPanel) {
-    curlPanel.style.display = showAdminPanels ? 'block' : 'none';
-  }
-  if (syncPanel) {
-    syncPanel.style.display = showAdminPanels ? 'flex' : 'none';
-  }
-  if (!showAdminPanels && curlResultBg) {
-    curlResultBg.style.display = 'none';
-  }
-}
-
-function checkIdGate() {
-  const id     = localStorage.getItem(ID_KEY);
-  const expiry = localStorage.getItem(ID_EXP);
-  if (id && expiry && Date.now() < parseInt(expiry)) {
-    document.getElementById('idGate').style.display    = 'none';
-    document.getElementById('idDisplay').style.display = 'block';
-    document.querySelector('.download-panel').style.display = 'block';
-    document.getElementById('maskedId').textContent    = maskId(id);
-    updateAdminOnlyPanels(id);
-    startExpireCountdown();
-    return true;
-  }
-  localStorage.removeItem(ID_KEY);
-  localStorage.removeItem(ID_EXP);
-  document.getElementById('idGate').style.display = 'flex';
-  document.querySelector('.download-panel').style.display = 'none';
-  updateAdminOnlyPanels('');
-  return false;
-}
-
-function startExpireCountdown() {
-  if (window._countdownTimer) clearInterval(window._countdownTimer);
-  function update() {
-    const expiry    = parseInt(localStorage.getItem(ID_EXP) || '0');
-    const remaining = expiry - Date.now();
-    const el = document.getElementById('expireCountdown');
-    if (!el) return;
-    if (remaining <= 0) {
-      el.textContent = 'Đã hết hạn';
-      el.style.color = '#dc2626';
-      clearInterval(window._countdownTimer);
-      setTimeout(() => {
-        localStorage.removeItem(ID_KEY);
-        localStorage.removeItem(ID_EXP);
-        location.reload();
-      }, 3000);
-      return;
-    }
-    const h = Math.floor(remaining / 3600000);
-    const m = Math.floor((remaining % 3600000) / 60000);
-    const s = Math.floor((remaining % 60000) / 1000);
-    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    el.style.color = remaining < 3600000 ? '#f59e0b' : '#6b21a8';
-  }
-  update();
-  window._countdownTimer = setInterval(update, 1000);
-}
-
-async function submitId() {
-  const input = document.getElementById('idInput');
-  const id = input.value.trim();
-  if (!id) { showIdError('Vui lòng nhập ID truy cập'); return; }
-
-  let firstEntry = parseInt(localStorage.getItem(ID_FIRST_ENTRY) || '0');
-  if (!firstEntry) {
-    firstEntry = Date.now();
-    localStorage.setItem(ID_FIRST_ENTRY, String(firstEntry));
-  }
-
-  try {
-    const res = await fetch('/api/auth/verify-id', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, firstEntry })
-    });
-    const data = await res.json();
-
-    if (data.error) {
-      showIdError(data.error);
-      input.value = '';
-      localStorage.removeItem(ID_KEY);
-      localStorage.removeItem(ID_EXP);
-      localStorage.removeItem(ID_FIRST_ENTRY);
-      return;
-    }
-
-    localStorage.setItem(ID_KEY, id);
-    localStorage.setItem(ID_EXP, String(data.expMs));
-    document.getElementById('idGate').style.display    = 'none';
-    document.getElementById('idDisplay').style.display = 'block';
-    document.getElementById('maskedId').textContent    = maskId(id);
-    updateAdminOnlyPanels(id);
-    startExpireCountdown();
-    init();
-
-    fetch('/api/auth/login-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: id, event: 'login' })
-    });
-
-  } catch(e) {
-    showIdError('Lỗi kết nối: ' + e.message);
-  }
-}
-
-function showIdError(msg) {
-  const err = document.getElementById('idError');
-  err.textContent = msg;
-  err.classList.add('show');
-}
-
-function changeId() {
-  if (!confirm('Bạn có chắc muốn đổi ID? Thời gian còn lại sẽ được tính theo lần nhập đầu tiên.')) return;
-
-  const oldId = localStorage.getItem('chiaki_id') || '';
-  if (oldId) {
-    fetch('/api/auth/login-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: oldId, event: 'logout' })
-    });
-  }
-
-  localStorage.removeItem(ID_KEY);
-  localStorage.removeItem(ID_EXP);
-  location.reload();
-}
-
-let mainChart = null;
-let chartMode = 'date';
-let chartRawData = null;
-
-const CHART_COLORS = [
-  '#BAD6FD','#F5BAD5','#F7E594','#570301','#BAD6FD',
-  '#F5BAD5','#F7E594','#BAD6FD','#F7E594','#F5BAD5'
-];
-
-async function loadChartData() {
-  try {
-    const data = await fetch('/api/chart-data').then(r => r.json());
-    chartRawData = data;
-    renderChart(chartMode);
-  } catch(e) { console.error('chart error:', e); }
-}
-
-function switchChart(mode) {
-  chartMode = mode;
-  document.getElementById('chartTabDate').classList.toggle('active', mode === 'date');
-  document.getElementById('chartTabShop').classList.toggle('active', mode === 'shop');
-  if (chartRawData) renderChart(mode);
-}
-
-function renderChart(mode) {
-  const ctx = document.getElementById('mainChart').getContext('2d');
-  if (mainChart) { mainChart.destroy(); mainChart = null; }
-
-  if (mode === 'date') {
-    const raw    = (chartRawData.by_date || []).slice(-10);
-    const labels = raw.map(d => {
-      const p = d.date ? d.date.split(/[-\/]/) : [];
-      return p.length >= 3 ? `${p[2]}/${p[1]}` : d.date;
-    });
-    const values = raw.map(d => d.count);
-
-    mainChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Số đơn',
-          data: values,
-          backgroundColor: 'rgba(167,139,250,.45)',
-          borderColor: '#a78bfa',
-          borderWidth: 2,
-          borderRadius: 8,
-          borderSkipped: false,
-          hoverBackgroundColor: 'rgba(167,139,250,.7)',
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(255,255,255,.9)',
-            titleColor: '#3b3551', bodyColor: '#7c6fa0',
-            borderColor: 'rgba(198,181,255,.5)', borderWidth: 1,
-            padding: 10, cornerRadius: 10,
-            callbacks: { label: ctx => ` ${ctx.parsed.y} đơn hàng` }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: '#9b8bb4', font: { size: 10 }, maxRotation: 45 }
-          },
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(198,181,255,.15)' },
-            ticks: { color: '#9b8bb4', font: { size: 10 }, precision: 0 }
-          }
-        }
-      }
-    });
-
-  } else {
- 
-    const raw    = (chartRawData.by_shop || []).slice(0, 55);
-    const labels = raw.map(d => d.shop || 'Unknown');
-    const values = raw.map(d => d.count);
-
-    mainChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{
-          data: values,
-          backgroundColor: CHART_COLORS.map(c => c + 'bb'),
-          borderColor: CHART_COLORS,
-          borderWidth: 2,
-          hoverOffset: 8,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              color: '#4c3f72', font: { size: 11 },
-              padding: 14, boxWidth: 12, boxHeight: 12,
-              usePointStyle: true, pointStyle: 'circle', pointStyleWidth: 10,
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(255,255,255,.9)',
-            titleColor: '#3b3551', bodyColor: '#7c6fa0',
-            borderColor: 'rgba(198,181,255,.5)', borderWidth: 1,
-            padding: 10, cornerRadius: 10,
-            callbacks: {
-              label: ctx => {
-                const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
-                const pct   = ((ctx.parsed / total) * 100).toFixed(1);
-                return ` ${ctx.parsed} đơn (${pct}%)`;
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-}
-
-let pendingOrder = null;
-
-function openTakeOrder(raw) {
-  try {
-    const o = (typeof raw === 'string')
-      ? JSON.parse(raw.replace(/&#39;/g, "'"))
-      : raw;
-
-    window.pendingOrder = o;
-
-    document.getElementById('confirmCode').textContent =
-      o.order_code || o.ordercode || '—';
-    document.getElementById('confirmName').textContent =
-      o.customer_name || o.buyer_name || '—';
-    document.getElementById('confirmAddress').textContent =
-      o.address || '—';
-    document.getElementById('confirmProduct').textContent =
-      o.product || '—';
-    document.getElementById('confirmTotal').textContent =
-      o.total ? Number(o.total).toLocaleString('vi') : '—';
-
-    document.getElementById('orderConfirmBg').classList.add('show');
-  } catch (e) {
-    console.error('openTakeOrder lỗi:', e, raw);
-  }
-}
-
-function closeConfirmModal() {
-  document.getElementById('orderConfirmBg').classList.remove('show');
-  pendingOrder = null;
-}
-
-function acceptOrder() {
-  if (!window.pendingOrder) return;
-
-  const o = window.pendingOrder;
-  window.pendingOrder = null;
-
-  document.getElementById('orderConfirmBg').classList.remove('show');
-
-  try {
-    launchFireworks(7000);
-  } catch (e) {}
-
-  const code = o.order_code || o.ordercode || '';
-  if (!code) {
-    console.warn('Không có mã đơn để export', o);
-    return;
-  }
-
-
-  (async () => {
-    try {
-      const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
-      if (!res.ok) {
-        console.warn('export-order HTTP', res.status);
-        return;
-      }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url;
-      a.download = `don-hang-${code}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.warn('Tải Excel lỗi:', e);
-    }
-  })();
-}
-
-function closeSuccessModal() {
-  document.getElementById('orderSuccessBg').classList.remove('show');
-}
-
-function copyField(elementId, btn) {
-  const text = document.getElementById(elementId).textContent.trim();
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✅ Đã copy';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '📋 Copy';
-      btn.classList.remove('copied');
-    }, 2000);
-  }).catch(() => {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    btn.textContent = '✅ Đã copy';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '📋 Copy';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
-}
-
-const TAKEN_KEY = 'chiaki_taken_orders';
-
-function getTakenOrders() {
-  try {
-    return JSON.parse(localStorage.getItem(TAKEN_KEY) || '[]');
-  } catch { return []; }
-}
-
-function saveTakenOrder(orderCode) {
-  const list    = getTakenOrders();
-  const keyId   = localStorage.getItem('chiaki_id') || 'Unknown';
-  // Lấy label từ VALID_IDS nếu có
-  const keyInfo = VALID_IDS[keyId];
-  const keyLabel = keyInfo ? keyInfo.label : maskId(keyId);
-
-  list.unshift({
-    order_code: orderCode,
-    key_label:  keyLabel,
-    taken_at:   new Date().toISOString(),
-  });
-
-  localStorage.setItem(TAKEN_KEY, JSON.stringify(list.slice(0, 200)));
-  renderTakenList();
-}
-
-function renderTakenList() {
-  const list  = getTakenOrders();
-  const badge = document.getElementById('takenBadge');
-  const count = document.getElementById('takenPanelCount');
-  const el    = document.getElementById('takenList');
-
-  if (badge) badge.textContent = list.length;
-  if (count) count.textContent = list.length + ' đơn';
-  if (!el) return;
-
-  if (!list.length) {
-    el.innerHTML = `<div class="taken-empty">Chưa có đơn nào được lấy</div>`;
-    return;
-  }
-  const currentId = localStorage.getItem('chiaki_id');
-  const canDelete = currentId === 'Chang2000';
-  el.innerHTML = list.map((item, idx) => {
-    const d   = new Date(item.takenat);
-    const fmt = d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    return `<div class="taken-item">
-      <div class="taken-code">${item.ordercode}</div>
-      <div><span class="taken-key">${item.keylabel}</span></div>
-      <div class="taken-time">${fmt}${canDelete ? ` <button class="btn-clear-taken" style="margin-left:6px" onclick="deleteTakenOrder(${idx})">Xoá</button>` : ''}</div>
-    </div>`;
-  }).join('');
-}
-
-function toggleTakenPanel() {
-  const panel = document.getElementById('takenPanel');
-  panel.classList.toggle('show');
-  // Đóng khi click ngoài
-  if (panel.classList.contains('show')) {
-    setTimeout(() => {
-      document.addEventListener('click', closeTakenOnOutside, { once: true });
-    }, 10);
-  }
-}
-
-function closeTakenOnOutside(e) {
-  const panel = document.getElementById('takenPanel');
-  const btn   = document.getElementById('takenBtn');
-  if (!panel.contains(e.target) && !btn.contains(e.target)) {
-    panel.classList.remove('show');
-  }
-}
-
-function clearTakenOrders() {
-  const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') {
-    alert('Bạn không có quyền xoá lịch sử đơn đã lấy.');
-    return;
-  }
-  if (!confirm('Xoá toàn bộ lịch sử lấy đơn?')) return;
-  localStorage.removeItem(TAKEN_KEY);
-  renderTakenList();
-}
-function deleteTakenOrder(index) {
-  const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') {
-    alert('Bạn không có quyền xoá đơn đã lấy.');
-    return;
-  }
-  const list = getTakenOrders();
-  if (index < 0 || index >= list.length) return;
-  list.splice(index, 1);
-  localStorage.setItem(TAKEN_KEY, JSON.stringify(list));
-  renderTakenList();
-}
-
-(function(){
-  const canvas  = document.getElementById('fireworksCanvas');
-  const ctx     = canvas.getContext('2d');
-  let particles = [];
-  let rafId     = null;
-  let stopAt    = 0;
-
-  const COLORS = [
-    '#a78bfa','#f9a8d4','#6ee7b7','#fcd34d',
-    '#93c5fd','#fda4af','#c4b5fd','#86efac',
-    '#fff','#fde68a','#f0abfc'
-  ];
-
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  function rand(min, max) { return Math.random() * (max - min) + min; }
-
-  function burst(x, y) {
-    const count = Math.floor(rand(80, 120));
-    for (let i = 0; i < count; i++) {
-      const angle  = rand(0, Math.PI * 2);
-      const speed  = rand(2, 9);
-      const color  = COLORS[Math.floor(rand(0, COLORS.length))];
-      const size   = rand(3, 7);
-      particles.push({
-        x, y,
-        vx:    Math.cos(angle) * speed,
-        vy:    Math.sin(angle) * speed,
-        alpha: 1,
-        color,
-        size,
-        decay: rand(0.012, 0.022),
-        gravity: rand(0.08, 0.18),
-        shape: Math.random() > 0.5 ? 'circle' : 'star',
-      });
-    }
-  }
-
-  function drawStar(cx, cy, r, color, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle   = color;
-    ctx.beginPath();
-    for (let i = 0; i < 5; i++) {
-      const a  = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-      const ia = a + (2 * Math.PI) / 5;
-      i === 0
-        ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
-        : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
-      ctx.lineTo(cx + (r/2) * Math.cos(ia), cy + (r/2) * Math.sin(ia));
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x     += p.vx;
-      p.y     += p.vy;
-      p.vy    += p.gravity;
-      p.vx    *= 0.98;
-      p.alpha -= p.decay;
-      if (p.shape === 'star') {
-        drawStar(p.x, p.y, p.size, p.color, Math.max(p.alpha, 0));
-      } else {
-        ctx.save();
-        ctx.globalAlpha = Math.max(p.alpha, 0);
-        ctx.fillStyle   = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    });
-    particles = particles.filter(p => p.alpha > 0);
-    if (Date.now() < stopAt) {
+    def serialize_with_user(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        return serialize_order(o, mask=mask)
     
-      if (Math.random() < 0.15) {
-        burst(rand(canvas.width * .15, canvas.width * .85),
-              rand(canvas.height * .1, canvas.height * .55));
-      }
-    }
-    if (particles.length > 0 || Date.now() < stopAt) {
-      rafId = requestAnimationFrame(loop);
-    } else {
-      canvas.style.display = 'none';
-      particles = [];
-    }
-  }
+    return [serialize_with_user(o) for o in orders]
 
-  window.launchFireworks = function(durationMs = 3000) {
-    resize();
-    canvas.style.display = 'block';
-    stopAt    = Date.now() + durationMs;
-    particles = [];
 
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    burst(cx, cy * 0.5);
-    burst(cx * 0.4, cy * 0.6);
-    burst(cx * 1.6, cy * 0.6);
-    burst(cx * 0.7, cy * 0.9);
-    burst(cx * 1.3, cy * 0.9);
+@app.get("/api/orders/nuochoa")
+async def get_nuochoa_orders(db: Session = Depends(get_db)):
+    keywords = ["nước hoa", "nuoc hoa", "nươc hoa", "nước  hoa"]
+    filters = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
+    orders = db.query(Order).filter(or_(*filters))\
+              .order_by(Order.order_date.desc()).all()
+    def serialize_with_user(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        return serialize_order(o, mask=mask)
+    
+    return [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
 
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(loop);
-  };
-
-  window.addEventListener('resize', resize);
-  resize();
-})();
-let soundEnabled = false;
-
-function enableSound() {
-  const audio = document.getElementById('successSound');
-  if (!audio) return;
-  audio.play().then(() => {
-    audio.pause();
-    audio.currentTime = 0;
-    soundEnabled = true;
-    const btn = document.getElementById('soundBtn');
-    if (btn) {
-      btn.textContent = '🔊 Âm thanh đã bật';
-      btn.disabled = true;
-      btn.style.opacity = '0.7';
-    }
-    showToast('Âm thanh chúc mừng đã được bật 🎵');
-  }).catch(() => {
-    showToast('Trình duyệt đang chặn âm thanh, thử lại sau.');
-  });
-}
-
-function initHistoryBtn() {
-  const uid = localStorage.getItem('chiaki_id');
-  const panel    = document.getElementById('historyPanel');
-  const toggleBtn = document.getElementById('historyToggleBtn');
-
-  if (uid === 'Chang2000') {
-    if (toggleBtn) {
-      toggleBtn.classList.add('visible'); // nút tròn hiện
+@app.get("/api/chart-data")
+def get_chart_data(db: Session = Depends(get_db)):
+    date_col = func.substr(Order.order_date, 1, 10)
+    by_date = (
+        db.query(date_col, func.count(Order.id))
+        .filter(Order.order_date != None, Order.order_date != '')
+        .group_by(date_col)
+        .order_by(date_col)
+        .all()
+    )
+    by_shop = (
+        db.query(Order.shop_name, func.count(Order.id))
+        .filter(Order.shop_name != None, Order.shop_name != '')
+        .group_by(Order.shop_name)
+        .order_by(func.count(Order.id).desc())
+        .all()
+    )
+    return {
+        "by_date": [{"date": d, "count": c} for d, c in by_date if d],
+        "by_shop": [{"shop": s, "count": c} for s, c in by_shop if s],
     }
 
-    setTimeout(() => loadHistoryPanel(), 200);
-  } else {
-    if (panel) panel.classList.remove('open');
-    if (toggleBtn) toggleBtn.classList.remove('visible');
-  }
+@app.post("/api/order-info")
+async def get_order_info(body: dict, db: Session = Depends(get_db)):
+    order_code = body.get("order_code", "").strip()
+    key        = body.get("key", "").strip()
+
+    if not order_code or not key:
+        return JSONResponse({"error": "Thiếu mã đơn hàng hoặc key."}, status_code=400)
+
+    if key not in VALID_KEYS:
+        return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
+
+    if key not in UNLIMITED_KEYS and VALID_KEYS[key] >= KEY_LIMIT:
+        return JSONResponse({"error": f"Key đã hết lượt sử dụng ({KEY_LIMIT}/{KEY_LIMIT})."}, status_code=403)
+
+    if len(order_code) < 9:
+        return JSONResponse({"error": "Mã đơn hàng không hợp lệ."}, status_code=400)
+
+    VALID_KEYS[key] += 1
+    remaining = -1 if key in UNLIMITED_KEYS else KEY_LIMIT - VALID_KEYS[key]
+
+    from datetime import timezone as _tz
+    now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%d/%m/%Y %H:%M")
+    if key not in KEY_HISTORY:
+        KEY_HISTORY[key] = []
+    KEY_HISTORY[key].append({"order_code": order_code, "time": now_vn})
+
+    input_id = order_code[2:9]
+    
+    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
+    session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
+    
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(url, headers={
+                "Accept": "application/json, text/plain, */*",
+                "platform": "ios",
+                "Cookie": f"laravel_session={session}",
+                "User-Agent": "chiakiApp/3.6.2"
+            })
+        data = res.json()
+
+        d = data.get("result") or data.get("data") or {}
+        if isinstance(d, list):
+            d = d[0] if d else {}
+        print(f"[debug] store_code in d = {d.get('store_code')}")
+        print(f"[debug] SHOP_NAME_MAP.get = '{SHOP_NAME_MAP.get('STD14EBRRV')}'")
+        print(f"[debug] SHOP_NAME_MAP keys = {list(SHOP_NAME_MAP.keys())[:5]}")
+        def g(*keys):
+            for k in keys:
+                v = d.get(k)
+                if v: return str(v)
+            return "—"
+
+        phone = next((x for x in d.get("search", "").split() if x.isdigit() and len(x) >= 9), "—")
+
+        payment_type   = d.get("payment_type", "")
+        prepaid_amount = d.get("prepaid_amount")
+        is_approved    = d.get("is_approved_prepaid", "0")
+        prepaid_time   = d.get("prepaid_time")
+
+        if payment_type in ("home", "cod"):
+            payment_status = "💵 COD — Thu tiền khi nhận hàng"
+        elif payment_type in ("atm", "online", "bank") and is_approved == "1":
+            payment_status = f"✅ Đã thanh toán online ({payment_type.upper()})"
+            if prepaid_time:
+                payment_status += f" lúc {prepaid_time}"
+        elif payment_type in ("atm", "online", "bank") and is_approved != "1":
+            payment_status = f"⏳ Chờ xác nhận thanh toán ({payment_type.upper()})"
+        else:
+            payment_status = f"— ({payment_type or 'Không rõ'})"
+        db_order = db.query(Order).filter(
+        Order.order_code.like(f"%_{order_code}")
+            ).first()
+        db_product   = db_order.product   if db_order else "—"
+        shop_id_from_api = g("store_code", "creator_name")
+        db_shop_name = (
+            SHOP_NAME_MAP.get(shop_id_from_api)
+            or (db_order.shop_name if db_order else None)
+            or shop_id_from_api
+        )
+        db_total     = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
+        url_history_parsed = []
+        try:
+            meta_raw = d.get("meta_data", "{}")
+            meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else (meta_raw or {})
+            uh = meta.get("url_history", {})
+            if isinstance(uh, dict):
+                url_history_parsed = [v for _, v in sorted(uh.items(), key=lambda x: int(x[0]))]
+            elif isinstance(uh, list):
+                url_history_parsed = uh
+        except Exception:
+            meta = {}
+            url_history_parsed = []
+        source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
+        return {
+    "order_code":           g("code"),
+    "status":               g("status"),
+    "shop_name":            db_shop_name,
+    "order_date":           g("verified_time", "create_time"),
+    "customer_name":        g("related_user_name", "receiver_name"),
+    "customer_id":          meta.get("customer_id") or d.get("related_user_id"),
+    "phone":                phone,
+    "email":                g("email_id"),
+    "address":              g("delivery_address"),
+    "source":               g("source", "from"),
+    "source_from":          source_from,
+    "payment":              payment_status,
+    "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
+    "shipping_code":        g("shipping_code"),
+    "delivery_status":      g("delivery_status"),
+    "delivery_location_id": g("delivery_location_id"),
+    "district_delivery_id": g("district_delivery_id"),
+    "commune_delivery_id":  g("commune_delivery_id"),
+    "shipper_receive_time": g("shipper_receive_time"),
+    "product":              db_product,          # ← thêm mới
+    "quantity":             d.get("quantity") or (db_order.quantity if db_order else None),
+    "url_history":          url_history_parsed,
+    "remaining":            remaining,
 }
+    except Exception as e:
+        VALID_KEYS[key] -= 1
+        return JSONResponse({"error": f"Lỗi khi gọi API: {str(e)}"}, status_code=500)
 
-let historyPanelOpen = false;
-
-function toggleHistoryPanel() {
-  historyPanelOpen = !historyPanelOpen;
-  document.getElementById('historyPanel').classList.toggle('open', historyPanelOpen);
-  if (historyPanelOpen) loadHistoryPanel();
+@app.post("/api/order-info/check-key")
+async def check_key(body: dict):
+    key = body.get("key", "").strip()
+    if key not in VALID_KEYS:
+        return JSONResponse({"error": "Key không hợp lệ."}, status_code=403)
+    used = VALID_KEYS[key]
+    is_unlimited = key in UNLIMITED_KEYS
+    return {
+        "used": used,
+        "remaining": -1 if is_unlimited else KEY_LIMIT - used,
+        "limit": -1 if is_unlimited else KEY_LIMIT,
+        "unlimited": is_unlimited
 }
+@app.get("/api/order-info/history")
+async def get_key_history(request: Request):
+    user_id = request.headers.get('X-User-ID', '')
+    if user_id != 'Chang2000':
+        return JSONResponse({"error": "Không có quyền."}, status_code=403)
 
-let currentHistoryTab = 'phone';
+    result = []
+    for key, logs in KEY_HISTORY.items():
+        if logs:
+            result.append({
+                "key":     key,
+                "used":    VALID_KEYS.get(key, 0),
+                "limit":   KEY_LIMIT,
+                "history": logs
+            })
+    return {"data": result, "total_queries": sum(len(v) for v in KEY_HISTORY.values())}
+@app.post("/api/auth/login-log")
+async def login_log(body: dict, request: Request):
+    key    = body.get("key", "").strip()
+    event  = body.get("event", "login")  # "login" hoặc "logout"
+    
+    from datetime import timezone as _tz
+    now_vn = datetime.now(_tz(timedelta(hours=7))).strftime("%H:%M:%S ngày %d/%m/%Y")
+    
+    LOGIN_HISTORY.append({
+        "key":   key,
+        "event": event,
+        "time":  now_vn,
+    })
+    return {"ok": True}
 
-function switchHistoryTab(tab) {
-  currentHistoryTab = tab;
-  document.getElementById('htabPhone').classList.toggle('active', tab === 'phone');
-  document.getElementById('htabLogin').classList.toggle('active', tab === 'login');
-  loadHistoryPanel();
-}
+@app.get("/api/auth/login-history")
+async def get_login_history(request: Request):
+    user_id = request.headers.get('X-User-ID', '')
+    if user_id != 'Chang2000':
+        return JSONResponse({"error": "Không có quyền."}, status_code=403)
+    return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
+@app.get("/api/export-order/{order_code}")
+async def export_order(order_code: str, request: Request, db: Session = Depends(get_db)):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
 
-async function loadHistoryPanel() {
-  const body = document.getElementById('historyBody');
-  body.innerHTML = '<div class="history-empty">Đang tải...</div>';
-  const uid = localStorage.getItem('chiaki_id') || '';
+    # Tìm đơn trong DB — dùng SQLAlchemy như các endpoint khác
+    order = db.query(Order).filter(Order.order_code == order_code).first()
 
-  if (currentHistoryTab === 'phone') {
+    if not order:
+        return JSONResponse({"error": "Không tìm thấy đơn hàng"}, status_code=404)
 
-    try {
-      const res = await fetch('/api/order-info/history', {
-        headers: { 'X-User-ID': uid }
-      });
-      const data = await res.json();
-      if (data.error) { body.innerHTML = `<div class="history-empty">⛔ ${data.error}</div>`; return; }
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Đơn hàng"
 
-      document.getElementById('hsTotalQueries').textContent = data.total_queries;
-      document.getElementById('hsTotalKeys').textContent    = data.data.length;
+    headers = [
+        ("Mã đơn",        order.order_code or ""),
+        ("Ngày tạo",      order.order_date or ""),
+        ("Gian hàng",     order.shop_name or ""),
+        ("Tên khách",     order.customer_name or order.buyer_name or ""),
+        ("Số điện thoại", order.phone or ""),
+        ("Địa chỉ",       order.address or ""),
+        ("Sản phẩm",      order.product or ""),
+        ("Số lượng",      order.quantity or ""),
+        ("Tổng tiền",     order.total or ""),
+        ("Trạng thái",    order.status or ""),
+    ]
 
-      if (!data.data.length) { body.innerHTML = '<div class="history-empty">Chưa có tra cứu nào</div>'; return; }
+    for i, (label, value) in enumerate(headers, start=1):
+        c_label = ws.cell(row=i, column=1, value=label)
+        c_label.font = Font(bold=True, color="5B4B8A", size=11)
+        c_label.fill = PatternFill("solid", fgColor="EDE8FF")
+        c_label.alignment = Alignment(horizontal="left", vertical="center")
 
-      body.innerHTML = data.data.map(k => {
-        const codes = k.history.slice().reverse().map(h => `
-          <div style="display:flex;justify-content:space-between;align-items:center;
-            padding:5px 0;border-bottom:1px solid rgba(198,181,255,.15);font-size:12px;">
-            <span style="font-family:monospace;font-weight:700;color:#3b3551;">📦 ${h.order_code}</span>
-            <span style="font-size:10px;color:#b0a0c8;">${h.time}</span>
-          </div>`).join('');
-        return `
-          <div style="background:rgba(255,255,255,.5);border:1px solid rgba(198,181,255,.25);
-            border-radius:12px;padding:12px 14px;margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-              <div style="font-family:monospace;font-size:11px;font-weight:700;color:#5b4b8a;
-                background:rgba(216,180,254,.25);padding:3px 10px;border-radius:20px;
-                border:1px solid rgba(198,181,255,.4);max-width:190px;
-                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🔑 ${k.key}</div>
-              <div style="font-size:11px;font-weight:700;color:${k.used>=k.limit?'#dc2626':'#059669'}">
-                ${k.used}/${k.limit} lượt</div>
-            </div>
-            <div style="font-size:11px;font-weight:700;color:#9b8bb4;margin-bottom:6px;">
-              ĐƠN ĐÃ TRA CỨU (${k.history.length})</div>
-            ${codes || '<div style="font-size:11px;color:#c4b5d4;">Chưa tra cứu</div>'}
-          </div>`;
-      }).join('');
-    } catch(e) {
-      body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
+        c_val = ws.cell(row=i, column=2, value=str(value) if value else "")
+        c_val.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws.column_dimensions["A"].width = 22
+    ws.column_dimensions["B"].width = 48
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    filename = f"don-hang-{order_code}.xlsx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+    )
+
+@app.post("/api/auth/verify-id")
+async def verify_id(body: dict):
+    VALID_IDS = {
+        "LOGIN-KEY-PHUONG2000": {"hours": 1,           "label": "Phương"},
+        "LOGIN-KEY-CHANGTESTUSER":    {"hours": 9999999999,   "label": "Hoàng"},
+        "Chang2000":    {"hours": 9999999999,   "label": "Hoàng"},
+    }
+    user_id = body.get("id", "").strip()
+    info = VALID_IDS.get(user_id)
+    if not info:
+        return JSONResponse({"error": "ID không hợp lệ."}, status_code=403)
+    
+    import time
+    first_entry = body.get("firstEntry")  # ms từ frontend
+    if not first_entry:
+        first_entry = int(time.time() * 1000)
+    
+    exp_ms = first_entry + info["hours"] * 3600000
+    if int(time.time() * 1000) > exp_ms:
+        return JSONResponse({"error": "ID đã hết hạn."}, status_code=403)
+    
+    return {"ok": True, "label": info["label"], "expMs": exp_ms, "firstEntry": first_entry}
+@app.get("/api/orders/mien-bac")
+async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "")
+    keywords = [
+        "hải phòng", "hai phong",
+        "bắc giang", "bac giang", "bắc kạn", "bac kan",
+        "cao bằng", "cao bang", "hà giang", "ha giang",
+        "lạng sơn", "lang son", "phú thọ", "phu tho",
+        "quảng ninh", "quang ninh", "thái nguyên", "thai nguyen",
+        "tuyên quang", "tuyen quang", "điện biên", "dien bien",
+        "hòa bình", "hoa binh", "lai châu", "lai chau",
+        "lào cai", "lao cai", "sơn la", "son la",
+        "yên bái", "yen bai", "bắc ninh", "bac ninh",
+        "hà nam", "ha nam", "hải dương", "hai duong",
+        "hưng yên", "hung yen", "nam định", "nam dinh",
+        "ninh bình", "ninh binh", "thái bình", "thai binh",
+        "vĩnh phúc", "vinh phuc"
+    ]
+    filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
+    orders = db.query(Order).filter(or_(*filters)).order_by(Order.order_date.desc()).all()
+    def serialize_with_user(o):
+        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        return serialize_order(o, mask=mask)
+    return [serialize_with_user(o) for o in orders]
+
+@app.get("/api/shops-list")
+def get_shops_list():
+    shops = get_shops_map()
+    result = []
+    for shop_id, (shop_url, shop_name) in shops.items():
+        result.append({
+            "shop_id": shop_id,
+            "shop_name": shop_name,
+            "shop_url": shop_url
+        })
+    return sorted(result, key=lambda x: x["shop_name"])
+
+@app.get("/api/sync-config")
+def get_sync_config():
+    return {
+        "seller_id": SELLER_ID,
+        "seller_token": SELLER_TOKEN,
     }
 
-  } else {
-
-    try {
-      const res = await fetch('/api/auth/login-history', {
-        headers: { 'X-User-ID': uid }
-      });
-      const data = await res.json();
-      if (data.error) { body.innerHTML = `<div class="history-empty">⛔ ${data.error}</div>`; return; }
-
-      document.getElementById('hsTotalQueries').textContent = data.total;
-      document.getElementById('hsTotalKeys').textContent    = [...new Set(data.data.map(d=>d.key))].length;
-
-      if (!data.data.length) { body.innerHTML = '<div class="history-empty">Chưa có đăng nhập nào</div>'; return; }
-
-      body.innerHTML = [...data.data].reverse().map(d => `
-        <div class="login-item ${d.event === 'login' ? 'login-ev' : 'logout-ev'}">
-          <div>
-            <div class="login-key">👤 ${d.key}</div>
-            <div class="login-time">${d.time}</div>
-          </div>
-          <span class="login-badge ${d.event === 'login' ? 'in' : 'out'}">
-            ${d.event === 'login' ? '🟢 Login' : '🔴 Logout'}
-          </span>
-        </div>`).join('');
-    } catch(e) {
-      body.innerHTML = `<div class="history-empty">Lỗi: ${e.message}</div>`;
-    }
-  }
-}
-function searchOrder() {
-  const raw   = document.getElementById('dlOrderCode').value.trim();
-  const msgEl = document.getElementById('dlMsg');
-
-  if (!raw) return;
-
-  msgEl.className  = 'download-msg';
-  msgEl.style.display = 'block';
-
-  if (!window.allOrders || window.allOrders.length === 0) {
-    msgEl.textContent = '⚠️ Dữ liệu chưa tải xong, vui lòng thử lại.';
-    msgEl.classList.add('err');
-    return;
-  }
-
-  const found = window.allOrders.find(o => {
-    const full = o.order_code || '';
-    const afterUnderscore = full.includes('_') ? full.split('_').slice(1).join('_') : full;
-    return afterUnderscore.toLowerCase() === raw.toLowerCase()
-        || full.toLowerCase() === raw.toLowerCase();
-  });
-
-  if (!found) {
-    msgEl.textContent = '📦 Đơn hàng đã được gian hàng gửi đi';
-    msgEl.classList.add('err');
-    return;
-  }
-
-  msgEl.style.display = 'none';
-  openTakeOrder(found);
-}
-
-
-// ── Tab Chờ lấy hàng / Đang giao ──────────────────────────
-let currentOrderTab = 'waiting';
-
-function switchOrderTab(tab) {
-  currentOrderTab = tab;
-  const btnW = document.getElementById('tabWaiting');
-  const btnD = document.getElementById('tabDelivering');
- 
-  const activeStyle = 'padding:7px 20px;border-radius:20px;border:1px solid transparent;cursor:pointer;background:linear-gradient(135deg,#d8b4fe,#a78bfa);color:#fff;font-weight:700;font-size:12px;font-family:inherit;box-shadow:0 3px 12px rgba(167,139,250,.35);';
-  const inactiveStyle = 'padding:7px 20px;border-radius:20px;border:1px solid rgba(198,181,255,.4);cursor:pointer;background:rgba(255,255,255,.4);color:#7c6fa0;font-weight:700;font-size:12px;font-family:inherit;';
-
-  btnW.style.cssText = tab === 'waiting'    ? activeStyle : inactiveStyle;
-  btnD.style.cssText = tab === 'delivering' ? activeStyle : inactiveStyle;
-  
-  if (tab === 'waiting') {
-    currentPage = 1;
-    loadOrders();
-  } else if (tab === 'delivering') {
-    loadDeliveringOrders();
-  } 
-}
-
-let mienBacVisible = false;
-
-window.mienBacData = [];
-
-function renderMienBacTable(data) {
-  const count = data.length;
-  document.getElementById('mienBacStatCount').textContent = count.toLocaleString('vi');
-  document.getElementById('mienBacCount').textContent = `${count.toLocaleString('vi')} đơn hàng`;
-
-  const tbody = document.getElementById('tbodyMienBac');
-  if (!count) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty"><div class="empty-icon">📭</div><div>Không có đơn nào tại Miền Bắc</div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = data.map(o => `<tr>
-    <td><b style="font-family:monospace;font-size:11px">${o.order_code || '—'}</b></td>
-    <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
-    <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
-    <td>${o.customer_name || o.buyer_name || '—'}</td>
-    <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.address || '—'}</td>
-    <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
-    <td style="text-align:center">${o.quantity || '—'}</td>
-    <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-    <td>
-      ${o.restricted
-        ? `<span class="restricted-mask">••••••••</span>`
-        : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`}
-    </td>
-  </tr>`).join('');
-}
-
-async function loadMienBac() {
-  try {
-    const res = await fetch('/api/orders/mien-bac', {
-      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
-    });
-    const data = await res.json();
-    window.mienBacData = Array.isArray(data) ? data : [];
-    renderMienBacTable(sortData(window.mienBacData));
-  } catch(e) { console.error('loadMienBac error', e); }
-}
-
-function toggleMienBacPanel() {
-  mienBacVisible = !mienBacVisible;
-  const card = document.getElementById('mienBacCard');
-  const panel = document.getElementById('panelMienBac');
-  const panelMain = document.getElementById('panelMain');
-
-  if (hanoiVisible) {
-    hanoiVisible = false;
-    document.getElementById('hanoiCard').classList.remove('active');
-    document.getElementById('hanoiCardSub').textContent = 'Click xem danh sách';
-    document.getElementById('panelHanoi').style.display = 'none';
-  }
-  if (nuocHoaVisible) {
-    nuocHoaVisible = false;
-    document.getElementById('nuocHoaCard').classList.remove('active');
-    document.getElementById('nuocHoaCardSub').textContent = 'Click xem danh sách';
-    document.getElementById('panelNuocHoa').style.display = 'none';
-  }
-
-  if (mienBacVisible) {
-    card.classList.add('active');
-    document.getElementById('mienBacCardSub').textContent = 'Đang hiển thị · Click để ẩn';
-    panel.style.display = 'block';
-    panelMain.style.display = 'none';
-  } else {
-    card.classList.remove('active');
-    document.getElementById('mienBacCardSub').textContent = 'Click xem danh sách';
-    panel.style.display = 'none';
-    panelMain.style.display = 'block';
-  }
-}
-
-async function doSync() {
-  const shopId      = document.getElementById('syncShopId').value.trim();
-  const cfChlTk     = document.getElementById('syncCfChlTk').value.trim();
-  const cfClearance = document.getElementById('syncCfClearance').value.trim();
-  const btn         = document.getElementById('btnSync');
-  const msg         = document.getElementById('syncMsg');
-
-  msg.className = 'sync-msg';
-  msg.style.display = 'none';
-
-  if (!shopId) {
-    msg.textContent = 'Vui lòng chọn gian hàng.';
-    msg.className = 'sync-msg err'; return;
-  }
-  if (!cfChlTk || !cfClearance) {
-    msg.textContent = 'Vui lòng điền đủ __cf_chl_tk và cf_clearance.';
-    msg.className = 'sync-msg err'; return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang sync...';
-
-  try {
-    const res = await fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ shop_id: shopId, cf_chl_tk: cfChlTk, cf_clearance: cfClearance })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      msg.textContent = `✅ ${data.shop_name}: đã sync ${data.synced} đơn`;
-      msg.className = 'sync-msg ok';
-      // Reload bảng đơn hàng
-      currentPage = 1;
-      await loadOrders();
-      await loadSummary();
-    } else {
-      msg.textContent = `❌ ${data.error || 'Lỗi không xác định'}`;
-      msg.className = 'sync-msg err';
-    }
-  } catch (e) {
-    msg.textContent = `❌ Lỗi kết nối: ${e.message}`;
-    msg.className = 'sync-msg err';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🔄 SYNC NOW';
-  }
-}
-
-function updateChiakiLink() {
-  const select = document.getElementById('syncShopId');
-  if (select && !select.value && syncShops.length) {
-    select.value = syncShops[0].id;
-  }
-}
-let syncFile = null;
-function handleSyncDrop(event) {
-  event.preventDefault();
-  document.getElementById('syncDropzone').classList.remove('dragover');
-  const file = event.dataTransfer.files[0];
-  if (file) handleSyncFile(file);
-}
-  
-function handleSyncFile(file) {
-  if (!file) return;
-  syncFile = file;
-  document.getElementById('syncFileName').textContent = `📄 ${file.name}`;
-  document.getElementById('btnSync').disabled = false;
-}
- 
-async function doSyncUpload() {
-  const shopId = document.getElementById('syncShopId').value.trim();
-  const btn    = document.getElementById('btnSync');
-  const msg    = document.getElementById('syncMsg');
-
-  msg.className = 'sync-msg';
-
-  if (!shopId) {
-    msg.textContent = 'Vui lòng chọn gian hàng.';
-    msg.className = 'sync-msg err'; return;
-  }
-  if (!syncFile) {
-    msg.textContent = 'Vui lòng chọn file Excel.';
-    msg.className = 'sync-msg err'; return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang upload & parse...';
-
-  const formData = new FormData();
-  formData.append('shop_id', shopId);
-  formData.append('file', syncFile);
-
-  try {
-    const res = await fetch('/api/sync-upload', { method: 'POST', body: formData });
-    const data = await res.json();
-    if (data.ok) {
-      msg.textContent = `✅ ${data.shop_name}: sync ${data.synced} đơn thành công`;
-      msg.className = 'sync-msg ok';
-      // Reset file
-      syncFile = null;
-      document.getElementById('syncFileName').textContent = '';
-      document.getElementById('syncFileInput').value = '';
-      btn.disabled = true;
-      // Reload bảng
-      currentPage = 1;
-      await loadOrders();
-      await loadSummary();
-    } else {
-      msg.textContent = `❌ ${data.error || 'Lỗi không xác định'}`;
-      msg.className = 'sync-msg err';
-    }
-  } catch (e) {
-    msg.textContent = `❌ Lỗi kết nối: ${e.message}`;
-    msg.className = 'sync-msg err';
-  } finally {
-    btn.disabled = !syncFile;
-    btn.textContent = '🔄 SYNC NOW';
-  }
-}
-
-let syncShops = [];
-let syncConfig = { sellerId: '', sellerToken: '' };
-let comboFileMap = {}; // index → File
-let syncDownloadTimer = null;
-let syncDownloadRunning = false;
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function populateSyncShopSelect() {
-  const select = document.getElementById('syncShopId');
-  if (!select) return;
-
-  const selected = select.value;
-  const options = syncShops.map(shop =>
-    `<option value="${escapeHtml(shop.id)}">${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}</option>`
-  ).join('');
-
-  select.innerHTML = `<option value="">Mời chọn</option>${options}`;
-  if (syncShops.some(shop => shop.id === selected)) {
-    select.value = selected;
-  }
-  updateChiakiLink();
-}
-
-function getSellerQuery() {
-  const params = new URLSearchParams();
-  if (syncConfig.sellerId) params.set('Seller_id', syncConfig.sellerId);
-  if (syncConfig.sellerToken) params.set('Seller_token', syncConfig.sellerToken);
-  return params.toString();
-}
-
-function setSyncMessage(message, type = '') {
-  const msg = document.getElementById('syncMsg');
-  if (!msg) return;
-  msg.textContent = message;
-  msg.className = type ? `sync-msg ${type}` : 'sync-msg';
-}
-
-function finishDownloadAllShops(message, type = 'ok') {
-  const btn = document.getElementById('chiakiLink');
-  syncDownloadRunning = false;
-  if (syncDownloadTimer) {
-    clearTimeout(syncDownloadTimer);
-    syncDownloadTimer = null;
-  }
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '🔗 Tải toàn bộ shop';
-  }
-  setSyncMessage(message, type);
-}
-
-function downloadAllShopFiles() {
-  const btn = document.getElementById('chiakiLink');
-  if (syncDownloadRunning) return;
-
-  if (!syncShops.length) {
-    setSyncMessage('Chưa tải được danh sách shop để mở file.', 'err');
-    return;
-  }
-  if (!syncConfig.sellerId || !syncConfig.sellerToken) {
-    setSyncMessage('Thiếu cấu hình seller từ backend, chưa thể tạo link tải.', 'err');
-    return;
-  }
-
-  syncDownloadRunning = true;
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Đang mở tab tải...';
-  }
-
-  const queue = syncShops.map(shop => ({
-    id: shop.id,
-    name: shop.name,
-    url: buildChiakiUrl(shop.id, 'receive_wating').replace('page_size=200', 'page_size=500')
-  }));
-  const popupTabs = [];
-
-  for (let i = 0; i < queue.length; i++) {
-    const popup = window.open('', '_blank');
-    if (!popup) {
-      popupTabs.forEach(tab => { try { tab.close(); } catch {} });
-      finishDownloadAllShops(
-        `Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`,
-        'err'
-      );
-      return;
-    }
-    popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
-    popupTabs.push(popup);
-  }
-
-  let index = 0;
-  const openNext = () => {
-    const shop = queue[index];
-    const popup = popupTabs[index];
-    if (!popup || popup.closed) {
-      finishDownloadAllShops(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
-      return;
-    }
-    popup.location.href = shop.url;
-
-    index += 1;
-    if (index >= queue.length) {
-      finishDownloadAllShops(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
-      return;
-    }
-
-    if (btn) {
-      btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
-    }
-    setSyncMessage(
-      `Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`,
-      'ok'
-    );
-    syncDownloadTimer = setTimeout(openNext, 10000);
-  };
-
-  setSyncMessage(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
-  openNext();
-}
-
-async function loadSyncShops() {
-  try {
-    const [shopsRes, configRes] = await Promise.allSettled([
-      fetch('/api/shops-list', { cache: 'no-store' }),
-      fetch('/api/sync-config', { cache: 'no-store' })
-    ]);
-
-    const shopsData = shopsRes.status === 'fulfilled'
-      ? await shopsRes.value.json()
-      : [];
-    const configData = configRes.status === 'fulfilled'
-      ? await configRes.value.json()
-      : {};
-
-    const shopsPayload = Array.isArray(shopsData)
-      ? shopsData
-      : Array.isArray(shopsData?.shops)
-        ? shopsData.shops
-        : [];
-
-    syncConfig = {
-      sellerId: String(configData?.seller_id || shopsData?.seller_id || '').trim(),
-      sellerToken: String(configData?.seller_token || shopsData?.seller_token || '').trim()
-    };
-    syncShops = shopsPayload.map(shop => ({
-          id: String(shop.shop_id || '').trim(),
-          name: String(shop.shop_name || shop.shop_id || '').trim()
-        })).filter(shop => shop.id);
-
-    populateSyncShopSelect();
-    initComboRows();
-  } catch (e) {
-    console.error('loadSyncShops error', e);
-    syncConfig = { sellerId: '', sellerToken: '' };
-    syncShops = [];
-    populateSyncShopSelect();
-
-    const container = document.getElementById('comboRows');
-    if (container) {
-      container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
-    }
-  }
-}
-
-function buildChiakiUrl(shopId, mode) {
-  const status = mode === 'delivering' ? 'delivering' : 'receive_wating';
-  const today = new Date(), since = new Date(today);
-  since.setDate(since.getDate() - 14);
-  const fmt = d =>
-    `${String(d.getDate()).padStart(2,'0')}%2F` +
-    `${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  const sellerQuery = getSellerQuery();
-  return `https://api.chiaki.vn/api/${shopId}/export-excel-order` +
-    `?source=seller&page_index=1&page_size=200&status=${status}` +
-    `&range_date=${fmt(since)}+-+${fmt(today)}` +
-    `&date_type=created_at&order=create-desc` +
-    (sellerQuery ? `&${sellerQuery}` : '');
-}
-function initComboRows() {
-  const container = document.getElementById('comboRows');
-  if (!container) return;
-  if (!syncShops.length) {
-    container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không có shop để hiển thị.</div>';
-    return;
-  }
-
-  container.innerHTML = syncShops.map((shop, i) => `
-    <div class="combo-row">
-      <div class="combo-shop-label" title="${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}">
-        <span class="combo-shop-id">${escapeHtml(shop.id)}</span>
-        <span class="combo-shop-name">${escapeHtml(shop.name)}</span>
-      </div>
-      <div class="combo-drop-cell"
-           id="comboUploadBtn_${i}"
-           onclick="document.getElementById('comboInput_${i}').click()"
-           ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dragover')"
-           ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
-           ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dragover'); handleComboFile(${i}, event.dataTransfer.files[0])">
-        📎 Upload
-      </div>
-      <input type="file" id="comboInput_${i}" accept=".xlsx,.xls"
-             style="display:none"
-             onchange="handleComboFile(${i}, this.files[0])"/>
-    </div>
-  `).join('');
-}
-  
-function handleComboFile(index, file) {
-  if (!file) return;
-  comboFileMap[index] = file;
-  const btn = document.getElementById(`comboUploadBtn_${index}`);
-  // Hiện tên file ngắn gọn tối đa 12 ký tự
-  const shortName = file.name.length > 14 ? file.name.slice(0,12) + '…' : file.name;
-  btn.textContent = `✅ ${shortName}`;
-  btn.classList.add('has-file');
-}
-
-async function doComboSync() {
-  const btn  = document.getElementById('btnComboSync');
-  const msg  = document.getElementById('comboMsg');
-
-  const rows = [];
-  for (let i = 0; i < syncShops.length; i++) {
-    const shopId = syncShops[i]?.id;
-    const file   = comboFileMap[i];
-    if (shopId && file) rows.push({ shopId, file });
-  }
-
-  if (!rows.length) {
-    msg.textContent = 'Vui lòng upload file cho ít nhất 1 shop.';
-    msg.className = 'sync-msg err';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = `⏳ Đang sync 0/${rows.length}...`;
-  msg.className = 'sync-msg';
-
-  const results = [];
-  for (let i = 0; i < rows.length; i++) {
-    const { shopId, file } = rows[i];
-    btn.textContent = `⏳ Đang sync ${i+1}/${rows.length}...`;
-
-    const formData = new FormData();
-    formData.append('shop_id', shopId);
-    formData.append('file', file);
-
-    try {
-      const res  = await fetch('/api/sync-upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.ok) {
-        results.push(`✅ ${data.shop_name}: ${data.synced} đơn`);
-      } else {
-        results.push(`❌ Shop ${shopId}: ${data.error}`);
-      }
-    } catch (e) {
-      results.push(`❌ Shop ${shopId}: lỗi kết nối`);
-    }
-  }
-
-  msg.innerHTML = results.join('<br>');
-  msg.className = 'sync-msg ok';
-  btn.disabled = false;
-
-  comboFileMap = {};
-  for (let i = 0; i < syncShops.length; i++) {
-    const uploadBtn = document.getElementById(`comboUploadBtn_${i}`);
-    if (uploadBtn) {
-      uploadBtn.textContent = '📎 Upload';
-      uploadBtn.classList.remove('has-file');
-    }
-    const input = document.getElementById(`comboInput_${i}`);
-    if (input) input.value = '';
-  }
-
-  currentPage = 1;
-  await loadOrders();
-  await loadSummary();
-}
-async function fetchSideOrderInfo() {
-  const code = document.getElementById('sideInfoOrderCode').value.trim();
-  const key  = document.getElementById('sideInfoKey').value.trim();
-  const errEl = document.getElementById('sideInfoError');
-  const resultEl = document.getElementById('sideInfoResult');
-  const btn = document.getElementById('btnSideInfo');
-
-  errEl.style.display = 'none';
-  resultEl.style.display = 'none';
-
-  if (!code) { errEl.textContent = 'Vui lòng nhập mã đơn hàng.'; errEl.style.display = 'block'; return; }
-  if (!key)  { errEl.textContent = 'Vui lòng nhập key tra cứu.'; errEl.style.display = 'block'; return; }
-
-  localStorage.setItem('lastInfoKey', key);
-
-  const modalKey = document.getElementById('infoKey');
-  if (modalKey && !modalKey.value) modalKey.value = key;
-
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Đang tra cứu...';
-
-  try {
-    const res  = await fetch('/api/order-info', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ordercode: code, key })
-    });
-    const data = await res.json();
-
-    if (data.error) {
-      errEl.textContent = data.error;
-      errEl.style.display = 'block';
-      return;
-    }
-
-    const STATUSMAP = {
-      'request_out':              { text: 'Đã nhận đơn hàng',        bg: 'rgba(253,230,138,.4)',  color: '#92400e' },
-      'out_products_in_progress':   { text: 'Đang MVC - Chờ lấy hàng', bg: 'rgba(253,186,116,.35)', color: '#c2410c' },
-      'delivering':              { text: 'Đang giao hàng',           bg: 'rgba(147,197,253,.35)', color: '#1e40af' },
-      'done':                    { text: 'Đã giao hàng',             bg: 'rgba(167,243,208,.4)',  color: '#065f46' },
-      'cancelled_wo_out_products':  { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
-      'cancelled':               { text: 'Đã huỷ',                   bg: 'rgba(254,202,202,.5)',  color: '#991b1b' },
-      'rein':                    { text: 'Giao thất bại - Hoàn hàng',bg: 'rgba(253,186,116,.35)', color: '#92400e' },
-      'request_in':               { text: 'Chờ xác nhận',             bg: 'rgba(216,180,254,.3)',  color: '#5b4b8a' },
-    };
-    const banner = document.getElementById('sideStatusBanner');
-    const raw    = (data.status || '').trim();
-    const matched = STATUSMAP[raw] || { text: raw, bg: 'rgba(198,181,255,.25)', color: '#5b4b8a' };
-    banner.textContent       = matched.text;
-    banner.style.background  = matched.bg;
-    banner.style.color       = matched.color;
-
-    document.getElementById('sideIrCode').textContent     = data.ordercode    || '—';
-    document.getElementById('sideIrShop').textContent     = data.shopname     || '—';
-    document.getElementById('sideIrDate').textContent     = data.orderdate    || '—';
-    document.getElementById('sideIrName').textContent     = data.customername || '—';
-    document.getElementById('sideIrPhone').textContent    = data.phone        || '—';
-    document.getElementById('sideIrAddress').textContent  = data.address      || '—';
-    document.getElementById('sideIrProduct').textContent  = data.product      || '—';
-    document.getElementById('sideIrTotal').textContent    = data.prepaidamount
-      ? Number(data.prepaidamount).toLocaleString('vi') + ' đ'
-      : (data.total ? Number(data.total).toLocaleString('vi') + ' đ' : '—');
-    document.getElementById('sideIrShipping').textContent = data.shippingcode || '—';
-
-    resultEl.style.display = 'block';
-
-  } catch(e) {
-    errEl.textContent = 'Lỗi kết nối: ' + e.message;
-    errEl.style.display = 'block';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span>🔍</span> Tra cứu';
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const savedKey = localStorage.getItem('lastInfoKey');
-  if (savedKey) {
-    const el = document.getElementById('sideInfoKey');
-    if (el) el.value = savedKey;
-  }
-});
-
-let curlCardExpanded = true;
-
-function toggleCurlCard() {
-  curlCardExpanded = !curlCardExpanded;
-  document.getElementById('curlCardBody').style.display = curlCardExpanded ? 'block' : 'none';
-  document.getElementById('curlCardToggler').textContent  = curlCardExpanded ? 'Thu gọn ▲' : 'Mở rộng ▼';
-  document.getElementById('curlFixedCard').style.width    = curlCardExpanded ? '280px' : 'auto';
-}
-
-function previewCurlOrderId() {
-  const val  = document.getElementById('curlOrderInput').value.trim();
-  const prev = document.getElementById('curlOrderPreview');
-  if (val.length >= 9) {
-    prev.textContent = `🔢 order_id: ${val.slice(2, 9)}`;
-    prev.style.color = '#7c3aed';
-  } else if (val.length > 0) {
-    prev.textContent = '⚠️ Mã đơn cần ≥ 9 ký tự';
-    prev.style.color = '#f59e0b';
-    prev.style.display = 'block';
-  } else {
-    prev.textContent = '';
-  }
-}
-
-function generateCancelCurl() {
-  const code = document.getElementById('curlOrderInput').value.trim();
-  if (!code || code.length < 9) {
-    document.getElementById('curlOrderPreview').textContent = '⚠️ Mã đơn không hợp lệ!';
-    document.getElementById('curlOrderPreview').style.color = '#ef4444';
-    return;
-  }
-  const orderId = code.slice(2, 9);
-  const curlText =
-`ORDER_ID="${orderId}" && \\
-SYNC_ID=$(curl -s "https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=$ORDER_ID" \\
-  -H 'Accept: application/json, text/plain, */*' \\
-  -H 'platform: ios' \\
-  -H 'Cookie: laravel_session=eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D' \\
-  -H 'User-Agent: chiakiApp/3.6.2' \\
-  | python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['sync_id'])") && \\
-echo "sync_id: $SYNC_ID" && \\
-curl -s -X POST "https://api.chiaki.vn/api/order/request-cancel" \\
-  -H "Accept: application/json, text/plain, */*" \\
-  -H "Accept-Encoding: gzip, deflate" \\
-  -H "Content-Type: application/json" \\
-  -H "token: YjYTQY7fP4vExhg0a8itBqBEFKzZlmcKWBoxkwc91XNyF3zpCi" \\
-  -H "User-Agent: chiakiApp/3.6.2" \\
-  --compressed \\
-  -d "{\\"sync_id\\":\\"$SYNC_ID\\",\\"order_id\\":\\"$ORDER_ID\\",\\"cancel_code\\":\\"change_item_order\\",\\"cancel_reason\\":\\"Thay đổi đơn hàng (màu sắc, kích thước, thêm mã giảm giá,...)\\"}" \\
-  | python3 -m json.tool`;
-
-  window._generatedCurl = curlText;
-  document.getElementById('curlResultOrderInfo').textContent = `Mã đơn hàng: ${code}`;
-  document.getElementById('curlResultText').textContent = curlText;
-  document.getElementById('copyCurlMsg').textContent = '';
-  document.getElementById('copyCurlBtn').textContent = '📋 Copy';
-  document.getElementById('curlResultBg').style.display = 'flex';
-}
-
-function closeCurlModal() {
-  document.getElementById('curlResultBg').style.display = 'none';
-}
-
-function copyCurlResult() {
-  const text = window._generatedCurl;
-  if (!text) return;
-  const doSuccess = () => {
-    document.getElementById('copyCurlBtn').textContent = '💾 Đã sao chép!';
-    document.getElementById('copyCurlMsg').textContent = '🪣';
-    setTimeout(() => {
-      document.getElementById('copyCurlBtn').textContent = '📋 Sao chép';
-      document.getElementById('copyCurlMsg').textContent = '';
-    }, 3000);
-  };
-  navigator.clipboard?.writeText(text).then(doSuccess).catch(() => {
-    const el = document.createElement('textarea');
-    el.value = text; document.body.appendChild(el);
-    el.select(); document.execCommand('copy');
-    document.body.removeChild(el); doSuccess();
-  });
-}
-function copyOrderCode(btn, fullCode) {
-  const parts = fullCode.split('_')
-  const codeToCopy = parts.length > 1 ? parts[parts.length - 1] : fullCode
-
-  navigator.clipboard.writeText(codeToCopy).then(() => {
-    btn.textContent = '✓'
-    btn.classList.add('copied')
-    setTimeout(() => {
-      btn.textContent = '⎘'
-      btn.classList.remove('copied')
-    }, 1500)
-  }).catch(() => {
-    const el = document.createElement('textarea')
-    el.value = codeToCopy
-    document.body.appendChild(el)
-    el.select()
-    document.execCommand('copy')
-    document.body.removeChild(el)
-    btn.textContent = '✓'
-    btn.classList.add('copied')
-    setTimeout(() => {
-      btn.textContent = '⎘'
-      btn.classList.remove('copied')
-    }, 1500)
-  })
-}
-
-function generateAddToCartCurl() {
-  const productId = document.getElementById('cartProductId').value.trim();
-  const productCode = document.getElementById('cartProductCode').value.trim();
-  const quantity = document.getElementById('cartQuantity').value.trim();
-  const shopId = document.getElementById('cartShopId').value.trim();
-  const userId = document.getElementById('cartUserId').value.trim();
-  const msg = document.getElementById('addCartCurlMsg');
-
-  if (!productId || !productCode || !quantity || !shopId || !userId) {
-    msg.textContent = '⚠️ Vui lòng điền đủ 5 trường.';
-    msg.style.color = '#ef4444';
-    return;
-  }
-  if (!/^\d+$/.test(productId) || !/^\d+$/.test(quantity) || !/^\d+$/.test(shopId) || !/^\d+$/.test(userId)) {
-    msg.textContent = '⚠️ ID Sản phẩm, Số lượng, ID Shop và User ID phải là số.';
-    msg.style.color = '#ef4444';
-    return;
-  }
-
-  const safeProductCode = productCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const curlText =
-`curl 'https://api.chiaki.vn/api/v2/cart_item/push' \\
--X POST \\
--H 'Host: api.chiaki.vn' \\
--H 'Accept: application/json, text/plain, */*' \\
--H 'baggage: sentry-environment=production,sentry-public_key=418f1affd8b5477baa885b6b4da50b79,sentry-trace_id=7f3084679f1944b2ae6208a09319a66b' \\
--H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \\
--H 'Cache-Control: no-cache' \\
--H 'platform: ios' \\
--H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
--H 'User-Agent: chiakiApp/3.6.2' \\
--H 'sentry-trace: 7f3084679f1944b2ae6208a09319a66b-a1c86e53db19d505' \\
--H 'Connection: keep-alive' \\
--H 'Content-Type: application/json' \\
---data-raw '{"product_id":${productId},"product_code":"${safeProductCode}","quantity":${quantity},"is_buy_now":0,"store_id":${shopId},"user_id":${userId}}' \\
-| python3 -m json.tool`;
-
-  window._generatedAddToCartCurl = curlText;
-  msg.textContent = '';
-  document.getElementById('addCartCurlResultInfo').textContent =
-    `Product ID: ${productId} · Code: ${productCode} · Qty: ${quantity} · Shop: ${shopId} · User: ${userId}`;
-  document.getElementById('addCartCurlResultText').textContent = curlText;
-  document.getElementById('copyAddCartCurlBtn').textContent = '📋 Sao chép';
-  document.getElementById('addCartCurlResultBg').style.display = 'flex';
-}
-
-function closeAddToCartCurlModal() {
-  document.getElementById('addCartCurlResultBg').style.display = 'none';
-}
-
-function copyAddToCartCurlResult() {
-  const text = window._generatedAddToCartCurl;
-  if (!text) return;
-  const doSuccess = () => {
-    document.getElementById('copyAddCartCurlBtn').textContent = '💾 Đã sao chép!';
-    setTimeout(() => {
-      document.getElementById('copyAddCartCurlBtn').textContent = '📋 Sao chép';
-    }, 3000);
-  };
-  navigator.clipboard?.writeText(text).then(doSuccess).catch(() => {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    doSuccess();
-  });
-}
-loadSyncShops();
-if (checkIdGate()) { init(); }
-</script>
-</body>
-</html>
+@app.post("/api/sync")
+async def sync_now(body: dict, db: Session = Depends(get_db)):
+    shop_id     = body.get("shop_id", "").strip()
+    cf_chl_tk   = body.get("cf_chl_tk", "").strip()
+    cf_clearance = body.get("cf_clearance", "").strip()
+
+    if not shop_id:
+        return JSONResponse({"error": "Thiếu shop_id"}, status_code=400)
+    if not cf_chl_tk or not cf_clearance:
+        return JSONResponse({"error": "Thiếu cf_chl_tk hoặc cf_clearance"}, status_code=400)
+
+    shops = get_shops_map()
+    if shop_id not in shops:
+        return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
+
+    shop_url, shop_name = shops[shop_id]
+
+    try:
+        synced = await sync_shop(shop_id, shop_url, shop_name, db,
+                                 cf_chl_tk=cf_chl_tk, cf_clearance=cf_clearance)
+        return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": synced}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=502)
+
+@app.post("/api/sync-upload")
+async def sync_upload(
+    shop_id: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        shops = get_shops_map()
+        if shop_id not in shops:
+            return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
+
+        shop_url, shop_name = shops[shop_id]
+        content = await file.read()
+
+        # Kiểm tra có phải Excel không (magic bytes PK = xlsx)
+        if len(content) < 100:
+            return JSONResponse({"error": "File quá nhỏ, không hợp lệ"}, status_code=422)
+
+        orders = parse_excel(content, shop_id, shop_name)
+        if orders is None:
+            return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel. Kiểm tra lại cột header."}, status_code=422)
+
+        deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
+        for o in orders:
+            db.add(Order(**o))
+        db.commit()
+
+        meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
+        if meta:
+            meta.shop_name   = shop_name
+            meta.last_sync   = datetime.now()
+            meta.order_count = len(orders)
+        else:
+            db.add(ShopMeta(
+                shop_id=shop_id, shop_name=shop_name,
+                shop_url=shop_url, last_sync=datetime.now(),
+                order_count=len(orders)
+            ))
+        db.commit()
+
+        return {
+            "ok": True,
+            "shop_id": shop_id,
+            "shop_name": shop_name,
+            "synced": len(orders),
+            "deleted": deleted
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
