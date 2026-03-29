@@ -3421,19 +3421,31 @@ function downloadAllShopFiles() {
     name: shop.name,
     url: buildChiakiUrl(shop.id, 'receive_wating').replace('page_size=200', 'page_size=500')
   }));
+  const popupTabs = [];
 
-  let index = 0;
-  const openNext = () => {
-    const shop = queue[index];
-    const opened = window.open(shop.url, '_blank', 'noopener,noreferrer');
-
-    if (!opened) {
+  for (let i = 0; i < queue.length; i++) {
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      popupTabs.forEach(tab => { try { tab.close(); } catch {} });
       finishDownloadAllShops(
-        `Trình duyệt đã chặn popup ở shop ${shop.id} · ${shop.name}. Hãy cho phép popup rồi thử lại.`,
+        `Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`,
         'err'
       );
       return;
     }
+    popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
+    popupTabs.push(popup);
+  }
+
+  let index = 0;
+  const openNext = () => {
+    const shop = queue[index];
+    const popup = popupTabs[index];
+    if (!popup || popup.closed) {
+      finishDownloadAllShops(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
+      return;
+    }
+    popup.location.href = shop.url;
 
     index += 1;
     if (index >= queue.length) {
