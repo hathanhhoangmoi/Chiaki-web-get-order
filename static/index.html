@@ -536,9 +536,10 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 .info-modal-bg{
   display:flex;
-  align-items:flex-start;
-  justify-content:flex-start;
+  align-items:center;
+  justify-content:center;
   padding:0;
+  width:100%;
 }
 .info-modal-bg.show{display:flex}
 .info-modal{
@@ -1202,7 +1203,7 @@ body::before{
 }
 .download-panel > *{
   width:min(50vw,920px);
-  margin:0 0 18px;
+  margin:0 auto 18px;
 }
 .download-panel-close{
   position:sticky;
@@ -1378,19 +1379,25 @@ tbody td{color:var(--ink)}
   border:1px solid rgba(23,23,23,.08);
 }
 #orderInfoBg,
-#syncPanel{
+#syncPanel,
+#adminCurlPanel{
   position:relative;
   inset:auto;
   padding:0;
   background:transparent;
   backdrop-filter:none;
+  margin-left:auto;
+  margin-right:auto;
 }
 #orderInfoBg .info-modal,
-#syncPanel .info-modal{
+#syncPanel .info-modal,
+#adminCurlPanel .info-modal{
   max-width:none;
   width:100%;
   max-height:none;
   overflow:visible;
+  margin-left:auto;
+  margin-right:auto;
 }
 #syncPanel .info-modal{
   background:
@@ -1474,7 +1481,7 @@ tbody td{color:var(--ink)}
   }
   .download-panel > *{
     width:min(92vw,560px);
-    margin-bottom:14px;
+    margin:0 auto 14px;
   }
   .download-panel-close{
     width:42px !important;
