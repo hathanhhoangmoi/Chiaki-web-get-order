@@ -2747,7 +2747,7 @@ function maskId(id) {
 }
 
 function isAdminId(id) {
-  return String(id || '').trim() === 'Chang2000';
+  return ['Chang2000', 'LOGIN-KEY-PHUONG2000'].includes(String(id || '').trim());
 }
 
 function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
