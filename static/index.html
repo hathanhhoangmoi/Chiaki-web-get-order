@@ -1389,6 +1389,13 @@ tbody td{color:var(--ink)}
   margin-left:auto;
   margin-right:auto;
 }
+#adminCurlPanel{
+  width:100%;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
 #orderInfoBg .info-modal,
 #syncPanel .info-modal,
 #adminCurlPanel .info-modal{
@@ -3178,17 +3185,17 @@ function switchHeaderPanel(section) {
     if (savedKey && !document.getElementById('infoKey').value) {
       document.getElementById('infoKey').value = savedKey;
     }
-    document.getElementById('orderInfoBg').style.display = 'block';
+    document.getElementById('orderInfoBg').style.display = 'flex';
     setTimeout(() => document.getElementById('infoOrderCode')?.focus(), 100);
   } else if (section === 'lookup') {
-    document.getElementById('adminCurlPanel').style.display = 'block';
+    document.getElementById('adminCurlPanel').style.display = 'flex';
     document.getElementById('lookupCurlPanel').style.display = 'block';
     document.getElementById('lookupAddCartPanel').style.display = 'block';
   } else if (section === 'transfer') {
-    document.getElementById('adminCurlPanel').style.display = 'block';
+    document.getElementById('adminCurlPanel').style.display = 'flex';
     document.getElementById('transferPanel').style.display = 'block';
   } else if (section === 'sync') {
-    document.getElementById('syncPanel').style.display = 'block';
+    document.getElementById('syncPanel').style.display = 'flex';
   }
 
   setHeaderNavActive(section);
