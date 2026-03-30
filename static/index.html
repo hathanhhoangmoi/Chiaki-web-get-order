@@ -1070,14 +1070,23 @@ body::before{
 .header{
   width:min(1620px,calc(100% - 96px));
   margin:0 auto 24px;
-  padding:18px 26px;
+  padding:20px 26px;
   border-radius:40px;
   background:rgba(250,248,242,.72);
   border:1px solid rgba(255,255,255,.72);
   backdrop-filter:blur(22px);
   box-shadow:0 16px 40px rgba(16,18,24,.08);
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:20px;
 }
-.header-left{gap:18px}
+.header-left{
+  gap:18px;
+  display:flex;
+  align-items:center;
+  min-width:290px;
+}
 .logo{
   width:auto;
   min-width:160px;
@@ -1097,17 +1106,49 @@ body::before{
   font-weight:600;
   letter-spacing:.01em;
 }
-.header-left > div:last-child > div:first-child{
-  font-size:30px !important;
-  font-weight:400 !important;
-  line-height:1.08;
-  color:var(--ink) !important;
-  margin-top:0;
+.header-brand-title{
+  font-size:20px;
+  font-weight:600;
+  line-height:1.05;
+  color:var(--ink);
+  letter-spacing:-.02em;
 }
 .header-sub{
-  font-size:14px;
+  font-size:12px;
   color:var(--muted);
-  margin-top:14px;
+  margin-top:8px;
+}
+.header-nav{
+  justify-self:center;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.62);
+  border:1px solid rgba(23,23,23,.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
+}
+.nav-pill{
+  border:none;
+  background:transparent;
+  color:var(--ink);
+  padding:12px 18px;
+  border-radius:999px;
+  font:inherit;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+}
+.nav-pill.active{
+  background:var(--accent-dark);
+  color:#fff;
+}
+.header-tools{
+  justify-self:end;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 #historyToggleBtn{
   border-radius:999px !important;
@@ -1115,6 +1156,7 @@ body::before{
   background:rgba(255,255,255,.72) !important;
   color:var(--ink) !important;
   box-shadow:0 8px 18px rgba(28,28,28,.06);
+  padding:11px 16px !important;
 }
 .id-badge{
   background:rgba(255,255,255,.72);
@@ -1129,12 +1171,35 @@ body::before{
   border-radius:999px;
   padding:7px 12px;
 }
+.tool-pill,
+.tool-circle{
+  border:1px solid rgba(23,23,23,.08);
+  background:rgba(255,255,255,.72);
+  color:var(--ink);
+  box-shadow:0 8px 18px rgba(28,28,28,.06);
+  font:inherit;
+}
+.tool-pill{
+  padding:11px 18px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:500;
+}
+.tool-circle{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+}
 .download-panel{
   display:none;
   left:max(48px,calc(50% - 780px));
-  top:176px;
-  width:370px;
-  max-height:calc(100vh - 220px);
+  top:156px;
+  width:392px;
+  max-height:calc(100vh - 190px);
   padding:0;
   overflow:auto;
   background:transparent;
@@ -1212,10 +1277,10 @@ body::before{
 .container{
   max-width:1620px;
   margin:0 auto;
-  padding:0 48px 48px 430px;
+  padding:0 48px 48px 456px;
 }
 .chart-card{
-  min-height:240px;
+  min-height:250px;
   background:
     radial-gradient(circle at 86% 22%,rgba(255,220,85,.45),transparent 25%),
     linear-gradient(180deg,rgba(252,248,239,.98),rgba(246,239,219,.9));
@@ -1239,7 +1304,7 @@ body::before{
   gap:18px;
 }
 .stat-card{
-  min-height:128px;
+  min-height:146px;
   padding:22px 24px;
 }
 .stat-value{
@@ -1331,21 +1396,25 @@ tbody td{color:var(--ink)}
     width:calc(100% - 40px);
     padding:18px 20px;
     border-radius:30px;
+    grid-template-columns:1fr;
+    justify-items:stretch;
   }
-  .header-left > div:last-child > div:first-child{
-    font-size:26px !important;
-    margin-top:0;
-  }
+  .header-left{min-width:0}
+  .header-nav{justify-self:stretch;justify-content:center;flex-wrap:wrap}
+  .header-tools{justify-self:stretch;justify-content:space-between;flex-wrap:wrap}
   .download-panel{
     position:relative;
     left:auto;
     top:auto;
-    width:auto;
+    width:min(100%,1180px);
     max-height:none;
     margin:0 auto 24px;
     padding:0 20px;
   }
-  .container{padding:0 20px 40px}
+  .container{
+    padding:0 20px 40px;
+    max-width:1180px;
+  }
   .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width: 760px){
@@ -1358,16 +1427,80 @@ tbody td{color:var(--ink)}
     width:calc(100% - 16px);
     margin-bottom:16px;
     padding:14px;
-    flex-direction:column;
-    align-items:flex-start;
     gap:14px;
+  }
+  .header-left{
+    width:100%;
+    align-items:flex-start;
+    flex-direction:column;
+    gap:12px;
   }
   .logo{
     min-width:132px;
     height:48px;
   }
-  .header-left > div:last-child > div:first-child{
-    font-size:24px !important;
+  .header-brand-title{font-size:18px}
+  .header-nav{
+    width:100%;
+    overflow:auto;
+    justify-content:flex-start;
+    padding:6px;
+  }
+  .nav-pill{
+    padding:10px 14px;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .header-tools{
+    width:100%;
+    gap:8px;
+  }
+  #historyToggleBtn,
+  .tool-pill{
+    flex:1 1 calc(50% - 8px);
+    justify-content:center;
+  }
+  .tool-circle{
+    width:42px;
+    height:42px;
+    font-size:16px;
+    flex:0 0 auto;
+  }
+  .download-panel{
+    width:100%;
+    margin-bottom:18px;
+    padding:0 10px;
+  }
+  .download-panel > *{
+    margin-bottom:14px;
+  }
+  .container{
+    padding:0 10px 28px;
+  }
+  .chart-toolbar{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .chart-tabs,
+  .shop-tabs{
+    width:100%;
+    overflow:auto;
+    flex-wrap:nowrap;
+    padding-bottom:4px;
+  }
+  .table-header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+  #sortSelect{
+    width:100%;
+  }
+  .table-wrap{
+    overflow-x:auto;
+  }
+  table{
+    min-width:980px;
   }
   .stats-row{grid-template-columns:1fr}
   .chart-card,
@@ -1405,11 +1538,19 @@ tbody td{color:var(--ink)}
   <div class="header-left">
     <div class="logo">☁️</div>
     <div>
-      <div style="font-size:17px;font-weight:700;color:#3b3551">Bán hàng Chiaki cùng Chang ✨</div>
+      <div class="header-brand-title">Bán hàng Chiaki cùng Chang ✨</div>
       <div class="header-sub">Đồng bộ, xử lý đơn hàng Chiaki</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:12px">
+  <div class="header-nav">
+    <button class="nav-pill active" type="button">Dashboard</button>
+    <button class="nav-pill" type="button">Orders</button>
+    <button class="nav-pill" type="button">Lookup</button>
+    <button class="nav-pill" type="button">Transfer</button>
+    <button class="nav-pill" type="button">Sync</button>
+    <button class="nav-pill" type="button">Review</button>
+  </div>
+  <div class="header-tools">
     <div id="idDisplay" style="display:none">
       <div class="id-badge">
         🔑 <span id="maskedId">—</span>
@@ -1442,6 +1583,10 @@ tbody td{color:var(--ink)}
 >
   🕓 Log track
 </button>
+  <button class="tool-pill" type="button">⚙️ Setting</button>
+  <button class="tool-circle" type="button">🔔</button>
+  <button class="tool-circle" type="button">👤</button>
+  </div>
 </div>
 
 <div class="download-panel">
