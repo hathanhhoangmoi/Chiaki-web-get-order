@@ -58,6 +58,77 @@ body{
   margin:0 0 0 440px;
   padding:24px 32px
 }
+.product-search-wrap{
+  margin:18px 32px 0 472px;
+}
+.product-search-box{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  border-radius:24px;
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.75);
+  backdrop-filter:blur(20px);
+  box-shadow:0 8px 28px rgba(87,3,1,.08);
+}
+.product-search-input{
+  flex:1;
+  border:none;
+  outline:none;
+  background:transparent;
+  color:#570301;
+  font:inherit;
+  font-size:14px;
+}
+.product-search-input::placeholder{color:#a06070}
+.product-search-hint{font-size:11px;color:#a06070;margin-top:8px;padding-left:8px}
+.product-search-modal{
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(15,23,42,.45);
+  align-items:center;justify-content:center;
+  padding:24px;
+}
+.product-search-dialog{
+  width:min(1200px,96vw);
+  max-height:88vh;
+  overflow:hidden;
+  border-radius:28px;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(186,214,253,.45);
+  box-shadow:0 18px 48px rgba(15,23,42,.18);
+  display:flex;
+  flex-direction:column;
+}
+.product-search-dialog-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:18px 20px 14px;
+  border-bottom:1px solid rgba(186,214,253,.24);
+}
+.product-search-dialog-title{font-size:16px;font-weight:700;color:#3b3551}
+.product-search-dialog-sub{font-size:12px;color:#a06070;margin-top:4px}
+.product-search-close{
+  width:34px;height:34px;border:none;border-radius:50%;
+  background:rgba(186,214,253,.22);color:#570301;cursor:pointer;
+  font-size:18px;
+}
+.product-search-table-wrap{
+  overflow:auto;
+  padding:0 0 12px;
+}
+.product-search-empty{
+  padding:26px 20px;
+  text-align:center;
+  color:#a06070;
+  font-size:13px;
+}
+.copy-code-btn{
+  margin-left:8px;
+  width:24px;height:24px;
+  border:none;border-radius:999px;
+  background:rgba(186,214,253,.22);
+  color:#570301;
+  cursor:pointer;
+  font-size:12px;
+}
 .stats-row{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
@@ -876,6 +947,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
   50%{box-shadow:0 4px 28px rgba(186,214,253,.65),0 0 0 6px rgba(186,214,253,.12)}
 }
 #shippingLabelPrint{display:none}
+@media (max-width: 1100px){
+  .product-search-wrap{margin:16px}
+}
 @media print{
   body > *:not(#shippingLabelPrint){display:none !important}
   #shippingLabelPrint{
@@ -1098,6 +1172,54 @@ select.sync-input{font-family:inherit;cursor:pointer}
 >
   🕓 Log track
 </button>
+</div>
+
+<div class="product-search-wrap">
+  <div class="product-search-box">
+    <span style="font-size:18px">🔎</span>
+    <input
+      id="productSearchInput"
+      class="product-search-input"
+      type="text"
+      placeholder="Tìm tên sản phẩm... hỗ trợ full-text / token search"
+      oninput="handleProductSearchInput()"
+      onkeydown="if(event.key==='Enter') searchProductOrders(true)"
+    />
+    <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm</button>
+  </div>
+  <div class="product-search-hint">Nhập từ khóa sản phẩm để hiện popup các đơn khớp tên sản phẩm.</div>
+</div>
+
+<div class="product-search-modal" id="productSearchBg" onclick="if(event.target===this) closeProductSearchModal()">
+  <div class="product-search-dialog">
+    <div class="product-search-dialog-head">
+      <div>
+        <div class="product-search-dialog-title">Kết quả tìm kiếm sản phẩm</div>
+        <div class="product-search-dialog-sub" id="productSearchMeta">Nhập từ khóa để tìm đơn hàng theo tên sản phẩm.</div>
+      </div>
+      <button class="product-search-close" type="button" onclick="closeProductSearchModal()">✕</button>
+    </div>
+    <div class="product-search-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Ngày đặt</th>
+            <th>Gian hàng</th>
+            <th>Tên khách hàng</th>
+            <th>Địa chỉ</th>
+            <th>Sản phẩm</th>
+            <th>Số lượng</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody id="productSearchBody">
+          <tr><td colspan="9" class="product-search-empty">Nhập từ khóa để tìm sản phẩm.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <div class="download-panel">
@@ -3362,6 +3484,105 @@ function searchOrder() {
 
   msgEl.style.display = 'none';
   openTakeOrder(found);
+}
+
+let productSearchTimer = null;
+
+function closeProductSearchModal() {
+  const bg = document.getElementById('productSearchBg');
+  if (bg) bg.style.display = 'none';
+}
+
+function openProductSearchModal() {
+  const bg = document.getElementById('productSearchBg');
+  if (bg) bg.style.display = 'flex';
+}
+
+function handleProductSearchInput() {
+  if (productSearchTimer) clearTimeout(productSearchTimer);
+  const keyword = document.getElementById('productSearchInput')?.value.trim() || '';
+  if (!keyword) {
+    closeProductSearchModal();
+    return;
+  }
+  productSearchTimer = setTimeout(() => searchProductOrders(false), 250);
+}
+
+function renderProductSearchResults(rows, keyword) {
+  const tbody = document.getElementById('productSearchBody');
+  const meta = document.getElementById('productSearchMeta');
+  if (!tbody || !meta) return;
+
+  meta.textContent = `Từ khóa: "${keyword}" · ${rows.length} đơn khớp`;
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="product-search-empty">Không tìm thấy đơn hàng khớp tên sản phẩm.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(o => {
+    const orderCode = o.order_code || '—';
+    const restricted = o.restricted;
+    const totalText = restricted
+      ? '••••••••'
+      : (o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—');
+
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <b style="font-family:monospace;font-size:11px">${orderCode}</b>
+            ${restricted ? '' : `<button class="copy-code-btn" type="button" onclick="copyOrderCode(this, '${String(orderCode).replace(/'/g, "\\'")}')">⎘</button>`}
+          </div>
+        </td>
+        <td style="font-size:11px;color:#9b8bb4">${o.order_date || '—'}</td>
+        <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
+        <td>${o.customer_name || o.buyer_name || '—'}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word">${o.address || '—'}</td>
+        <td style="max-width:240px;white-space:normal;word-break:break-word">${o.product || '—'}</td>
+        <td style="text-align:center">${o.quantity || '—'}</td>
+        <td><b>${totalText}</b></td>
+        <td>${o.status || '—'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function searchProductOrders(forceOpen = false) {
+  const input = document.getElementById('productSearchInput');
+  const keyword = input?.value.trim() || '';
+  const tbody = document.getElementById('productSearchBody');
+  const meta = document.getElementById('productSearchMeta');
+
+  if (!keyword) {
+    closeProductSearchModal();
+    return;
+  }
+
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="9" class="product-search-empty">Đang tìm kiếm...</td></tr>';
+  }
+  if (meta) {
+    meta.textContent = `Đang tìm với từ khóa: "${keyword}"`;
+  }
+  if (forceOpen || keyword) {
+    openProductSearchModal();
+  }
+
+  try {
+    const res = await fetch(`/api/orders/search-products?q=${encodeURIComponent(keyword)}`, {
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+    });
+    const data = await res.json();
+    renderProductSearchResults(Array.isArray(data?.data) ? data.data : [], keyword);
+  } catch (e) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="9" class="product-search-empty">Lỗi tìm kiếm: ${e.message}</td></tr>`;
+    }
+    if (meta) {
+      meta.textContent = `Không thể tìm sản phẩm với từ khóa: "${keyword}"`;
+    }
+  }
 }
 
 
