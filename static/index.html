@@ -1200,16 +1200,17 @@ body::before{
   position:fixed;
   inset:0;
   z-index:6500;
+  flex-direction:column;
   padding:108px 24px 32px;
   overflow:auto;
   background:rgba(17,17,17,.22);
   backdrop-filter:blur(16px);
-  align-items:flex-start;
+  align-items:center;
   justify-content:center;
 }
 .download-panel > *{
   width:min(50vw,920px);
-  margin:0 auto 18px;
+  margin:0 0 18px;
 }
 .download-panel-close{
   position:sticky;
