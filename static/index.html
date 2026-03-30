@@ -1181,13 +1181,13 @@ select.sync-input{font-family:inherit;cursor:pointer}
       id="productSearchInput"
       class="product-search-input"
       type="text"
-      placeholder="Tìm tên sản phẩm... hỗ trợ full-text / token search"
+      placeholder="Tìm tên sản phẩm... "
       oninput="handleProductSearchInput()"
       onkeydown="if(event.key==='Enter') searchProductOrders(true)"
     />
     <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm</button>
   </div>
-  <div class="product-search-hint">Nhập từ khóa sản phẩm để hiện popup các đơn khớp tên sản phẩm.</div>
+  <div class="product-search-hint">Nhập từ khóa sản phẩm.</div>
 </div>
 
 <div class="product-search-modal" id="productSearchBg" onclick="if(event.target===this) closeProductSearchModal()">
@@ -3548,6 +3548,19 @@ function renderProductSearchResults(rows, keyword) {
   }).join('');
 }
 
+function searchProductOrdersFromCache(keyword) {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  const rows = Array.isArray(window.allOrders) ? window.allOrders : [];
+
+  return rows.filter(o => {
+    const product = String(o.product || '').toLowerCase();
+    if (!product) return false;
+    if (product.includes(normalized)) return true;
+    return tokens.some(token => product.includes(token));
+  });
+}
+
 async function searchProductOrders(forceOpen = false) {
   const input = document.getElementById('productSearchInput');
   const keyword = input?.value.trim() || '';
@@ -3573,9 +3586,24 @@ async function searchProductOrders(forceOpen = false) {
     const res = await fetch(`/api/orders/search-products?q=${encodeURIComponent(keyword)}`, {
       headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
     });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
     const data = await res.json();
-    renderProductSearchResults(Array.isArray(data?.data) ? data.data : [], keyword);
+    let rows = Array.isArray(data?.data) ? data.data : [];
+    if (!rows.length) {
+      rows = searchProductOrdersFromCache(keyword);
+    }
+    renderProductSearchResults(rows, keyword);
   } catch (e) {
+    const fallbackRows = searchProductOrdersFromCache(keyword);
+    if (fallbackRows.length) {
+      renderProductSearchResults(fallbackRows, keyword);
+      if (meta) {
+        meta.textContent = `Từ khóa: "${keyword}" · ${fallbackRows.length} đơn khớp (từ dữ liệu đã tải)`;
+      }
+      return;
+    }
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="9" class="product-search-empty">Lỗi tìm kiếm: ${e.message}</td></tr>`;
     }
