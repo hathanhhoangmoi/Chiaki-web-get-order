@@ -668,6 +668,9 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 .collapsible-panel.collapsed .panel-inline-title{
   display:block;
+  margin:0;
+  flex:1;
+  text-align:left;
 }
 .collapsible-panel.collapsed .panel-body{
   display:none;
@@ -1153,6 +1156,31 @@ select.sync-input{font-family:inherit;cursor:pointer}
 .btn-copy-code.copied{
   background:rgba(247,229,148,.35);border-color:rgba(247,229,148,.5);color:#7a4500;
 }
+.btn-copy-order-main{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:6px;
+  padding:4px 10px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff7ed;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  cursor:pointer;
+  box-shadow:0 6px 16px rgba(249,115,22,.28);
+  transition:all .15s;
+}
+.btn-copy-order-main:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 20px rgba(249,115,22,.34);
+}
+.btn-copy-order-main.copied{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  box-shadow:0 6px 16px rgba(34,197,94,.28);
+}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:rgba(186,214,253,.15);border-radius:10px}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#F5BAD5,#BAD6FD);border-radius:10px}
@@ -1277,7 +1305,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 <div class="download-panel">
   <!-- Modal Thông tin đơn hàng -->
 <div class="info-modal-bg" id="orderInfoBg" style="display:flex">
-  <div class="info-modal collapsible-panel" id="panelOrderInfo">
+  <div class="info-modal collapsible-panel collapsed" id="panelOrderInfo">
     <div class="panel-chrome">
       <div class="panel-window-controls">
         <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -1338,7 +1366,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
   <!-- ═══ CURL HUỶ ĐƠN ═══ -->
 <div id="adminCurlPanel" style="display:none">
-<div class="info-modal collapsible-panel" id="panelCancelCurl" style="margin-top: 16px;">
+<div class="info-modal collapsible-panel collapsed" id="panelCancelCurl" style="margin-top: 16px;">
   <div class="panel-chrome">
     <div class="panel-window-controls">
       <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -1383,7 +1411,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 </div>
 
-<div class="info-modal collapsible-panel" id="panelAddCartCurl" style="margin-top: 16px;">
+<div class="info-modal collapsible-panel collapsed" id="panelAddCartCurl" style="margin-top: 16px;">
   <div class="panel-chrome">
     <div class="panel-window-controls">
       <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -1410,7 +1438,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 </div>
 
-<div class="info-modal collapsible-panel" id="panelTransferCurl" style="margin-top: 16px;">
+<div class="info-modal collapsible-panel collapsed" id="panelTransferCurl" style="margin-top: 16px;">
   <div class="panel-chrome">
     <div class="panel-window-controls">
       <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -1441,7 +1469,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
   <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
 <div class="info-modal-bg" id="syncPanel" style="display:none">
-  <div class="info-modal collapsible-panel" id="panelSyncOrders">
+  <div class="info-modal collapsible-panel collapsed" id="panelSyncOrders">
     <div class="panel-chrome">
       <div class="panel-window-controls">
         <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -2233,9 +2261,16 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
     tbody.innerHTML = data.data.map(o => {
       const M = v => `<span class="restricted-mask">${v || '••••••••'}</span>`;
       const R = o.restricted;
+      const orderCode = o.order_code || '—';
+      const escapedOrderCode = String(orderCode)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'");
       return `
         <tr>
-          <td><b style="font-family:monospace;font-size:11px">${R ? M('••••••••') : (o.order_code || '—')}</b></td>
+          <td>
+            <b style="font-family:monospace;font-size:11px">${R ? M('••••••••') : orderCode}</b>
+            ${R ? '' : `<br><button class="btn-copy-order-main" type="button" onclick="copyOrderCode(this, '${escapedOrderCode}')">COPY</button>`}
+          </td>
           <td style="font-size:11px;color:#9b8bb4">${R ? M() : (o.order_date || '—')}</td>
           <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
           <td>${R ? M() : (o.customer_name || o.buyer_name || '—')}</td>
@@ -4466,12 +4501,13 @@ function copyCurlResult() {
 function copyOrderCode(btn, fullCode) {
   const parts = fullCode.split('_')
   const codeToCopy = parts.length > 1 ? parts[parts.length - 1] : fullCode
+  const originalText = btn.textContent
 
   navigator.clipboard.writeText(codeToCopy).then(() => {
     btn.textContent = '✓'
     btn.classList.add('copied')
     setTimeout(() => {
-      btn.textContent = '⎘'
+      btn.textContent = originalText
       btn.classList.remove('copied')
     }, 1500)
   }).catch(() => {
@@ -4484,7 +4520,7 @@ function copyOrderCode(btn, fullCode) {
     btn.textContent = '✓'
     btn.classList.add('copied')
     setTimeout(() => {
-      btn.textContent = '⎘'
+      btn.textContent = originalText
       btn.classList.remove('copied')
     }, 1500)
   })
