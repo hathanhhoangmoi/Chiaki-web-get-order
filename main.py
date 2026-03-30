@@ -11,7 +11,7 @@ from reportlab.lib.utils import simpleSplit
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from sqlalchemy import desc, func, or_
+from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session
 
 from database import engine, get_db, migrate
@@ -238,6 +238,34 @@ def get_orders(
         "total": total,
         "page": page,
         "data": [serialize(o) for o in orders]
+    }
+
+@app.get("/api/orders/search-products")
+def search_orders_by_product(
+    request: Request,
+    q: str = Query(..., min_length=1),
+    limit: int = Query(200, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    user_id = request.headers.get('X-User-ID', '')
+    tokens = [token.strip().lower() for token in q.split() if token.strip()]
+    if not tokens:
+        return {"total": 0, "data": []}
+
+    orders = (
+        db.query(Order)
+        .filter(and_(*[func.lower(Order.product).contains(token) for token in tokens]))
+        .order_by(desc(Order.order_date), desc(Order.fetched_at))
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "total": len(orders),
+        "data": [
+            serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000')
+            for o in orders
+        ]
     }
 
 @app.post("/api/update-shopname")
