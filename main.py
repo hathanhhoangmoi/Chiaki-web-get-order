@@ -11,7 +11,7 @@ from reportlab.lib.utils import simpleSplit
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from sqlalchemy import and_, desc, func, or_
+from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
 from database import engine, get_db, migrate
@@ -248,13 +248,17 @@ def search_orders_by_product(
     db: Session = Depends(get_db)
 ):
     user_id = request.headers.get('X-User-ID', '')
-    tokens = [token.strip().lower() for token in q.split() if token.strip()]
-    if not tokens:
+    normalized_q = q.strip().lower()
+    tokens = [token.strip().lower() for token in normalized_q.split() if token.strip()]
+    if not normalized_q or not tokens:
         return {"total": 0, "data": []}
+
+    filters = [func.lower(Order.product).contains(normalized_q)]
+    filters.extend(func.lower(Order.product).contains(token) for token in tokens)
 
     orders = (
         db.query(Order)
-        .filter(and_(*[func.lower(Order.product).contains(token) for token in tokens]))
+        .filter(or_(*filters))
         .order_by(desc(Order.order_date), desc(Order.fetched_at))
         .limit(limit)
         .all()
