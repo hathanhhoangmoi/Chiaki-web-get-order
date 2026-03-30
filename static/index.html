@@ -1250,6 +1250,25 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="info-error" id="syncMsg" style="margin-top:6px"></div>
     <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
       <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng</div>
+      <div
+        id="comboBulkDropzone"
+        style="border:1.5px dashed rgba(186,214,253,.65);border-radius:18px;padding:16px 14px;text-align:center;background:rgba(255,255,255,.42);cursor:pointer;margin-bottom:10px"
+        onclick="document.getElementById('comboBulkInput').click()"
+        ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dragover')"
+        ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
+        ondrop="handleComboBulkDrop(event)"
+      >
+        <div style="font-size:13px;font-weight:700;color:#570301">📂 Kéo thả nhiều file Excel vào đây</div>
+        <div style="font-size:11px;color:#a06070;margin-top:4px">
+          File sẽ được gán theo thứ tự shop: file đầu là shop đầu tiên, file thứ 2 là shop tiếp theo...
+        </div>
+        <div style="font-size:11px;color:#9b8bb4;margin-top:6px">
+          Ví dụ: <code>danh-sach-don-hang.xlsx</code>, <code>danh-sach-don-hang (1).xlsx</code>, ...
+        </div>
+      </div>
+      <input type="file" id="comboBulkInput" accept=".xlsx,.xls" multiple style="display:none"
+             onchange="handleComboBulkFiles(this.files)"/>
+      <div id="comboBulkSummary" style="font-size:12px;color:#a06070;margin-bottom:12px;min-height:18px"></div>
       <div id="comboRows" style="display:flex;border-radius:50px;flex-direction:column;gap:8px;"></div>
       <button class="btn-info-search" id="btnComboSync"
               style="margin-top:12px;width:100%;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
@@ -3569,6 +3588,28 @@ let comboFileMap = {}; // index → File
 let syncDownloadTimer = null;
 let syncDownloadRunning = false;
 
+function getComboFileSequence(fileName = '') {
+  const normalized = String(fileName || '').trim();
+  const match = normalized.match(/\((\d+)\)(?=\.[^.]+$)/);
+  if (match) return parseInt(match[1], 10) + 1;
+  return 0;
+}
+
+function sortComboFiles(files) {
+  return [...files].sort((a, b) => {
+    const seqDiff = getComboFileSequence(a.name) - getComboFileSequence(b.name);
+    if (seqDiff !== 0) return seqDiff;
+    return String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
+function updateComboBulkSummary(message = '', type = '') {
+  const summary = document.getElementById('comboBulkSummary');
+  if (!summary) return;
+  summary.textContent = message;
+  summary.style.color = type === 'err' ? '#dc2626' : '#a06070';
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -3755,6 +3796,7 @@ function initComboRows() {
   if (!container) return;
   if (!syncShops.length) {
     container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không có shop để hiển thị.</div>';
+    updateComboBulkSummary('');
     return;
   }
 
@@ -3777,6 +3819,7 @@ function initComboRows() {
              onchange="handleComboFile(${i}, this.files[0])"/>
     </div>
   `).join('');
+  updateComboBulkSummary(Object.keys(comboFileMap).length ? `Đã gán ${Object.keys(comboFileMap).length}/${syncShops.length} file cho shop.` : '');
 }
   
 function handleComboFile(index, file) {
@@ -3787,6 +3830,51 @@ function handleComboFile(index, file) {
   const shortName = file.name.length > 14 ? file.name.slice(0,12) + '…' : file.name;
   btn.textContent = `✅ ${shortName}`;
   btn.classList.add('has-file');
+  updateComboBulkSummary(`Đã gán ${Object.keys(comboFileMap).length}/${syncShops.length} file cho shop.`);
+}
+
+function handleComboBulkDrop(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  const zone = document.getElementById('comboBulkDropzone');
+  if (zone) zone.classList.remove('dragover');
+  handleComboBulkFiles(event.dataTransfer?.files || []);
+}
+
+function handleComboBulkFiles(fileList) {
+  const files = sortComboFiles(Array.from(fileList || []).filter(file => /\.(xlsx|xls)$/i.test(file.name || '')));
+  if (!files.length) {
+    updateComboBulkSummary('Không có file Excel hợp lệ để gán.', 'err');
+    return;
+  }
+  if (!syncShops.length) {
+    updateComboBulkSummary('Chưa có danh sách shop để gán file.', 'err');
+    return;
+  }
+
+  comboFileMap = {};
+  const assignedCount = Math.min(files.length, syncShops.length);
+
+  for (let i = 0; i < syncShops.length; i++) {
+    const uploadBtn = document.getElementById(`comboUploadBtn_${i}`);
+    const input = document.getElementById(`comboInput_${i}`);
+    if (uploadBtn) {
+      uploadBtn.textContent = '📎 Upload';
+      uploadBtn.classList.remove('has-file');
+    }
+    if (input) input.value = '';
+  }
+
+  for (let i = 0; i < assignedCount; i++) {
+    handleComboFile(i, files[i]);
+  }
+
+  const skipped = files.length > syncShops.length ? files.length - syncShops.length : 0;
+  let message = `Đã gán ${assignedCount}/${syncShops.length} file theo thứ tự shop.`;
+  if (skipped > 0) {
+    message += ` Bỏ qua ${skipped} file dư.`;
+  }
+  updateComboBulkSummary(message, skipped ? 'err' : '');
 }
 
 async function doComboSync() {
@@ -3846,6 +3934,9 @@ async function doComboSync() {
     const input = document.getElementById(`comboInput_${i}`);
     if (input) input.value = '';
   }
+  const bulkInput = document.getElementById('comboBulkInput');
+  if (bulkInput) bulkInput.value = '';
+  updateComboBulkSummary('');
 
   currentPage = 1;
   await loadOrders();
