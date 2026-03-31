@@ -1,16 +1,12 @@
 import io
 import json as _json
+import re
 from datetime import datetime, timedelta
 
 import httpx
 from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from reportlab.lib.pagesizes import inch
-from reportlab.lib.utils import simpleSplit
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
@@ -32,74 +28,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HATHANHHOANG"}
-# ── Key management cho Cancel Order ───────────────────────
-CANCEL_KEYS = {
-    "HATHANHHOANG": 0,
-    "CANCEL-KEY-3821-7045": 0,
-    "CANCEL-KEY-6174-2938": 0,
-    "CANCEL-KEY-9502-5163": 0,
-    "CANCEL-KEY-1847-8320": 0,
-    "CANCEL-KEY-4293-6751": 0,
-    "CANCEL-KEY-7618-3094": 0,
-    "CANCEL-KEY-2056-9482": 0,
-    "CANCEL-KEY-5739-1867": 0,
-    "CANCEL-KEY-8401-4215": 0,
-    "CANCEL-KEY-3164-7590": 0,
-    "CANCEL-KEY-6827-2043": 0,
-    "CANCEL-KEY-9350-5718": 0,
-    "CANCEL-KEY-1493-8261": 0,
-    "CANCEL-KEY-4706-3947": 0,
-    "CANCEL-KEY-7082-6534": 0,
-    "CANCEL-KEY-2915-9170": 0,
-    "CANCEL-KEY-5348-1826": 0,
-    "CANCEL-KEY-8671-4302": 0,
-    "CANCEL-KEY-3209-7654": 0,
-    "CANCEL-KEY-6543-2187": 0,
-    "CANCEL-KEY-9876-5430": 0,
-    "CANCEL-KEY-1230-8976": 0,
-    "CANCEL-KEY-4567-3219": 0,
-    "CANCEL-KEY-7894-6542": 0,
-    "CANCEL-KEY-2341-9875": 0,
-    "CANCEL-KEY-5678-1234": 0,
-    "CANCEL-KEY-8912-4567": 0,
-    "CANCEL-KEY-3456-7891": 0,
-    "CANCEL-KEY-6789-2345": 0,
-    "CANCEL-KEY-9123-5678": 0,
-
-}
-CANCEL_KEY_LIMIT = 10
-CANCEL_UNLIMITED_KEYS = {"HATHANHHOANG"} 
-CANCEL_KEY_HISTORY: dict = {k: [] for k in CANCEL_KEYS}
-# ── GETORDER KEY ──
-GETORDER_KEYS = {
-    "GETORDER-KEY-1234-5678": 0,
-    "GETORDER-KEY-8765-4321": 0,
-    "GETORDER-KEY-1798-1820": 0,
-    "GETORDER-KEY-5307-5294": 0,
-    "GETORDER-KEY-6682-4366": 0,
-    "GETORDER-KEY-2422-1762": 0,
-    "GETORDER-KEY-9373-9617": 0,
-    "GETORDER-KEY-4393-7851": 0,
-    "GETORDER-KEY-2553-6631": 0,
-    "GETORDER-KEY-4570-1679": 0,
-    "GETORDER-KEY-7842-7049": 0,
-    "GETORDER-KEY-8631-3272": 0,
-    "GETORDER-KEY-3181-7097": 0,
-    "GETORDER-KEY-5801-6373": 0,
-    "GETORDER-KEY-3097-7233": 0,
-    "GETORDER-KEY-6608-3640": 0,
-    "GETORDER-KEY-7555-9096": 0,
-    "GETORDER-KEY-2161-1064": 0,
-    "GETORDER-KEY-6003-8995": 0,
-    "GETORDER-KEY-9679-7130": 0,
-    "GETORDER-KEY-4630-3698": 0,
-    "GETORDER-KEY-9001-8597": 0,
-    "HATHANHHOANG":  0,
-}
-GETORDER_KEY_LIMIT      = 20
-GETORDER_UNLIMITED_KEYS = {"HATHANHHOANG"}
-GETORDER_KEY_HISTORY    = {k: [] for k in GETORDER_KEYS}
+UNLIMITED_KEYS = {"HATHANHHOANG", "PHONE-KEY-PHUONG2000"}
 
 app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -124,23 +53,21 @@ def should_hide_order(order, user_id: str) -> bool:
         total = 0
     return shop_id in SENSITIVE_SHOPS or total >= SENSITIVE_TOTAL_THRESHOLD
 
-def serialize_order(o, mask=False):
-    """Serialize order với mask nếu cần"""
-    M = "••••••••"
+def serialize_order(o):
     return {
-        "order_code":    M if mask else o.order_code,
-        "order_date":    M if mask else o.order_date,
+        "order_code":    o.order_code,
+        "order_date":    o.order_date,
         "shop_id":       o.shop_id,
-        "shop_name":     o.shop_name,  # ✅ luôn hiện tên shop
-        "buyer_name":    M if mask else o.buyer_name,
-        "customer_name": M if mask else o.customer_name,
-        "address":       M if mask else o.address,
-        "product":       M if mask else o.product,
-        "quantity":      M if mask else o.quantity,
-        "total":         None if mask else o.total,
-        "status":        M if mask else o.status,
+        "shop_name":     o.shop_name,
+        "buyer_name":    o.buyer_name,
+        "customer_name": o.customer_name,
+        "address":       o.address,
+        "product":       o.product,
+        "quantity":      o.quantity,
+        "total":         o.total,
+        "status":        o.status,
         "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-        "restricted":    mask,
+        "restricted":    False,
     }
 
 # ── API Endpoints ──────────────────────────────────────────
@@ -211,7 +138,7 @@ def get_orders(
     return {
         "total": total,
         "page": page,
-        "data": [serialize_order(o, mask=False) for o in orders]
+        "data": [serialize_order(o) for o in orders]
     }
 
 @app.get("/api/orders/search-products")
@@ -239,7 +166,7 @@ def search_orders_by_product(
 
     return {
         "total": len(orders),
-        "data": [serialize_order(o, mask=False) for o in orders]
+        "data": [serialize_order(o) for o in orders]
     }
 
 @app.post("/api/update-shopname")
@@ -266,7 +193,7 @@ async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q.order_by(Order.order_date.desc()).all()
-    return [serialize_order(o, mask=False) for o in orders]
+    return [serialize_order(o) for o in orders]
 
 
 @app.get("/api/orders/nuochoa")
@@ -280,7 +207,7 @@ async def get_nuochoa_orders(request: Request, db: Session = Depends(get_db)):
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q.order_by(Order.order_date.desc()).all()
-    return [serialize_order(o, mask=False) for o in orders]
+    return [serialize_order(o) for o in orders]
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
@@ -349,9 +276,6 @@ async def get_order_info(request: Request, body: dict, db: Session = Depends(get
         d = data.get("result") or data.get("data") or {}
         if isinstance(d, list):
             d = d[0] if d else {}
-        print(f"[debug] store_code in d = {d.get('store_code')}")
-        print(f"[debug] SHOP_NAME_MAP.get = '{SHOP_NAME_MAP.get('STD14EBRRV')}'")
-        print(f"[debug] SHOP_NAME_MAP keys = {list(SHOP_NAME_MAP.keys())[:5]}")
         def g(*keys):
             for k in keys:
                 v = d.get(k)
@@ -586,7 +510,7 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q.order_by(Order.order_date.desc()).all()
-    return [serialize_order(o, mask=False) for o in orders]
+    return [serialize_order(o) for o in orders]
 
 @app.get("/api/shops-list")
 def get_shops_list():
