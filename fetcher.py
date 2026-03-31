@@ -181,17 +181,18 @@ async def sync_shop(
     for o in orders:
         db.add(Order(**o))
     db.commit()
+    unique_order_count = len({str(item.get("order_code", "")).strip() for item in orders if item.get("order_code")})
 
     meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
     if meta:
         meta.shop_name   = shop_name
         meta.last_sync   = datetime.now()
-        meta.order_count = len(orders)
+        meta.order_count = unique_order_count
     else:
         db.add(ShopMeta(
             shop_id=shop_id, shop_name=shop_name,
             shop_url=shop_url, last_sync=datetime.now(),
-            order_count=len(orders)
+            order_count=unique_order_count
         ))
     db.commit()
 
