@@ -80,6 +80,7 @@ def serialize_external_order(o: ExternalOrderTracking):
         "code": o.order_code,
         "cod": int(o.cod_amount or 0),
         "status": o.status or "unknown",
+        "is_paid": bool(o.is_paid),
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
     }
 
@@ -87,7 +88,7 @@ def serialize_external_order(o: ExternalOrderTracking):
 def get_external_order_config(db: Session) -> ExternalOrderConfig:
     config = db.query(ExternalOrderConfig).filter(ExternalOrderConfig.id == 1).first()
     if not config:
-        config = ExternalOrderConfig(id=1, fee_amount=0, fee_content="")
+        config = ExternalOrderConfig(id=1, fee_items_json="[]")
         db.add(config)
         db.commit()
         db.refresh(config)
@@ -95,9 +96,16 @@ def get_external_order_config(db: Session) -> ExternalOrderConfig:
 
 
 def serialize_external_order_config(config: ExternalOrderConfig):
+    fee_items = []
+    try:
+        raw = config.fee_items_json or "[]"
+        parsed = _json.loads(raw)
+        if isinstance(parsed, list):
+            fee_items = parsed
+    except Exception:
+        fee_items = []
     return {
-        "fee_amount": int(config.fee_amount or 0),
-        "fee_content": config.fee_content or "",
+        "fee_items": fee_items,
         "updated_at": config.updated_at.isoformat() if config.updated_at else None,
     }
 
@@ -301,14 +309,28 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
         status = str(item.get("status") or "unknown").strip()
         if status not in valid_statuses:
             status = "unknown"
-        normalized.append({"code": code, "cod": cod, "status": status})
+        is_paid = 1 if item.get("is_paid") else 0
+        normalized.append({"code": code, "cod": cod, "status": status, "is_paid": is_paid})
 
-    fee_amount_raw = body.get("fee_amount", 0)
-    fee_content = str(body.get("fee_content", "") or "").strip()
-    try:
-        fee_amount = int(fee_amount_raw or 0)
-    except Exception:
-        fee_amount = 0
+    fee_items_in = body.get("fee_items")
+    fee_items = []
+    if isinstance(fee_items_in, list):
+        for item in fee_items_in:
+            if not isinstance(item, dict):
+                continue
+            content = str(item.get("content", "") or "").strip()
+            try:
+                amount = int(item.get("amount") or 0)
+            except Exception:
+                amount = 0
+            collected = bool(item.get("collected"))
+            if not content and amount == 0:
+                continue
+            fee_items.append({
+                "content": content,
+                "amount": amount,
+                "collected": collected,
+            })
 
     db.query(ExternalOrderTracking).delete()
     for item in normalized:
@@ -316,11 +338,11 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
             order_code=item["code"],
             cod_amount=item["cod"],
             status=item["status"],
+            is_paid=item["is_paid"],
             updated_at=datetime.now(),
         ))
     config = get_external_order_config(db)
-    config.fee_amount = fee_amount
-    config.fee_content = fee_content
+    config.fee_items_json = _json.dumps(fee_items, ensure_ascii=False)
     config.updated_at = datetime.now()
     db.commit()
 
@@ -350,6 +372,30 @@ def update_external_order_status(request: Request, body: dict, db: Session = Dep
         return JSONResponse({"error": "Không tìm thấy đơn ngoại sàn."}, status_code=404)
 
     row.status = status
+    row.updated_at = datetime.now()
+    db.commit()
+
+    return {
+        "ok": True,
+        "item": serialize_external_order(row),
+    }
+
+
+@app.post("/api/external-orders/payment")
+def update_external_order_payment(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not can_manage_external_orders(user_id):
+        return JSONResponse({"error": "Không có quyền cập nhật thanh toán."}, status_code=403)
+
+    code = str(body.get("code", "")).strip().upper()
+    if not code:
+        return JSONResponse({"error": "Dữ liệu không hợp lệ."}, status_code=422)
+
+    row = db.query(ExternalOrderTracking).filter(ExternalOrderTracking.order_code == code).first()
+    if not row:
+        return JSONResponse({"error": "Không tìm thấy đơn ngoại sàn."}, status_code=404)
+
+    row.is_paid = 1 if body.get("is_paid") else 0
     row.updated_at = datetime.now()
     db.commit()
 
