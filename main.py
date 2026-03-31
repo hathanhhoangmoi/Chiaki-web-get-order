@@ -142,7 +142,7 @@ SENSITIVE_TOTAL_THRESHOLD = 2_500_000
 def is_full_access_user(user_id: str) -> bool:
     return str(user_id or "").strip() in FULL_ACCESS_IDS
 
-def should_mask_order(order, user_id: str) -> bool:
+def should_hide_order(order, user_id: str) -> bool:
     if not order or is_full_access_user(user_id):
         return False
     shop_id = str(getattr(order, "shop_id", "") or "").strip()
@@ -217,6 +217,10 @@ def get_orders(
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
+    if not is_full_access_user(user_id):
+        q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
+            or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
+        )
     total = q.count()
 
     # Sắp xếp
@@ -233,29 +237,10 @@ def get_orders(
 
     orders = q.offset((page - 1) * limit).limit(limit).all()
 
-    def serialize(o):
-        mask = should_mask_order(o, user_id)
-        M = "••••••••"
-        return {
-            "order_code":    M if mask else o.order_code,
-            "shop_name":     o.shop_name,
-            "shop_id":       o.shop_id,
-            "buyer_name":    M if mask else o.buyer_name,
-            "customer_name": M if mask else o.customer_name,
-            "address":       M if mask else o.address,
-            "product":       M if mask else o.product,
-            "quantity":      M if mask else o.quantity,
-            "total":         M if mask else o.total,
-            "status":        M if mask else o.status,
-            "order_date":    M if mask else o.order_date,
-            "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
-            "restricted":    mask,
-        }
-
     return {
         "total": total,
         "page": page,
-        "data": [serialize(o) for o in orders]
+        "data": [serialize_order(o, mask=False) for o in orders]
     }
 
 @app.get("/api/orders/search-products")
@@ -274,20 +259,16 @@ def search_orders_by_product(
     filters = [func.lower(Order.product).contains(normalized_q)]
     filters.extend(func.lower(Order.product).contains(token) for token in tokens)
 
-    orders = (
-        db.query(Order)
-        .filter(or_(*filters))
-        .order_by(desc(Order.order_date), desc(Order.fetched_at))
-        .limit(limit)
-        .all()
-    )
+    q_orders = db.query(Order).filter(or_(*filters))
+    if not is_full_access_user(user_id):
+        q_orders = q_orders.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
+            or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
+        )
+    orders = q_orders.order_by(desc(Order.order_date), desc(Order.fetched_at)).limit(limit).all()
 
     return {
         "total": len(orders),
-        "data": [
-            serialize_order(o, mask=should_mask_order(o, user_id))
-            for o in orders
-        ]
+        "data": [serialize_order(o, mask=False) for o in orders]
     }
 
 @app.post("/api/update-shopname")
@@ -308,14 +289,13 @@ async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
     user_id = request.headers.get('X-User-ID', '')
     keywords = ["hà nội", "ha noi", " hn", "hanoi", "Hà Nội"]
     filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
-    orders = db.query(Order).filter(or_(*filters))\
-              .order_by(Order.order_date.desc()).all()
-    
-    def serialize_with_user(o):
-        mask = should_mask_order(o, user_id)
-        return serialize_order(o, mask=mask)
-    
-    return [serialize_with_user(o) for o in orders]
+    q = db.query(Order).filter(or_(*filters))
+    if not is_full_access_user(user_id):
+        q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
+            or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
+        )
+    orders = q.order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=False) for o in orders]
 
 
 @app.get("/api/orders/nuochoa")
@@ -323,13 +303,13 @@ async def get_nuochoa_orders(request: Request, db: Session = Depends(get_db)):
     user_id = request.headers.get('X-User-ID', '')
     keywords = ["nước hoa", "nuoc hoa", "nươc hoa", "nước  hoa"]
     filters = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
-    orders = db.query(Order).filter(or_(*filters))\
-              .order_by(Order.order_date.desc()).all()
-    def serialize_with_user(o):
-        mask = should_mask_order(o, user_id)
-        return serialize_order(o, mask=mask)
-    
-    return [serialize_with_user(o) for o in orders]
+    q = db.query(Order).filter(or_(*filters))
+    if not is_full_access_user(user_id):
+        q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
+            or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
+        )
+    orders = q.order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=False) for o in orders]
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
@@ -427,7 +407,7 @@ async def get_order_info(request: Request, body: dict, db: Session = Depends(get
         db_order = db.query(Order).filter(
         Order.order_code.like(f"%_{order_code}")
             ).first()
-        mask_order = should_mask_order(db_order, user_id)
+        hide_order = should_hide_order(db_order, user_id)
         db_product   = db_order.product   if db_order else "—"
         shop_id_from_api = g("store_code", "creator_name")
         db_shop_name = (
@@ -449,32 +429,8 @@ async def get_order_info(request: Request, body: dict, db: Session = Depends(get
             meta = {}
             url_history_parsed = []
         source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
-        if mask_order:
-            return {
-                "order_code": "••••••••",
-                "status": "••••••••",
-                "shop_name": db_shop_name,
-                "order_date": "••••••••",
-                "customer_name": "••••••••",
-                "customer_id": "••••••••",
-                "phone": "••••••••",
-                "email": "••••••••",
-                "address": "••••••••",
-                "source": "••••••••",
-                "source_from": "••••••••",
-                "payment": "••••••••",
-                "prepaid_amount": "••••••••",
-                "shipping_code": "••••••••",
-                "delivery_status": "••••••••",
-                "delivery_location_id": "••••••••",
-                "district_delivery_id": "••••••••",
-                "commune_delivery_id": "••••••••",
-                "shipper_receive_time": "••••••••",
-                "product": "••••••••",
-                "quantity": "••••••••",
-                "url_history": [],
-                "remaining": remaining,
-            }
+        if hide_order:
+            return JSONResponse({"error": "Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn này."}, status_code=404)
 
         return {
     "order_code":           g("code"),
@@ -648,11 +604,13 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
         "vĩnh phúc", "vinh phuc"
     ]
     filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
-    orders = db.query(Order).filter(or_(*filters)).order_by(Order.order_date.desc()).all()
-    def serialize_with_user(o):
-        mask = should_mask_order(o, user_id)
-        return serialize_order(o, mask=mask)
-    return [serialize_with_user(o) for o in orders]
+    q = db.query(Order).filter(or_(*filters))
+    if not is_full_access_user(user_id):
+        q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
+            or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
+        )
+    orders = q.order_by(Order.order_date.desc()).all()
+    return [serialize_order(o, mask=False) for o in orders]
 
 @app.get("/api/shops-list")
 def get_shops_list():
