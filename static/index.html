@@ -1549,8 +1549,8 @@ select.sync-input{font-family:inherit;cursor:pointer}
           Mỗi dòng là 1 đơn. Tổng phí = tổng các phí đã liệt kê - phí đã thu.
         </div>
         <div class="external-config-btns">
-          <button class="btn-external-secondary" type="button" onclick="addExternalFeeRow()">＋ Thêm phí</button>
-          <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu</button>
+          <button class="btn-external-secondary" type="button" onclick="addExternalFeeRow()">＋ Thêm dòng phí</button>
+          <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu danh sách</button>
           <button class="btn-external-secondary" type="button" onclick="clearExternalOrdersConfig()">🗑️ Xóa toàn bộ</button>
         </div>
       </div>
@@ -2698,7 +2698,7 @@ function getExternalStatusMeta(status) {
 }
 
 function canConfigExternalOrders(id = localStorage.getItem(ID_KEY) || '') {
-  return String(id || '').trim() === 'Hoang5611';
+  return String(id || '').trim() === 'Chang2000';
 }
 
 function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
@@ -2849,6 +2849,7 @@ function renderExternalOrdersDashboard() {
   const inTransitRevenueEl = document.getElementById('externalInTransitRevenue');
   const deliveredRevenueEl = document.getElementById('externalDeliveredRevenue');
   const feeAmountEl = document.getElementById('externalFeeAmount');
+  const feeContentEl = document.getElementById('externalFeeContent');
   const payoutEl = document.getElementById('externalPayoutToPhuong');
   const paidToPhuongEl = document.getElementById('externalPaidToPhuong');
   if (!grid || !meta || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl || !paidToPhuongEl) return;
@@ -3803,7 +3804,7 @@ function maskId(id) {
 }
 
 function isAdminId(id) {
-  return ['Hoang5611', 'LOGIN-KEY-PHUONG2000'].includes(String(id || '').trim());
+  return ['Chang2000', 'LOGIN-KEY-PHUONG2000'].includes(String(id || '').trim());
 }
 
 function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
@@ -4211,7 +4212,7 @@ function renderTakenList() {
     return;
   }
   const currentId = localStorage.getItem('chiaki_id');
-  const canDelete = currentId === 'Hoang5611';
+  const canDelete = currentId === 'Chang2000';
   el.innerHTML = list.map((item, idx) => {
     const d   = new Date(item.takenat);
     const fmt = d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -4244,7 +4245,7 @@ function closeTakenOnOutside(e) {
 
 function clearTakenOrders() {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Hoang5611') {
+  if (currentId !== 'Chang2000') {
     alert('Bạn không có quyền xoá lịch sử đơn đã lấy.');
     return;
   }
@@ -4254,7 +4255,7 @@ function clearTakenOrders() {
 }
 function deleteTakenOrder(index) {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Hoang5611') {
+  if (currentId !== 'Chang2000') {
     alert('Bạn không có quyền xoá đơn đã lấy.');
     return;
   }
@@ -4407,7 +4408,7 @@ function initHistoryBtn() {
   const panel    = document.getElementById('historyPanel');
   const toggleBtn = document.getElementById('historyToggleBtn');
 
-  if (uid === 'Hoang5611') {
+  if (uid === 'Chang2000') {
     if (toggleBtn) {
       toggleBtn.classList.add('visible'); // nút tròn hiện
     }
