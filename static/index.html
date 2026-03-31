@@ -509,6 +509,12 @@ body{
 }
 .table-title{font-size:14px;font-weight:700;color:#570301}
 .table-count{font-size:12px;color:#a06070}
+.table-sync-info{
+  margin-top:6px;
+  font-size:11px;
+  color:#a06070;
+  line-height:1.6;
+}
 table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.3);backdrop-filter:blur(20px)}
 thead th{
   padding:11px 14px;text-align:left;font-size:11px;font-weight:600;
@@ -2175,6 +2181,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
     </select>
     <div class="table-count" id="tableCount"></div>
   </div>
+  <div class="table-sync-info" id="tableSyncInfo">Chưa có thông tin đồng bộ.</div>
 </div>
 
   <!-- Panel đơn thường -->
@@ -2706,6 +2713,7 @@ let hanoiVisible = false;
 let currentSort = 'default';
 let activeExternalOrderCode = '';
 let activeExternalScope = 'phuong';
+let lastSyncDelta = null;
 window.userCapabilities = {};
 window.externalOrdersData = [];
 window.externalOrdersConfig = { fee_items: [] };
@@ -2720,6 +2728,33 @@ function getExternalScopeLabel(scope = activeExternalScope) {
 
 function hasCapability(name) {
   return !!window.userCapabilities?.[name];
+}
+
+function formatSyncDate(value) {
+  if (!value) return '';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function updateTableSyncInfo(latestSync) {
+  const el = document.getElementById('tableSyncInfo');
+  if (!el) return;
+  const parts = [];
+  const formatted = formatSyncDate(latestSync);
+  parts.push(formatted ? `Lần đồng bộ gần nhất: ${formatted}` : 'Chưa có dữ liệu đồng bộ.');
+  if (lastSyncDelta) {
+    parts.push(`Đơn đặt hàng mới: +${lastSyncDelta.added}`);
+    parts.push(`Đơn đã bàn giao ĐVVC/huỷ: -${lastSyncDelta.removed}`);
+  }
+  el.textContent = parts.join(' · ');
 }
 
 function canViewExternalScope(scope = activeExternalScope, id = localStorage.getItem(ID_KEY) || '') {
@@ -3290,6 +3325,7 @@ async function loadSummary() {
     document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
 
     const latestSync = data.shops.map(s => s.last_sync).filter(Boolean).sort().reverse()[0];
+    updateTableSyncInfo(latestSync);
     const tabs = document.getElementById('shopTabs');
     while (tabs.children.length > 1) tabs.removeChild(tabs.lastChild);
 
@@ -5031,7 +5067,11 @@ async function doSync() {
     });
     const data = await res.json();
     if (data.ok) {
-      msg.textContent = `✅ ${data.shop_name}: đã sync ${data.synced} đơn`;
+      lastSyncDelta = {
+        added: Number(data.added_count || 0),
+        removed: Number(data.removed_count || 0)
+      };
+      msg.textContent = `✅ ${data.shop_name}: đã sync ${data.synced} đơn · Đơn đặt hàng mới: +${lastSyncDelta.added} · Đơn đã bàn giao ĐVVC/huỷ: -${lastSyncDelta.removed}`;
       msg.className = 'sync-msg ok';
       // Reload bảng đơn hàng
       currentPage = 1;
@@ -5098,7 +5138,11 @@ async function doSyncUpload() {
     const res = await fetch('/api/sync-upload', { method: 'POST', body: formData });
     const data = await res.json();
     if (data.ok) {
-      msg.textContent = `✅ ${data.shop_name}: sync ${data.synced} đơn thành công`;
+      lastSyncDelta = {
+        added: Number(data.added_count || 0),
+        removed: Number(data.removed_count || 0)
+      };
+      msg.textContent = `✅ ${data.shop_name}: sync ${data.synced} đơn thành công · Đơn đặt hàng mới: +${lastSyncDelta.added} · Đơn đã bàn giao ĐVVC/huỷ: -${lastSyncDelta.removed}`;
       msg.className = 'sync-msg ok';
       // Reset file
       syncFile = null;
@@ -5397,6 +5441,8 @@ async function doComboSync() {
   msg.className = 'sync-msg';
 
   const results = [];
+  let totalAdded = 0;
+  let totalRemoved = 0;
   for (let i = 0; i < rows.length; i++) {
     const { shopId, file } = rows[i];
     btn.textContent = `⏳ Đang sync ${i+1}/${rows.length}...`;
@@ -5409,7 +5455,9 @@ async function doComboSync() {
       const res  = await fetch('/api/sync-upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.ok) {
-        results.push(`✅ ${data.shop_name}: ${data.synced} đơn`);
+        totalAdded += Number(data.added_count || 0);
+        totalRemoved += Number(data.removed_count || 0);
+        results.push(`✅ ${data.shop_name}: ${data.synced} đơn · +${Number(data.added_count || 0)} mới · -${Number(data.removed_count || 0)} đã bàn giao/huỷ`);
       } else {
         results.push(`❌ Shop ${shopId}: ${data.error}`);
       }
@@ -5420,6 +5468,8 @@ async function doComboSync() {
 
   msg.innerHTML = results.join('<br>');
   msg.className = 'sync-msg ok';
+  lastSyncDelta = { added: totalAdded, removed: totalRemoved };
+  msg.innerHTML += `<br><br><b>Tổng lượt đồng bộ này:</b> Đơn đặt hàng mới: +${totalAdded} · Đơn đã bàn giao ĐVVC/huỷ: -${totalRemoved}`;
   btn.disabled = false;
 
   comboFileMap = {};
