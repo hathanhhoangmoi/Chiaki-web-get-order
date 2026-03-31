@@ -101,6 +101,14 @@ body{
 .external-orders-actions{
   display:flex;gap:8px;align-items:center;flex-wrap:wrap;
 }
+.external-readonly-note{
+  font-size:11px;
+  color:#a06070;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.45);
+  border:1px solid rgba(186,214,253,.28);
+}
 .external-config-toggle{
   padding:8px 14px;border:none;border-radius:999px;
   background:rgba(186,214,253,.28);color:#570301;
@@ -159,14 +167,19 @@ body{
 }
 .external-order-btn{
   padding:10px 14px;border:none;border-radius:16px;
-  background:linear-gradient(135deg,rgba(245,186,213,.5),rgba(186,214,253,.42));
-  color:#570301;cursor:pointer;
-  box-shadow:0 5px 16px rgba(186,214,253,.22);
+  background:linear-gradient(135deg,#fde7ef,#e9f3ff);
+  color:#6f4150;cursor:pointer;
+  border:1px solid rgba(186,214,253,.45);
+  box-shadow:0 4px 12px rgba(186,214,253,.12);
   min-width:170px;text-align:left;
 }
-.external-order-btn:hover{transform:translateY(-1px)}
-.external-order-code{font-size:12px;font-weight:800;font-family:monospace}
-.external-order-meta{font-size:11px;color:#7a3040;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+.external-order-btn:hover{
+  transform:translateY(-1px);
+  background:linear-gradient(135deg,#fbe1eb,#e3f0ff);
+  border-color:rgba(186,214,253,.65);
+}
+.external-order-code{font-size:12px;font-weight:800;font-family:monospace;color:#5c3d49}
+.external-order-meta{font-size:11px;color:#8b6672;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
 .external-status-pill{
   display:inline-flex;align-items:center;justify-content:center;
   padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;
@@ -358,10 +371,17 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 .tag-done{background:rgba(167,243,208,.5);color:#065f46;border:1px solid rgba(110,231,183,.4)}
 .tag-cancel{background:rgba(254,202,202,.5);color:#991b1b;border:1px solid rgba(252,165,165,.4)}
 .shop-chip{
-  display:inline-block;padding:3px 10px;border-radius:20px;
-  font-size:10px;font-weight:600;
-  background:rgba(186,214,253,.35);color:#570301;
-  border:1px solid rgba(186,214,253,.6);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:4px 10px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff7ed;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
 }
 .empty{padding:48px;text-align:center;color:#c09090;background:rgba(255,255,255,.25)}
 .empty-icon{font-size:40px;margin-bottom:10px}
@@ -1437,6 +1457,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
         </div>
         <div class="external-orders-actions">
           <button class="external-config-toggle" id="externalConfigToggleBtn" type="button" onclick="toggleExternalConfig()">⚙️ Config đơn ngoại sàn</button>
+          <div class="external-readonly-note" id="externalReadonlyNote" style="display:none">Chỉ `Chang2000` được chỉnh config</div>
         </div>
       </div>
 
@@ -1825,16 +1846,26 @@ select.sync-input{font-family:inherit;cursor:pointer}
 
 <div class="container">
 <!-- ── Chart Section ── -->
-<div class="chart-card">
-  <div class="chart-toolbar">
-    <div class="chart-title">📊 Thống kê đơn hàng tồn kho chưa xuất hàng</div>
-    <div class="chart-tabs">
-      <div class="chart-tab active" id="chartTabDate" onclick="switchChart('date')">📅 Thống kê theo ngày</div>
-      <div class="chart-tab" id="chartTabShop" onclick="switchChart('shop')">🏪 Thống kê theo shop</div>
+<div class="chart-card collapsible-panel" id="chartPanel">
+  <div class="panel-chrome">
+    <div class="panel-window-controls">
+      <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+      <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('chartPanel')" title="Thu gọn / mở rộng"></button>
+      <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
     </div>
+    <div class="panel-inline-title">Thống kê đơn hàng tồn kho chưa xuất hàng</div>
   </div>
-  <div class="chart-wrap">
-    <canvas id="mainChart"></canvas>
+  <div class="panel-body">
+    <div class="chart-toolbar">
+      <div class="chart-title">📊 Thống kê đơn hàng tồn kho chưa xuất hàng</div>
+      <div class="chart-tabs">
+        <div class="chart-tab active" id="chartTabDate" onclick="switchChart('date')">📅 Thống kê theo ngày</div>
+        <div class="chart-tab" id="chartTabShop" onclick="switchChart('shop')">🏪 Thống kê theo shop</div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="mainChart"></canvas>
+    </div>
   </div>
 </div>
   
@@ -2499,8 +2530,12 @@ function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
   const canConfig = canConfigExternalOrders(id);
   const toggleBtn = document.getElementById('externalConfigToggleBtn');
   const configPanel = document.getElementById('externalConfigPanel');
+  const readonlyNote = document.getElementById('externalReadonlyNote');
   if (toggleBtn) {
     toggleBtn.style.display = canConfig ? 'inline-flex' : 'none';
+  }
+  if (readonlyNote) {
+    readonlyNote.style.display = canConfig ? 'none' : 'inline-flex';
   }
   if (!canConfig && configPanel) {
     configPanel.classList.remove('open');
@@ -2577,7 +2612,11 @@ function renderExternalOrdersDashboard() {
     : 'Chưa có đơn nào được cấu hình.';
 
   if (!items.length) {
-    grid.innerHTML = '<div class="external-empty">Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.</div>';
+    grid.innerHTML = `<div class="external-empty">${
+      canConfigExternalOrders()
+        ? 'Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.'
+        : 'Chưa có mã đơn ngoại sàn được cấu hình.'
+    }</div>`;
     return;
   }
 
@@ -3415,6 +3454,9 @@ function togglePanelCollapse(panelId) {
   const panel = document.getElementById(panelId);
   if (!panel) return;
   panel.classList.toggle('collapsed');
+  if (panelId === 'chartPanel' && !panel.classList.contains('collapsed') && typeof chartMode !== 'undefined' && chartRawData) {
+    setTimeout(() => renderChart(chartMode), 120);
+  }
 }
 
 const ID_KEY         = 'chiaki_id';
