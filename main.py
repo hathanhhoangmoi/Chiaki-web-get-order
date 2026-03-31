@@ -21,37 +21,7 @@ from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, 
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
-    "ADMIN-UNLIMITED-HOANG": 0,
-    "PHONE-KEY-1472-3891": 0,
-    "PHONE-KEY-5830-2147": 0,
-    "PHONE-KEY-9214-6753": 0,
-    "PHONE-KEY-3768-4512": 0,
-    "PHONE-KEY-6091-8324": 0,
-    "PHONE-KEY-2845-7163": 0,
-    "PHONE-KEY-7539-1086": 0,
-    "PHONE-KEY-4127-9450": 0,
-    "PHONE-KEY-8963-2718": 0,
-    "PHONE-KEY-1604-5937": 0,
-    "PHONE-KEY-5281-3074": 0,
-    "PHONE-KEY-9746-6812": 0,
-    "PHONE-KEY-3019-8265": 0,
-    "PHONE-KEY-6453-1790": 0,
-    "PHONE-KEY-2897-4631": 0,
-    "PHONE-KEY-7162-9048": 0,
-    "PHONE-KEY-4385-2576": 0,
-    "PHONE-KEY-8720-5193": 0,
-    "PHONE-KEY-1938-7402": 0,
-    "PHONE-KEY-5674-3819": 0,
-    "PHONE-KEY-9051-6247": 0,
-    "PHONE-KEY-3492-8760": 0,
-    "PHONE-KEY-6815-1034": 0,
-    "PHONE-KEY-2370-9581": 0,
-    "PHONE-KEY-7643-4208": 0,
-    "PHONE-KEY-4056-7925": 0,
-    "PHONE-KEY-8219-3467": 0,
-    "PHONE-KEY-1587-6140": 0,
-    "PHONE-KEY-5904-2783": 0,
-    "PHONE-KEY-9368-5016": 0,
+    "HATHANHHOANG": 0,
     "PHONE-KEY-PHUONG2000": 0,
 }
 KEY_LIMIT = 10
@@ -62,10 +32,10 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG", "PHONE-KEY-PHUONG2000"}
+UNLIMITED_KEYS = {"HATHANHHOANG"}
 # ── Key management cho Cancel Order ───────────────────────
 CANCEL_KEYS = {
-    "ADMIN-UNLIMITED-HOANG": 0,
+    "HATHANHHOANG": 0,
     "CANCEL-KEY-3821-7045": 0,
     "CANCEL-KEY-6174-2938": 0,
     "CANCEL-KEY-9502-5163": 0,
@@ -99,7 +69,7 @@ CANCEL_KEYS = {
 
 }
 CANCEL_KEY_LIMIT = 10
-CANCEL_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"} 
+CANCEL_UNLIMITED_KEYS = {"HATHANHHOANG"} 
 CANCEL_KEY_HISTORY: dict = {k: [] for k in CANCEL_KEYS}
 # ── GETORDER KEY ──
 GETORDER_KEYS = {
@@ -125,10 +95,10 @@ GETORDER_KEYS = {
     "GETORDER-KEY-9679-7130": 0,
     "GETORDER-KEY-4630-3698": 0,
     "GETORDER-KEY-9001-8597": 0,
-    "ADMIN-UNLIMITED-HOANG":  0,
+    "HATHANHHOANG":  0,
 }
 GETORDER_KEY_LIMIT      = 20
-GETORDER_UNLIMITED_KEYS = {"ADMIN-UNLIMITED-HOANG"}
+GETORDER_UNLIMITED_KEYS = {"HATHANHHOANG"}
 GETORDER_KEY_HISTORY    = {k: [] for k in GETORDER_KEYS}
 
 app = FastAPI(title="Chiaki Order Dashboard")
@@ -138,6 +108,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 FULL_ACCESS_IDS = {"Chang2000"}
 SENSITIVE_SHOPS = {"4647", "4732"}
 SENSITIVE_TOTAL_THRESHOLD = 2_500_000
+PHONE_KEY_PHUONG_ALLOWED_SHOPS = {"4917", "4940", "5096", "5125", "5114"}
 
 def is_full_access_user(user_id: str) -> bool:
     return str(user_id or "").strip() in FULL_ACCESS_IDS
@@ -429,6 +400,11 @@ async def get_order_info(request: Request, body: dict, db: Session = Depends(get
             meta = {}
             url_history_parsed = []
         source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
+
+        effective_shop_id = str((db_order.shop_id if db_order and db_order.shop_id else shop_id_from_api) or "").strip()
+        if key == "PHONE-KEY-PHUONG2000" and effective_shop_id not in PHONE_KEY_PHUONG_ALLOWED_SHOPS:
+            return JSONResponse({"error": "Không có thông tin đơn hàng."}, status_code=404)
+
         if hide_order:
             return JSONResponse({"error": "Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn này."}, status_code=404)
 
