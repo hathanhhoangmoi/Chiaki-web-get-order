@@ -1418,65 +1418,75 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 
 <div class="external-orders-wrap">
-  <div class="external-orders-card">
-    <div class="external-orders-head">
-      <div>
-        <div class="external-orders-title">🚚 Theo dõi đơn giao ngoại sàn Chiaki</div>
-        <div class="external-orders-sub">
-          Nhập danh sách mã đơn SPX và COD, sau đó click từng mã để mở trang tracking SPX ngay trong dashboard.
+  <div class="external-orders-card collapsible-panel" id="externalOrdersPanel">
+    <div class="panel-chrome">
+      <div class="panel-window-controls">
+        <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+        <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('externalOrdersPanel')" title="Thu gọn / mở rộng"></button>
+        <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
+      </div>
+      <div class="panel-inline-title">Theo dõi đơn giao ngoại sàn Chiaki</div>
+    </div>
+    <div class="panel-body">
+      <div class="external-orders-head">
+        <div>
+          <div class="external-orders-title">🚚 Theo dõi đơn giao ngoại sàn Chiaki</div>
+          <div class="external-orders-sub">
+            Nhập danh sách mã đơn SPX và COD, sau đó click từng mã để mở trang tracking SPX ngay trong dashboard.
+          </div>
+        </div>
+        <div class="external-orders-actions">
+          <button class="external-config-toggle" id="externalConfigToggleBtn" type="button" onclick="toggleExternalConfig()">⚙️ Config đơn ngoại sàn</button>
         </div>
       </div>
-      <div class="external-orders-actions">
-        <button class="external-config-toggle" type="button" onclick="toggleExternalConfig()">⚙️ Config đơn ngoại sàn</button>
-      </div>
-    </div>
 
-    <div class="external-config-panel" id="externalConfigPanel">
-      <div class="external-config-label">Danh sách đơn theo mẫu: `MÃ_ĐƠN|COD`</div>
-      <textarea
-        id="externalOrdersInput"
-        class="external-config-textarea"
-        placeholder="SPXVN123456789|350000&#10;SPXVN987654321|420000"
-      ></textarea>
-      <div class="external-config-hint">
-        Mỗi dòng là 1 đơn. Hệ thống sẽ lưu tại trình duyệt hiện tại và dùng để tạo nút, thống kê và modal tracking.
+      <div class="external-config-panel" id="externalConfigPanel">
+        <div class="external-config-label">Danh sách đơn theo mẫu: `MÃ_ĐƠN|COD`</div>
+        <textarea
+          id="externalOrdersInput"
+          class="external-config-textarea"
+          placeholder="SPXVN123456789|350000&#10;SPXVN987654321|420000"
+        ></textarea>
+        <div class="external-config-hint">
+          Mỗi dòng là 1 đơn. Hệ thống sẽ lưu tại trình duyệt hiện tại và dùng để tạo nút, thống kê và modal tracking.
+        </div>
+        <div class="external-config-btns">
+          <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu danh sách</button>
+          <button class="btn-external-secondary" type="button" onclick="clearExternalOrdersConfig()">🗑️ Xóa toàn bộ</button>
+        </div>
       </div>
-      <div class="external-config-btns">
-        <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu danh sách</button>
-        <button class="btn-external-secondary" type="button" onclick="clearExternalOrdersConfig()">🗑️ Xóa toàn bộ</button>
-      </div>
-    </div>
 
-    <div class="external-stats">
-      <div class="external-stat">
-        <div class="external-stat-label">🚛 Đang giao</div>
-        <div class="external-stat-value" id="externalInTransitCount">0</div>
-        <div class="external-stat-sub">Các đơn đang trên hành trình giao</div>
+      <div class="external-stats">
+        <div class="external-stat">
+          <div class="external-stat-label">🚛 Đang giao</div>
+          <div class="external-stat-value" id="externalInTransitCount">0</div>
+          <div class="external-stat-sub">Các đơn đang trên hành trình giao</div>
+        </div>
+        <div class="external-stat">
+          <div class="external-stat-label">✅ Giao thành công</div>
+          <div class="external-stat-value" id="externalDeliveredCount">0</div>
+          <div class="external-stat-sub">Các đơn đã phát thành công</div>
+        </div>
+        <div class="external-stat">
+          <div class="external-stat-label">↩️ Hoàn hàng</div>
+          <div class="external-stat-value" id="externalReturnedCount">0</div>
+          <div class="external-stat-sub">Các đơn trả về / hoàn về</div>
+        </div>
+        <div class="external-stat">
+          <div class="external-stat-label">💰 Tổng COD</div>
+          <div class="external-stat-value" id="externalTotalCod">0₫</div>
+          <div class="external-stat-sub">Tổng số tiền của toàn bộ đơn cấu hình</div>
+        </div>
       </div>
-      <div class="external-stat">
-        <div class="external-stat-label">✅ Giao thành công</div>
-        <div class="external-stat-value" id="externalDeliveredCount">0</div>
-        <div class="external-stat-sub">Các đơn đã phát thành công</div>
-      </div>
-      <div class="external-stat">
-        <div class="external-stat-label">↩️ Hoàn hàng</div>
-        <div class="external-stat-value" id="externalReturnedCount">0</div>
-        <div class="external-stat-sub">Các đơn trả về / hoàn về</div>
-      </div>
-      <div class="external-stat">
-        <div class="external-stat-label">💰 Tổng COD</div>
-        <div class="external-stat-value" id="externalTotalCod">0₫</div>
-        <div class="external-stat-sub">Tổng số tiền của toàn bộ đơn cấu hình</div>
-      </div>
-    </div>
 
-    <div class="external-toolbar">
-      <div class="table-title">Danh sách mã đơn ngoại sàn</div>
-      <div class="external-toolbar-note" id="externalOrdersMeta">Chưa có đơn nào được cấu hình.</div>
-    </div>
+      <div class="external-toolbar">
+        <div class="table-title">Danh sách mã đơn ngoại sàn</div>
+        <div class="external-toolbar-note" id="externalOrdersMeta">Chưa có đơn nào được cấu hình.</div>
+      </div>
 
-    <div class="external-order-grid" id="externalOrdersGrid">
-      <div class="external-empty">Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.</div>
+      <div class="external-order-grid" id="externalOrdersGrid">
+        <div class="external-empty">Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -2481,7 +2491,24 @@ function getExternalStatusMeta(status) {
   return map[status] || map.unknown;
 }
 
+function canConfigExternalOrders(id = localStorage.getItem(ID_KEY) || '') {
+  return String(id || '').trim() === 'Chang2000';
+}
+
+function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
+  const canConfig = canConfigExternalOrders(id);
+  const toggleBtn = document.getElementById('externalConfigToggleBtn');
+  const configPanel = document.getElementById('externalConfigPanel');
+  if (toggleBtn) {
+    toggleBtn.style.display = canConfig ? 'inline-flex' : 'none';
+  }
+  if (!canConfig && configPanel) {
+    configPanel.classList.remove('open');
+  }
+}
+
 function toggleExternalConfig(forceOpen) {
+  if (!canConfigExternalOrders()) return;
   const panel = document.getElementById('externalConfigPanel');
   if (!panel) return;
   const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !panel.classList.contains('open');
@@ -2489,6 +2516,7 @@ function toggleExternalConfig(forceOpen) {
 }
 
 function saveExternalOrdersConfig() {
+  if (!canConfigExternalOrders()) return;
   const text = document.getElementById('externalOrdersInput')?.value || '';
   const items = parseExternalOrdersText(text);
   setExternalOrdersConfig(items);
@@ -2498,6 +2526,7 @@ function saveExternalOrdersConfig() {
 }
 
 function clearExternalOrdersConfig() {
+  if (!canConfigExternalOrders()) return;
   setExternalOrdersConfig([]);
   setExternalStatuses({});
   const input = document.getElementById('externalOrdersInput');
@@ -3415,6 +3444,7 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
   if (!showAdminPanels && curlResultBg) {
     curlResultBg.style.display = 'none';
   }
+  updateExternalOrdersAccess(id);
 }
 
 function checkIdGate() {
