@@ -98,6 +98,22 @@ body{
 }
 .external-orders-title{font-size:16px;font-weight:800;color:#570301}
 .external-orders-sub{font-size:12px;color:#a06070;margin-top:4px;line-height:1.6}
+.external-scope-switch{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin-top:12px;
+}
+.external-scope-btn{
+  padding:9px 14px;border:none;border-radius:999px;
+  background:rgba(186,214,253,.16);color:#7a3040;
+  font-size:12px;font-weight:800;cursor:pointer;
+  transition:all .2s;
+}
+.external-scope-btn.active{
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff7ed;
+  box-shadow:0 6px 16px rgba(249,115,22,.25);
+}
+.external-scope-btn:hover{transform:translateY(-1px)}
 .external-orders-actions{
   display:flex;gap:8px;align-items:center;flex-wrap:wrap;
 }
@@ -1510,7 +1526,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 
 <div class="external-orders-wrap">
-  <div class="external-orders-card collapsible-panel" id="externalOrdersPanel">
+  <div class="external-orders-card collapsible-panel collapsed" id="externalOrdersPanel">
     <div class="panel-chrome">
       <div class="panel-window-controls">
         <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -1525,6 +1541,10 @@ select.sync-input{font-family:inherit;cursor:pointer}
           <div class="external-orders-title">🚚 Theo dõi đơn giao ngoại sàn Chiaki</div>
           <div class="external-orders-sub">
             Nhập danh sách mã đơn SPX và COD, sau đó click từng mã để mở trang tracking SPX ngay trong dashboard.
+          </div>
+          <div class="external-scope-switch">
+            <button class="external-scope-btn active" id="externalScopeBtnPhuong" type="button" onclick="switchExternalScope('phuong')">Phương's Order</button>
+            <button class="external-scope-btn" id="externalScopeBtnHoang" type="button" onclick="switchExternalScope('hoang')">Hoàng's Order</button>
           </div>
         </div>
         <div class="external-orders-actions">
@@ -1585,7 +1605,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
           <div class="external-stat clickable" onclick="openExternalFeeModal()">
             <div class="external-stat-label">🧾 KHẤU TRỪ</div>
             <div class="external-stat-value" id="externalFeeAmount">0₫</div>
-            <div class="external-stat-sub" id="externalFeeContent">Bấm để xem chi tiết phí</div>
+            <div class="external-stat-sub" id="externalFeeContent">Click để xem chi tiết</div>
           </div>
           <div class="external-stat">
             <div class="external-stat-label">💸 SỐ DƯ HIỆN TẠI</div>
@@ -1605,6 +1625,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
         <div class="external-toolbar-note" id="externalOrdersMeta">Chưa có đơn nào được cấu hình.</div>
       </div>
 
+      <div class="external-empty" id="externalOrdersPermission" style="display:none"></div>
       <div class="external-order-grid" id="externalOrdersGrid">
         <div class="external-empty">Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.</div>
       </div>
@@ -1983,7 +2004,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 
 <div class="container">
 <!-- ── Chart Section ── -->
-<div class="chart-card collapsible-panel" id="chartPanel">
+<div class="chart-card collapsible-panel collapsed" id="chartPanel">
   <div class="panel-chrome">
     <div class="panel-window-controls">
       <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
@@ -2593,8 +2614,43 @@ const limit = 200;
 let hanoiVisible = false;
 let currentSort = 'default';
 let activeExternalOrderCode = '';
+let activeExternalScope = 'phuong';
 window.externalOrdersData = [];
 window.externalOrdersConfig = { fee_items: [] };
+window.externalOrdersState = {
+  phuong: { items: [], config: { fee_items: [] } },
+  hoang: { items: [], config: { fee_items: [] } }
+};
+
+function getExternalScopeLabel(scope = activeExternalScope) {
+  return scope === 'hoang' ? "Hoàng's Order" : "Phương's Order";
+}
+
+function canViewExternalScope(scope = activeExternalScope, id = localStorage.getItem(ID_KEY) || '') {
+  if (scope !== 'hoang') return true;
+  return String(id || '').trim() === 'Hoang5611';
+}
+
+function getExternalScopeState(scope = activeExternalScope) {
+  return window.externalOrdersState?.[scope] || { items: [], config: { fee_items: [] } };
+}
+
+function setExternalScopeState(scope, items, config) {
+  window.externalOrdersState[scope] = {
+    items: Array.isArray(items) ? items : [],
+    config: config || { fee_items: [] }
+  };
+  if (scope === activeExternalScope) {
+    window.externalOrdersData = window.externalOrdersState[scope].items;
+    window.externalOrdersConfig = window.externalOrdersState[scope].config;
+  }
+}
+
+function hydrateActiveExternalState() {
+  const state = getExternalScopeState(activeExternalScope);
+  window.externalOrdersData = state.items;
+  window.externalOrdersConfig = state.config;
+}
 
 function formatExternalCurrency(amount) {
   return `${Number(amount || 0).toLocaleString('vi')}₫`;
@@ -2698,14 +2754,32 @@ function canConfigExternalOrders(id = localStorage.getItem(ID_KEY) || '') {
 }
 
 function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
-  const canConfig = canConfigExternalOrders(id);
+  const canConfig = canConfigExternalOrders(id) && canViewExternalScope(activeExternalScope, id);
   const toggleBtn = document.getElementById('externalConfigToggleBtn');
   const configPanel = document.getElementById('externalConfigPanel');
+  const btnPhuong = document.getElementById('externalScopeBtnPhuong');
+  const btnHoang = document.getElementById('externalScopeBtnHoang');
+  if (btnPhuong) btnPhuong.classList.toggle('active', activeExternalScope === 'phuong');
+  if (btnHoang) btnHoang.classList.toggle('active', activeExternalScope === 'hoang');
   if (toggleBtn) {
     toggleBtn.style.display = canConfig ? 'inline-flex' : 'none';
   }
   if (!canConfig && configPanel) {
     configPanel.classList.remove('open');
+  }
+}
+
+function switchExternalScope(scope) {
+  const nextScope = scope === 'hoang' ? 'hoang' : 'phuong';
+  activeExternalScope = nextScope;
+  activeExternalOrderCode = '';
+  closeExternalTrackModal();
+  hydrateActiveExternalState();
+  updateExternalOrdersAccess();
+  hydrateExternalOrdersInput();
+  renderExternalOrdersDashboard();
+  if (canViewExternalScope(nextScope)) {
+    loadExternalOrders(nextScope);
   }
 }
 
@@ -2733,17 +2807,17 @@ function saveExternalOrdersConfig() {
       'Content-Type': 'application/json',
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
-    body: JSON.stringify({ items, fee_items: feeItems })
+    body: JSON.stringify({ scope: activeExternalScope, items, fee_items: feeItems })
   })
     .then(r => r.json().then(data => ({ ok: r.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không lưu được cấu hình');
-      window.externalOrdersData = Array.isArray(data.items) ? data.items : [];
-      window.externalOrdersConfig = data.config || { fee_items: [] };
+      setExternalScopeState(activeExternalScope, data.items, data.config || { fee_items: [] });
+      hydrateActiveExternalState();
       hydrateExternalOrdersInput();
       renderExternalOrdersDashboard();
       toggleExternalConfig(false);
-      showToast(`Đã lưu ${window.externalOrdersData.length} đơn ngoại sàn`);
+      showToast(`Đã lưu ${window.externalOrdersData.length} đơn ngoại sàn cho ${getExternalScopeLabel()}`);
     })
     .catch(e => showToast(`❌ ${e.message}`));
 }
@@ -2756,19 +2830,19 @@ function clearExternalOrdersConfig() {
       'Content-Type': 'application/json',
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
-    body: JSON.stringify({ items: [], fee_items: [] })
+    body: JSON.stringify({ scope: activeExternalScope, items: [], fee_items: [] })
   })
     .then(r => r.json().then(data => ({ ok: r.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không xóa được cấu hình');
-      window.externalOrdersData = [];
-      window.externalOrdersConfig = data.config || { fee_items: [] };
+      setExternalScopeState(activeExternalScope, [], data.config || { fee_items: [] });
+      hydrateActiveExternalState();
       const input = document.getElementById('externalOrdersInput');
       if (input) input.value = '';
       renderExternalFeeRows();
       closeExternalTrackModal();
       renderExternalOrdersDashboard();
-      showToast('Đã xóa toàn bộ đơn ngoại sàn');
+      showToast(`Đã xóa toàn bộ đơn ngoại sàn của ${getExternalScopeLabel()}`);
     })
     .catch(e => showToast(`❌ ${e.message}`));
 }
@@ -2781,19 +2855,34 @@ function hydrateExternalOrdersInput() {
   renderExternalFeeRows();
 }
 
-async function loadExternalOrders() {
+async function loadExternalOrders(scope = activeExternalScope) {
+  if (!canViewExternalScope(scope)) {
+    if (scope === activeExternalScope) {
+      hydrateActiveExternalState();
+      renderExternalOrdersDashboard();
+    }
+    return;
+  }
   try {
-    const res = await fetch('/api/external-orders', { cache: 'no-store' });
+    const res = await fetch(`/api/external-orders?scope=${encodeURIComponent(scope)}`, {
+      cache: 'no-store',
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+    });
     const data = await res.json();
-    window.externalOrdersData = Array.isArray(data.items) ? data.items : [];
-    window.externalOrdersConfig = data.config || { fee_items: [] };
-    hydrateExternalOrdersInput();
-    renderExternalOrdersDashboard();
+    if (!res.ok) throw new Error(data.error || 'Không tải được đơn ngoại sàn');
+    setExternalScopeState(scope, data.items, data.config || { fee_items: [] });
+    if (scope === activeExternalScope) {
+      hydrateActiveExternalState();
+      hydrateExternalOrdersInput();
+      renderExternalOrdersDashboard();
+    }
   } catch (e) {
     console.error('loadExternalOrders error:', e);
-    window.externalOrdersData = [];
-    window.externalOrdersConfig = { fee_items: [] };
-    renderExternalOrdersDashboard();
+    setExternalScopeState(scope, [], { fee_items: [] });
+    if (scope === activeExternalScope) {
+      hydrateActiveExternalState();
+      renderExternalOrdersDashboard();
+    }
   }
 }
 
@@ -2839,6 +2928,7 @@ function renderExternalOrdersDashboard() {
   const feeItems = Array.isArray(config.fee_items) ? config.fee_items : [];
   const grid = document.getElementById('externalOrdersGrid');
   const meta = document.getElementById('externalOrdersMeta');
+  const permission = document.getElementById('externalOrdersPermission');
   const inTransitEl = document.getElementById('externalInTransitCount');
   const deliveredEl = document.getElementById('externalDeliveredCount');
   const returnedEl = document.getElementById('externalReturnedCount');
@@ -2848,7 +2938,26 @@ function renderExternalOrdersDashboard() {
   const feeContentEl = document.getElementById('externalFeeContent');
   const payoutEl = document.getElementById('externalPayoutToPhuong');
   const paidToPhuongEl = document.getElementById('externalPaidToPhuong');
-  if (!grid || !meta || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl || !paidToPhuongEl) return;
+  if (!grid || !meta || !permission || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl || !paidToPhuongEl) return;
+
+  if (!canViewExternalScope(activeExternalScope)) {
+    permission.style.display = 'block';
+    permission.textContent = 'Bạn không có quyền xem thông tin tại đây.';
+    grid.innerHTML = '';
+    meta.textContent = `${getExternalScopeLabel()} đang bị giới hạn quyền truy cập.`;
+    inTransitEl.textContent = '0';
+    deliveredEl.textContent = '0';
+    returnedEl.textContent = '0';
+    inTransitRevenueEl.textContent = formatExternalCurrency(0);
+    deliveredRevenueEl.textContent = formatExternalCurrency(0);
+    feeAmountEl.textContent = formatExternalCurrency(0);
+    feeContentEl.textContent = 'Không có dữ liệu để hiển thị';
+    payoutEl.textContent = formatExternalCurrency(0);
+    paidToPhuongEl.textContent = formatExternalCurrency(0);
+    return;
+  }
+
+  permission.style.display = 'none';
 
   let inTransit = 0;
   let delivered = 0;
@@ -2883,15 +2992,13 @@ function renderExternalOrdersDashboard() {
   inTransitRevenueEl.textContent = formatExternalCurrency(inTransitRevenue);
   deliveredRevenueEl.textContent = formatExternalCurrency(deliveredRevenue);
   feeAmountEl.textContent = formatExternalCurrency(outstandingFee);
-  feeContentEl.textContent = feeItems.length
-    ? feeItems.map(item => `${item.content || 'Không tên'}: ${formatExternalCurrency(item.amount || 0)}${item.collected ? ' • đã thu' : ''}`).join(' | ')
-    : 'Chưa có dòng phí';
+  feeContentEl.textContent = 'Click để xem chi tiết';
   payoutEl.textContent = formatExternalCurrency(deliveredRevenueUnpaid - outstandingFee);
   paidToPhuongEl.textContent = formatExternalCurrency(deliveredRevenuePaid - collectedFee);
 
   meta.textContent = items.length
-    ? `${items.length.toLocaleString('vi')} mã đơn đang được theo dõi ngoại sàn.`
-    : 'Chưa có đơn nào được cấu hình.';
+    ? `${items.length.toLocaleString('vi')} mã đơn đang được theo dõi cho ${getExternalScopeLabel()}.`
+    : `Chưa có đơn nào được cấu hình cho ${getExternalScopeLabel()}.`;
 
   if (!items.length) {
     grid.innerHTML = '<div class="external-empty">Chưa có mã đơn ngoại sàn được cấu hình.</div>';
@@ -2933,7 +3040,7 @@ function refreshExternalModalStatus() {
     paidEl.textContent = current.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán';
   }
 
-  const canEdit = canConfigExternalOrders();
+  const canEdit = canConfigExternalOrders() && canViewExternalScope(activeExternalScope);
   ['in_transit', 'delivered', 'returned', 'unknown'].forEach(status => {
     const button = document.getElementById(`externalStatusBtn${status === 'in_transit' ? 'InTransit' : status === 'delivered' ? 'Delivered' : status === 'returned' ? 'Returned' : 'Unknown'}`);
     if (button) {
@@ -2992,6 +3099,7 @@ function setExternalOrderStatus(status) {
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
     body: JSON.stringify({
+      scope: activeExternalScope,
       code: activeExternalOrderCode,
       status
     })
@@ -3003,6 +3111,7 @@ function setExternalOrderStatus(status) {
       window.externalOrdersData = (window.externalOrdersData || []).map(row =>
         row.code === item.code ? item : row
       );
+      setExternalScopeState(activeExternalScope, window.externalOrdersData, window.externalOrdersConfig);
       refreshExternalModalStatus();
       renderExternalOrdersDashboard();
     })
@@ -3018,6 +3127,7 @@ function setExternalOrderPaid(isPaid) {
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
     body: JSON.stringify({
+      scope: activeExternalScope,
       code: activeExternalOrderCode,
       is_paid: isPaid
     })
@@ -3029,6 +3139,7 @@ function setExternalOrderPaid(isPaid) {
       window.externalOrdersData = (window.externalOrdersData || []).map(row =>
         row.code === item.code ? item : row
       );
+      setExternalScopeState(activeExternalScope, window.externalOrdersData, window.externalOrdersConfig);
       refreshExternalModalStatus();
       renderExternalOrdersDashboard();
     })
@@ -3055,6 +3166,7 @@ function sortData(arr) {
 }
 
 async function init() {
+  collapseDefaultPanels();
   try {
     const [summaryData] = await Promise.all([loadSummary(), loadOrders(), loadExternalOrders()]);
     if (summaryData && summaryData.shops) {
@@ -3789,6 +3901,13 @@ function togglePanelCollapse(panelId) {
   if (panelId === 'chartPanel' && !panel.classList.contains('collapsed') && typeof chartMode !== 'undefined' && chartRawData) {
     setTimeout(() => renderChart(chartMode), 120);
   }
+}
+
+function collapseDefaultPanels() {
+  ['externalOrdersPanel', 'chartPanel'].forEach(panelId => {
+    const panel = document.getElementById(panelId);
+    if (panel) panel.classList.add('collapsed');
+  });
 }
 
 const ID_KEY         = 'chiaki_id';
