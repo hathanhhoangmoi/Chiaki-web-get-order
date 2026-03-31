@@ -1453,8 +1453,8 @@ select.sync-input{font-family:inherit;cursor:pointer}
   <div class="info-modal-sub">Nhập đơn cũ và sản phẩm mới để tạo script chuyển đơn</div>
 
   <input class="info-input" id="transferOldOrderCode" type="text" placeholder="Mã đơn hàng cũ" />
-  <input class="info-input" id="transferNewProductCode" type="text" placeholder="Mã sản phẩm mới" />
-  <input class="info-input" id="transferNewProductId" type="text" placeholder="ID sản phẩm mới" />
+  <input class="info-input" id="transferProductLink" type="text" placeholder="Link sản phẩm" />
+  <div id="transferProductResolved" style="font-size:12px;color:#7c3aed;margin:-4px 0 10px;min-height:16px"></div>
   <input class="info-input" id="transferQuantity" type="number" min="1" step="1" placeholder="Số lượng" />
   <input class="info-input" id="transferTargetShopId" type="text" placeholder="ID Shop nhận đơn" />
 
@@ -1465,6 +1465,8 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 </div>
 </div>
+
+  <div style="border-top:1px solid rgba(198,181,255,.3);margin:16px 0"></div>
   <!-- Panel SYNC DANH SÁCH ĐƠN HÀNG -->
 <div class="info-modal-bg" id="syncPanel" style="display:none">
   <div class="info-modal collapsible-panel collapsed" id="panelSyncOrders">
@@ -4614,20 +4616,25 @@ function escapeForShellDoubleQuotes(value) {
 
 async function generateTransferOrderCurl() {
   const oldOrderCode = document.getElementById('transferOldOrderCode').value.trim();
-  const newProductCode = document.getElementById('transferNewProductCode').value.trim();
-  const newProductId = document.getElementById('transferNewProductId').value.trim();
+  const productLink = document.getElementById('transferProductLink').value.trim();
   const quantity = document.getElementById('transferQuantity').value.trim();
   const targetShopId = document.getElementById('transferTargetShopId').value.trim();
   const msg = document.getElementById('transferCurlMsg');
+  const resolvedBox = document.getElementById('transferProductResolved');
   const key = (localStorage.getItem('lastInfoKey') || document.getElementById('infoKey')?.value || '').trim();
 
-  if (!oldOrderCode || !newProductCode || !newProductId || !quantity || !targetShopId) {
-    msg.textContent = '⚠️ Vui lòng điền đủ 5 trường.';
+  if (!oldOrderCode || !productLink || !quantity || !targetShopId) {
+    msg.textContent = '⚠️ Vui lòng điền đủ 4 trường.';
     msg.style.color = '#ef4444';
     return;
   }
-  if (!/^\d+$/.test(newProductId) || !/^\d+$/.test(quantity) || !/^\d+$/.test(targetShopId)) {
-    msg.textContent = '⚠️ ID sản phẩm mới, số lượng và ID Shop nhận đơn phải là số.';
+  if (!/^https?:\/\//i.test(productLink)) {
+    msg.textContent = '⚠️ Link sản phẩm phải bắt đầu bằng http:// hoặc https://';
+    msg.style.color = '#ef4444';
+    return;
+  }
+  if (!/^\d+$/.test(quantity) || !/^\d+$/.test(targetShopId)) {
+    msg.textContent = '⚠️ Số lượng và ID Shop nhận đơn phải là số.';
     msg.style.color = '#ef4444';
     return;
   }
@@ -4637,10 +4644,32 @@ async function generateTransferOrderCurl() {
     return;
   }
 
-  msg.textContent = '⏳ Đang lấy thông tin đơn hàng cũ...';
+  msg.textContent = '⏳ Đang đọc link sản phẩm...';
   msg.style.color = '#7c3aed';
+  if (resolvedBox) resolvedBox.textContent = '';
 
   try {
+    const productRes = await fetch('/api/product-link-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: productLink })
+    });
+    const productData = await productRes.json();
+    if (!productRes.ok || productData.error) {
+      throw new Error(productData.error || `HTTP ${productRes.status}`);
+    }
+
+    const newProductId = String(productData.product_id || '').trim();
+    const newProductCode = String(productData.product_code || '').trim();
+    if (!/^\d+$/.test(newProductId) || !newProductCode) {
+      throw new Error('Không lấy được ID hoặc mã sản phẩm hợp lệ từ link.');
+    }
+    if (resolvedBox) {
+      resolvedBox.textContent = `Đã lấy từ link: ID ${newProductId} · Mã ${newProductCode}`;
+    }
+
+    msg.textContent = '⏳ Đang lấy thông tin đơn hàng cũ...';
+
     const res = await fetch('/api/order-info', {
       method: 'POST',
       headers: {
@@ -4763,7 +4792,7 @@ curl 'https://api.chiaki.vn/api/checkout' \\
     window._generatedTransferCurl = curlText;
     msg.textContent = '';
     document.getElementById('transferCurlResultInfo').textContent =
-      `Đơn cũ: ${oldOrderCode} · User ID: ${userId} · SP mới: ${newProductCode} · Shop nhận: ${targetShopId}`;
+      `Đơn cũ: ${oldOrderCode} · User ID: ${userId} · SP mới: ${newProductCode} · ID: ${newProductId} · Shop nhận: ${targetShopId}`;
     document.getElementById('transferCurlResultText').textContent = curlText;
     document.getElementById('copyTransferCurlBtn').textContent = '📋 Sao chép';
     document.getElementById('transferCurlResultBg').style.display = 'flex';
