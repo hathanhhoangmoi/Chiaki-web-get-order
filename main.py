@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db, migrate
 from fetcher import sync_shop, parse_excel
-from models import Base, Order, ShopMeta
+from models import Base, ExternalOrderTracking, Order, ShopMeta
 from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, get_shops_map
 
 # ── Key management cho order-info ─────────────────────────
@@ -68,6 +68,19 @@ def serialize_order(o):
         "status":        o.status,
         "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
         "restricted":    False,
+    }
+
+
+def can_manage_external_orders(user_id: str) -> bool:
+    return str(user_id or "").strip() == "Chang2000"
+
+
+def serialize_external_order(o: ExternalOrderTracking):
+    return {
+        "code": o.order_code,
+        "cod": int(o.cod_amount or 0),
+        "status": o.status or "unknown",
+        "updated_at": o.updated_at.isoformat() if o.updated_at else None,
     }
 
 # ── API Endpoints ──────────────────────────────────────────
@@ -229,6 +242,88 @@ def get_chart_data(db: Session = Depends(get_db)):
     return {
         "by_date": [{"date": d, "count": c} for d, c in by_date if d],
         "by_shop": [{"shop": s, "count": c} for s, c in by_shop if s],
+    }
+
+
+@app.get("/api/external-orders")
+def get_external_orders(db: Session = Depends(get_db)):
+    rows = db.query(ExternalOrderTracking).order_by(desc(ExternalOrderTracking.updated_at), ExternalOrderTracking.order_code).all()
+    return {
+        "total": len(rows),
+        "items": [serialize_external_order(row) for row in rows],
+    }
+
+
+@app.post("/api/external-orders")
+def save_external_orders(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "")
+    if not can_manage_external_orders(user_id):
+        return JSONResponse({"error": "Không có quyền chỉnh cấu hình."}, status_code=403)
+
+    items = body.get("items")
+    if not isinstance(items, list):
+        return JSONResponse({"error": "Dữ liệu không hợp lệ."}, status_code=422)
+
+    normalized = []
+    seen = set()
+    valid_statuses = {"unknown", "in_transit", "delivered", "returned"}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code", "")).strip().upper()
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        try:
+            cod = int(item.get("cod") or 0)
+        except Exception:
+            cod = 0
+        status = str(item.get("status") or "unknown").strip()
+        if status not in valid_statuses:
+            status = "unknown"
+        normalized.append({"code": code, "cod": cod, "status": status})
+
+    db.query(ExternalOrderTracking).delete()
+    for item in normalized:
+        db.add(ExternalOrderTracking(
+            order_code=item["code"],
+            cod_amount=item["cod"],
+            status=item["status"],
+            updated_at=datetime.now(),
+        ))
+    db.commit()
+
+    rows = db.query(ExternalOrderTracking).order_by(desc(ExternalOrderTracking.updated_at), ExternalOrderTracking.order_code).all()
+    return {
+        "ok": True,
+        "total": len(rows),
+        "items": [serialize_external_order(row) for row in rows],
+    }
+
+
+@app.post("/api/external-orders/status")
+def update_external_order_status(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not user_id:
+        return JSONResponse({"error": "Không có quyền cập nhật."}, status_code=403)
+
+    code = str(body.get("code", "")).strip().upper()
+    status = str(body.get("status", "unknown")).strip()
+    valid_statuses = {"unknown", "in_transit", "delivered", "returned"}
+    if not code or status not in valid_statuses:
+        return JSONResponse({"error": "Dữ liệu không hợp lệ."}, status_code=422)
+
+    row = db.query(ExternalOrderTracking).filter(ExternalOrderTracking.order_code == code).first()
+    if not row:
+        return JSONResponse({"error": "Không tìm thấy đơn ngoại sàn."}, status_code=404)
+
+    row.status = status
+    row.updated_at = datetime.now()
+    db.commit()
+
+    return {
+        "ok": True,
+        "item": serialize_external_order(row),
     }
 
 @app.post("/api/order-info")
