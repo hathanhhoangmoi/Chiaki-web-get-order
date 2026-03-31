@@ -80,7 +80,6 @@ body{
   font-size:14px;
 }
 .product-search-input::placeholder{color:#a06070}
-.product-search-hint{font-size:11px;color:#a06070;margin-top:8px;padding-left:8px}
 .external-orders-wrap{
   margin:18px 32px 0 472px;
 }
@@ -225,16 +224,36 @@ body{
   border-color:rgba(186,214,253,.65);
 }
 .external-order-code{font-size:12px;font-weight:800;font-family:monospace;color:#5c3d49}
-.external-order-meta{font-size:11px;color:#8b6672;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+.external-order-meta{
+  font-size:11px;color:#8b6672;margin-top:6px;
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+}
 .external-status-pill{
   display:inline-flex;align-items:center;justify-content:center;
-  padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;
-  letter-spacing:.3px;
+  padding:5px 10px;border-radius:999px;font-size:10px;font-weight:900;
+  letter-spacing:.35px;border:1px solid transparent;
+  box-shadow:0 6px 14px rgba(15,23,42,.08);
 }
-.external-status-in_transit{background:rgba(186,214,253,.28);color:#1d4ed8}
-.external-status-delivered{background:rgba(167,243,208,.5);color:#065f46}
-.external-status-returned{background:rgba(254,202,202,.55);color:#991b1b}
-.external-status-unknown{background:rgba(247,229,148,.42);color:#7a4500}
+.external-status-in_transit{
+  background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+  color:#1d4ed8;border-color:rgba(59,130,246,.28);
+}
+.external-status-delivered{
+  background:linear-gradient(135deg,#dcfce7,#bbf7d0);
+  color:#166534;border-color:rgba(34,197,94,.25);
+}
+.external-status-returned{
+  background:linear-gradient(135deg,#fee2e2,#fecaca);
+  color:#b91c1c;border-color:rgba(239,68,68,.22);
+}
+.external-status-unknown{
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  color:#92400e;border-color:rgba(245,158,11,.25);
+}
+.external-status-paid{
+  background:linear-gradient(135deg,#ccfbf1,#99f6e4);
+  color:#0f766e;border-color:rgba(20,184,166,.24);
+}
 .external-empty{
   padding:22px;text-align:center;color:#a06070;font-size:13px;
   border:1px dashed rgba(186,214,253,.45);border-radius:22px;
@@ -1540,7 +1559,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
         <div>
           <div class="external-orders-title">🚚 Theo dõi đơn giao ngoại sàn Chiaki</div>
           <div class="external-orders-sub">
-            Nhập danh sách mã đơn SPX và COD, sau đó click từng mã để mở trang tracking SPX ngay trong dashboard.
+            Theo dõi đơn hàng SPX.
           </div>
           <div class="external-scope-switch">
             <button class="external-scope-btn active" id="externalScopeBtnPhuong" type="button" onclick="switchExternalScope('phuong')">Phương's Order</button>
@@ -1548,7 +1567,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
           </div>
         </div>
         <div class="external-orders-actions">
-          <button class="external-config-toggle" id="externalConfigToggleBtn" type="button" onclick="toggleExternalConfig()">⚙️ Config đơn ngoại sàn</button>
+          <button class="external-config-toggle" id="externalConfigToggleBtn" type="button" onclick="toggleExternalConfig()">⚙️ Config</button>
         </div>
       </div>
 
@@ -1669,13 +1688,12 @@ select.sync-input{font-family:inherit;cursor:pointer}
       id="productSearchInput"
       class="product-search-input"
       type="text"
-      placeholder="Tìm tên sản phẩm... hỗ trợ full-text / token search"
+      placeholder="Tìm tên sản phẩm..."
       oninput="handleProductSearchInput()"
       onkeydown="if(event.key==='Enter') searchProductOrders(true)"
     />
     <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm ngay</button>
   </div>
-  <div class="product-search-hint">Nhập từ khóa sản phẩm để hiện popup các đơn khớp tên sản phẩm.</div>
 </div>
 
 <div class="external-track-modal" id="externalTrackModal" onclick="if(event.target===this) closeExternalTrackModal()">
@@ -3008,7 +3026,7 @@ function renderExternalOrdersDashboard() {
   grid.innerHTML = items.map(item => {
     const metaStatus = getExternalStatusMeta(item.status || 'unknown');
     const updatedAt = item.updated_at ? `<span>${new Date(item.updated_at).toLocaleString('vi-VN')}</span>` : '';
-    const paidBadge = item.is_paid ? '<span class="external-status-pill external-status-delivered">Đã thanh toán</span>' : '';
+    const paidBadge = item.is_paid ? '<span class="external-status-pill external-status-paid">Đã thanh toán</span>' : '';
     return `
       <button class="external-order-btn" type="button" onclick="openExternalTrackModal('${item.code}')">
         <div class="external-order-code">${item.code}</div>
@@ -3036,7 +3054,7 @@ function refreshExternalModalStatus() {
   }
   if (updatedAtEl) updatedAtEl.textContent = current.updated_at ? new Date(current.updated_at).toLocaleString('vi-VN') : '—';
   if (paidEl) {
-    paidEl.className = `external-status-pill ${current.is_paid ? 'external-status-delivered' : 'external-status-unknown'}`;
+    paidEl.className = `external-status-pill ${current.is_paid ? 'external-status-paid' : 'external-status-unknown'}`;
     paidEl.textContent = current.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán';
   }
 
