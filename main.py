@@ -1,6 +1,5 @@
 import io
 import json as _json
-import re
 from datetime import datetime, timedelta
 
 import httpx
@@ -154,26 +153,6 @@ def should_hide_order(order, user_id: str) -> bool:
         total = 0
     return shop_id in SENSITIVE_SHOPS or total >= SENSITIVE_TOTAL_THRESHOLD
 
-def extract_product_payload(value):
-    if isinstance(value, dict):
-        product_id = value.get("id")
-        product_code = value.get("code")
-        if product_id not in (None, "") and product_code not in (None, ""):
-            return {
-                "id": str(product_id).strip(),
-                "code": str(product_code).strip()
-            }
-        for child in value.values():
-            found = extract_product_payload(child)
-            if found:
-                return found
-    elif isinstance(value, list):
-        for child in value:
-            found = extract_product_payload(child)
-            if found:
-                return found
-    return None
-
 def serialize_order(o, mask=False):
     """Serialize order với mask nếu cần"""
     M = "••••••••"
@@ -291,55 +270,6 @@ def search_orders_by_product(
         "total": len(orders),
         "data": [serialize_order(o, mask=False) for o in orders]
     }
-
-@app.post("/api/product-link-info")
-async def get_product_link_info(body: dict):
-    product_url = str(body.get("url", "")).strip()
-    if not product_url:
-        return JSONResponse({"error": "Thiếu link sản phẩm."}, status_code=400)
-
-    try:
-        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
-            page_res = await client.get(product_url, headers={
-                "User-Agent": "Mozilla/5.0",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-            })
-        page_res.raise_for_status()
-        html = page_res.text.replace("\\/", "/")
-
-        api_match = re.search(r'https?://api\.chiaki\.vn/api/product/[^\s"\'<>\\]+', html)
-        if not api_match:
-            api_match = re.search(r'api\.chiaki\.vn/api/product/[^\s"\'<>\\]+', html)
-
-        if not api_match:
-            return JSONResponse({"error": "Không tìm thấy API sản phẩm trong link này."}, status_code=404)
-
-        api_url = api_match.group(0)
-        if api_url.startswith("api.chiaki.vn/"):
-            api_url = f"https://{api_url}"
-
-        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
-            api_res = await client.get(api_url, headers={
-                "Accept": "application/json, text/plain, */*",
-                "User-Agent": "chiakiApp/3.6.2"
-            })
-        api_res.raise_for_status()
-        payload = api_res.json()
-
-        product = extract_product_payload(payload)
-        if not product or not product["id"] or not product["code"]:
-            return JSONResponse({"error": "Không tìm thấy id/code sản phẩm trong API response."}, status_code=404)
-
-        return {
-            "ok": True,
-            "api_url": api_url,
-            "product_id": product["id"],
-            "product_code": product["code"],
-        }
-    except httpx.HTTPError as e:
-        return JSONResponse({"error": f"Không đọc được link sản phẩm: {e}"}, status_code=502)
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.post("/api/update-shopname")
 def update_shopname(body: dict, db: Session = Depends(get_db)):
