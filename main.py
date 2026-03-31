@@ -34,7 +34,7 @@ app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ── Helper functions ───────────────────────────────────────
-FULL_ACCESS_IDS = {"Chang2000"}
+FULL_ACCESS_IDS = {"Hoang5611"}
 SENSITIVE_SHOPS = {"4647", "4732"}
 SENSITIVE_TOTAL_THRESHOLD = 2_500_000
 PHONE_KEY_PHUONG_ALLOWED_SHOPS = {"4917", "4940", "5096", "5125", "5114"}
@@ -72,7 +72,7 @@ def serialize_order(o):
 
 
 def can_manage_external_orders(user_id: str) -> bool:
-    return str(user_id or "").strip() == "Chang2000"
+    return str(user_id or "").strip() == "Hoang5611"
 
 
 def serialize_external_order(o: ExternalOrderTracking):
@@ -550,7 +550,7 @@ async def check_key(body: dict):
 @app.get("/api/order-info/history")
 async def get_key_history(request: Request):
     user_id = request.headers.get('X-User-ID', '')
-    if user_id != 'Chang2000':
+    if user_id != 'Hoang5611':
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
 
     result = []
@@ -581,7 +581,7 @@ async def login_log(body: dict, request: Request):
 @app.get("/api/auth/login-history")
 async def get_login_history(request: Request):
     user_id = request.headers.get('X-User-ID', '')
-    if user_id != 'Chang2000':
+    if user_id != 'Hoang5611':
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
     return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
 @app.get("/api/export-order/{order_code}")
@@ -638,9 +638,9 @@ async def export_order(order_code: str, request: Request, db: Session = Depends(
 @app.post("/api/auth/verify-id")
 async def verify_id(body: dict):
     VALID_IDS = {
-        "LOGIN-KEY-PHUONG2000": {"hours": 24,           "label": "Phương"},
+        "LOGIN-KEY-PHUONG2000": {"hours": 1,           "label": "Phương"},
         "LOGIN-KEY-CHANGTESTUSER":    {"hours": 9999999999,   "label": "Hoàng"},
-        "Chang2000":    {"hours": 9999999999,   "label": "Hoàng"},
+        "Hoang5611":    {"hours": 9999999999,   "label": "Hoàng"},
         "unlimited_id": {"hours": 9999999999, "label": "Unlimited"},
     }
     user_id = body.get("id", "").strip()
