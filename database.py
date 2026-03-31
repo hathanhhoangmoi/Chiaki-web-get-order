@@ -50,6 +50,21 @@ def migrate():
     except Exception as e:
         print(f"[migrate] external_order_tracking: {e}")
 
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS external_order_config (
+                    id INTEGER PRIMARY KEY,
+                    fee_amount INTEGER DEFAULT 0,
+                    fee_content TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.commit()
+            print("[migrate] Đã đảm bảo bảng external_order_config")
+    except Exception as e:
+        print(f"[migrate] external_order_config: {e}")
+
     # Đổi order_code từ unique → index thường
     try:
         with engine.connect() as conn:
