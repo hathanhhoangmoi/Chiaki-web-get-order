@@ -81,6 +81,165 @@ body{
 }
 .product-search-input::placeholder{color:#a06070}
 .product-search-hint{font-size:11px;color:#a06070;margin-top:8px;padding-left:8px}
+.external-orders-wrap{
+  margin:18px 32px 0 472px;
+}
+.external-orders-card{
+  padding:18px 20px 20px;
+  border-radius:30px;
+  background:rgba(255,255,255,.58);
+  border:1px solid rgba(255,255,255,.78);
+  backdrop-filter:blur(24px);
+  box-shadow:0 10px 30px rgba(87,3,1,.08);
+}
+.external-orders-head{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:14px;flex-wrap:wrap;margin-bottom:14px;
+}
+.external-orders-title{font-size:16px;font-weight:800;color:#570301}
+.external-orders-sub{font-size:12px;color:#a06070;margin-top:4px;line-height:1.6}
+.external-orders-actions{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+}
+.external-config-toggle{
+  padding:8px 14px;border:none;border-radius:999px;
+  background:rgba(186,214,253,.28);color:#570301;
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.external-config-panel{
+  display:none;
+  margin:14px 0 16px;
+  padding:16px;
+  border-radius:24px;
+  background:rgba(255,255,255,.45);
+  border:1px solid rgba(186,214,253,.35);
+}
+.external-config-panel.open{display:block}
+.external-config-label{
+  font-size:11px;font-weight:700;color:#a06070;
+  letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px;
+}
+.external-config-textarea{
+  width:100%;min-height:130px;resize:vertical;
+  border:1.5px solid rgba(186,214,253,.5);
+  border-radius:18px;padding:12px 14px;
+  font:12px/1.7 monospace;color:#570301;
+  background:rgba(255,255,255,.7);outline:none;
+}
+.external-config-textarea:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
+.external-config-hint{font-size:11px;color:#a06070;margin-top:8px;line-height:1.6}
+.external-config-btns{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;
+}
+.btn-external-secondary{
+  padding:9px 14px;border:none;border-radius:12px;
+  background:rgba(186,214,253,.22);color:#570301;
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+}
+.external-stats{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;margin-bottom:16px;
+}
+.external-stat{
+  padding:14px 16px;border-radius:22px;
+  background:rgba(255,255,255,.42);
+  border:1px solid rgba(255,255,255,.8);
+}
+.external-stat-label{font-size:11px;color:#a06070;font-weight:600;margin-bottom:6px}
+.external-stat-value{font-size:24px;font-weight:800;color:#570301;line-height:1}
+.external-stat-sub{font-size:11px;color:#c09090;margin-top:5px}
+.external-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin-bottom:12px;
+}
+.external-toolbar-note{font-size:11px;color:#a06070}
+.external-order-grid{
+  display:flex;flex-wrap:wrap;gap:10px;
+}
+.external-order-btn{
+  padding:10px 14px;border:none;border-radius:16px;
+  background:linear-gradient(135deg,rgba(245,186,213,.5),rgba(186,214,253,.42));
+  color:#570301;cursor:pointer;
+  box-shadow:0 5px 16px rgba(186,214,253,.22);
+  min-width:170px;text-align:left;
+}
+.external-order-btn:hover{transform:translateY(-1px)}
+.external-order-code{font-size:12px;font-weight:800;font-family:monospace}
+.external-order-meta{font-size:11px;color:#7a3040;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+.external-status-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;
+  letter-spacing:.3px;
+}
+.external-status-in_transit{background:rgba(186,214,253,.28);color:#1d4ed8}
+.external-status-delivered{background:rgba(167,243,208,.5);color:#065f46}
+.external-status-returned{background:rgba(254,202,202,.55);color:#991b1b}
+.external-status-unknown{background:rgba(247,229,148,.42);color:#7a4500}
+.external-empty{
+  padding:22px;text-align:center;color:#a06070;font-size:13px;
+  border:1px dashed rgba(186,214,253,.45);border-radius:22px;
+  background:rgba(255,255,255,.24);
+}
+.external-track-modal{
+  position:fixed;inset:0;z-index:9100;
+  display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(15,23,42,.42);backdrop-filter:blur(8px);
+}
+.external-track-modal.show{display:flex}
+.external-track-dialog{
+  width:min(1220px,96vw);max-height:92vh;overflow:hidden;
+  border-radius:28px;background:rgba(255,255,255,.95);
+  border:1px solid rgba(255,255,255,.88);
+  box-shadow:0 24px 70px rgba(15,23,42,.22);
+  display:grid;grid-template-columns:340px minmax(0,1fr);
+}
+.external-track-side{
+  padding:22px 20px;border-right:1px solid rgba(186,214,253,.25);
+  background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(245,186,213,.18));
+  overflow-y:auto;
+}
+.external-track-main{
+  display:flex;flex-direction:column;min-height:0;background:#fff;
+}
+.external-track-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:18px 20px 14px;border-bottom:1px solid rgba(186,214,253,.22);
+}
+.external-track-head-title{font-size:15px;font-weight:800;color:#570301}
+.external-track-head-sub{font-size:11px;color:#a06070;margin-top:4px}
+.external-track-close{
+  width:34px;height:34px;border:none;border-radius:999px;
+  background:rgba(186,214,253,.2);color:#570301;cursor:pointer;font-size:18px;
+}
+.external-track-iframe{
+  flex:1;width:100%;border:none;background:#fff;
+}
+.external-track-row{
+  display:flex;justify-content:space-between;gap:10px;
+  padding:10px 0;border-bottom:1px solid rgba(186,214,253,.18);
+}
+.external-track-row:last-of-type{border-bottom:none}
+.external-track-label{font-size:11px;font-weight:700;color:#a06070;min-width:110px}
+.external-track-value{font-size:13px;font-weight:700;color:#570301;text-align:right;word-break:break-word}
+.external-status-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;
+}
+.external-status-btn{
+  padding:10px 12px;border:none;border-radius:12px;
+  background:rgba(255,255,255,.68);color:#570301;
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid rgba(186,214,253,.32);
+}
+.external-status-btn.active{background:linear-gradient(135deg,#F5BAD5,#BAD6FD)}
+.external-track-links{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;
+}
+.external-track-note{
+  margin-top:16px;padding:12px 14px;border-radius:14px;
+  background:rgba(247,229,148,.22);border:1px solid rgba(247,229,148,.5);
+  font-size:11px;color:#7a4500;line-height:1.7;
+}
 .product-search-modal{
   display:none;position:fixed;inset:0;z-index:9998;
   background:rgba(15,23,42,.45);
@@ -1003,6 +1162,10 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 #shippingLabelPrint{display:none}
 @media (max-width: 1100px){
+  .external-orders-wrap{margin:16px}
+  .external-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .external-track-dialog{grid-template-columns:1fr}
+  .external-track-side{border-right:none;border-bottom:1px solid rgba(186,214,253,.25)}
   .product-search-wrap{margin:16px}
 }
 @media print{
@@ -1254,6 +1417,70 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </button>
 </div>
 
+<div class="external-orders-wrap">
+  <div class="external-orders-card">
+    <div class="external-orders-head">
+      <div>
+        <div class="external-orders-title">🚚 Theo dõi đơn giao ngoại sàn Chiaki</div>
+        <div class="external-orders-sub">
+          Nhập danh sách mã đơn SPX và COD, sau đó click từng mã để mở trang tracking SPX ngay trong dashboard.
+        </div>
+      </div>
+      <div class="external-orders-actions">
+        <button class="external-config-toggle" type="button" onclick="toggleExternalConfig()">⚙️ Config đơn ngoại sàn</button>
+      </div>
+    </div>
+
+    <div class="external-config-panel" id="externalConfigPanel">
+      <div class="external-config-label">Danh sách đơn theo mẫu: `MÃ_ĐƠN|COD`</div>
+      <textarea
+        id="externalOrdersInput"
+        class="external-config-textarea"
+        placeholder="SPXVN123456789|350000&#10;SPXVN987654321|420000"
+      ></textarea>
+      <div class="external-config-hint">
+        Mỗi dòng là 1 đơn. Hệ thống sẽ lưu tại trình duyệt hiện tại và dùng để tạo nút, thống kê và modal tracking.
+      </div>
+      <div class="external-config-btns">
+        <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu danh sách</button>
+        <button class="btn-external-secondary" type="button" onclick="clearExternalOrdersConfig()">🗑️ Xóa toàn bộ</button>
+      </div>
+    </div>
+
+    <div class="external-stats">
+      <div class="external-stat">
+        <div class="external-stat-label">🚛 Đang giao</div>
+        <div class="external-stat-value" id="externalInTransitCount">0</div>
+        <div class="external-stat-sub">Các đơn đang trên hành trình giao</div>
+      </div>
+      <div class="external-stat">
+        <div class="external-stat-label">✅ Giao thành công</div>
+        <div class="external-stat-value" id="externalDeliveredCount">0</div>
+        <div class="external-stat-sub">Các đơn đã phát thành công</div>
+      </div>
+      <div class="external-stat">
+        <div class="external-stat-label">↩️ Hoàn hàng</div>
+        <div class="external-stat-value" id="externalReturnedCount">0</div>
+        <div class="external-stat-sub">Các đơn trả về / hoàn về</div>
+      </div>
+      <div class="external-stat">
+        <div class="external-stat-label">💰 Tổng COD</div>
+        <div class="external-stat-value" id="externalTotalCod">0₫</div>
+        <div class="external-stat-sub">Tổng số tiền của toàn bộ đơn cấu hình</div>
+      </div>
+    </div>
+
+    <div class="external-toolbar">
+      <div class="table-title">Danh sách mã đơn ngoại sàn</div>
+      <div class="external-toolbar-note" id="externalOrdersMeta">Chưa có đơn nào được cấu hình.</div>
+    </div>
+
+    <div class="external-order-grid" id="externalOrdersGrid">
+      <div class="external-empty">Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.</div>
+    </div>
+  </div>
+</div>
+
 <div class="product-search-wrap">
   <div class="product-search-box">
     <span style="font-size:18px">🔎</span>
@@ -1268,6 +1495,61 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm ngay</button>
   </div>
   <div class="product-search-hint">Nhập từ khóa sản phẩm để hiện popup các đơn khớp tên sản phẩm.</div>
+</div>
+
+<div class="external-track-modal" id="externalTrackModal" onclick="if(event.target===this) closeExternalTrackModal()">
+  <div class="external-track-dialog">
+    <div class="external-track-side">
+      <div class="external-orders-title" style="font-size:15px">Thông tin vận chuyển</div>
+      <div class="external-orders-sub" style="margin-bottom:12px">
+        Modal mở trực tiếp trang tracking từ SPX để tiện theo dõi ngay trong dashboard.
+      </div>
+
+      <div class="external-track-row">
+        <div class="external-track-label">Mã đơn</div>
+        <div class="external-track-value" id="externalModalCode">—</div>
+      </div>
+      <div class="external-track-row">
+        <div class="external-track-label">COD</div>
+        <div class="external-track-value" id="externalModalCod">—</div>
+      </div>
+      <div class="external-track-row">
+        <div class="external-track-label">Trạng thái</div>
+        <div class="external-track-value"><span class="external-status-pill external-status-unknown" id="externalModalStatus">Chưa xác định</span></div>
+      </div>
+      <div class="external-track-row">
+        <div class="external-track-label">Cập nhật</div>
+        <div class="external-track-value" id="externalModalUpdatedAt">—</div>
+      </div>
+
+      <div class="external-status-actions">
+        <button class="external-status-btn" id="externalStatusBtnInTransit" type="button" onclick="setExternalOrderStatus('in_transit')">🚛 Đang giao</button>
+        <button class="external-status-btn" id="externalStatusBtnDelivered" type="button" onclick="setExternalOrderStatus('delivered')">✅ Thành công</button>
+        <button class="external-status-btn" id="externalStatusBtnReturned" type="button" onclick="setExternalOrderStatus('returned')">↩️ Hoàn hàng</button>
+        <button class="external-status-btn" id="externalStatusBtnUnknown" type="button" onclick="setExternalOrderStatus('unknown')">❔ Chưa rõ</button>
+      </div>
+
+      <div class="external-track-links">
+        <a class="btn btn-primary" id="externalTrackLink" href="https://spx.vn" target="_blank" rel="noopener noreferrer">🌐 Mở SPX tab mới</a>
+        <button class="btn-external-secondary" type="button" onclick="reloadExternalTrackFrame()">🔄 Tải lại</button>
+      </div>
+
+      <div class="external-track-note">
+        Trạng thái dùng cho phần thống kê được lưu riêng theo từng mã đơn trên trình duyệt hiện tại. Khi cần đối chiếu chi tiết, mở trực tiếp SPX ở khung bên phải hoặc tab mới.
+      </div>
+    </div>
+
+    <div class="external-track-main">
+      <div class="external-track-head">
+        <div>
+          <div class="external-track-head-title">SPX Tracking Viewer</div>
+          <div class="external-track-head-sub">Nguồn hiển thị: `https://spx.vn/track?(mã đơn)`</div>
+        </div>
+        <button class="external-track-close" type="button" onclick="closeExternalTrackModal()">✕</button>
+      </div>
+      <iframe class="external-track-iframe" id="externalTrackIframe" src="about:blank" loading="lazy"></iframe>
+    </div>
+  </div>
 </div>
 
 <div class="product-search-modal" id="productSearchBg" onclick="if(event.target===this) closeProductSearchModal()">
@@ -2132,6 +2414,224 @@ let currentPage = 1;
 const limit = 200;
 let hanoiVisible = false;
 let currentSort = 'default';
+const EXTERNAL_ORDERS_KEY = 'chiaki_external_orders_config_v1';
+const EXTERNAL_ORDER_STATUSES_KEY = 'chiaki_external_order_statuses_v1';
+let activeExternalOrderCode = '';
+
+function formatExternalCurrency(amount) {
+  return `${Number(amount || 0).toLocaleString('vi')}₫`;
+}
+
+function getExternalOrdersConfig() {
+  try {
+    const raw = localStorage.getItem(EXTERNAL_ORDERS_KEY) || '[]';
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function setExternalOrdersConfig(items) {
+  localStorage.setItem(EXTERNAL_ORDERS_KEY, JSON.stringify(items));
+}
+
+function getExternalStatuses() {
+  try {
+    const raw = localStorage.getItem(EXTERNAL_ORDER_STATUSES_KEY) || '{}';
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function setExternalStatuses(map) {
+  localStorage.setItem(EXTERNAL_ORDER_STATUSES_KEY, JSON.stringify(map));
+}
+
+function parseExternalCodValue(raw) {
+  const normalized = String(raw || '').replace(/[^\d]/g, '');
+  return normalized ? Number(normalized) : 0;
+}
+
+function parseExternalOrdersText(text) {
+  const items = [];
+  const seen = new Set();
+  (text || '').split('\n').forEach(line => {
+    const value = line.trim();
+    if (!value) return;
+    const parts = value.split('|');
+    const code = (parts[0] || '').trim().toUpperCase();
+    if (!code || seen.has(code)) return;
+    const cod = parseExternalCodValue(parts.slice(1).join('|'));
+    items.push({ code, cod });
+    seen.add(code);
+  });
+  return items;
+}
+
+function getExternalStatusMeta(status) {
+  const map = {
+    in_transit: { label: 'Đang giao', className: 'external-status-in_transit' },
+    delivered: { label: 'Đã giao thành công', className: 'external-status-delivered' },
+    returned: { label: 'Hoàn hàng', className: 'external-status-returned' },
+    unknown: { label: 'Chưa xác định', className: 'external-status-unknown' }
+  };
+  return map[status] || map.unknown;
+}
+
+function toggleExternalConfig(forceOpen) {
+  const panel = document.getElementById('externalConfigPanel');
+  if (!panel) return;
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !panel.classList.contains('open');
+  panel.classList.toggle('open', shouldOpen);
+}
+
+function saveExternalOrdersConfig() {
+  const text = document.getElementById('externalOrdersInput')?.value || '';
+  const items = parseExternalOrdersText(text);
+  setExternalOrdersConfig(items);
+  renderExternalOrdersDashboard();
+  toggleExternalConfig(false);
+  showToast(`Đã lưu ${items.length} đơn ngoại sàn`);
+}
+
+function clearExternalOrdersConfig() {
+  setExternalOrdersConfig([]);
+  setExternalStatuses({});
+  const input = document.getElementById('externalOrdersInput');
+  if (input) input.value = '';
+  closeExternalTrackModal();
+  renderExternalOrdersDashboard();
+  showToast('Đã xóa toàn bộ đơn ngoại sàn');
+}
+
+function hydrateExternalOrdersInput() {
+  const input = document.getElementById('externalOrdersInput');
+  if (!input) return;
+  const items = getExternalOrdersConfig();
+  input.value = items.map(item => `${item.code}|${item.cod || 0}`).join('\n');
+}
+
+function renderExternalOrdersDashboard() {
+  const items = getExternalOrdersConfig();
+  const statuses = getExternalStatuses();
+  const grid = document.getElementById('externalOrdersGrid');
+  const meta = document.getElementById('externalOrdersMeta');
+  const inTransitEl = document.getElementById('externalInTransitCount');
+  const deliveredEl = document.getElementById('externalDeliveredCount');
+  const returnedEl = document.getElementById('externalReturnedCount');
+  const totalCodEl = document.getElementById('externalTotalCod');
+  if (!grid || !meta || !inTransitEl || !deliveredEl || !returnedEl || !totalCodEl) return;
+
+  let inTransit = 0;
+  let delivered = 0;
+  let returned = 0;
+  let totalCod = 0;
+
+  items.forEach(item => {
+    totalCod += Number(item.cod || 0);
+    const status = statuses[item.code]?.status || 'unknown';
+    if (status === 'in_transit') inTransit += 1;
+    if (status === 'delivered') delivered += 1;
+    if (status === 'returned') returned += 1;
+  });
+
+  inTransitEl.textContent = inTransit.toLocaleString('vi');
+  deliveredEl.textContent = delivered.toLocaleString('vi');
+  returnedEl.textContent = returned.toLocaleString('vi');
+  totalCodEl.textContent = formatExternalCurrency(totalCod);
+
+  meta.textContent = items.length
+    ? `${items.length.toLocaleString('vi')} mã đơn đang được theo dõi ngoại sàn.`
+    : 'Chưa có đơn nào được cấu hình.';
+
+  if (!items.length) {
+    grid.innerHTML = '<div class="external-empty">Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.</div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(item => {
+    const info = statuses[item.code] || {};
+    const metaStatus = getExternalStatusMeta(info.status || 'unknown');
+    const updatedAt = info.updatedAt ? `<span>${info.updatedAt}</span>` : '';
+    return `
+      <button class="external-order-btn" type="button" onclick="openExternalTrackModal('${item.code}')">
+        <div class="external-order-code">${item.code}</div>
+        <div class="external-order-meta">
+          <span>${formatExternalCurrency(item.cod || 0)}</span>
+          <span class="external-status-pill ${metaStatus.className}">${metaStatus.label}</span>
+          ${updatedAt}
+        </div>
+      </button>
+    `;
+  }).join('');
+}
+
+function refreshExternalModalStatus() {
+  if (!activeExternalOrderCode) return;
+  const statuses = getExternalStatuses();
+  const current = statuses[activeExternalOrderCode] || {};
+  const statusMeta = getExternalStatusMeta(current.status || 'unknown');
+  const statusEl = document.getElementById('externalModalStatus');
+  const updatedAtEl = document.getElementById('externalModalUpdatedAt');
+  if (statusEl) {
+    statusEl.className = `external-status-pill ${statusMeta.className}`;
+    statusEl.textContent = statusMeta.label;
+  }
+  if (updatedAtEl) updatedAtEl.textContent = current.updatedAt || '—';
+
+  ['in_transit', 'delivered', 'returned', 'unknown'].forEach(status => {
+    const button = document.getElementById(`externalStatusBtn${status === 'in_transit' ? 'InTransit' : status === 'delivered' ? 'Delivered' : status === 'returned' ? 'Returned' : 'Unknown'}`);
+    if (button) button.classList.toggle('active', (current.status || 'unknown') === status);
+  });
+}
+
+function openExternalTrackModal(code) {
+  const items = getExternalOrdersConfig();
+  const item = items.find(entry => entry.code === code);
+  if (!item) return;
+  activeExternalOrderCode = code;
+  const trackUrl = `https://spx.vn/track?${encodeURIComponent(code)}`;
+  const modal = document.getElementById('externalTrackModal');
+  const codeEl = document.getElementById('externalModalCode');
+  const codEl = document.getElementById('externalModalCod');
+  const frame = document.getElementById('externalTrackIframe');
+  const link = document.getElementById('externalTrackLink');
+  if (codeEl) codeEl.textContent = code;
+  if (codEl) codEl.textContent = formatExternalCurrency(item.cod || 0);
+  if (frame) frame.src = trackUrl;
+  if (link) link.href = trackUrl;
+  refreshExternalModalStatus();
+  if (modal) modal.classList.add('show');
+}
+
+function reloadExternalTrackFrame() {
+  const frame = document.getElementById('externalTrackIframe');
+  if (!frame || !activeExternalOrderCode) return;
+  frame.src = `https://spx.vn/track?${encodeURIComponent(activeExternalOrderCode)}&t=${Date.now()}`;
+}
+
+function closeExternalTrackModal() {
+  const modal = document.getElementById('externalTrackModal');
+  const frame = document.getElementById('externalTrackIframe');
+  if (modal) modal.classList.remove('show');
+  if (frame) frame.src = 'about:blank';
+  activeExternalOrderCode = '';
+}
+
+function setExternalOrderStatus(status) {
+  if (!activeExternalOrderCode) return;
+  const statuses = getExternalStatuses();
+  statuses[activeExternalOrderCode] = {
+    status,
+    updatedAt: new Date().toLocaleString('vi-VN')
+  };
+  setExternalStatuses(statuses);
+  refreshExternalModalStatus();
+  renderExternalOrdersDashboard();
+}
 
 function changeSortOrder() {
   currentSort = document.getElementById('sortSelect').value;
@@ -2154,6 +2654,8 @@ function sortData(arr) {
 
 async function init() {
   try {
+    hydrateExternalOrdersInput();
+    renderExternalOrdersDashboard();
     const [summaryData] = await Promise.all([loadSummary(), loadOrders()]);
     if (summaryData && summaryData.shops) {
       fetchAndUpdateShopNames(summaryData.shops);
