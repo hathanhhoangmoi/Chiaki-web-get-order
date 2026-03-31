@@ -89,6 +89,15 @@ body{
   font-size:13px;font-weight:800;color:#7c2d12;
   line-height:1.5;
 }
+.fee-notice-highlight{
+  display:inline-block;
+  margin-top:4px;
+  font-size:22px;
+  font-weight:900;
+  line-height:1.2;
+  color:#ea580c;
+  text-shadow:0 6px 18px rgba(249,115,22,.18);
+}
 .container{
   max-width:100%;
   margin:0 0 0 440px;
@@ -1582,7 +1591,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
 
 <div class="fee-notice-wrap">
   <div class="fee-notice">
-    <div class="fee-notice-title">📢 Thông báo phí</div>
+    <div class="fee-notice-title">📢 Phí dịch vụ áp dụng</div>
     <div class="fee-notice-list">
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí lấy thông tin đơn hàng</div>
@@ -1590,19 +1599,19 @@ select.sync-input{font-family:inherit;cursor:pointer}
       </div>
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí chuyển đơn</div>
-        <div class="fee-notice-value">10% giá trị đơn hàng</div>
+        <div class="fee-notice-value"><span class="fee-notice-highlight">10%</span><br/>giá trị đơn hàng</div>
       </div>
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí giao ngoài</div>
-        <div class="fee-notice-value">10% đơn giao thành công</div>
+        <div class="fee-notice-value"><span class="fee-notice-highlight">10%</span><br/>đơn giao thành công</div>
       </div>
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí huỷ đơn</div>
-        <div class="fee-notice-value">10.000đ/đơn</div>
+        <div class="fee-notice-value"><span class="fee-notice-highlight">10.000đ</span><br/>/đơn</div>
       </div>
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí nền tảng</div>
-        <div class="fee-notice-value">Phí được thu để duy trì và phát triển website<br/>1.500.000đ/tháng</div>
+        <div class="fee-notice-value">Phí được thu để duy trì và phát triển website<br/><span class="fee-notice-highlight">1.500.000đ</span><br/>/tháng</div>
       </div>
     </div>
   </div>
@@ -2697,6 +2706,7 @@ let hanoiVisible = false;
 let currentSort = 'default';
 let activeExternalOrderCode = '';
 let activeExternalScope = 'phuong';
+window.userCapabilities = {};
 window.externalOrdersData = [];
 window.externalOrdersConfig = { fee_items: [] };
 window.externalOrdersState = {
@@ -2708,9 +2718,13 @@ function getExternalScopeLabel(scope = activeExternalScope) {
   return scope === 'hoang' ? "Hoàng's Order" : "Phương's Order";
 }
 
+function hasCapability(name) {
+  return !!window.userCapabilities?.[name];
+}
+
 function canViewExternalScope(scope = activeExternalScope, id = localStorage.getItem(ID_KEY) || '') {
   if (scope !== 'hoang') return true;
-  return String(id || '').trim() === 'Hoang5611';
+  return hasCapability('view_hoang_orders');
 }
 
 function getExternalScopeState(scope = activeExternalScope) {
@@ -2832,7 +2846,7 @@ function getExternalStatusMeta(status) {
 }
 
 function canConfigExternalOrders(id = localStorage.getItem(ID_KEY) || '') {
-  return String(id || '').trim() === 'Hoang5611';
+  return hasCapability('manage_external_orders');
 }
 
 function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
@@ -3250,6 +3264,7 @@ function sortData(arr) {
 async function init() {
   collapseDefaultPanels();
   try {
+    await refreshUserCapabilities();
     const [summaryData] = await Promise.all([loadSummary(), loadOrders(), loadExternalOrders()]);
     if (summaryData && summaryData.shops) {
       fetchAndUpdateShopNames(summaryData.shops);
@@ -4001,7 +4016,7 @@ function maskId(id) {
 }
 
 function isAdminId(id) {
-  return ['Hoang5611', 'LOGIN-KEY-PHUONG2000'].includes(String(id || '').trim());
+  return hasCapability('admin_tools');
 }
 
 function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
@@ -4022,6 +4037,26 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
   updateExternalOrdersAccess(id);
 }
 
+async function refreshUserCapabilities() {
+  const id = localStorage.getItem(ID_KEY) || '';
+  if (!id) {
+    window.userCapabilities = {};
+    updateAdminOnlyPanels('');
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/capabilities', {
+      cache: 'no-store',
+      headers: { 'X-User-ID': id }
+    });
+    const data = await res.json();
+    window.userCapabilities = data.capabilities || {};
+  } catch (e) {
+    window.userCapabilities = {};
+  }
+  updateAdminOnlyPanels(id);
+}
+
 function checkIdGate() {
   const id     = localStorage.getItem(ID_KEY);
   const expiry = localStorage.getItem(ID_EXP);
@@ -4034,6 +4069,7 @@ function checkIdGate() {
     startExpireCountdown();
     return true;
   }
+  window.userCapabilities = {};
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   document.getElementById('idGate').style.display = 'flex';
@@ -4100,6 +4136,8 @@ async function submitId() {
 
     localStorage.setItem(ID_KEY, id);
     localStorage.setItem(ID_EXP, String(data.expMs));
+    localStorage.setItem(ID_FIRST_ENTRY, String(data.firstEntry));
+    window.userCapabilities = data.capabilities || {};
     document.getElementById('idGate').style.display    = 'none';
     document.getElementById('idDisplay').style.display = 'block';
     document.getElementById('maskedId').textContent    = maskId(id);
@@ -4138,6 +4176,7 @@ function changeId() {
 
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
+  window.userCapabilities = {};
   location.reload();
 }
 
@@ -4409,7 +4448,7 @@ function renderTakenList() {
     return;
   }
   const currentId = localStorage.getItem('chiaki_id');
-  const canDelete = currentId === 'Hoang5611';
+  const canDelete = hasCapability('manage_taken_history');
   el.innerHTML = list.map((item, idx) => {
     const d   = new Date(item.takenat);
     const fmt = d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -4441,8 +4480,7 @@ function closeTakenOnOutside(e) {
 }
 
 function clearTakenOrders() {
-  const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Hoang5611') {
+  if (!hasCapability('manage_taken_history')) {
     alert('Bạn không có quyền xoá lịch sử đơn đã lấy.');
     return;
   }
@@ -4451,8 +4489,7 @@ function clearTakenOrders() {
   renderTakenList();
 }
 function deleteTakenOrder(index) {
-  const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Hoang5611') {
+  if (!hasCapability('manage_taken_history')) {
     alert('Bạn không có quyền xoá đơn đã lấy.');
     return;
   }
@@ -4601,11 +4638,10 @@ function enableSound() {
 }
 
 function initHistoryBtn() {
-  const uid = localStorage.getItem('chiaki_id');
   const panel    = document.getElementById('historyPanel');
   const toggleBtn = document.getElementById('historyToggleBtn');
 
-  if (uid === 'Hoang5611') {
+  if (hasCapability('view_history_panel')) {
     if (toggleBtn) {
       toggleBtn.classList.add('visible'); // nút tròn hiện
     }
@@ -5087,7 +5123,6 @@ async function doSyncUpload() {
 }
 
 let syncShops = [];
-let syncConfig = { sellerId: '', sellerToken: '' };
 let comboFileMap = {}; // index → File
 let syncDownloadTimer = null;
 let syncDownloadRunning = false;
@@ -5139,13 +5174,6 @@ function populateSyncShopSelect() {
   updateChiakiLink();
 }
 
-function getSellerQuery() {
-  const params = new URLSearchParams();
-  if (syncConfig.sellerId) params.set('Seller_id', syncConfig.sellerId);
-  if (syncConfig.sellerToken) params.set('Seller_token', syncConfig.sellerToken);
-  return params.toString();
-}
-
 function setSyncMessage(message, type = '') {
   const msg = document.getElementById('syncMsg');
   if (!msg) return;
@@ -5175,92 +5203,74 @@ function downloadAllShopFiles() {
     setSyncMessage('Chưa tải được danh sách shop để mở file.', 'err');
     return;
   }
-  if (!syncConfig.sellerId || !syncConfig.sellerToken) {
-    setSyncMessage('Thiếu cấu hình seller từ backend, chưa thể tạo link tải.', 'err');
-    return;
-  }
 
   syncDownloadRunning = true;
   if (btn) {
     btn.disabled = true;
     btn.textContent = '⏳ Đang mở tab tải...';
   }
+  fetch('/api/sync-download-links', {
+    cache: 'no-store',
+    headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không tải được link tải file');
+      const queue = Array.isArray(data.shops) ? data.shops.map(shop => ({
+        id: shop.shop_id,
+        name: shop.shop_name,
+        url: shop.download_url
+      })) : [];
+      if (!queue.length) throw new Error('Không có shop để mở file.');
 
-  const queue = syncShops.map(shop => ({
-    id: shop.id,
-    name: shop.name,
-    url: buildChiakiUrl(shop.id, 'receive_wating').replace('page_size=200', 'page_size=500')
-  }));
-  const popupTabs = [];
+      const popupTabs = [];
+      for (let i = 0; i < queue.length; i++) {
+        const popup = window.open('', '_blank');
+        if (!popup) {
+          popupTabs.forEach(tab => { try { tab.close(); } catch {} });
+          throw new Error(`Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`);
+        }
+        popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
+        popupTabs.push(popup);
+      }
 
-  for (let i = 0; i < queue.length; i++) {
-    const popup = window.open('', '_blank');
-    if (!popup) {
-      popupTabs.forEach(tab => { try { tab.close(); } catch {} });
-      finishDownloadAllShops(
-        `Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`,
-        'err'
-      );
-      return;
-    }
-    popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
-    popupTabs.push(popup);
-  }
+      let index = 0;
+      const openNext = () => {
+        const shop = queue[index];
+        const popup = popupTabs[index];
+        if (!popup || popup.closed) {
+          finishDownloadAllShops(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
+          return;
+        }
+        popup.location.href = shop.url;
 
-  let index = 0;
-  const openNext = () => {
-    const shop = queue[index];
-    const popup = popupTabs[index];
-    if (!popup || popup.closed) {
-      finishDownloadAllShops(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
-      return;
-    }
-    popup.location.href = shop.url;
+        index += 1;
+        if (index >= queue.length) {
+          finishDownloadAllShops(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
+          return;
+        }
 
-    index += 1;
-    if (index >= queue.length) {
-      finishDownloadAllShops(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
-      return;
-    }
+        if (btn) btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
+        setSyncMessage(`Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`, 'ok');
+        syncDownloadTimer = setTimeout(openNext, 10000);
+      };
 
-    if (btn) {
-      btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
-    }
-    setSyncMessage(
-      `Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`,
-      'ok'
-    );
-    syncDownloadTimer = setTimeout(openNext, 10000);
-  };
-
-  setSyncMessage(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
-  openNext();
+      setSyncMessage(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
+      openNext();
+    })
+    .catch(e => finishDownloadAllShops(e.message, 'err'));
 }
 
 async function loadSyncShops() {
   try {
-    const [shopsRes, configRes] = await Promise.allSettled([
-      fetch('/api/shops-list', { cache: 'no-store' }),
-      fetch('/api/sync-config', { cache: 'no-store' })
-    ]);
-
-    const shopsData = shopsRes.status === 'fulfilled'
-      ? await shopsRes.value.json()
-      : [];
-    const configData = configRes.status === 'fulfilled'
-      ? await configRes.value.json()
-      : {};
+    const shopsRes = await fetch('/api/shops-list', { cache: 'no-store' });
+    const shopsData = shopsRes.ok ? await shopsRes.json() : [];
 
     const shopsPayload = Array.isArray(shopsData)
       ? shopsData
       : Array.isArray(shopsData?.shops)
         ? shopsData.shops
         : [];
-
-    syncConfig = {
-      sellerId: String(configData?.seller_id || shopsData?.seller_id || '').trim(),
-      sellerToken: String(configData?.seller_token || shopsData?.seller_token || '').trim()
-    };
     syncShops = shopsPayload.map(shop => ({
           id: String(shop.shop_id || '').trim(),
           name: String(shop.shop_name || shop.shop_id || '').trim()
@@ -5270,7 +5280,6 @@ async function loadSyncShops() {
     initComboRows();
   } catch (e) {
     console.error('loadSyncShops error', e);
-    syncConfig = { sellerId: '', sellerToken: '' };
     syncShops = [];
     populateSyncShopSelect();
 
@@ -5279,21 +5288,6 @@ async function loadSyncShops() {
       container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
     }
   }
-}
-
-function buildChiakiUrl(shopId, mode) {
-  const status = mode === 'delivering' ? 'delivering' : 'receive_wating';
-  const today = new Date(), since = new Date(today);
-  since.setDate(since.getDate() - 14);
-  const fmt = d =>
-    `${String(d.getDate()).padStart(2,'0')}%2F` +
-    `${String(d.getMonth()+1).padStart(2,'0')}%2F${d.getFullYear()}`;
-  const sellerQuery = getSellerQuery();
-  return `https://api.chiaki.vn/api/${shopId}/export-excel-order` +
-    `?source=seller&page_index=1&page_size=200&status=${status}` +
-    `&range_date=${fmt(since)}+-+${fmt(today)}` +
-    `&date_type=created_at&order=create-desc` +
-    (sellerQuery ? `&${sellerQuery}` : '');
 }
 function initComboRows() {
   const container = document.getElementById('comboRows');
@@ -5563,32 +5557,28 @@ function generateCancelCurl() {
     document.getElementById('curlOrderPreview').style.color = '#ef4444';
     return;
   }
-  const orderId = code.slice(2, 9);
-  const curlText =
-`ORDER_ID="${orderId}" && \\
-SYNC_ID=$(curl -s "https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=$ORDER_ID" \\
-  -H 'Accept: application/json, text/plain, */*' \\
-  -H 'platform: ios' \\
-  -H 'Cookie: laravel_session=eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D' \\
-  -H 'User-Agent: chiakiApp/3.6.2' \\
-  | python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['sync_id'])") && \\
-echo "sync_id: $SYNC_ID" && \\
-curl -s -X POST "https://api.chiaki.vn/api/order/request-cancel" \\
-  -H "Accept: application/json, text/plain, */*" \\
-  -H "Accept-Encoding: gzip, deflate" \\
-  -H "Content-Type: application/json" \\
-  -H "token: YjYTQY7fP4vExhg0a8itBqBEFKzZlmcKWBoxkwc91XNyF3zpCi" \\
-  -H "User-Agent: chiakiApp/3.6.2" \\
-  --compressed \\
-  -d "{\\"sync_id\\":\\"$SYNC_ID\\",\\"order_id\\":\\"$ORDER_ID\\",\\"cancel_code\\":\\"change_item_order\\",\\"cancel_reason\\":\\"Thay đổi đơn hàng (màu sắc, kích thước, thêm mã giảm giá,...)\\"}" \\
-  | python3 -m json.tool`;
-
-  window._generatedCurl = curlText;
-  document.getElementById('curlResultOrderInfo').textContent = `Mã đơn hàng: ${code}`;
-  document.getElementById('curlResultText').textContent = curlText;
-  document.getElementById('copyCurlMsg').textContent = '';
-  document.getElementById('copyCurlBtn').textContent = '📋 Copy';
-  document.getElementById('curlResultBg').style.display = 'flex';
+  fetch('/api/tools/cancel-order-curl', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': localStorage.getItem('chiaki_id') || ''
+    },
+    body: JSON.stringify({ order_code: code })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không tạo được cURL');
+      window._generatedCurl = data.curl || '';
+      document.getElementById('curlResultOrderInfo').textContent = `Mã đơn hàng: ${data.order_code || code}`;
+      document.getElementById('curlResultText').textContent = data.curl || '';
+      document.getElementById('copyCurlMsg').textContent = '';
+      document.getElementById('copyCurlBtn').textContent = '📋 Copy';
+      document.getElementById('curlResultBg').style.display = 'flex';
+    })
+    .catch(e => {
+      document.getElementById('curlOrderPreview').textContent = `❌ ${e.message}`;
+      document.getElementById('curlOrderPreview').style.color = '#ef4444';
+    });
 }
 
 function closeCurlModal() {
@@ -5711,14 +5701,6 @@ function copyAddToCartCurlResult() {
   });
 }
 
-function escapeForShellDoubleQuotes(value) {
-  return String(value ?? '')
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/\$/g, '\\$')
-    .replace(/`/g, '\\`');
-}
-
 async function generateTransferOrderCurl() {
   const oldOrderCode = document.getElementById('transferOldOrderCode').value.trim();
   const newProductCode = document.getElementById('transferNewProductCode').value.trim();
@@ -5744,134 +5726,34 @@ async function generateTransferOrderCurl() {
     return;
   }
 
-  msg.textContent = '⏳ Đang lấy thông tin đơn hàng cũ...';
+  msg.textContent = '⏳ Đang tạo cURL chuyển đơn...';
   msg.style.color = '#7c3aed';
 
   try {
-    const res = await fetch('/api/order-info', {
+    const res = await fetch('/api/tools/transfer-order-curl', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-User-ID': localStorage.getItem('chiaki_id') || ''
       },
-      body: JSON.stringify({ order_code: oldOrderCode, key })
+      body: JSON.stringify({
+        old_order_code: oldOrderCode,
+        new_product_code: newProductCode,
+        new_product_id: newProductId,
+        quantity,
+        target_shop_id: targetShopId,
+        key
+      })
     });
     const data = await res.json();
 
     if (!res.ok || data.error) {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
-
-    const userId = String(data.customer_id || '').trim();
-    const deliveryLocationId = String(data.delivery_location_id || '').trim();
-    const districtDeliveryId = String(data.district_delivery_id || '').trim();
-    const communeDeliveryId = String(data.commune_delivery_id || '').trim();
-    const orderTime = String(data.order_date || '').trim();
-    const address = data.address === '—' ? '' : String(data.address || '').trim();
-    const fullName = data.customer_name === '—' ? '' : String(data.customer_name || '').trim();
-    const email = data.email === '—' ? '' : String(data.email || '').trim();
-    const phone = data.phone === '—' ? '' : String(data.phone || '').trim();
-
-    if (!userId || !deliveryLocationId || !districtDeliveryId || !communeDeliveryId) {
-      throw new Error('Thiếu dữ liệu giao hàng hoặc customer_id từ đơn hàng cũ.');
-    }
-
-    const encodedTime = encodeURIComponent(orderTime);
-    const addToCartPayload = JSON.stringify({
-      product_id: Number(newProductId),
-      product_code: newProductCode,
-      quantity: Number(quantity),
-      is_buy_now: 0,
-      store_id: Number(targetShopId),
-      user_id: Number(userId)
-    });
-
-    const checkoutPayload = JSON.stringify({
-      user_id: Number(userId),
-      delivery_location_id: Number(deliveryLocationId),
-      district_delivery_id: Number(districtDeliveryId),
-      commune_delivery_id: Number(communeDeliveryId),
-      delivery_address: address,
-      earn: 0,
-      full_name: fullName,
-      email,
-      phone,
-      phone2: '',
-      payment_type: 'home',
-      prepaid_code: '',
-      related_user_id: Number(userId),
-      related_user_name: 'Nguyên',
-      require_call_back: 0,
-      campaign_id: '',
-      order_cookie: '',
-      from: '',
-      affiliate_id: '',
-      custom_id: '',
-      point: 0,
-      ads_id: '',
-      ip: '192.168.1.241',
-      platform: 'ios',
-      from_flow: '',
-      email_id: '',
-      tracking: '',
-      affiliate_type: '',
-      affiliate_url: '',
-      banner_id: '',
-      flash_sale: '',
-      product_sync: '',
-      delivery_time: '',
-      url_history: JSON.stringify([{
-        url: `https://chiaki.vn/add_to_cart?is_buy_now=0&product_code=${encodeURIComponent(newProductCode)}&product_id=${newProductId}&quantity=${quantity}&store_id=${targetShopId}&time=${encodedTime}&user_id=${userId}&version=3.6.2`,
-        time: orderTime
-      }]),
-      current_warehouse_product: 'empty',
-      delivery_note: 'other',
-      description: '',
-      promotion_code_used: {},
-      delivery_shipping_mode: 'normal',
-      source: 'chiaki-app',
-      device: 'ios',
-      clicker_data: { source: null, sources: '', trackingData: null },
-      browser: ' ',
-      user_device: 'Mobile',
-      payment_value: JSON.stringify({ bank_code: 'home' }),
-      is_hide_product_name: 0
-    });
-
-    const curlText =
-`curl 'https://api.chiaki.vn/api/v2/cart_item/push' \\
--X POST \\
--H 'Host: api.chiaki.vn' \\
--H 'Accept: application/json, text/plain, */*' \\
--H 'baggage: sentry-environment=production,sentry-public_key=418f1affd8b5477baa885b6b4da50b79,sentry-trace_id=7f3084679f1944b2ae6208a09319a66b' \\
--H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \\
--H 'Cache-Control: no-cache' \\
--H 'platform: ios' \\
--H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
--H 'User-Agent: chiakiApp/3.6.2' \\
--H 'sentry-trace: 7f3084679f1944b2ae6208a09319a66b-a1c86e53db19d505' \\
--H 'Connection: keep-alive' \\
--H 'Content-Type: application/json' \\
---data-raw "${escapeForShellDoubleQuotes(addToCartPayload)}" \\
-| python3 -m json.tool
-
-sleep 10
-
-curl 'https://api.chiaki.vn/api/checkout' \\
--X POST \\
--H 'platform: ios' \\
--H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
--H 'User-Agent: chiakiApp/3.6.2' \\
--H 'Accept: application/json, text/plain, */*' \\
--H 'Content-Type: application/json' \\
---data-raw "${escapeForShellDoubleQuotes(checkoutPayload)}" \\
-| python3 -m json.tool`;
-
-    window._generatedTransferCurl = curlText;
+    window._generatedTransferCurl = data.curl || '';
     msg.textContent = '';
-    document.getElementById('transferCurlResultInfo').textContent =
-      `Đơn cũ: ${oldOrderCode} · User ID: ${userId} · SP mới: ${newProductCode} · Shop nhận: ${targetShopId}`;
-    document.getElementById('transferCurlResultText').textContent = curlText;
+    document.getElementById('transferCurlResultInfo').textContent = data.summary || `Đơn cũ: ${oldOrderCode}`;
+    document.getElementById('transferCurlResultText').textContent = data.curl || '';
     document.getElementById('copyTransferCurlBtn').textContent = '📋 Sao chép';
     document.getElementById('transferCurlResultBg').style.display = 'flex';
   } catch (e) {
