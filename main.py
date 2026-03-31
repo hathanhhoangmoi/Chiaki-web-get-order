@@ -135,6 +135,24 @@ app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ── Helper functions ───────────────────────────────────────
+FULL_ACCESS_IDS = {"Chang2000"}
+SENSITIVE_SHOPS = {"4647", "4732"}
+SENSITIVE_TOTAL_THRESHOLD = 2_500_000
+
+def is_full_access_user(user_id: str) -> bool:
+    return str(user_id or "").strip() in FULL_ACCESS_IDS
+
+def should_mask_order(order, user_id: str) -> bool:
+    if not order or is_full_access_user(user_id):
+        return False
+    shop_id = str(getattr(order, "shop_id", "") or "").strip()
+    total = getattr(order, "total", 0) or 0
+    try:
+        total = float(total)
+    except Exception:
+        total = 0
+    return shop_id in SENSITIVE_SHOPS or total >= SENSITIVE_TOTAL_THRESHOLD
+
 def serialize_order(o, mask=False):
     """Serialize order với mask nếu cần"""
     M = "••••••••"
@@ -189,7 +207,7 @@ def get_orders(
 ):
     user_id = request.headers.get('X-User-ID', '')
 
-    if shop_id and shop_id in BLOCKED_SHOPS and user_id != 'Chang2000':
+    if shop_id and shop_id in BLOCKED_SHOPS and not is_full_access_user(user_id):
         return {
             "total": 0, "page": page, "data": [],
             "blocked": True,
@@ -216,7 +234,7 @@ def get_orders(
     orders = q.offset((page - 1) * limit).limit(limit).all()
 
     def serialize(o):
-        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        mask = should_mask_order(o, user_id)
         M = "••••••••"
         return {
             "order_code":    M if mask else o.order_code,
@@ -267,7 +285,7 @@ def search_orders_by_product(
     return {
         "total": len(orders),
         "data": [
-            serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000')
+            serialize_order(o, mask=should_mask_order(o, user_id))
             for o in orders
         ]
     }
@@ -294,23 +312,24 @@ async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
               .order_by(Order.order_date.desc()).all()
     
     def serialize_with_user(o):
-        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        mask = should_mask_order(o, user_id)
         return serialize_order(o, mask=mask)
     
     return [serialize_with_user(o) for o in orders]
 
 
 @app.get("/api/orders/nuochoa")
-async def get_nuochoa_orders(db: Session = Depends(get_db)):
+async def get_nuochoa_orders(request: Request, db: Session = Depends(get_db)):
+    user_id = request.headers.get('X-User-ID', '')
     keywords = ["nước hoa", "nuoc hoa", "nươc hoa", "nước  hoa"]
     filters = [func.lower(Order.product).contains(kw.lower()) for kw in keywords]
     orders = db.query(Order).filter(or_(*filters))\
               .order_by(Order.order_date.desc()).all()
     def serialize_with_user(o):
-        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        mask = should_mask_order(o, user_id)
         return serialize_order(o, mask=mask)
     
-    return [serialize_order(o, mask=o.shop_id in BLOCKED_SHOPS) for o in orders]
+    return [serialize_with_user(o) for o in orders]
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
@@ -335,9 +354,10 @@ def get_chart_data(db: Session = Depends(get_db)):
     }
 
 @app.post("/api/order-info")
-async def get_order_info(body: dict, db: Session = Depends(get_db)):
+async def get_order_info(request: Request, body: dict, db: Session = Depends(get_db)):
     order_code = body.get("order_code", "").strip()
     key        = body.get("key", "").strip()
+    user_id    = request.headers.get('X-User-ID', '')
 
     if not order_code or not key:
         return JSONResponse({"error": "Thiếu mã đơn hàng hoặc key."}, status_code=400)
@@ -407,6 +427,7 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
         db_order = db.query(Order).filter(
         Order.order_code.like(f"%_{order_code}")
             ).first()
+        mask_order = should_mask_order(db_order, user_id)
         db_product   = db_order.product   if db_order else "—"
         shop_id_from_api = g("store_code", "creator_name")
         db_shop_name = (
@@ -428,6 +449,33 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
             meta = {}
             url_history_parsed = []
         source_from = meta.get("meta_tracking", {}).get("from", "") or g("from") or ""
+        if mask_order:
+            return {
+                "order_code": "••••••••",
+                "status": "••••••••",
+                "shop_name": db_shop_name,
+                "order_date": "••••••••",
+                "customer_name": "••••••••",
+                "customer_id": "••••••••",
+                "phone": "••••••••",
+                "email": "••••••••",
+                "address": "••••••••",
+                "source": "••••••••",
+                "source_from": "••••••••",
+                "payment": "••••••••",
+                "prepaid_amount": "••••••••",
+                "shipping_code": "••••••••",
+                "delivery_status": "••••••••",
+                "delivery_location_id": "••••••••",
+                "district_delivery_id": "••••••••",
+                "commune_delivery_id": "••••••••",
+                "shipper_receive_time": "••••••••",
+                "product": "••••••••",
+                "quantity": "••••••••",
+                "url_history": [],
+                "remaining": remaining,
+            }
+
         return {
     "order_code":           g("code"),
     "status":               g("status"),
@@ -441,14 +489,14 @@ async def get_order_info(body: dict, db: Session = Depends(get_db)):
     "source":               g("source", "from"),
     "source_from":          source_from,
     "payment":              payment_status,
-    "prepaid_amount":       db_total,            # ← lấy từ DB thay vì API
+    "prepaid_amount":       db_total,
     "shipping_code":        g("shipping_code"),
     "delivery_status":      g("delivery_status"),
     "delivery_location_id": g("delivery_location_id"),
     "district_delivery_id": g("district_delivery_id"),
     "commune_delivery_id":  g("commune_delivery_id"),
     "shipper_receive_time": g("shipper_receive_time"),
-    "product":              db_product,          # ← thêm mới
+    "product":              db_product,
     "quantity":             d.get("quantity") or (db_order.quantity if db_order else None),
     "url_history":          url_history_parsed,
     "remaining":            remaining,
@@ -564,6 +612,7 @@ async def verify_id(body: dict):
         "LOGIN-KEY-PHUONG2000": {"hours": 1,           "label": "Phương"},
         "LOGIN-KEY-CHANGTESTUSER":    {"hours": 9999999999,   "label": "Hoàng"},
         "Chang2000":    {"hours": 9999999999,   "label": "Hoàng"},
+        "unlimited_id": {"hours": 9999999999, "label": "Unlimited"},
     }
     user_id = body.get("id", "").strip()
     info = VALID_IDS.get(user_id)
@@ -601,7 +650,7 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
     filters = [func.lower(Order.address).contains(kw.lower()) for kw in keywords]
     orders = db.query(Order).filter(or_(*filters)).order_by(Order.order_date.desc()).all()
     def serialize_with_user(o):
-        mask = o.shop_id in BLOCKED_SHOPS and user_id != 'Chang2000'
+        mask = should_mask_order(o, user_id)
         return serialize_order(o, mask=mask)
     return [serialize_with_user(o) for o in orders]
 
