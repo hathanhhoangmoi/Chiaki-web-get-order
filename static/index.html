@@ -101,14 +101,6 @@ body{
 .external-orders-actions{
   display:flex;gap:8px;align-items:center;flex-wrap:wrap;
 }
-.external-readonly-note{
-  font-size:11px;
-  color:#a06070;
-  padding:8px 12px;
-  border-radius:999px;
-  background:rgba(255,255,255,.45);
-  border:1px solid rgba(186,214,253,.28);
-}
 .external-config-toggle{
   padding:8px 14px;border:none;border-radius:999px;
   background:rgba(186,214,253,.28);color:#570301;
@@ -1457,7 +1449,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
         </div>
         <div class="external-orders-actions">
           <button class="external-config-toggle" id="externalConfigToggleBtn" type="button" onclick="toggleExternalConfig()">⚙️ Config đơn ngoại sàn</button>
-          <div class="external-readonly-note" id="externalReadonlyNote" style="display:none">Chỉ `Chang2000` được chỉnh config</div>
         </div>
       </div>
 
@@ -2455,40 +2446,11 @@ let currentPage = 1;
 const limit = 200;
 let hanoiVisible = false;
 let currentSort = 'default';
-const EXTERNAL_ORDERS_KEY = 'chiaki_external_orders_config_v1';
-const EXTERNAL_ORDER_STATUSES_KEY = 'chiaki_external_order_statuses_v1';
 let activeExternalOrderCode = '';
+window.externalOrdersData = [];
 
 function formatExternalCurrency(amount) {
   return `${Number(amount || 0).toLocaleString('vi')}₫`;
-}
-
-function getExternalOrdersConfig() {
-  try {
-    const raw = localStorage.getItem(EXTERNAL_ORDERS_KEY) || '[]';
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (_) {
-    return [];
-  }
-}
-
-function setExternalOrdersConfig(items) {
-  localStorage.setItem(EXTERNAL_ORDERS_KEY, JSON.stringify(items));
-}
-
-function getExternalStatuses() {
-  try {
-    const raw = localStorage.getItem(EXTERNAL_ORDER_STATUSES_KEY) || '{}';
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (_) {
-    return {};
-  }
-}
-
-function setExternalStatuses(map) {
-  localStorage.setItem(EXTERNAL_ORDER_STATUSES_KEY, JSON.stringify(map));
 }
 
 function parseExternalCodValue(raw) {
@@ -2530,12 +2492,8 @@ function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
   const canConfig = canConfigExternalOrders(id);
   const toggleBtn = document.getElementById('externalConfigToggleBtn');
   const configPanel = document.getElementById('externalConfigPanel');
-  const readonlyNote = document.getElementById('externalReadonlyNote');
   if (toggleBtn) {
     toggleBtn.style.display = canConfig ? 'inline-flex' : 'none';
-  }
-  if (readonlyNote) {
-    readonlyNote.style.display = canConfig ? 'none' : 'inline-flex';
   }
   if (!canConfig && configPanel) {
     configPanel.classList.remove('open');
@@ -2553,34 +2511,77 @@ function toggleExternalConfig(forceOpen) {
 function saveExternalOrdersConfig() {
   if (!canConfigExternalOrders()) return;
   const text = document.getElementById('externalOrdersInput')?.value || '';
-  const items = parseExternalOrdersText(text);
-  setExternalOrdersConfig(items);
-  renderExternalOrdersDashboard();
-  toggleExternalConfig(false);
-  showToast(`Đã lưu ${items.length} đơn ngoại sàn`);
+  const currentMap = Object.fromEntries((window.externalOrdersData || []).map(item => [item.code, item]));
+  const items = parseExternalOrdersText(text).map(item => ({
+    ...item,
+    status: currentMap[item.code]?.status || 'unknown'
+  }));
+  fetch('/api/external-orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': localStorage.getItem('chiaki_id') || ''
+    },
+    body: JSON.stringify({ items })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không lưu được cấu hình');
+      window.externalOrdersData = Array.isArray(data.items) ? data.items : [];
+      hydrateExternalOrdersInput();
+      renderExternalOrdersDashboard();
+      toggleExternalConfig(false);
+      showToast(`Đã lưu ${window.externalOrdersData.length} đơn ngoại sàn`);
+    })
+    .catch(e => showToast(`❌ ${e.message}`));
 }
 
 function clearExternalOrdersConfig() {
   if (!canConfigExternalOrders()) return;
-  setExternalOrdersConfig([]);
-  setExternalStatuses({});
-  const input = document.getElementById('externalOrdersInput');
-  if (input) input.value = '';
-  closeExternalTrackModal();
-  renderExternalOrdersDashboard();
-  showToast('Đã xóa toàn bộ đơn ngoại sàn');
+  fetch('/api/external-orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': localStorage.getItem('chiaki_id') || ''
+    },
+    body: JSON.stringify({ items: [] })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không xóa được cấu hình');
+      window.externalOrdersData = [];
+      const input = document.getElementById('externalOrdersInput');
+      if (input) input.value = '';
+      closeExternalTrackModal();
+      renderExternalOrdersDashboard();
+      showToast('Đã xóa toàn bộ đơn ngoại sàn');
+    })
+    .catch(e => showToast(`❌ ${e.message}`));
 }
 
 function hydrateExternalOrdersInput() {
   const input = document.getElementById('externalOrdersInput');
   if (!input) return;
-  const items = getExternalOrdersConfig();
+  const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
   input.value = items.map(item => `${item.code}|${item.cod || 0}`).join('\n');
 }
 
+async function loadExternalOrders() {
+  try {
+    const res = await fetch('/api/external-orders', { cache: 'no-store' });
+    const data = await res.json();
+    window.externalOrdersData = Array.isArray(data.items) ? data.items : [];
+    hydrateExternalOrdersInput();
+    renderExternalOrdersDashboard();
+  } catch (e) {
+    console.error('loadExternalOrders error:', e);
+    window.externalOrdersData = [];
+    renderExternalOrdersDashboard();
+  }
+}
+
 function renderExternalOrdersDashboard() {
-  const items = getExternalOrdersConfig();
-  const statuses = getExternalStatuses();
+  const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
   const grid = document.getElementById('externalOrdersGrid');
   const meta = document.getElementById('externalOrdersMeta');
   const inTransitEl = document.getElementById('externalInTransitCount');
@@ -2596,7 +2597,7 @@ function renderExternalOrdersDashboard() {
 
   items.forEach(item => {
     totalCod += Number(item.cod || 0);
-    const status = statuses[item.code]?.status || 'unknown';
+    const status = item.status || 'unknown';
     if (status === 'in_transit') inTransit += 1;
     if (status === 'delivered') delivered += 1;
     if (status === 'returned') returned += 1;
@@ -2612,18 +2613,13 @@ function renderExternalOrdersDashboard() {
     : 'Chưa có đơn nào được cấu hình.';
 
   if (!items.length) {
-    grid.innerHTML = `<div class="external-empty">${
-      canConfigExternalOrders()
-        ? 'Chưa có mã đơn ngoại sàn. Mở phần config để thêm danh sách.'
-        : 'Chưa có mã đơn ngoại sàn được cấu hình.'
-    }</div>`;
+    grid.innerHTML = '<div class="external-empty">Chưa có mã đơn ngoại sàn được cấu hình.</div>';
     return;
   }
 
   grid.innerHTML = items.map(item => {
-    const info = statuses[item.code] || {};
-    const metaStatus = getExternalStatusMeta(info.status || 'unknown');
-    const updatedAt = info.updatedAt ? `<span>${info.updatedAt}</span>` : '';
+    const metaStatus = getExternalStatusMeta(item.status || 'unknown');
+    const updatedAt = item.updated_at ? `<span>${new Date(item.updated_at).toLocaleString('vi-VN')}</span>` : '';
     return `
       <button class="external-order-btn" type="button" onclick="openExternalTrackModal('${item.code}')">
         <div class="external-order-code">${item.code}</div>
@@ -2639,8 +2635,7 @@ function renderExternalOrdersDashboard() {
 
 function refreshExternalModalStatus() {
   if (!activeExternalOrderCode) return;
-  const statuses = getExternalStatuses();
-  const current = statuses[activeExternalOrderCode] || {};
+  const current = (window.externalOrdersData || []).find(item => item.code === activeExternalOrderCode) || {};
   const statusMeta = getExternalStatusMeta(current.status || 'unknown');
   const statusEl = document.getElementById('externalModalStatus');
   const updatedAtEl = document.getElementById('externalModalUpdatedAt');
@@ -2648,7 +2643,7 @@ function refreshExternalModalStatus() {
     statusEl.className = `external-status-pill ${statusMeta.className}`;
     statusEl.textContent = statusMeta.label;
   }
-  if (updatedAtEl) updatedAtEl.textContent = current.updatedAt || '—';
+  if (updatedAtEl) updatedAtEl.textContent = current.updated_at ? new Date(current.updated_at).toLocaleString('vi-VN') : '—';
 
   ['in_transit', 'delivered', 'returned', 'unknown'].forEach(status => {
     const button = document.getElementById(`externalStatusBtn${status === 'in_transit' ? 'InTransit' : status === 'delivered' ? 'Delivered' : status === 'returned' ? 'Returned' : 'Unknown'}`);
@@ -2657,7 +2652,7 @@ function refreshExternalModalStatus() {
 }
 
 function openExternalTrackModal(code) {
-  const items = getExternalOrdersConfig();
+  const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
   const item = items.find(entry => entry.code === code);
   if (!item) return;
   activeExternalOrderCode = code;
@@ -2691,14 +2686,28 @@ function closeExternalTrackModal() {
 
 function setExternalOrderStatus(status) {
   if (!activeExternalOrderCode) return;
-  const statuses = getExternalStatuses();
-  statuses[activeExternalOrderCode] = {
-    status,
-    updatedAt: new Date().toLocaleString('vi-VN')
-  };
-  setExternalStatuses(statuses);
-  refreshExternalModalStatus();
-  renderExternalOrdersDashboard();
+  fetch('/api/external-orders/status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': localStorage.getItem('chiaki_id') || ''
+    },
+    body: JSON.stringify({
+      code: activeExternalOrderCode,
+      status
+    })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không cập nhật được trạng thái');
+      const item = data.item || {};
+      window.externalOrdersData = (window.externalOrdersData || []).map(row =>
+        row.code === item.code ? item : row
+      );
+      refreshExternalModalStatus();
+      renderExternalOrdersDashboard();
+    })
+    .catch(e => showToast(`❌ ${e.message}`));
 }
 
 function changeSortOrder() {
@@ -2722,9 +2731,7 @@ function sortData(arr) {
 
 async function init() {
   try {
-    hydrateExternalOrdersInput();
-    renderExternalOrdersDashboard();
-    const [summaryData] = await Promise.all([loadSummary(), loadOrders()]);
+    const [summaryData] = await Promise.all([loadSummary(), loadOrders(), loadExternalOrders()]);
     if (summaryData && summaryData.shops) {
       fetchAndUpdateShopNames(summaryData.shops);
     }
@@ -2738,7 +2745,7 @@ async function init() {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); loadMienBac(); }, 300_000);
+  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); loadMienBac(); loadExternalOrders(); }, 300_000);
 }
 
 async function loadSummary() {
