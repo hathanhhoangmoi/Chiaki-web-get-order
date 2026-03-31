@@ -64,7 +64,7 @@ body{
 .product-search-box{
   display:flex;align-items:center;gap:10px;
   padding:12px 16px;
-  border-radius:24px;
+  border-radius:35px;
   background:rgba(255,255,255,.55);
   border:1px solid rgba(255,255,255,.75);
   backdrop-filter:blur(20px);
@@ -1261,13 +1261,13 @@ select.sync-input{font-family:inherit;cursor:pointer}
       id="productSearchInput"
       class="product-search-input"
       type="text"
-      placeholder="Tìm tên sản phẩm..."
+      placeholder="Tìm tên sản phẩm... hỗ trợ full-text / token search"
       oninput="handleProductSearchInput()"
       onkeydown="if(event.key==='Enter') searchProductOrders(true)"
     />
-    <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm</button>
+    <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm ngay</button>
   </div>
-  <div class="product-search-hint">Nhập từ khóa sản phẩm...</div>
+  <div class="product-search-hint">Nhập từ khóa sản phẩm để hiện popup các đơn khớp tên sản phẩm.</div>
 </div>
 
 <div class="product-search-modal" id="productSearchBg" onclick="if(event.target===this) closeProductSearchModal()">
@@ -1373,7 +1373,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('panelCancelCurl')" title="Thu gọn / mở rộng"></button>
       <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
     </div>
-    <div class="panel-inline-title">Tạo mã cURL huỷ đơn</div>
+    <div class="panel-inline-title">Tạo mã cURL</div>
   </div>
   <div class="panel-body">
   <div class="info-modal-icon">👨🏻‍💻</div>
@@ -1476,7 +1476,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
         <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('panelSyncOrders')" title="Thu gọn / mở rộng"></button>
         <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
       </div>
-      <div class="panel-inline-title">Đồng bộ đơn hàng</div>
+      <div class="panel-inline-title">Tải danh sách đơn hàng</div>
     </div>
     <div class="panel-body">
 
@@ -1509,9 +1509,9 @@ select.sync-input{font-family:inherit;cursor:pointer}
         ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
         ondrop="handleComboBulkDrop(event)"
       >
-        <div style="font-size:13px;font-weight:700;color:#570301">📂 Kéo thả tất cả file Excel vào đây</div>
+        <div style="font-size:13px;font-weight:700;color:#570301">📂 Kéo thả nhiều file Excel vào đây</div>
         <div style="font-size:11px;color:#a06070;margin-top:4px">
-          File sẽ được gán theo thứ tự shop
+          File sẽ được gán theo thứ tự shop: file đầu là shop đầu tiên, file thứ 2 là shop tiếp theo...
         </div>
         <div style="font-size:11px;color:#9b8bb4;margin-top:6px">
           Ví dụ: <code>danh-sach-don-hang.xlsx</code>, <code>danh-sach-don-hang (1).xlsx</code>, ...
@@ -2336,7 +2336,9 @@ function renderHanoiTable(data) {
 
 async function loadHanoi() {
   try {
-    const res  = await fetch('/api/orders/hanoi');
+    const res  = await fetch('/api/orders/hanoi', {
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+    });
     const data = await res.json();
     window.hanoiData = Array.isArray(data) ? data : [];
     renderHanoiTable(sortData(window.hanoiData));
@@ -2382,7 +2384,9 @@ let nuocHoaVisible = false;
 
 async function loadNuocHoa() {
   try {
-    const res  = await fetch('/api/orders/nuochoa');
+    const res  = await fetch('/api/orders/nuochoa', {
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+    });
     const data = await res.json();
     window.nuocHoaData = Array.isArray(data) ? data : [];
     renderNuocHoaTable(sortData(window.nuocHoaData));
@@ -2499,7 +2503,7 @@ function renderPagination(total) {
 
 function goPage(p) { currentPage = p; loadOrders(); }
 
-const BLOCKED_SHOPS = new Set(['4647']);
+const BLOCKED_SHOPS = new Set(['4647', '4732']);
 let unlockedShops      = new Set();
 let pendingShopId      = null;
 
@@ -2584,7 +2588,10 @@ async function fetchOrderInfo() {
   try {
     const res = await fetch('/api/order-info', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem('chiaki_id') || ''
+      },
       body: JSON.stringify({ order_code: code, key })
     });
     const data = await res.json();
@@ -3813,7 +3820,7 @@ function renderMienBacTable(data) {
 async function loadMienBac() {
   try {
     const res = await fetch('/api/orders/mien-bac', {
-      headers: { 'X-User-ID': localStorage.getItem('chiakiid') || '' }
+      headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
     });
     const data = await res.json();
     window.mienBacData = Array.isArray(data) ? data : [];
@@ -4358,7 +4365,10 @@ async function fetchSideOrderInfo() {
   try {
     const res  = await fetch('/api/order-info', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem('chiaki_id') || ''
+      },
       body: JSON.stringify({ ordercode: code, key })
     });
     const data = await res.json();
@@ -4635,7 +4645,10 @@ async function generateTransferOrderCurl() {
   try {
     const res = await fetch('/api/order-info', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem('chiaki_id') || ''
+      },
       body: JSON.stringify({ order_code: oldOrderCode, key })
     });
     const data = await res.json();
