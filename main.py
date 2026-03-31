@@ -12,7 +12,15 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db, migrate
 from fetcher import sync_shop, parse_excel
-from models import Base, ExternalOrderConfig, ExternalOrderTracking, Order, ShopMeta
+from models import (
+    Base,
+    ExternalOrderConfig,
+    ExternalOrderConfigHoang,
+    ExternalOrderTracking,
+    ExternalOrderTrackingHoang,
+    Order,
+    ShopMeta,
+)
 from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, get_shops_map
 
 # ── Key management cho order-info ─────────────────────────
@@ -75,6 +83,22 @@ def can_manage_external_orders(user_id: str) -> bool:
     return str(user_id or "").strip() == "Hoang5611"
 
 
+def can_view_hoang_orders(user_id: str) -> bool:
+    return str(user_id or "").strip() == "Hoang5611"
+
+
+def normalize_external_scope(scope: str | None) -> str:
+    value = str(scope or "phuong").strip().lower()
+    return value if value in {"phuong", "hoang"} else "phuong"
+
+
+def get_external_models(scope: str):
+    normalized = normalize_external_scope(scope)
+    if normalized == "hoang":
+        return ExternalOrderTrackingHoang, ExternalOrderConfigHoang
+    return ExternalOrderTracking, ExternalOrderConfig
+
+
 def serialize_external_order(o: ExternalOrderTracking):
     return {
         "code": o.order_code,
@@ -85,10 +109,11 @@ def serialize_external_order(o: ExternalOrderTracking):
     }
 
 
-def get_external_order_config(db: Session) -> ExternalOrderConfig:
-    config = db.query(ExternalOrderConfig).filter(ExternalOrderConfig.id == 1).first()
+def get_external_order_config(db: Session, scope: str = "phuong"):
+    _, config_model = get_external_models(scope)
+    config = db.query(config_model).filter(config_model.id == 1).first()
     if not config:
-        config = ExternalOrderConfig(id=1, fee_items_json="[]")
+        config = config_model(id=1, fee_items_json="[]")
         db.add(config)
         db.commit()
         db.refresh(config)
@@ -272,10 +297,17 @@ def get_chart_data(db: Session = Depends(get_db)):
 
 
 @app.get("/api/external-orders")
-def get_external_orders(db: Session = Depends(get_db)):
-    rows = db.query(ExternalOrderTracking).order_by(desc(ExternalOrderTracking.updated_at), ExternalOrderTracking.order_code).all()
-    config = get_external_order_config(db)
+def get_external_orders(request: Request, scope: str = Query("phuong"), db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    scope = normalize_external_scope(scope)
+    if scope == "hoang" and not can_view_hoang_orders(user_id):
+        return JSONResponse({"error": "Bạn không có quyền xem thông tin tại đây."}, status_code=403)
+
+    tracking_model, _ = get_external_models(scope)
+    rows = db.query(tracking_model).order_by(desc(tracking_model.updated_at), tracking_model.order_code).all()
+    config = get_external_order_config(db, scope)
     return {
+        "scope": scope,
         "total": len(rows),
         "items": [serialize_external_order(row) for row in rows],
         "config": serialize_external_order_config(config),
@@ -287,6 +319,7 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
     user_id = request.headers.get("X-User-ID", "")
     if not can_manage_external_orders(user_id):
         return JSONResponse({"error": "Không có quyền chỉnh cấu hình."}, status_code=403)
+    scope = normalize_external_scope(body.get("scope"))
 
     items = body.get("items")
     if not isinstance(items, list):
@@ -332,23 +365,25 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
                 "collected": collected,
             })
 
-    db.query(ExternalOrderTracking).delete()
+    tracking_model, _ = get_external_models(scope)
+    db.query(tracking_model).delete()
     for item in normalized:
-        db.add(ExternalOrderTracking(
+        db.add(tracking_model(
             order_code=item["code"],
             cod_amount=item["cod"],
             status=item["status"],
             is_paid=item["is_paid"],
             updated_at=datetime.now(),
         ))
-    config = get_external_order_config(db)
+    config = get_external_order_config(db, scope)
     config.fee_items_json = _json.dumps(fee_items, ensure_ascii=False)
     config.updated_at = datetime.now()
     db.commit()
 
-    rows = db.query(ExternalOrderTracking).order_by(desc(ExternalOrderTracking.updated_at), ExternalOrderTracking.order_code).all()
+    rows = db.query(tracking_model).order_by(desc(tracking_model.updated_at), tracking_model.order_code).all()
     return {
         "ok": True,
+        "scope": scope,
         "total": len(rows),
         "items": [serialize_external_order(row) for row in rows],
         "config": serialize_external_order_config(config),
@@ -360,6 +395,7 @@ def update_external_order_status(request: Request, body: dict, db: Session = Dep
     user_id = request.headers.get("X-User-ID", "").strip()
     if not can_manage_external_orders(user_id):
         return JSONResponse({"error": "Không có quyền cập nhật trạng thái."}, status_code=403)
+    scope = normalize_external_scope(body.get("scope"))
 
     code = str(body.get("code", "")).strip().upper()
     status = str(body.get("status", "unknown")).strip()
@@ -367,7 +403,8 @@ def update_external_order_status(request: Request, body: dict, db: Session = Dep
     if not code or status not in valid_statuses:
         return JSONResponse({"error": "Dữ liệu không hợp lệ."}, status_code=422)
 
-    row = db.query(ExternalOrderTracking).filter(ExternalOrderTracking.order_code == code).first()
+    tracking_model, _ = get_external_models(scope)
+    row = db.query(tracking_model).filter(tracking_model.order_code == code).first()
     if not row:
         return JSONResponse({"error": "Không tìm thấy đơn ngoại sàn."}, status_code=404)
 
@@ -386,12 +423,14 @@ def update_external_order_payment(request: Request, body: dict, db: Session = De
     user_id = request.headers.get("X-User-ID", "").strip()
     if not can_manage_external_orders(user_id):
         return JSONResponse({"error": "Không có quyền cập nhật thanh toán."}, status_code=403)
+    scope = normalize_external_scope(body.get("scope"))
 
     code = str(body.get("code", "")).strip().upper()
     if not code:
         return JSONResponse({"error": "Dữ liệu không hợp lệ."}, status_code=422)
 
-    row = db.query(ExternalOrderTracking).filter(ExternalOrderTracking.order_code == code).first()
+    tracking_model, _ = get_external_models(scope)
+    row = db.query(tracking_model).filter(tracking_model.order_code == code).first()
     if not row:
         return JSONResponse({"error": "Không tìm thấy đơn ngoại sàn."}, status_code=404)
 
