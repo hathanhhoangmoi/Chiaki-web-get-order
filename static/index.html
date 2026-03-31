@@ -773,14 +773,10 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 .btn-close-success:hover{transform:translateY(-1px)}
 .btn-take-order{
-  padding:5px 14px;border:none;border-radius:10px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-size:11px;font-weight:700;
-  font-family:inherit;cursor:pointer;
-  box-shadow:0 3px 10px rgba(245,186,213,.35);
-  transition:all .2s;white-space:nowrap;
+  margin-top:6px;
+  white-space:nowrap;
 }
-.btn-take-order:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(186,214,253,.45)}
+.btn-take-order:hover{transform:translateY(-1px)}
 .phone-blur{
   filter:blur(4px);user-select:none;
   transition:filter .2s;cursor:default;
@@ -2698,7 +2694,7 @@ function getExternalStatusMeta(status) {
 }
 
 function canConfigExternalOrders(id = localStorage.getItem(ID_KEY) || '') {
-  return String(id || '').trim() === 'Chang2000';
+  return String(id || '').trim() === 'Hoang5611';
 }
 
 function updateExternalOrdersAccess(id = localStorage.getItem(ID_KEY) || '') {
@@ -3190,7 +3186,7 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
                 .replace(/\\/g, '\\\\')
                 .replace(/'/g, "\\'")
                 .replace(/"/g, '&quot;');
-                return `<button class="btn-take-order" onclick="openTakeOrder('${payload}')">📦 GET</button>`;
+                return `<button class="btn-copy-order-main btn-take-order" type="button" onclick="openTakeOrder('${payload}')">GET</button>`;
                 })()
             }
           </td>
@@ -3232,7 +3228,7 @@ function renderHanoiTable(data) {
       <td>
         ${o.restricted
           ? `<span class="restricted-mask">••••••••</span>`
-          : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>📦 GET</button>`}
+          : `<button class="btn-copy-order-main btn-take-order" type="button" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>GET</button>`}
       </td>
     </tr>
   `).join('');
@@ -3278,7 +3274,7 @@ function renderNuocHoaTable(data) {
       <td>
         ${o.restricted
           ? `<span class="restricted-mask">••••••••</span>`
-          : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`}
+          : `<button class="btn-copy-order-main btn-take-order" type="button" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>GET</button>`}
       </td>
     </tr>
   `).join('');
@@ -3804,7 +3800,7 @@ function maskId(id) {
 }
 
 function isAdminId(id) {
-  return ['Chang2000', 'LOGIN-KEY-PHUONG2000'].includes(String(id || '').trim());
+  return ['Hoang5611', 'LOGIN-KEY-PHUONG2000'].includes(String(id || '').trim());
 }
 
 function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
@@ -4212,7 +4208,7 @@ function renderTakenList() {
     return;
   }
   const currentId = localStorage.getItem('chiaki_id');
-  const canDelete = currentId === 'Chang2000';
+  const canDelete = currentId === 'Hoang5611';
   el.innerHTML = list.map((item, idx) => {
     const d   = new Date(item.takenat);
     const fmt = d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -4245,7 +4241,7 @@ function closeTakenOnOutside(e) {
 
 function clearTakenOrders() {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') {
+  if (currentId !== 'Hoang5611') {
     alert('Bạn không có quyền xoá lịch sử đơn đã lấy.');
     return;
   }
@@ -4255,7 +4251,7 @@ function clearTakenOrders() {
 }
 function deleteTakenOrder(index) {
   const currentId = localStorage.getItem('chiaki_id');
-  if (currentId !== 'Chang2000') {
+  if (currentId !== 'Hoang5611') {
     alert('Bạn không có quyền xoá đơn đã lấy.');
     return;
   }
@@ -4408,7 +4404,7 @@ function initHistoryBtn() {
   const panel    = document.getElementById('historyPanel');
   const toggleBtn = document.getElementById('historyToggleBtn');
 
-  if (uid === 'Chang2000') {
+  if (uid === 'Hoang5611') {
     if (toggleBtn) {
       toggleBtn.classList.add('visible'); // nút tròn hiện
     }
@@ -4720,7 +4716,7 @@ function renderMienBacTable(data) {
     <td>
       ${o.restricted
         ? `<span class="restricted-mask">••••••••</span>`
-        : `<button class="btn-take-order" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>📦 GET</button>`}
+        : `<button class="btn-copy-order-main btn-take-order" type="button" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>GET</button>`}
     </td>
   </tr>`).join('');
 }
