@@ -2,6 +2,7 @@ import io
 import json as _json
 import re
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 import httpx
 from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
@@ -46,6 +47,12 @@ FULL_ACCESS_IDS = {"Hoang5611"}
 SENSITIVE_SHOPS = {"4647", "4732"}
 SENSITIVE_TOTAL_THRESHOLD = 2_500_000
 PHONE_KEY_PHUONG_ALLOWED_SHOPS = {"4917", "4940", "5096", "5125", "5114"}
+LOGIN_ID_META = {
+    "LOGIN-KEY-PHUONG2000": {"hours": 1, "label": "Phương"},
+    "LOGIN-KEY-CHANGTESTUSER": {"hours": 9999999999, "label": "Hoàng"},
+    "Hoang5611": {"hours": 9999999999, "label": "Hoàng"},
+    "unlimited_id": {"hours": 9999999999, "label": "Unlimited"},
+}
 
 def is_full_access_user(user_id: str) -> bool:
     return str(user_id or "").strip() in FULL_ACCESS_IDS
@@ -85,6 +92,120 @@ def can_manage_external_orders(user_id: str) -> bool:
 
 def can_view_hoang_orders(user_id: str) -> bool:
     return str(user_id or "").strip() == "Hoang5611"
+
+
+def get_user_capabilities(user_id: str) -> dict:
+    normalized = str(user_id or "").strip()
+    return {
+        "full_access": is_full_access_user(normalized),
+        "manage_external_orders": can_manage_external_orders(normalized),
+        "view_hoang_orders": can_view_hoang_orders(normalized),
+        "admin_tools": normalized in {"Hoang5611", "LOGIN-KEY-PHUONG2000"},
+        "manage_taken_history": can_view_hoang_orders(normalized),
+        "view_history_panel": can_view_hoang_orders(normalized),
+    }
+
+
+def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str:
+    today = datetime.now()
+    since = today - timedelta(days=14)
+
+    def fmt(d):
+        return quote(d.strftime("%d/%m/%Y"), safe="")
+
+    range_date = f"{fmt(since)}+-+{fmt(today)}"
+    return (
+        f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
+        f"?source=seller&page_index=1&page_size=500&status={status}"
+        f"&range_date={range_date}"
+        f"&date_type=created_at&order=create-desc"
+        f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
+    )
+
+
+def escape_for_shell_double_quotes(value: str) -> str:
+    return (
+        str(value or "")
+        .replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("$", "\\$")
+        .replace("`", "\\`")
+    )
+
+
+async def fetch_order_info_data(order_code: str, key: str, user_id: str, db: Session):
+    if not order_code or not key:
+        raise ValueError("Thiếu mã đơn hàng hoặc key.")
+    if key not in VALID_KEYS:
+        raise PermissionError("Key không hợp lệ.")
+    if len(order_code) < 9:
+        raise ValueError("Mã đơn hàng không hợp lệ.")
+
+    input_id = order_code[2:9]
+    url = f"https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId={input_id}"
+    session = "eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D"
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        res = await client.get(url, headers={
+            "Accept": "application/json, text/plain, */*",
+            "platform": "ios",
+            "Cookie": f"laravel_session={session}",
+            "User-Agent": "chiakiApp/3.6.2"
+        })
+    data = res.json()
+    d = data.get("result") or data.get("data") or {}
+    if isinstance(d, list):
+        d = d[0] if d else {}
+
+    def g(*keys):
+        for k in keys:
+            v = d.get(k)
+            if v:
+                return str(v)
+        return "—"
+
+    phone = next((x for x in d.get("search", "").split() if x.isdigit() and len(x) >= 9), "—")
+    db_order = db.query(Order).filter(Order.order_code.like(f"%_{order_code}")).first()
+    hide_order = should_hide_order(db_order, user_id)
+    db_product = db_order.product if db_order else "—"
+    shop_id_from_api = g("store_code", "creator_name")
+    db_shop_name = (
+        SHOP_NAME_MAP.get(shop_id_from_api)
+        or (db_order.shop_name if db_order else None)
+        or shop_id_from_api
+    )
+    db_total = f"{int(db_order.total):,} đ".replace(",", ".") if db_order and db_order.total else "—"
+    try:
+        meta_raw = d.get("meta_data", "{}")
+        meta = _json.loads(meta_raw) if isinstance(meta_raw, str) else (meta_raw or {})
+    except Exception:
+        meta = {}
+
+    effective_shop_id = str((db_order.shop_id if db_order and db_order.shop_id else shop_id_from_api) or "").strip()
+    if key == "PHONE-KEY-PHUONG2000" and effective_shop_id not in PHONE_KEY_PHUONG_ALLOWED_SHOPS:
+        raise LookupError("Không có thông tin đơn hàng.")
+    if hide_order:
+        raise LookupError("Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn này.")
+
+    return {
+        "raw": d,
+        "meta": meta,
+        "db_order": db_order,
+        "payment_type": d.get("payment_type", ""),
+        "shop_name": db_shop_name,
+        "product": db_product,
+        "phone": phone,
+        "prepaid_amount_text": db_total,
+        "customer_id": meta.get("customer_id") or d.get("related_user_id"),
+        "delivery_location_id": g("delivery_location_id"),
+        "district_delivery_id": g("district_delivery_id"),
+        "commune_delivery_id": g("commune_delivery_id"),
+        "order_date": g("verified_time", "create_time"),
+        "address": g("delivery_address"),
+        "customer_name": g("related_user_name", "receiver_name"),
+        "email": g("email_id"),
+        "shipping_code": g("shipping_code"),
+    }
 
 
 def normalize_external_scope(scope: str | None) -> str:
@@ -623,6 +744,15 @@ async def get_login_history(request: Request):
     if user_id != 'Hoang5611':
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
     return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
+
+
+@app.get("/api/auth/capabilities")
+def get_auth_capabilities(request: Request):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    return {
+        "ok": True,
+        "capabilities": get_user_capabilities(user_id),
+    }
 @app.get("/api/export-order/{order_code}")
 async def export_order(order_code: str, request: Request, db: Session = Depends(get_db)):
     from openpyxl import Workbook
@@ -676,14 +806,8 @@ async def export_order(order_code: str, request: Request, db: Session = Depends(
 
 @app.post("/api/auth/verify-id")
 async def verify_id(body: dict):
-    VALID_IDS = {
-        "LOGIN-KEY-PHUONG2000": {"hours": 1,           "label": "Phương"},
-        "LOGIN-KEY-CHANGTESTUSER":    {"hours": 9999999999,   "label": "Hoàng"},
-        "Hoang5611":    {"hours": 9999999999,   "label": "Hoàng"},
-        "unlimited_id": {"hours": 9999999999, "label": "Unlimited"},
-    }
     user_id = body.get("id", "").strip()
-    info = VALID_IDS.get(user_id)
+    info = LOGIN_ID_META.get(user_id)
     if not info:
         return JSONResponse({"error": "ID không hợp lệ."}, status_code=403)
     
@@ -696,7 +820,13 @@ async def verify_id(body: dict):
     if int(time.time() * 1000) > exp_ms:
         return JSONResponse({"error": "ID đã hết hạn."}, status_code=403)
     
-    return {"ok": True, "label": info["label"], "expMs": exp_ms, "firstEntry": first_entry}
+    return {
+        "ok": True,
+        "label": info["label"],
+        "expMs": exp_ms,
+        "firstEntry": first_entry,
+        "capabilities": get_user_capabilities(user_id),
+    }
 @app.get("/api/orders/mien-bac")
 async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
     user_id = request.headers.get("X-User-ID", "")
@@ -736,11 +866,193 @@ def get_shops_list():
         })
     return sorted(result, key=lambda x: x["shop_name"])
 
-@app.get("/api/sync-config")
-def get_sync_config():
+@app.get("/api/sync-download-links")
+def get_sync_download_links(request: Request):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not get_user_capabilities(user_id).get("admin_tools"):
+        return JSONResponse({"error": "Không có quyền truy cập."}, status_code=403)
+
+    shops = sorted(get_shops_map().items(), key=lambda item: item[1][1])
     return {
-        "seller_id": SELLER_ID,
-        "seller_token": SELLER_TOKEN,
+        "shops": [
+            {
+                "shop_id": shop_id,
+                "shop_name": shop_name,
+                "shop_url": shop_url,
+                "download_url": build_shop_download_url(shop_id),
+            }
+            for shop_id, (shop_url, shop_name) in shops
+        ]
+    }
+
+
+@app.post("/api/tools/cancel-order-curl")
+async def create_cancel_order_curl(request: Request, body: dict):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not get_user_capabilities(user_id).get("admin_tools"):
+        return JSONResponse({"error": "Không có quyền truy cập."}, status_code=403)
+
+    order_code = str(body.get("order_code", "")).strip()
+    if not order_code or len(order_code) < 9:
+        return JSONResponse({"error": "Mã đơn không hợp lệ."}, status_code=422)
+
+    order_id = order_code[2:9]
+    curl_text = f"""ORDER_ID="{order_id}" && \\
+SYNC_ID=$(curl -s "https://ec.megaads.vn/service/inoutput/find-promotion-codes-api?inoutputId=$ORDER_ID" \\
+  -H 'Accept: application/json, text/plain, */*' \\
+  -H 'platform: ios' \\
+  -H 'Cookie: laravel_session=eyJpdiI6ImIra2pmWitCVVRRTlp2K3pRUUZOZ1E9PSIsInZhbHVlIjoibXpYaFhkQmVZU1VMRFRKWWhEcXRCdnBFSWdycVNzNFlSVHpGWjVYT0hTVDFpdlErVWxDSWhEaVdcL3JyT2RvSjZIcDNkMVJSYTllZDJMMTlsR2ZIQ3BnPT0iLCJtYWMiOiI2MDc2MTFlNDg0MTg4M2IyNDBiNDAzMDE4ZWE0MTk0ZTFkNDdlNGU3MjQ0ZjA3ODFkYTlkYzZiMjcyOTEyMzNmIn0%3D' \\
+  -H 'User-Agent: chiakiApp/3.6.2' \\
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['sync_id'])") && \\
+echo "sync_id: $SYNC_ID" && \\
+curl -s -X POST "https://api.chiaki.vn/api/order/request-cancel" \\
+  -H "Accept: application/json, text/plain, */*" \\
+  -H "Accept-Encoding: gzip, deflate" \\
+  -H "Content-Type: application/json" \\
+  -H "token: YjYTQY7fP4vExhg0a8itBqBEFKzZlmcKWBoxkwc91XNyF3zpCi" \\
+  -H "User-Agent: chiakiApp/3.6.2" \\
+  --compressed \\
+  -d "{{\\"sync_id\\":\\"$SYNC_ID\\",\\"order_id\\":\\"$ORDER_ID\\",\\"cancel_code\\":\\"change_item_order\\",\\"cancel_reason\\":\\"Thay đổi đơn hàng (màu sắc, kích thước, thêm mã giảm giá,...)\\\"}}" \\
+  | python3 -m json.tool"""
+    return {"ok": True, "order_code": order_code, "curl": curl_text}
+
+
+@app.post("/api/tools/transfer-order-curl")
+async def create_transfer_order_curl(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not get_user_capabilities(user_id).get("admin_tools"):
+        return JSONResponse({"error": "Không có quyền truy cập."}, status_code=403)
+
+    old_order_code = str(body.get("old_order_code", "")).strip()
+    new_product_code = str(body.get("new_product_code", "")).strip()
+    new_product_id = str(body.get("new_product_id", "")).strip()
+    quantity = str(body.get("quantity", "")).strip()
+    target_shop_id = str(body.get("target_shop_id", "")).strip()
+    key = str(body.get("key", "")).strip()
+
+    if not all([old_order_code, new_product_code, new_product_id, quantity, target_shop_id]):
+        return JSONResponse({"error": "Vui lòng điền đủ 5 trường."}, status_code=422)
+    if not re.fullmatch(r"\d+", new_product_id or "") or not re.fullmatch(r"\d+", quantity or "") or not re.fullmatch(r"\d+", target_shop_id or ""):
+        return JSONResponse({"error": "ID sản phẩm mới, số lượng và ID Shop nhận đơn phải là số."}, status_code=422)
+    if not key:
+        return JSONResponse({"error": "Chưa có key tra cứu."}, status_code=422)
+
+    try:
+        order_info = await fetch_order_info_data(old_order_code, key, user_id, db)
+    except PermissionError as e:
+        return JSONResponse({"error": str(e)}, status_code=403)
+    except LookupError as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=422)
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi khi lấy thông tin đơn cũ: {e}"}, status_code=500)
+
+    user_id_value = str(order_info.get("customer_id") or "").strip()
+    delivery_location_id = str(order_info.get("delivery_location_id") or "").strip()
+    district_delivery_id = str(order_info.get("district_delivery_id") or "").strip()
+    commune_delivery_id = str(order_info.get("commune_delivery_id") or "").strip()
+    order_time = str(order_info.get("order_date") or "").strip()
+    address = "" if order_info.get("address") == "—" else str(order_info.get("address") or "").strip()
+    full_name = "" if order_info.get("customer_name") == "—" else str(order_info.get("customer_name") or "").strip()
+    email = "" if order_info.get("email") == "—" else str(order_info.get("email") or "").strip()
+    phone = "" if order_info.get("phone") == "—" else str(order_info.get("phone") or "").strip()
+
+    if not user_id_value or not delivery_location_id or not district_delivery_id or not commune_delivery_id:
+        return JSONResponse({"error": "Thiếu dữ liệu giao hàng hoặc customer_id từ đơn hàng cũ."}, status_code=422)
+
+    encoded_time = quote(order_time, safe="")
+    add_to_cart_payload = _json.dumps({
+        "product_id": int(new_product_id),
+        "product_code": new_product_code,
+        "quantity": int(quantity),
+        "is_buy_now": 0,
+        "store_id": int(target_shop_id),
+        "user_id": int(user_id_value)
+    }, ensure_ascii=False)
+    checkout_payload = _json.dumps({
+        "user_id": int(user_id_value),
+        "delivery_location_id": int(delivery_location_id),
+        "district_delivery_id": int(district_delivery_id),
+        "commune_delivery_id": int(commune_delivery_id),
+        "delivery_address": address,
+        "earn": 0,
+        "full_name": full_name,
+        "email": email,
+        "phone": phone,
+        "phone2": "",
+        "payment_type": "home",
+        "prepaid_code": "",
+        "related_user_id": int(user_id_value),
+        "related_user_name": "Nguyên",
+        "require_call_back": 0,
+        "campaign_id": "",
+        "order_cookie": "",
+        "from": "",
+        "affiliate_id": "",
+        "custom_id": "",
+        "point": 0,
+        "ads_id": "",
+        "ip": "192.168.1.241",
+        "platform": "ios",
+        "from_flow": "",
+        "email_id": "",
+        "tracking": "",
+        "affiliate_type": "",
+        "affiliate_url": "",
+        "banner_id": "",
+        "flash_sale": "",
+        "product_sync": "",
+        "delivery_time": "",
+        "url_history": _json.dumps([{
+            "url": f"https://chiaki.vn/add_to_cart?is_buy_now=0&product_code={quote(new_product_code, safe='')}&product_id={new_product_id}&quantity={quantity}&store_id={target_shop_id}&time={encoded_time}&user_id={user_id_value}&version=3.6.2",
+            "time": order_time
+        }], ensure_ascii=False),
+        "current_warehouse_product": "empty",
+        "delivery_note": "other",
+        "description": "",
+        "promotion_code_used": {},
+        "delivery_shipping_mode": "normal",
+        "source": "chiaki-app",
+        "device": "ios",
+        "clicker_data": {"source": None, "sources": "", "trackingData": None},
+        "browser": " ",
+        "user_device": "Mobile",
+        "payment_value": _json.dumps({"bank_code": "home"}, ensure_ascii=False),
+        "is_hide_product_name": 0
+    }, ensure_ascii=False)
+
+    curl_text = f"""curl 'https://api.chiaki.vn/api/v2/cart_item/push' \\
+-X POST \\
+-H 'Host: api.chiaki.vn' \\
+-H 'Accept: application/json, text/plain, */*' \\
+-H 'baggage: sentry-environment=production,sentry-public_key=418f1affd8b5477baa885b6b4da50b79,sentry-trace_id=7f3084679f1944b2ae6208a09319a66b' \\
+-H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \\
+-H 'Cache-Control: no-cache' \\
+-H 'platform: ios' \\
+-H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
+-H 'User-Agent: chiakiApp/3.6.2' \\
+-H 'sentry-trace: 7f3084679f1944b2ae6208a09319a66b-a1c86e53db19d505' \\
+-H 'Connection: keep-alive' \\
+-H 'Content-Type: application/json' \\
+--data-raw "{escape_for_shell_double_quotes(add_to_cart_payload)}" \\
+| python3 -m json.tool
+
+sleep 10
+
+curl 'https://api.chiaki.vn/api/checkout' \\
+-X POST \\
+-H 'platform: ios' \\
+-H 'imei: A4184509-4A7A-423B-A0EE-044668760C71' \\
+-H 'User-Agent: chiakiApp/3.6.2' \\
+-H 'Accept: application/json, text/plain, */*' \\
+-H 'Content-Type: application/json' \\
+--data-raw "{escape_for_shell_double_quotes(checkout_payload)}" \\
+| python3 -m json.tool"""
+    return {
+        "ok": True,
+        "summary": f"Đơn cũ: {old_order_code} · User ID: {user_id_value} · SP mới: {new_product_code} · Shop nhận: {target_shop_id}",
+        "curl": curl_text,
     }
 
 @app.post("/api/sync")
