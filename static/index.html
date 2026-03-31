@@ -2169,9 +2169,8 @@ select.sync-input{font-family:inherit;cursor:pointer}
   padding: 12px 18px;
   margin-bottom: 12px;
 ">
-  <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
-
-  <div style="display:flex;gap:8px;align-items:center">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
     <select id="sortSelect" onchange="changeSortOrder()">
       <option value="default">📁 Mặc định</option>
       <option value="total_desc">💰 Giá trị cao → thấp</option>
@@ -2714,6 +2713,7 @@ let currentSort = 'default';
 let activeExternalOrderCode = '';
 let activeExternalScope = 'phuong';
 let lastSyncDelta = null;
+window.shopIdNameMap = {};
 window.userCapabilities = {};
 window.externalOrdersData = [];
 window.externalOrdersConfig = { fee_items: [] };
@@ -2732,7 +2732,10 @@ function hasCapability(name) {
 
 function formatSyncDate(value) {
   if (!value) return '';
-  const dt = new Date(value);
+  const normalized = /(?:Z|[+-]\d{2}:\d{2})$/.test(String(value))
+    ? String(value)
+    : `${String(value)}Z`;
+  const dt = new Date(normalized);
   if (Number.isNaN(dt.getTime())) return '';
   return dt.toLocaleString('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -3767,27 +3770,6 @@ if (statusBanner) {
     statusBanner.style.display = rawStatus ? 'block' : 'none'
 }
 
-const SHOP_ID_NAME = {
-    "2732": "Min Duty", "4299": "HADES Shop", "3522": "ShipnhanhStore",
-    "4337": "TH Cosmetic", "3684": "Hoya Life", "3540": "Rongcon",
-    "3783": "Đẹp & Khoẻ 365", "1489": "Beauty & Healthy", "4036": "Kitty House",
-    "635": "Trang Perfume", "1498": "Kho Dược TPCN", "5090": "Mason House Store",
-    "5091": "Gia Phương Shop", "4339": "PINASAGO Pin Sài Gòn", "4961": "Kalos Việt Nam",
-    "4872": "Green House", "4917": "Moss Skincare", "4647": "XXIV Store",
-    "4732": "Ken Perfume", "5112": "MoiThom - Mèo bán nước hoa", "2292": "Thế Giới Hàng Auth 88",
-    "4940": "Mint- Skin Beauty & Cosmetics", "5096": "The Senté Hill", "1164": "O2 PHARMACY",
-    "3612": "NGUYENKIM", "5092": "Thế Giới Son", "5125": "Felice Beauty Garden",
-    "1600": "ChoychoyStore", "2423": "Peony Cosmetics", "4965": "nhathuocsuckhoe2",
-    "4365": "Nana Beauty & More", "1729": "MHDMART", "4360": "SnapshopVN",
-    "5094": "Shop Snap TPHCM", "1602": "Winny Shop", "1105": "MjuMju",
-    "4294": "Life Healthy", "3009": "QuangNgoc1976", "1414": "Dược Phẩm Tâm An",
-    "2573": "MiMi Beauty", "2225": "T&T Japan shop", "3047": "GREENBOX",
-    "3864": "Hàng ngoại giá tốt", "3852": "Baby Grow Shop", "1273": "NHÀ THUỐC MINH TÂM",
-    "3300": "Mayya Hàng Nội Địa Nhật", "1258": "Shop Adam", "3337": "Shop Sài Gòn",
-    "4342": "Sản Phẩm Hỗ Trợ", "1015": "Green Healthy & Beauty",
-    "3218": "Bảo Lâm Anh", "2557": "XUAN MINH PHARMACY"
-}
-
     document.getElementById('irCode').textContent     = data.order_code    || '—';
     document.getElementById('irShop').textContent     = data.shop_name     || '—';
     document.getElementById('irDate').textContent     = data.order_date    || '—';
@@ -3826,7 +3808,7 @@ const SHOP_ID_NAME = {
                 const url = item.url || '';
                 const time = item.time || '';
                 const storeId = (url.match(/store_id=(\d+)/) || [])[1] || '';
-                const storeName = storeId ? (SHOP_ID_NAME[storeId] || `Store #${storeId}`) : '';
+                const storeName = storeId ? ((window.shopIdNameMap && window.shopIdNameMap[storeId]) || `Store #${storeId}`) : '';
                 const productId = (url.match(/product_id=(\d+)/) || [])[1] || '';
                 const productCode = (url.match(/product_code=([^&]+)/) || [])[1] || '';
 
@@ -5319,12 +5301,14 @@ async function loadSyncShops() {
           id: String(shop.shop_id || '').trim(),
           name: String(shop.shop_name || shop.shop_id || '').trim()
         })).filter(shop => shop.id);
+    window.shopIdNameMap = Object.fromEntries(syncShops.map(shop => [shop.id, shop.name]));
 
     populateSyncShopSelect();
     initComboRows();
   } catch (e) {
     console.error('loadSyncShops error', e);
     syncShops = [];
+    window.shopIdNameMap = {};
     populateSyncShopSelect();
 
     const container = document.getElementById('comboRows');
