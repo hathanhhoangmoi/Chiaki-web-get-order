@@ -127,6 +127,15 @@ body{
   background:rgba(255,255,255,.7);outline:none;
 }
 .external-config-textarea:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
+.external-config-input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid rgba(186,214,253,.5);
+  border-radius:14px;font-size:12px;
+  background:rgba(255,255,255,.7);color:#570301;
+  outline:none;transition:border .2s;box-sizing:border-box;
+  font-family:monospace;
+}
+.external-config-input:focus{border-color:#BAD6FD;box-shadow:0 0 0 3px rgba(186,214,253,.15)}
 .external-config-hint{font-size:11px;color:#a06070;margin-top:8px;line-height:1.6}
 .external-config-btns{
   display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;
@@ -138,7 +147,7 @@ body{
 }
 .external-stats{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   gap:10px;margin-bottom:16px;
 }
 .external-stat{
@@ -237,6 +246,11 @@ body{
   border:1px solid rgba(186,214,253,.32);
 }
 .external-status-btn.active{background:linear-gradient(135deg,#F5BAD5,#BAD6FD)}
+.external-status-btn:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+  background:rgba(220,200,210,.35);
+}
 .external-track-links{
   display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;
 }
@@ -1459,8 +1473,22 @@ select.sync-input{font-family:inherit;cursor:pointer}
           class="external-config-textarea"
           placeholder="SPXVN123456789|350000&#10;SPXVN987654321|420000"
         ></textarea>
+        <div class="external-config-label" style="margin-top:12px">Config Tổng Phí</div>
+        <input
+          id="externalFeeAmountInput"
+          class="external-config-input"
+          type="text"
+          inputmode="numeric"
+          placeholder="Số tiền tổng phí..."
+        />
+        <textarea
+          id="externalFeeContentInput"
+          class="external-config-textarea"
+          placeholder="Nội dung tổng phí..."
+          style="min-height:84px;margin-top:10px"
+        ></textarea>
         <div class="external-config-hint">
-          Mỗi dòng là 1 đơn. Hệ thống sẽ lưu tại trình duyệt hiện tại và dùng để tạo nút, thống kê và modal tracking.
+          Mỗi dòng là 1 đơn. Tổng thanh toán cho Phương = doanh thu đã giao - tổng phí.
         </div>
         <div class="external-config-btns">
           <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu danh sách</button>
@@ -1485,9 +1513,24 @@ select.sync-input{font-family:inherit;cursor:pointer}
           <div class="external-stat-sub">Các đơn trả về / hoàn về</div>
         </div>
         <div class="external-stat">
-          <div class="external-stat-label">💰 Tổng COD</div>
-          <div class="external-stat-value" id="externalTotalCod">0₫</div>
-          <div class="external-stat-sub">Tổng số tiền của toàn bộ đơn cấu hình</div>
+          <div class="external-stat-label">💰 DT đang giao</div>
+          <div class="external-stat-value" id="externalInTransitRevenue">0₫</div>
+          <div class="external-stat-sub">Doanh thu từ các đơn đang giao</div>
+        </div>
+        <div class="external-stat">
+          <div class="external-stat-label">💵 DT đã giao</div>
+          <div class="external-stat-value" id="externalDeliveredRevenue">0₫</div>
+          <div class="external-stat-sub">Doanh thu từ các đơn thành công</div>
+        </div>
+        <div class="external-stat">
+          <div class="external-stat-label">🧾 Tổng phí</div>
+          <div class="external-stat-value" id="externalFeeAmount">0₫</div>
+          <div class="external-stat-sub" id="externalFeeContent">Chưa có nội dung phí</div>
+        </div>
+        <div class="external-stat">
+          <div class="external-stat-label">💸 Thanh toán Phương</div>
+          <div class="external-stat-value" id="externalPayoutToPhuong">0₫</div>
+          <div class="external-stat-sub">DT đã giao - Tổng phí</div>
         </div>
       </div>
 
@@ -1548,7 +1591,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
         <button class="external-status-btn" id="externalStatusBtnInTransit" type="button" onclick="setExternalOrderStatus('in_transit')">🚛 Đang giao</button>
         <button class="external-status-btn" id="externalStatusBtnDelivered" type="button" onclick="setExternalOrderStatus('delivered')">✅ Thành công</button>
         <button class="external-status-btn" id="externalStatusBtnReturned" type="button" onclick="setExternalOrderStatus('returned')">↩️ Hoàn hàng</button>
-        <button class="external-status-btn" id="externalStatusBtnUnknown" type="button" onclick="setExternalOrderStatus('unknown')">❔ Chưa rõ</button>
+        <button class="external-status-btn" id="externalStatusBtnUnknown" type="button" onclick="setExternalOrderStatus('unknown')">❔ Chưa xử lý</button>
       </div>
 
       <div class="external-track-links">
@@ -1557,7 +1600,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
       </div>
 
       <div class="external-track-note">
-        Trạng thái dùng cho phần thống kê được lưu riêng theo từng mã đơn trên trình duyệt hiện tại. Khi cần đối chiếu chi tiết, mở trực tiếp SPX ở khung bên phải hoặc tab mới.
+        Trạng thái đơn ngoại sàn được đồng bộ trên server. Khi cần đối chiếu chi tiết, mở trực tiếp SPX ở khung bên phải hoặc tab mới.
       </div>
     </div>
 
@@ -2448,6 +2491,7 @@ let hanoiVisible = false;
 let currentSort = 'default';
 let activeExternalOrderCode = '';
 window.externalOrdersData = [];
+window.externalOrdersConfig = { fee_amount: 0, fee_content: '' };
 
 function formatExternalCurrency(amount) {
   return `${Number(amount || 0).toLocaleString('vi')}₫`;
@@ -2479,7 +2523,7 @@ function getExternalStatusMeta(status) {
     in_transit: { label: 'Đang giao', className: 'external-status-in_transit' },
     delivered: { label: 'Đã giao thành công', className: 'external-status-delivered' },
     returned: { label: 'Hoàn hàng', className: 'external-status-returned' },
-    unknown: { label: 'Chưa xác định', className: 'external-status-unknown' }
+    unknown: { label: 'Chưa xử lý', className: 'external-status-unknown' }
   };
   return map[status] || map.unknown;
 }
@@ -2511,6 +2555,8 @@ function toggleExternalConfig(forceOpen) {
 function saveExternalOrdersConfig() {
   if (!canConfigExternalOrders()) return;
   const text = document.getElementById('externalOrdersInput')?.value || '';
+  const feeAmount = parseExternalCodValue(document.getElementById('externalFeeAmountInput')?.value || 0);
+  const feeContent = document.getElementById('externalFeeContentInput')?.value || '';
   const currentMap = Object.fromEntries((window.externalOrdersData || []).map(item => [item.code, item]));
   const items = parseExternalOrdersText(text).map(item => ({
     ...item,
@@ -2522,12 +2568,13 @@ function saveExternalOrdersConfig() {
       'Content-Type': 'application/json',
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
-    body: JSON.stringify({ items })
+    body: JSON.stringify({ items, fee_amount: feeAmount, fee_content: feeContent })
   })
     .then(r => r.json().then(data => ({ ok: r.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không lưu được cấu hình');
       window.externalOrdersData = Array.isArray(data.items) ? data.items : [];
+      window.externalOrdersConfig = data.config || { fee_amount: 0, fee_content: '' };
       hydrateExternalOrdersInput();
       renderExternalOrdersDashboard();
       toggleExternalConfig(false);
@@ -2550,8 +2597,13 @@ function clearExternalOrdersConfig() {
     .then(({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không xóa được cấu hình');
       window.externalOrdersData = [];
+      window.externalOrdersConfig = data.config || { fee_amount: 0, fee_content: '' };
       const input = document.getElementById('externalOrdersInput');
       if (input) input.value = '';
+      const feeAmountInput = document.getElementById('externalFeeAmountInput');
+      const feeContentInput = document.getElementById('externalFeeContentInput');
+      if (feeAmountInput) feeAmountInput.value = String(window.externalOrdersConfig.fee_amount || 0);
+      if (feeContentInput) feeContentInput.value = window.externalOrdersConfig.fee_content || '';
       closeExternalTrackModal();
       renderExternalOrdersDashboard();
       showToast('Đã xóa toàn bộ đơn ngoại sàn');
@@ -2561,9 +2613,13 @@ function clearExternalOrdersConfig() {
 
 function hydrateExternalOrdersInput() {
   const input = document.getElementById('externalOrdersInput');
+  const feeAmountInput = document.getElementById('externalFeeAmountInput');
+  const feeContentInput = document.getElementById('externalFeeContentInput');
   if (!input) return;
   const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
   input.value = items.map(item => `${item.code}|${item.cod || 0}`).join('\n');
+  if (feeAmountInput) feeAmountInput.value = String(window.externalOrdersConfig?.fee_amount || 0);
+  if (feeContentInput) feeContentInput.value = window.externalOrdersConfig?.fee_content || '';
 }
 
 async function loadExternalOrders() {
@@ -2571,42 +2627,56 @@ async function loadExternalOrders() {
     const res = await fetch('/api/external-orders', { cache: 'no-store' });
     const data = await res.json();
     window.externalOrdersData = Array.isArray(data.items) ? data.items : [];
+    window.externalOrdersConfig = data.config || { fee_amount: 0, fee_content: '' };
     hydrateExternalOrdersInput();
     renderExternalOrdersDashboard();
   } catch (e) {
     console.error('loadExternalOrders error:', e);
     window.externalOrdersData = [];
+    window.externalOrdersConfig = { fee_amount: 0, fee_content: '' };
     renderExternalOrdersDashboard();
   }
 }
 
 function renderExternalOrdersDashboard() {
   const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
+  const config = window.externalOrdersConfig || { fee_amount: 0, fee_content: '' };
   const grid = document.getElementById('externalOrdersGrid');
   const meta = document.getElementById('externalOrdersMeta');
   const inTransitEl = document.getElementById('externalInTransitCount');
   const deliveredEl = document.getElementById('externalDeliveredCount');
   const returnedEl = document.getElementById('externalReturnedCount');
-  const totalCodEl = document.getElementById('externalTotalCod');
-  if (!grid || !meta || !inTransitEl || !deliveredEl || !returnedEl || !totalCodEl) return;
+  const inTransitRevenueEl = document.getElementById('externalInTransitRevenue');
+  const deliveredRevenueEl = document.getElementById('externalDeliveredRevenue');
+  const feeAmountEl = document.getElementById('externalFeeAmount');
+  const feeContentEl = document.getElementById('externalFeeContent');
+  const payoutEl = document.getElementById('externalPayoutToPhuong');
+  if (!grid || !meta || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl) return;
 
   let inTransit = 0;
   let delivered = 0;
   let returned = 0;
-  let totalCod = 0;
+  let inTransitRevenue = 0;
+  let deliveredRevenue = 0;
 
   items.forEach(item => {
-    totalCod += Number(item.cod || 0);
+    const cod = Number(item.cod || 0);
     const status = item.status || 'unknown';
     if (status === 'in_transit') inTransit += 1;
     if (status === 'delivered') delivered += 1;
     if (status === 'returned') returned += 1;
+    if (status === 'in_transit') inTransitRevenue += cod;
+    if (status === 'delivered') deliveredRevenue += cod;
   });
 
   inTransitEl.textContent = inTransit.toLocaleString('vi');
   deliveredEl.textContent = delivered.toLocaleString('vi');
   returnedEl.textContent = returned.toLocaleString('vi');
-  totalCodEl.textContent = formatExternalCurrency(totalCod);
+  inTransitRevenueEl.textContent = formatExternalCurrency(inTransitRevenue);
+  deliveredRevenueEl.textContent = formatExternalCurrency(deliveredRevenue);
+  feeAmountEl.textContent = formatExternalCurrency(config.fee_amount || 0);
+  feeContentEl.textContent = config.fee_content || 'Chưa có nội dung phí';
+  payoutEl.textContent = formatExternalCurrency(deliveredRevenue - Number(config.fee_amount || 0));
 
   meta.textContent = items.length
     ? `${items.length.toLocaleString('vi')} mã đơn đang được theo dõi ngoại sàn.`
@@ -2645,9 +2715,13 @@ function refreshExternalModalStatus() {
   }
   if (updatedAtEl) updatedAtEl.textContent = current.updated_at ? new Date(current.updated_at).toLocaleString('vi-VN') : '—';
 
+  const canEdit = canConfigExternalOrders();
   ['in_transit', 'delivered', 'returned', 'unknown'].forEach(status => {
     const button = document.getElementById(`externalStatusBtn${status === 'in_transit' ? 'InTransit' : status === 'delivered' ? 'Delivered' : status === 'returned' ? 'Returned' : 'Unknown'}`);
-    if (button) button.classList.toggle('active', (current.status || 'unknown') === status);
+    if (button) {
+      button.classList.toggle('active', (current.status || 'unknown') === status);
+      button.disabled = !canEdit;
+    }
   });
 }
 
