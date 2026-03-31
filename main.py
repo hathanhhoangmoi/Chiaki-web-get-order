@@ -86,6 +86,97 @@ def serialize_order(o):
     }
 
 
+def aggregate_orders(rows: list[Order]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+
+    for row in rows:
+        code = str(getattr(row, "order_code", "") or "").strip()
+        if not code:
+            continue
+
+        product_name = str(getattr(row, "product", "") or "").strip()
+        quantity = getattr(row, "quantity", 0) or 0
+        try:
+            quantity = int(quantity)
+        except Exception:
+            quantity = 0
+
+        product_line = product_name or "—"
+        if quantity:
+            product_line = f"{product_line} x{quantity}"
+
+        current_total = getattr(row, "total", 0) or 0
+        try:
+            current_total = float(current_total)
+        except Exception:
+            current_total = 0
+
+        fetched_at = getattr(row, "fetched_at", None)
+        status = str(getattr(row, "status", "") or "").strip()
+
+        if code not in grouped:
+            base = serialize_order(row)
+            base["quantity"] = quantity
+            base["total"] = current_total
+            base["_product_lines"] = [product_line]
+            base["_statuses"] = [status] if status else []
+            grouped[code] = base
+            continue
+
+        item = grouped[code]
+        item["quantity"] = int(item.get("quantity") or 0) + quantity
+        item["total"] = float(item.get("total") or 0) + current_total
+
+        if product_line not in item["_product_lines"]:
+            item["_product_lines"].append(product_line)
+        if status and status not in item["_statuses"]:
+            item["_statuses"].append(status)
+
+        existing_fetched_at = item.get("fetched_at")
+        existing_dt = None
+        if existing_fetched_at:
+            try:
+                existing_dt = datetime.fromisoformat(existing_fetched_at)
+            except Exception:
+                existing_dt = None
+        if fetched_at and (existing_dt is None or fetched_at > existing_dt):
+            item["fetched_at"] = fetched_at.isoformat()
+
+    result = []
+    for item in grouped.values():
+        product_lines = item.pop("_product_lines", [])
+        statuses = item.pop("_statuses", [])
+        item["product"] = "<br>".join(product_lines) if product_lines else "—"
+        if statuses:
+            item["status"] = " | ".join(statuses)
+        result.append(item)
+
+    return result
+
+
+def sort_aggregated_orders(rows: list[dict], sort: str) -> list[dict]:
+    if sort == "total_desc":
+        return sorted(rows, key=lambda item: float(item.get("total") or 0), reverse=True)
+    if sort == "total_asc":
+        return sorted(rows, key=lambda item: float(item.get("total") or 0))
+    if sort == "date_desc":
+        return sorted(rows, key=lambda item: str(item.get("order_date") or ""), reverse=True)
+    if sort == "date_asc":
+        return sorted(rows, key=lambda item: str(item.get("order_date") or ""))
+    return sorted(rows, key=lambda item: str(item.get("fetched_at") or ""), reverse=True)
+
+
+def build_sync_delta(old_codes: set[str], new_codes: set[str]) -> dict:
+    removed_codes = sorted(old_codes - new_codes)
+    added_codes = sorted(new_codes - old_codes)
+    return {
+        "removed_count": len(removed_codes),
+        "added_count": len(added_codes),
+        "removed_codes": removed_codes,
+        "added_codes": added_codes,
+    }
+
+
 def can_manage_external_orders(user_id: str) -> bool:
     return str(user_id or "").strip() == "Hoang5611"
 
@@ -264,7 +355,7 @@ async def root():
 @app.get("/api/summary")
 def get_summary(db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
-    total = db.query(Order).count()
+    total = db.query(func.count(func.distinct(Order.order_code))).scalar() or 0
     return {
         "total_orders": total,
         "total_shops": len(shops),
@@ -272,7 +363,7 @@ def get_summary(db: Session = Depends(get_db)):
             {
                 "shop_id": s.shop_id,
                 "shop_name": s.shop_name,
-                "order_count": s.order_count,
+                "order_count": db.query(func.count(func.distinct(Order.order_code))).filter(Order.shop_id == s.shop_id).scalar() or 0,
                 "last_sync": s.last_sync.isoformat() if s.last_sync else None,
             }
             for s in shops
@@ -304,26 +395,15 @@ def get_orders(
         q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
-    total = q.count()
-
-    # Sắp xếp
-    if sort == "total_desc":
-        q = q.order_by(desc(Order.total))
-    elif sort == "total_asc":
-        q = q.order_by(Order.total)
-    elif sort == "date_desc":
-        q = q.order_by(desc(Order.order_date))
-    elif sort == "date_asc":
-        q = q.order_by(Order.order_date)
-    else:
-        q = q.order_by(desc(Order.fetched_at))
-
-    orders = q.offset((page - 1) * limit).limit(limit).all()
+    orders = q.all()
+    aggregated_orders = sort_aggregated_orders(aggregate_orders(orders), sort)
+    total = len(aggregated_orders)
+    page_rows = aggregated_orders[(page - 1) * limit: page * limit]
 
     return {
         "total": total,
         "page": page,
-        "data": [serialize_order(o) for o in orders]
+        "data": page_rows
     }
 
 @app.get("/api/orders/search-products")
@@ -348,10 +428,11 @@ def search_orders_by_product(
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q_orders.order_by(desc(Order.order_date), desc(Order.fetched_at)).limit(limit).all()
+    aggregated_orders = sort_aggregated_orders(aggregate_orders(orders), "date_desc")
 
     return {
-        "total": len(orders),
-        "data": [serialize_order(o) for o in orders]
+        "total": len(aggregated_orders),
+        "data": aggregated_orders
     }
 
 @app.post("/api/update-shopname")
@@ -378,7 +459,7 @@ async def get_hanoi_orders(request: Request, db: Session = Depends(get_db)):
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q.order_by(Order.order_date.desc()).all()
-    return [serialize_order(o) for o in orders]
+    return sort_aggregated_orders(aggregate_orders(orders), "date_desc")
 
 
 @app.get("/api/orders/nuochoa")
@@ -392,7 +473,7 @@ async def get_nuochoa_orders(request: Request, db: Session = Depends(get_db)):
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q.order_by(Order.order_date.desc()).all()
-    return [serialize_order(o) for o in orders]
+    return sort_aggregated_orders(aggregate_orders(orders), "date_desc")
 
 @app.get("/api/chart-data")
 def get_chart_data(db: Session = Depends(get_db)):
@@ -852,7 +933,7 @@ async def get_mien_bac_orders(request: Request, db: Session = Depends(get_db)):
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
     orders = q.order_by(Order.order_date.desc()).all()
-    return [serialize_order(o) for o in orders]
+    return sort_aggregated_orders(aggregate_orders(orders), "date_desc")
 
 @app.get("/api/shops-list")
 def get_shops_list():
@@ -1071,11 +1152,28 @@ async def sync_now(body: dict, db: Session = Depends(get_db)):
         return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
 
     shop_url, shop_name = shops[shop_id]
+    old_codes = {
+        str(code).strip()
+        for (code,) in db.query(Order.order_code).filter(Order.shop_id == shop_id).all()
+        if code
+    }
 
     try:
         synced = await sync_shop(shop_id, shop_url, shop_name, db,
                                  cf_chl_tk=cf_chl_tk, cf_clearance=cf_clearance)
-        return {"ok": True, "shop_id": shop_id, "shop_name": shop_name, "synced": synced}
+        new_codes = {
+            str(code).strip()
+            for (code,) in db.query(Order.order_code).filter(Order.shop_id == shop_id).all()
+            if code
+        }
+        delta = build_sync_delta(old_codes, new_codes)
+        return {
+            "ok": True,
+            "shop_id": shop_id,
+            "shop_name": shop_name,
+            "synced": synced,
+            **delta,
+        }
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
 
@@ -1092,6 +1190,11 @@ async def sync_upload(
 
         shop_url, shop_name = shops[shop_id]
         content = await file.read()
+        old_codes = {
+            str(code).strip()
+            for (code,) in db.query(Order.order_code).filter(Order.shop_id == shop_id).all()
+            if code
+        }
 
         # Kiểm tra có phải Excel không (magic bytes PK = xlsx)
         if len(content) < 100:
@@ -1110,21 +1213,24 @@ async def sync_upload(
         if meta:
             meta.shop_name   = shop_name
             meta.last_sync   = datetime.now()
-            meta.order_count = len(orders)
+            meta.order_count = len(new_codes)
         else:
             db.add(ShopMeta(
                 shop_id=shop_id, shop_name=shop_name,
                 shop_url=shop_url, last_sync=datetime.now(),
-                order_count=len(orders)
+                order_count=len(new_codes)
             ))
         db.commit()
+        new_codes = {str(item.get("order_code", "")).strip() for item in orders if item.get("order_code")}
+        delta = build_sync_delta(old_codes, new_codes)
 
         return {
             "ok": True,
             "shop_id": shop_id,
             "shop_name": shop_name,
             "synced": len(orders),
-            "deleted": deleted
+            "deleted": deleted,
+            **delta
         }
 
     except Exception as e:
