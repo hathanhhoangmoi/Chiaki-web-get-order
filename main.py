@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db, migrate
 from fetcher import sync_shop, parse_excel
-from models import Base, ExternalOrderTracking, Order, ShopMeta
+from models import Base, ExternalOrderConfig, ExternalOrderTracking, Order, ShopMeta
 from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, get_shops_map
 
 # ── Key management cho order-info ─────────────────────────
@@ -81,6 +81,24 @@ def serialize_external_order(o: ExternalOrderTracking):
         "cod": int(o.cod_amount or 0),
         "status": o.status or "unknown",
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
+    }
+
+
+def get_external_order_config(db: Session) -> ExternalOrderConfig:
+    config = db.query(ExternalOrderConfig).filter(ExternalOrderConfig.id == 1).first()
+    if not config:
+        config = ExternalOrderConfig(id=1, fee_amount=0, fee_content="")
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+    return config
+
+
+def serialize_external_order_config(config: ExternalOrderConfig):
+    return {
+        "fee_amount": int(config.fee_amount or 0),
+        "fee_content": config.fee_content or "",
+        "updated_at": config.updated_at.isoformat() if config.updated_at else None,
     }
 
 # ── API Endpoints ──────────────────────────────────────────
@@ -248,9 +266,11 @@ def get_chart_data(db: Session = Depends(get_db)):
 @app.get("/api/external-orders")
 def get_external_orders(db: Session = Depends(get_db)):
     rows = db.query(ExternalOrderTracking).order_by(desc(ExternalOrderTracking.updated_at), ExternalOrderTracking.order_code).all()
+    config = get_external_order_config(db)
     return {
         "total": len(rows),
         "items": [serialize_external_order(row) for row in rows],
+        "config": serialize_external_order_config(config),
     }
 
 
@@ -283,6 +303,13 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
             status = "unknown"
         normalized.append({"code": code, "cod": cod, "status": status})
 
+    fee_amount_raw = body.get("fee_amount", 0)
+    fee_content = str(body.get("fee_content", "") or "").strip()
+    try:
+        fee_amount = int(fee_amount_raw or 0)
+    except Exception:
+        fee_amount = 0
+
     db.query(ExternalOrderTracking).delete()
     for item in normalized:
         db.add(ExternalOrderTracking(
@@ -291,6 +318,10 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
             status=item["status"],
             updated_at=datetime.now(),
         ))
+    config = get_external_order_config(db)
+    config.fee_amount = fee_amount
+    config.fee_content = fee_content
+    config.updated_at = datetime.now()
     db.commit()
 
     rows = db.query(ExternalOrderTracking).order_by(desc(ExternalOrderTracking.updated_at), ExternalOrderTracking.order_code).all()
@@ -298,14 +329,15 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
         "ok": True,
         "total": len(rows),
         "items": [serialize_external_order(row) for row in rows],
+        "config": serialize_external_order_config(config),
     }
 
 
 @app.post("/api/external-orders/status")
 def update_external_order_status(request: Request, body: dict, db: Session = Depends(get_db)):
     user_id = request.headers.get("X-User-ID", "").strip()
-    if not user_id:
-        return JSONResponse({"error": "Không có quyền cập nhật."}, status_code=403)
+    if not can_manage_external_orders(user_id):
+        return JSONResponse({"error": "Không có quyền cập nhật trạng thái."}, status_code=403)
 
     code = str(body.get("code", "")).strip().upper()
     status = str(body.get("status", "unknown")).strip()
