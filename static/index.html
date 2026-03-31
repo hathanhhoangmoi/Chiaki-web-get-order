@@ -1261,13 +1261,13 @@ select.sync-input{font-family:inherit;cursor:pointer}
       id="productSearchInput"
       class="product-search-input"
       type="text"
-      placeholder="Tìm tên sản phẩm... hỗ trợ full-text / token search"
+      placeholder="Tìm tên sản phẩm..."
       oninput="handleProductSearchInput()"
       onkeydown="if(event.key==='Enter') searchProductOrders(true)"
     />
     <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm</button>
   </div>
-  <div class="product-search-hint">Nhập từ khóa sản phẩm để hiện popup các đơn khớp tên sản phẩm.</div>
+  <div class="product-search-hint">Nhập từ khóa sản phẩm...</div>
 </div>
 
 <div class="product-search-modal" id="productSearchBg" onclick="if(event.target===this) closeProductSearchModal()">
@@ -1373,7 +1373,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('panelCancelCurl')" title="Thu gọn / mở rộng"></button>
       <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
     </div>
-    <div class="panel-inline-title">Tạo mã cURL</div>
+    <div class="panel-inline-title">Tạo mã cURL huỷ đơn</div>
   </div>
   <div class="panel-body">
   <div class="info-modal-icon">👨🏻‍💻</div>
@@ -1476,7 +1476,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
         <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('panelSyncOrders')" title="Thu gọn / mở rộng"></button>
         <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
       </div>
-      <div class="panel-inline-title">Tải danh sách đơn hàng</div>
+      <div class="panel-inline-title">Đồng bộ đơn hàng</div>
     </div>
     <div class="panel-body">
 
@@ -1509,9 +1509,9 @@ select.sync-input{font-family:inherit;cursor:pointer}
         ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
         ondrop="handleComboBulkDrop(event)"
       >
-        <div style="font-size:13px;font-weight:700;color:#570301">📂 Kéo thả nhiều file Excel vào đây</div>
+        <div style="font-size:13px;font-weight:700;color:#570301">📂 Kéo thả tất cả file Excel vào đây</div>
         <div style="font-size:11px;color:#a06070;margin-top:4px">
-          File sẽ được gán theo thứ tự shop: file đầu là shop đầu tiên, file thứ 2 là shop tiếp theo...
+          File sẽ được gán theo thứ tự shop
         </div>
         <div style="font-size:11px;color:#9b8bb4;margin-top:6px">
           Ví dụ: <code>danh-sach-don-hang.xlsx</code>, <code>danh-sach-don-hang (1).xlsx</code>, ...
