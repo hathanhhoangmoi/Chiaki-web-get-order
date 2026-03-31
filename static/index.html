@@ -41,30 +41,6 @@ body{
 }
 .header-sub{font-size:12px;color:#a06070;margin-top:2px}
 .sync-info{font-size:12px;color:#a06070;text-align:right}
-.fee-notice{
-  margin:18px 32px 0 472px;
-  padding:16px 20px;
-  border-radius:24px;
-  background:linear-gradient(135deg,rgba(255,84,84,.18),rgba(255,255,255,.72));
-  border:1px solid rgba(220,38,38,.24);
-  box-shadow:0 10px 28px rgba(220,38,38,.12);
-}
-.fee-notice-title{
-  font-size:14px;
-  font-weight:700;
-  color:#b91c1c;
-  margin-bottom:10px;
-}
-.fee-notice-list{
-  list-style:none;
-  display:grid;
-  gap:8px;
-}
-.fee-notice-list li{
-  color:#991b1b;
-  font-size:13px;
-  font-weight:600;
-}
 .btn{
   padding:9px 18px;border:none;border-radius:12px;
   font-family:inherit;font-size:13px;font-weight:600;
@@ -1279,7 +1255,6 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 #shippingLabelPrint{display:none}
 @media (max-width: 1100px){
-  .fee-notice{margin:16px}
   .external-orders-wrap{margin:16px}
   .external-stats-row.row-3,.external-stats-row.row-2{grid-template-columns:1fr}
   .external-track-dialog{grid-template-columns:1fr}
@@ -1536,16 +1511,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
 >
   🕓 Log track
 </button>
-</div>
-
-<div class="fee-notice">
-  <div class="fee-notice-title">Thông báo phí</div>
-  <ul class="fee-notice-list">
-    <li>Phí lấy thông tin đơn hàng: Free</li>
-    <li>Phí chuyển đơn: 10% giá trị đơn hàng</li>
-    <li>Phí giao ngoài: 10% đơn giao thành công</li>
-    <li>Phí huỷ đơn: 10k/đơn</li>
-  </ul>
 </div>
 
 <div class="external-orders-wrap">
@@ -2884,6 +2849,7 @@ function renderExternalOrdersDashboard() {
   const inTransitRevenueEl = document.getElementById('externalInTransitRevenue');
   const deliveredRevenueEl = document.getElementById('externalDeliveredRevenue');
   const feeAmountEl = document.getElementById('externalFeeAmount');
+  const feeContentEl = document.getElementById('externalFeeContent');
   const payoutEl = document.getElementById('externalPayoutToPhuong');
   const paidToPhuongEl = document.getElementById('externalPaidToPhuong');
   if (!grid || !meta || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl || !paidToPhuongEl) return;
