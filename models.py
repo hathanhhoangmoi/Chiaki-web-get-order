@@ -38,3 +38,12 @@ class ExternalOrderTracking(Base):
     cod_amount = Column(Integer, default=0)
     status = Column(String, default="unknown")
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class ExternalOrderConfig(Base):
+    __tablename__ = "external_order_config"
+
+    id = Column(Integer, primary_key=True, default=1)
+    fee_amount = Column(Integer, default=0)
+    fee_content = Column(Text)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
