@@ -86,15 +86,15 @@ body{
 }
 .fee-notice-value{
   margin-top:6px;
-  font-size:13px;font-weight:800;color:#7c2d12;
+  font-size:15px;font-weight:800;color:#7c2d12;
   line-height:1.5;
 }
 .fee-notice-highlight{
   display:inline-block;
   margin-top:4px;
-  font-size:22px;
+  font-size:30px;
   font-weight:900;
-  line-height:1.2;
+  line-height:1.15;
   color:#ea580c;
   text-shadow:0 6px 18px rgba(249,115,22,.18);
 }
@@ -125,6 +125,11 @@ body{
   font-size:14px;
 }
 .product-search-input::placeholder{color:#a06070}
+.product-search-box .btn-copy-order-main{
+  margin-top:0;
+  padding:8px 14px;
+  font-size:11px;
+}
 .external-orders-wrap{
   margin:18px 32px 0 472px;
 }
@@ -1459,6 +1464,28 @@ select.sync-input{font-family:inherit;cursor:pointer}
   border-color:#F7E594;background:rgba(247,229,148,.2);
   color:#7a4500;font-weight:700;
 }
+.sync-shop-panel{
+  margin-top:10px;
+  padding:12px 14px;
+  border-radius:22px;
+  background:rgba(255,255,255,.38);
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 8px 22px rgba(87,3,1,.06);
+}
+.sync-shop-panel .panel-chrome{
+  margin-bottom:10px;
+}
+.sync-shop-panel .panel-inline-title{
+  display:block;
+  flex:1;
+  text-align:left;
+  font-size:12px;
+  font-weight:800;
+  color:#7a3040;
+}
+.sync-shop-panel.collapsed .panel-chrome{
+  margin-bottom:0;
+}
 .order-row{transition:all .2s ease;cursor:pointer}
 .order-row:hover{
   background:rgba(247,229,148,0.15) !important;
@@ -1601,7 +1628,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="fee-notice-list">
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí lấy thông tin đơn hàng</div>
-        <div class="fee-notice-value">Theo Key hiện tại</div>
+        <div class="fee-notice-value"><span class="fee-notice-highlight">MIỄN PHÍ</span></div>
       </div>
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí chuyển đơn</div>
@@ -1617,7 +1644,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
       </div>
       <div class="fee-notice-item">
         <div class="fee-notice-label">Phí nền tảng</div>
-        <div class="fee-notice-value">Phí được thu để duy trì và phát triển website<br/><span class="fee-notice-highlight">1.500.000đ</span><br/>/tháng</div>
+        <div class="fee-notice-value"><span class="fee-notice-highlight">1.500.000đ</span><br/>/tháng</div>
       </div>
     </div>
   </div>
@@ -1757,21 +1784,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
       </div>
       <div id="externalFeeModalList"></div>
     </div>
-  </div>
-</div>
-
-<div class="product-search-wrap">
-  <div class="product-search-box">
-    <span style="font-size:18px">🔎</span>
-    <input
-      id="productSearchInput"
-      class="product-search-input"
-      type="text"
-      placeholder="Tìm tên sản phẩm..."
-      oninput="handleProductSearchInput()"
-      onkeydown="if(event.key==='Enter') searchProductOrders(true)"
-    />
-    <button class="btn btn-primary" type="button" onclick="searchProductOrders(true)">Tìm ngay</button>
   </div>
 </div>
 
@@ -2086,7 +2098,19 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <input type="file" id="comboBulkInput" accept=".xlsx,.xls" multiple style="display:none"
              onchange="handleComboBulkFiles(this.files)"/>
       <div id="comboBulkSummary" style="font-size:12px;color:#a06070;margin-bottom:12px;min-height:18px"></div>
-      <div id="comboRows" style="display:flex;border-radius:50px;flex-direction:column;gap:8px;"></div>
+      <div class="sync-shop-panel collapsible-panel collapsed" id="comboShopListPanel">
+        <div class="panel-chrome">
+          <div class="panel-window-controls">
+            <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+            <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('comboShopListPanel')" title="Thu gọn / mở rộng"></button>
+            <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
+          </div>
+          <div class="panel-inline-title">Danh sách các gian hàng</div>
+        </div>
+        <div class="panel-body">
+          <div id="comboRows" style="display:flex;border-radius:50px;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
       <button class="btn-info-search" id="btnComboSync"
               style="margin-top:12px;width:100%;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
               onclick="doComboSync()">
@@ -2121,6 +2145,21 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="chart-wrap">
       <canvas id="mainChart"></canvas>
     </div>
+  </div>
+</div>
+
+<div class="product-search-wrap">
+  <div class="product-search-box">
+    <span style="font-size:18px">🔎</span>
+    <input
+      id="productSearchInput"
+      class="product-search-input"
+      type="text"
+      placeholder="Tìm tên sản phẩm..."
+      oninput="handleProductSearchInput()"
+      onkeydown="if(event.key==='Enter') searchProductOrders(true)"
+    />
+    <button class="btn-copy-order-main" type="button" onclick="searchProductOrders(true)">Tìm ngay</button>
   </div>
 </div>
   
