@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1957,15 +1958,15 @@ select.sync-input{font-family:inherit;cursor:pointer}
   <div class="panel-body">
   <div class="info-modal-icon">👨🏻‍💻</div>
   <div class="info-modal-title">Tạo mã cURL</div>
-  <div class="info-modal-sub">Nhập tối đa 5 mã đơn, mỗi dòng 1 mã, để tạo mã huỷ đơn</div>
+  <div class="info-modal-sub">Nhập tối đa 5 mã đơn, mỗi mã một ô, để tạo mã huỷ đơn</div>
 
-  <textarea
-    class="info-input"
-    id="curlOrderInput"
-    placeholder="Mỗi dòng 1 mã đơn&#10;VD: R8547883114&#10;R8547883115"
-    oninput="previewCurlOrderId()"
-    style="min-height:120px;resize:vertical;line-height:1.55"
-  ></textarea>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:2px">
+    <input class="info-input curl-order-field" type="text" placeholder="Mã đơn 1..." oninput="previewCurlOrderId()" onkeydown="if(event.key==='Enter') generateCancelCurl()" />
+    <input class="info-input curl-order-field" type="text" placeholder="Mã đơn 2..." oninput="previewCurlOrderId()" onkeydown="if(event.key==='Enter') generateCancelCurl()" />
+    <input class="info-input curl-order-field" type="text" placeholder="Mã đơn 3..." oninput="previewCurlOrderId()" onkeydown="if(event.key==='Enter') generateCancelCurl()" />
+    <input class="info-input curl-order-field" type="text" placeholder="Mã đơn 4..." oninput="previewCurlOrderId()" onkeydown="if(event.key==='Enter') generateCancelCurl()" />
+    <input class="info-input curl-order-field" type="text" placeholder="Mã đơn 5..." oninput="previewCurlOrderId()" onkeydown="if(event.key==='Enter') generateCancelCurl()" />
+  </div>
 
   <div id="curlOrderPreview" style="
     font-size: 11px; color: #7c3aed;
@@ -5610,9 +5611,8 @@ function toggleCurlCard() {
 }
 
 function parseCurlOrderCodes() {
-  return document.getElementById('curlOrderInput').value
-    .split(/\n|,|;/)
-    .map(v => v.trim())
+  return Array.from(document.querySelectorAll('.curl-order-field'))
+    .map(input => input.value.trim())
     .filter(Boolean);
 }
 
