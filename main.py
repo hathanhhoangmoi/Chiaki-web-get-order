@@ -1234,6 +1234,7 @@ async def sync_upload(
         }
 
     except Exception as e:
+        db.rollback()
         import traceback
         traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
