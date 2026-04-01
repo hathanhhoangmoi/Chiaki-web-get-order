@@ -1208,6 +1208,7 @@ async def sync_upload(
         for o in orders:
             db.add(Order(**o))
         db.commit()
+        new_codes = {str(item.get("order_code", "")).strip() for item in orders if item.get("order_code")}
 
         meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
         if meta:
@@ -1221,7 +1222,6 @@ async def sync_upload(
                 order_count=len(new_codes)
             ))
         db.commit()
-        new_codes = {str(item.get("order_code", "")).strip() for item in orders if item.get("order_code")}
         delta = build_sync_delta(old_codes, new_codes)
 
         return {
