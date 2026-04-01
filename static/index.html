@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1958,21 +1957,21 @@ select.sync-input{font-family:inherit;cursor:pointer}
   <div class="panel-body">
   <div class="info-modal-icon">👨🏻‍💻</div>
   <div class="info-modal-title">Tạo mã cURL</div>
-  <div class="info-modal-sub">Nhập mã đơn để tạo mã huỷ đơn</div>
+  <div class="info-modal-sub">Nhập tối đa 5 mã đơn, mỗi dòng 1 mã, để tạo mã huỷ đơn</div>
 
-  <input
+  <textarea
     class="info-input"
     id="curlOrderInput"
-    type="text"
-    placeholder="Mã đơn..."
-    onkeydown="if(event.key==='Enter') generateCancelCurl()"
+    placeholder="Mỗi dòng 1 mã đơn&#10;VD: R8547883114&#10;R8547883115"
     oninput="previewCurlOrderId()"
-  />
+    style="min-height:120px;resize:vertical;line-height:1.55"
+  ></textarea>
 
   <div id="curlOrderPreview" style="
     font-size: 11px; color: #7c3aed;
     display: none; margin: -6px 0 10px;
     padding-left: 2px; font-family: monospace;
+    white-space: pre-wrap;
   "></div>
 
   <button class="btn-info-search" onclick="generateCancelCurl()" style="width:100%">
@@ -2551,24 +2550,17 @@ select.sync-input{font-family:inherit;cursor:pointer}
     "></div>
 
     <div style="position:relative">
-      <pre id="curlResultText" style="
-        background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);
-        border:1px solid rgba(129,140,248,.5);
-        border-radius:14px;
-        padding:12px 12px 12px 12px;
-        font-size:11px;
-        color:#0f172a;
-        font-family:'SF Mono','JetBrains Mono','Courier New',monospace;
-        white-space:pre-wrap;
-        word-break:break-all;
+      <div id="curlResultList" style="
+        display:flex;
+        flex-direction:column;
+        gap:12px;
         max-height:420px;
         overflow-y:auto;
-        line-height:1.7;
-        margin:0;
-      "></pre>
+        padding-right:4px;
+      "></div>
 
       <button id="copyCurlBtn" onclick="copyCurlResult()" style="
-        position:absolute;top:10px;right:10px;
+        position:absolute;top:-2px;right:0;
         background:linear-gradient(135deg,#38bdf8,#60a5fa);
         border:1px solid rgba(37,99,235,.85);
         border-radius:999px;
@@ -5617,50 +5609,113 @@ function toggleCurlCard() {
   document.getElementById('curlFixedCard').style.width    = curlCardExpanded ? '280px' : 'auto';
 }
 
-function previewCurlOrderId() {
-  const val  = document.getElementById('curlOrderInput').value.trim();
-  const prev = document.getElementById('curlOrderPreview');
-  if (val.length >= 9) {
-    prev.textContent = `🔢 order_id: ${val.slice(2, 9)}`;
-    prev.style.color = '#7c3aed';
-  } else if (val.length > 0) {
-    prev.textContent = '⚠️ Mã đơn cần ≥ 9 ký tự';
-    prev.style.color = '#f59e0b';
-    prev.style.display = 'block';
-  } else {
-    prev.textContent = '';
-  }
+function parseCurlOrderCodes() {
+  return document.getElementById('curlOrderInput').value
+    .split(/\n|,|;/)
+    .map(v => v.trim())
+    .filter(Boolean);
 }
 
-function generateCancelCurl() {
-  const code = document.getElementById('curlOrderInput').value.trim();
-  if (!code || code.length < 9) {
-    document.getElementById('curlOrderPreview').textContent = '⚠️ Mã đơn không hợp lệ!';
-    document.getElementById('curlOrderPreview').style.color = '#ef4444';
+function previewCurlOrderId() {
+  const prev = document.getElementById('curlOrderPreview');
+  const codes = parseCurlOrderCodes();
+  if (!codes.length) {
+    prev.textContent = '';
+    prev.style.display = 'none';
     return;
   }
-  fetch('/api/tools/cancel-order-curl', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-ID': localStorage.getItem('chiaki_id') || ''
-    },
-    body: JSON.stringify({ order_code: code })
-  })
-    .then(r => r.json().then(data => ({ ok: r.ok, data })))
-    .then(({ ok, data }) => {
-      if (!ok) throw new Error(data.error || 'Không tạo được cURL');
-      window._generatedCurl = data.curl || '';
-      document.getElementById('curlResultOrderInfo').textContent = `Mã đơn hàng: ${data.order_code || code}`;
-      document.getElementById('curlResultText').textContent = data.curl || '';
-      document.getElementById('copyCurlMsg').textContent = '';
-      document.getElementById('copyCurlBtn').textContent = '📋 Copy';
-      document.getElementById('curlResultBg').style.display = 'flex';
-    })
-    .catch(e => {
-      document.getElementById('curlOrderPreview').textContent = `❌ ${e.message}`;
-      document.getElementById('curlOrderPreview').style.color = '#ef4444';
-    });
+  if (codes.length > 5) {
+    prev.textContent = `⚠️ Chỉ được nhập tối đa 5 mã đơn. Hiện có ${codes.length} mã.`;
+    prev.style.color = '#ef4444';
+    prev.style.display = 'block';
+    return;
+  }
+  const invalidCodes = codes.filter(code => code.length < 9);
+  if (invalidCodes.length) {
+    prev.textContent = `⚠️ Có ${invalidCodes.length} mã đơn chưa hợp lệ. Mỗi mã cần ít nhất 9 ký tự.`;
+    prev.style.color = '#f59e0b';
+    prev.style.display = 'block';
+    return;
+  }
+  prev.textContent = codes.map((code, idx) => `${idx + 1}. ${code} → order_id: ${code.slice(2, 9)}`).join('\n');
+  prev.style.color = '#7c3aed';
+  prev.style.display = 'block';
+}
+
+function renderCancelCurlResults(items) {
+  const list = document.getElementById('curlResultList');
+  list.innerHTML = items.map((item, index) => `
+    <div style="background:linear-gradient(145deg,#dbeafe 0%,#eff6ff 100%);border:1px solid rgba(129,140,248,.5);border-radius:14px;padding:12px 12px 10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:#1e3a8a">
+          ${index + 1}. ${item.orderCode}
+        </div>
+        <button type="button" onclick="copySingleCurlResult(${index}, this)" style="background:linear-gradient(135deg,#f59e0b,#f97316);border:none;border-radius:999px;padding:5px 12px;font-size:10px;font-weight:800;color:#fff7ed;cursor:pointer;box-shadow:0 4px 10px rgba(249,115,22,.24)">
+          📋 Copy
+        </button>
+      </div>
+      <pre style="font-size:11px;color:#0f172a;font-family:'SF Mono','JetBrains Mono','Courier New',monospace;white-space:pre-wrap;word-break:break-all;line-height:1.7;margin:0">${item.curl}</pre>
+    </div>
+  `).join('');
+}
+
+async function generateCancelCurl() {
+  const codes = parseCurlOrderCodes();
+  const preview = document.getElementById('curlOrderPreview');
+  if (!codes.length) {
+    preview.textContent = '⚠️ Vui lòng nhập ít nhất 1 mã đơn.';
+    preview.style.color = '#ef4444';
+    preview.style.display = 'block';
+    return;
+  }
+  if (codes.length > 5) {
+    preview.textContent = `⚠️ Chỉ được tạo tối đa 5 mã đơn một lần. Hiện có ${codes.length} mã.`;
+    preview.style.color = '#ef4444';
+    preview.style.display = 'block';
+    return;
+  }
+  if (codes.some(code => code.length < 9)) {
+    preview.textContent = '⚠️ Có mã đơn không hợp lệ. Mỗi mã cần ít nhất 9 ký tự.';
+    preview.style.color = '#ef4444';
+    preview.style.display = 'block';
+    return;
+  }
+  preview.textContent = `⏳ Đang tạo cURL cho ${codes.length} mã đơn...`;
+  preview.style.color = '#7c3aed';
+  preview.style.display = 'block';
+
+  try {
+    const results = await Promise.all(codes.map(async (code) => {
+      const response = await fetch('/api/tools/cancel-order-curl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': localStorage.getItem('chiaki_id') || ''
+        },
+        body: JSON.stringify({ order_code: code })
+      });
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(`${code}: ${data.error || 'Không tạo được cURL'}`);
+      }
+      return {
+        orderCode: data.order_code || code,
+        curl: data.curl || ''
+      };
+    }));
+
+    window._generatedCurls = results;
+    document.getElementById('curlResultOrderInfo').textContent = `Đã tạo ${results.length} mã cURL huỷ đơn.`;
+    document.getElementById('copyCurlMsg').textContent = '';
+    document.getElementById('copyCurlBtn').textContent = '📋 Copy tất cả';
+    renderCancelCurlResults(results);
+    document.getElementById('curlResultBg').style.display = 'flex';
+    preview.textContent = results.map((item, idx) => `${idx + 1}. ${item.orderCode}`).join('\n');
+    preview.style.color = '#16a34a';
+  } catch (e) {
+    preview.textContent = `❌ ${e.message}`;
+    preview.style.color = '#ef4444';
+  }
 }
 
 function closeCurlModal() {
@@ -5668,7 +5723,7 @@ function closeCurlModal() {
 }
 
 function copyCurlResult() {
-  const text = window._generatedCurl;
+  const text = (window._generatedCurls || []).map(item => `# ${item.orderCode}\n${item.curl}`).join('\n\n');
   if (!text) return;
   const doSuccess = () => {
     document.getElementById('copyCurlBtn').textContent = '💾 Đã sao chép!';
@@ -5683,6 +5738,27 @@ function copyCurlResult() {
     el.value = text; document.body.appendChild(el);
     el.select(); document.execCommand('copy');
     document.body.removeChild(el); doSuccess();
+  });
+}
+
+function copySingleCurlResult(index, btn) {
+  const item = (window._generatedCurls || [])[index];
+  if (!item?.curl) return;
+  const originalText = btn.textContent;
+  const doSuccess = () => {
+    btn.textContent = '✓';
+    setTimeout(() => {
+      btn.textContent = originalText;
+    }, 1500);
+  };
+  navigator.clipboard?.writeText(item.curl).then(doSuccess).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = item.curl;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    doSuccess();
   });
 }
 function copyOrderCode(btn, fullCode) {
