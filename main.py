@@ -205,9 +205,9 @@ def normalize_sync_text(value: str | None) -> str:
 
 def normalize_view_sync_stage(sync_stage: str | None) -> str:
     stage = str(sync_stage or "").strip().lower()
-    if stage in {"confirm", "pending", "cho_xnhan"}:
+    if stage in {"confirm", "pending"}:
         return "confirm"
-    if stage in {"pickup", "waiting", "da_xac_nhan"}:
+    if stage in {"pickup", "waiting"}:
         return "pickup"
     return stage
 
