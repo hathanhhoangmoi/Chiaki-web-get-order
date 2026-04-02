@@ -493,6 +493,23 @@ body{
 .stat-label{font-size:12px;color:#a06070;margin-bottom:6px;font-weight:500}
 .stat-value{font-size:28px;font-weight:700;color:#570301;line-height:1}
 .stat-sub{font-size:11px;color:#c09090;margin-top:4px}
+.shop-tabs-panel{
+  margin-bottom:16px;
+  padding:14px 18px;
+  border-radius:30px;
+  background:rgba(255,255,255,.42);
+  border:1px solid rgba(255,255,255,.75);
+  backdrop-filter:blur(20px);
+  box-shadow:0 8px 26px rgba(87,3,1,.06);
+}
+.shop-tabs-panel .panel-inline-title{
+  display:block;
+  flex:1;
+  text-align:left;
+}
+.shop-tabs-panel.collapsed .panel-chrome{
+  margin-bottom:0;
+}
 .shop-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
 .tab{
   padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;
@@ -774,186 +791,10 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
   padding:48px;text-align:center;color:#c09090;
   display:flex;flex-direction:column;align-items:center;gap:12px;
 }
-.order-modal-bg{
-  position:fixed;inset:0;z-index:4000;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(87,3,1,.2);
-  backdrop-filter:blur(10px);
-  padding:16px;
-}
-.order-modal-bg.show{display:flex}
-.order-modal{
-  width:100%;max-width:460px;
-  background:rgba(255,255,255,.75);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.9);
-  border-radius:22px;padding:28px;
-  box-shadow:0 24px 60px rgba(87,3,1,.15);
-  max-height:90vh;overflow-y:auto;
-}
-.order-modal-icon{font-size:40px;text-align:center;margin-bottom:8px}
-.order-modal-title{font-size:16px;font-weight:700;color:#570301;text-align:center;margin-bottom:4px;}
-.order-modal-sub{font-size:12px;color:#a06070;text-align:center;margin-bottom:18px;}
-.order-info-row{
-  display:flex;align-items:flex-start;justify-content:space-between;
-  gap:8px;padding:10px 0;
-  border-bottom:1px solid rgba(186,214,253,.2);
-}
-.order-info-row:last-of-type{border-bottom:none}
-.order-info-label{font-size:11px;font-weight:600;color:#a06070;min-width:110px;margin-top:1px;}
-.order-info-value{font-size:13px;font-weight:600;color:#570301;flex:1;text-align:right;word-break:break-word;}
-.order-modal-btns{display:flex;gap:8px;margin-top:20px;}
-.btn-modal-cancel{
-  flex:1;padding:11px;border:1px solid rgba(186,214,253,.4);
-  border-radius:12px;background:rgba(255,255,255,.4);
-  color:#7a3040;font-family:inherit;font-size:13px;
-  font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-modal-cancel:hover{background:rgba(255,255,255,.7)}
-.btn-modal-confirm{
-  flex:2;padding:11px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-family:inherit;font-size:13px;
-  font-weight:700;cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(245,186,213,.45);
-}
-.btn-modal-confirm:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(186,214,253,.5)}
-.success-modal-bg{
-  position:fixed;inset:0;z-index:5000;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(87,3,1,.2);
-  backdrop-filter:blur(10px);
-  padding:16px;
-}
-.success-modal-bg.show{display:flex}
-.success-modal{
-  width:100%;max-width:480px;
-  background:rgba(255,255,255,.78);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.9);
-  border-radius:22px;padding:28px;
-  box-shadow:0 24px 60px rgba(87,3,1,.12);
-  max-height:90vh;overflow-y:auto;
-}
-.success-banner{
-  background:linear-gradient(135deg,rgba(247,229,148,.45),rgba(245,186,213,.35));
-  border:1px solid rgba(247,229,148,.6);
-  border-radius:14px;padding:16px;
-  text-align:center;margin-bottom:18px;
-}
-.success-banner-icon{font-size:36px;margin-bottom:6px}
-.success-banner-title{font-size:16px;font-weight:700;color:#570301;margin-bottom:4px}
-.success-banner-sub{font-size:12px;color:#7a4500}
-.success-amount{font-size:22px;font-weight:800;color:#570301;margin-top:6px;}
-.copy-row{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:8px;padding:10px 0;
-  border-bottom:1px solid rgba(186,214,253,.2);
-}
-.copy-row:last-of-type{border-bottom:none}
-.copy-label{font-size:11px;font-weight:600;color:#a06070;min-width:120px}
-.copy-value{font-size:13px;font-weight:600;color:#570301;flex:1;word-break:break-word}
-.btn-copy{
-  padding:5px 12px;border:none;border-radius:8px;
-  background:rgba(186,214,253,.2);color:#570301;
-  font-family:inherit;font-size:11px;font-weight:700;
-  cursor:pointer;transition:all .2s;white-space:nowrap;
-  border:1px solid rgba(186,214,253,.35);
-}
-.btn-copy:hover{background:rgba(186,214,253,.4)}
-.btn-copy.copied{
-  background:rgba(247,229,148,.4);color:#7a4500;
-  border-color:rgba(247,229,148,.6);
-}
-.btn-close-success{
-  width:100%;padding:12px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;font-family:inherit;font-size:14px;
-  font-weight:700;cursor:pointer;margin-top:18px;
-  box-shadow:0 4px 14px rgba(245,186,213,.4);
-  transition:all .2s;
-}
-.btn-close-success:hover{transform:translateY(-1px)}
-.btn-take-order{
-  margin-top:6px;
-  white-space:nowrap;
-}
-.btn-take-order:hover{transform:translateY(-1px)}
 .phone-blur{
   filter:blur(4px);user-select:none;
   transition:filter .2s;cursor:default;
   display:inline-block;
-}
-.taken-btn{
-  position:relative;
-  padding:8px 16px;border:1px solid rgba(186,214,253,.4);
-  border-radius:12px;background:rgba(255,255,255,.4);
-  color:#7a3040;font-family:inherit;font-size:12px;
-  font-weight:600;cursor:pointer;transition:all .2s;
-  display:flex;align-items:center;gap:6px;
-}
-.taken-btn:hover{background:rgba(255,255,255,.7)}
-.taken-badge{
-  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
-  color:#570301;border-radius:20px;padding:1px 8px;
-  font-size:10px;font-weight:700;
-}
-.taken-panel{
-  position:fixed;top:70px;right:24px;
-  width:540px;max-height:70vh;
-  background:rgba(255,255,255,.75);
-  backdrop-filter:blur(30px) saturate(200%);
-  border:1px solid rgba(255,255,255,.85);
-  border-radius:18px;
-  box-shadow:0 16px 48px rgba(87,3,1,.12);
-  z-index:500;overflow:hidden;
-  display:none;flex-direction:column;
-}
-.taken-panel.show{display:flex}
-.taken-panel-header{
-  padding:14px 18px;
-  background:rgba(255,255,255,.5);
-  border-bottom:1px solid rgba(255,255,255,.6);
-  display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;
-}
-.taken-panel-title{font-size:14px;font-weight:700;color:#570301}
-.taken-panel-body{overflow-y:auto;flex:1}
-.taken-empty{padding:36px;text-align:center;color:#c09090;font-size:13px;}
-.taken-item{
-  padding:12px 18px;
-  border-bottom:1px solid rgba(186,214,253,.15);
-  transition:background .15s;
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:6px;align-items:center;
-}
-.taken-item:hover{background:rgba(255,255,255,.4)}
-.taken-item:last-child{border-bottom:none}
-.taken-code{font-family:monospace;font-size:12px;font-weight:700;color:#570301}
-.taken-key{
-  font-size:10px;color:#570301;font-weight:600;
-  background:rgba(186,214,253,.2);
-  border:1px solid rgba(186,214,253,.4);
-  border-radius:8px;padding:2px 8px;
-  text-align:center;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;
-}
-.taken-time{font-size:10px;color:#a06070;text-align:right}
-.btn-clear-taken{
-  padding:4px 12px;border:none;border-radius:8px;
-  background:rgba(245,186,213,.3);color:#570301;
-  font-family:inherit;font-size:11px;font-weight:600;
-  cursor:pointer;transition:all .15s;
-  border:1px solid rgba(245,186,213,.5);
-}
-.btn-clear-taken:hover{background:rgba(245,186,213,.55)}
-#fireworksCanvas{
-  position:fixed;inset:0;
-  width:100vw;height:100vh;
-  pointer-events:none;
-  z-index:9999;
-  display:none;
 }
 .info-modal-bg{
   display:flex;
@@ -2208,10 +2049,21 @@ select.sync-input{font-family:inherit;cursor:pointer}
 
   </div>
 
-  <!-- Shop tabs — chỉ có Tất cả + shop tabs, KHÔNG có Hà Nội -->
-  <div class="shop-tabs" id="shopTabs">
-    <div class="tab active" data-id="" onclick="selectShop('')">
-      Tất cả <span class="badge" id="tabAll">0</span>
+  <div class="shop-tabs-panel collapsible-panel collapsed" id="shopTabsPanel">
+    <div class="panel-chrome">
+      <div class="panel-window-controls">
+        <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+        <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('shopTabsPanel')" title="Thu gọn / mở rộng"></button>
+        <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
+      </div>
+      <div class="panel-inline-title">Danh sách các gian hàng</div>
+    </div>
+    <div class="panel-body">
+      <div class="shop-tabs" id="shopTabs">
+        <div class="tab active" data-id="" onclick="selectShop('')">
+          Tất cả <span class="badge" id="tabAll">0</span>
+        </div>
+      </div>
     </div>
   </div>
 <div class="table-header" style="
@@ -2339,121 +2191,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 </div>
 </div><!-- end .container -->
-
-<!-- ── Modal 1: Xác nhận lấy đơn ── -->
-<div class="order-modal-bg" id="orderConfirmBg">
-  <div class="order-modal">
-    <div class="order-modal-icon">📦</div>
-    <div class="order-modal-title">Bạn có muốn tải đơn hàng này không?</div>
-    <div class="order-modal-sub">Kiểm tra lại thông tin đơn hàng trước khi tải về</div>
-
-
-    <div class="order-info-row">
-      <div class="order-info-label">🔖 Mã đơn</div>
-      <div class="order-info-value" id="confirmCode">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">👤 Tên khách hàng</div>
-      <div class="order-info-value" id="confirmName">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">📞 SĐT</div>
-      <div class="order-info-value">
-        <span class="blur-val">Sẽ hiển thị khi xác nhận</span>
-      </div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">📍 Địa chỉ</div>
-      <div class="order-info-value" id="confirmAddress">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">🛍 Sản phẩm</div>
-      <div class="order-info-value" id="confirmProduct">—</div>
-    </div>
-    <div class="order-info-row">
-      <div class="order-info-label">💰 Tổng tiền</div>
-      <div class="order-info-value" id="confirmTotal">—</div>
-    </div>
-    
-    <div class="order-modal-btns">
-      <button class="btn-modal-cancel" onclick="closeConfirmModal()">❌ Đóng</button>
-      <button class="btn-modal-confirm" onclick="acceptOrder()">🔽 Tải về</button>
-
-    </div>
-  </div>
-</div>
-
-<!-- ── Modal 2: Nhận đơn thành công ── -->
-<div class="success-modal-bg" id="orderSuccessBg">
-  <div class="success-modal">
-    <div class="success-banner">
-      <div class="success-banner-icon">🎉</div>
-      <div class="success-banner-title">Chúc mừng bạn đã nhận được đơn hàng!</div>
-      <div class="success-banner-sub">Hãy đóng hàng và gửi đi sớm nhé 🚀</div>
-      <div class="success-amount" id="successAmount">—</div>
-    </div>
-
-    <div style="font-size:12px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;margin-bottom:8px">
-      THÔNG TIN ĐƠN HÀNG
-    </div>
-
-    <div class="copy-row">
-      <div class="copy-label">🔖 Mã đơn hàng</div>
-      <div class="copy-value" id="successCode">—</div>
-      <button class="btn-copy" onclick="copyField('successCode', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">👤 Tên khách hàng</div>
-      <div class="copy-value" id="successName">—</div>
-      <button class="btn-copy" onclick="copyField('successName', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">📍 Địa chỉ</div>
-      <div class="copy-value" id="successAddress">—</div>
-      <button class="btn-copy" onclick="copyField('successAddress', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">🛍 Sản phẩm</div>
-      <div class="copy-value" id="successProduct">—</div>
-      <button class="btn-copy" onclick="copyField('successProduct', this)">📋 Copy</button>
-    </div>
-    <div class="copy-row">
-      <div class="copy-label">💰 Tổng tiền</div>
-      <div class="copy-value" id="successTotal">—</div>
-      <button class="btn-copy" onclick="copyField('successTotal', this)">📋 Copy</button>
-    </div>
-
-    <div style="font-size:11px;color:#9b8bb4;text-align:center;margin-top:14px">
-      Hãy sao chép thông tin rồi ấn đóng cửa sổ này bạn nhé 💜
-    </div>
-    <button class="btn-close-success" onclick="closeSuccessModal()">📦 Hoàn thành đơn hàng</button>
-  </div>
-</div>
-<!-- ── Panel Đơn đã lấy ── -->
-<div class="taken-panel" id="takenPanel">
-  <div class="taken-panel-header">
-    <div class="taken-panel-title">📋 Danh sách đơn đã lấy</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:#9b8bb4" id="takenPanelCount"></span>
-    </div>
-  </div>
-  <div class="taken-panel-body">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px 18px 4px;border-bottom:1px solid rgba(198,181,255,.15)">
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px">MÃ ĐƠN</div>
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:center">KEY LẤY ĐƠN</div>
-      <div style="font-size:10px;font-weight:700;color:#9b8bb4;letter-spacing:.5px;text-align:right">THỜI GIAN</div>
-    </div>
-    <div id="takenList">
-      <div class="taken-empty">📭 Chưa có đơn nào được lấy</div>
-    </div>
-  </div>
-</div>
-
-<canvas id="fireworksCanvas"></canvas>
-<audio id="successSound" preload="auto">
-  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_8cb749c041.mp3" type="audio/mpeg">
-  <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
-</audio>
 
 <!-- Panel lịch sử -->
 <div class="history-panel" id="historyPanel">
@@ -3355,14 +3092,13 @@ async function init() {
     loadHanoi();
     loadNuocHoa();
     loadChartData();
-    renderTakenList();
     initHistoryBtn();
     loadMienBac();
   } catch(e) {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); renderTakenList(); loadMienBac(); loadExternalOrders(); }, 300_000);
+  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); loadMienBac(); loadExternalOrders(); }, 300_000);
 }
 
 async function loadSummary() {
@@ -3471,18 +3207,7 @@ if (currentSort !== 'default') url += `&sort=${currentSort}`;
           <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.product || '—')}</td>
           <td style="text-align:center">${R ? M() : (o.quantity || '—')}</td>
           <td><b>${R ? M() : (o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—')}</b></td>
-          <td>
-            ${R
-              ? `<span class="restricted-mask">••••••••</span>`
-              : (() => {
-                const payload = JSON.stringify(o)
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '&quot;');
-                return `<button class="btn-copy-order-main btn-take-order" type="button" onclick="openTakeOrder('${payload}')">GET</button>`;
-                })()
-            }
-          </td>
+          <td>${R ? `<span class="restricted-mask">••••••••</span>` : (o.status || '—')}</td>
 
         </tr>`;
     }).join('');
@@ -3521,11 +3246,7 @@ function renderHanoiTable(data) {
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
       <td style="text-align:center">${o.quantity || '—'}</td>
       <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-      <td>
-        ${o.restricted
-          ? `<span class="restricted-mask">••••••••</span>`
-          : `<button class="btn-copy-order-main btn-take-order" type="button" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g, "&#39;")})'>GET</button>`}
-      </td>
+      <td>${o.restricted ? `<span class="restricted-mask">••••••••</span>` : (o.status || '—')}</td>
     </tr>
   `).join('');
 }
@@ -3570,11 +3291,7 @@ function renderNuocHoaTable(data) {
       <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
       <td style="text-align:center">${o.quantity || '—'}</td>
       <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-      <td>
-        ${o.restricted
-          ? `<span class="restricted-mask">••••••••</span>`
-          : `<button class="btn-copy-order-main btn-take-order" type="button" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>GET</button>`}
-      </td>
+      <td>${o.restricted ? `<span class="restricted-mask">••••••••</span>` : (o.status || '—')}</td>
     </tr>
   `).join('');
 }
@@ -4375,337 +4092,6 @@ function renderChart(mode) {
   }
 }
 
-let pendingOrder = null;
-
-function openTakeOrder(raw) {
-  try {
-    const o = (typeof raw === 'string')
-      ? JSON.parse(raw.replace(/&#39;/g, "'"))
-      : raw;
-
-    window.pendingOrder = o;
-
-    document.getElementById('confirmCode').textContent =
-      o.order_code || o.ordercode || '—';
-    document.getElementById('confirmName').textContent =
-      o.customer_name || o.buyer_name || '—';
-    document.getElementById('confirmAddress').textContent =
-      o.address || '—';
-    document.getElementById('confirmProduct').textContent =
-      o.product || '—';
-    document.getElementById('confirmTotal').textContent =
-      o.total ? Number(o.total).toLocaleString('vi') : '—';
-
-    document.getElementById('orderConfirmBg').classList.add('show');
-  } catch (e) {
-    console.error('openTakeOrder lỗi:', e, raw);
-  }
-}
-
-function closeConfirmModal() {
-  document.getElementById('orderConfirmBg').classList.remove('show');
-  pendingOrder = null;
-}
-
-function acceptOrder() {
-  if (!window.pendingOrder) return;
-
-  const o = window.pendingOrder;
-  window.pendingOrder = null;
-
-  document.getElementById('orderConfirmBg').classList.remove('show');
-
-  try {
-    launchFireworks(7000);
-  } catch (e) {}
-
-  const code = o.order_code || o.ordercode || '';
-  if (!code) {
-    console.warn('Không có mã đơn để export', o);
-    return;
-  }
-
-
-  (async () => {
-    try {
-      const res = await fetch(`/api/export-order/${encodeURIComponent(code)}`);
-      if (!res.ok) {
-        console.warn('export-order HTTP', res.status);
-        return;
-      }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url;
-      a.download = `don-hang-${code}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.warn('Tải Excel lỗi:', e);
-    }
-  })();
-}
-
-function closeSuccessModal() {
-  document.getElementById('orderSuccessBg').classList.remove('show');
-}
-
-function copyField(elementId, btn) {
-  const text = document.getElementById(elementId).textContent.trim();
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✅ Đã copy';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '📋 Copy';
-      btn.classList.remove('copied');
-    }, 2000);
-  }).catch(() => {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    btn.textContent = '✅ Đã copy';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '📋 Copy';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
-}
-
-const TAKEN_KEY = 'chiaki_taken_orders';
-
-function getTakenOrders() {
-  try {
-    return JSON.parse(localStorage.getItem(TAKEN_KEY) || '[]');
-  } catch { return []; }
-}
-
-function saveTakenOrder(orderCode) {
-  const list    = getTakenOrders();
-  const keyId   = localStorage.getItem('chiaki_id') || 'Unknown';
-  // Lấy label từ VALID_IDS nếu có
-  const keyInfo = VALID_IDS[keyId];
-  const keyLabel = keyInfo ? keyInfo.label : maskId(keyId);
-
-  list.unshift({
-    order_code: orderCode,
-    key_label:  keyLabel,
-    taken_at:   new Date().toISOString(),
-  });
-
-  localStorage.setItem(TAKEN_KEY, JSON.stringify(list.slice(0, 200)));
-  renderTakenList();
-}
-
-function renderTakenList() {
-  const list  = getTakenOrders();
-  const badge = document.getElementById('takenBadge');
-  const count = document.getElementById('takenPanelCount');
-  const el    = document.getElementById('takenList');
-
-  if (badge) badge.textContent = list.length;
-  if (count) count.textContent = list.length + ' đơn';
-  if (!el) return;
-
-  if (!list.length) {
-    el.innerHTML = `<div class="taken-empty">Chưa có đơn nào được lấy</div>`;
-    return;
-  }
-  const currentId = localStorage.getItem('chiaki_id');
-  const canDelete = hasCapability('manage_taken_history');
-  el.innerHTML = list.map((item, idx) => {
-    const d   = new Date(item.takenat);
-    const fmt = d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    return `<div class="taken-item">
-      <div class="taken-code">${item.ordercode}</div>
-      <div><span class="taken-key">${item.keylabel}</span></div>
-      <div class="taken-time">${fmt}${canDelete ? ` <button class="btn-clear-taken" style="margin-left:6px" onclick="deleteTakenOrder(${idx})">Xoá</button>` : ''}</div>
-    </div>`;
-  }).join('');
-}
-
-function toggleTakenPanel() {
-  const panel = document.getElementById('takenPanel');
-  panel.classList.toggle('show');
-  // Đóng khi click ngoài
-  if (panel.classList.contains('show')) {
-    setTimeout(() => {
-      document.addEventListener('click', closeTakenOnOutside, { once: true });
-    }, 10);
-  }
-}
-
-function closeTakenOnOutside(e) {
-  const panel = document.getElementById('takenPanel');
-  const btn   = document.getElementById('takenBtn');
-  if (!panel.contains(e.target) && !btn.contains(e.target)) {
-    panel.classList.remove('show');
-  }
-}
-
-function clearTakenOrders() {
-  if (!hasCapability('manage_taken_history')) {
-    alert('Bạn không có quyền xoá lịch sử đơn đã lấy.');
-    return;
-  }
-  if (!confirm('Xoá toàn bộ lịch sử lấy đơn?')) return;
-  localStorage.removeItem(TAKEN_KEY);
-  renderTakenList();
-}
-function deleteTakenOrder(index) {
-  if (!hasCapability('manage_taken_history')) {
-    alert('Bạn không có quyền xoá đơn đã lấy.');
-    return;
-  }
-  const list = getTakenOrders();
-  if (index < 0 || index >= list.length) return;
-  list.splice(index, 1);
-  localStorage.setItem(TAKEN_KEY, JSON.stringify(list));
-  renderTakenList();
-}
-
-(function(){
-  const canvas  = document.getElementById('fireworksCanvas');
-  const ctx     = canvas.getContext('2d');
-  let particles = [];
-  let rafId     = null;
-  let stopAt    = 0;
-
-  const COLORS = [
-    '#a78bfa','#f9a8d4','#6ee7b7','#fcd34d',
-    '#93c5fd','#fda4af','#c4b5fd','#86efac',
-    '#fff','#fde68a','#f0abfc'
-  ];
-
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  function rand(min, max) { return Math.random() * (max - min) + min; }
-
-  function burst(x, y) {
-    const count = Math.floor(rand(80, 120));
-    for (let i = 0; i < count; i++) {
-      const angle  = rand(0, Math.PI * 2);
-      const speed  = rand(2, 9);
-      const color  = COLORS[Math.floor(rand(0, COLORS.length))];
-      const size   = rand(3, 7);
-      particles.push({
-        x, y,
-        vx:    Math.cos(angle) * speed,
-        vy:    Math.sin(angle) * speed,
-        alpha: 1,
-        color,
-        size,
-        decay: rand(0.012, 0.022),
-        gravity: rand(0.08, 0.18),
-        shape: Math.random() > 0.5 ? 'circle' : 'star',
-      });
-    }
-  }
-
-  function drawStar(cx, cy, r, color, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle   = color;
-    ctx.beginPath();
-    for (let i = 0; i < 5; i++) {
-      const a  = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-      const ia = a + (2 * Math.PI) / 5;
-      i === 0
-        ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
-        : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
-      ctx.lineTo(cx + (r/2) * Math.cos(ia), cy + (r/2) * Math.sin(ia));
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x     += p.vx;
-      p.y     += p.vy;
-      p.vy    += p.gravity;
-      p.vx    *= 0.98;
-      p.alpha -= p.decay;
-      if (p.shape === 'star') {
-        drawStar(p.x, p.y, p.size, p.color, Math.max(p.alpha, 0));
-      } else {
-        ctx.save();
-        ctx.globalAlpha = Math.max(p.alpha, 0);
-        ctx.fillStyle   = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    });
-    particles = particles.filter(p => p.alpha > 0);
-    if (Date.now() < stopAt) {
-    
-      if (Math.random() < 0.15) {
-        burst(rand(canvas.width * .15, canvas.width * .85),
-              rand(canvas.height * .1, canvas.height * .55));
-      }
-    }
-    if (particles.length > 0 || Date.now() < stopAt) {
-      rafId = requestAnimationFrame(loop);
-    } else {
-      canvas.style.display = 'none';
-      particles = [];
-    }
-  }
-
-  window.launchFireworks = function(durationMs = 3000) {
-    resize();
-    canvas.style.display = 'block';
-    stopAt    = Date.now() + durationMs;
-    particles = [];
-
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    burst(cx, cy * 0.5);
-    burst(cx * 0.4, cy * 0.6);
-    burst(cx * 1.6, cy * 0.6);
-    burst(cx * 0.7, cy * 0.9);
-    burst(cx * 1.3, cy * 0.9);
-
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(loop);
-  };
-
-  window.addEventListener('resize', resize);
-  resize();
-})();
-let soundEnabled = false;
-
-function enableSound() {
-  const audio = document.getElementById('successSound');
-  if (!audio) return;
-  audio.play().then(() => {
-    audio.pause();
-    audio.currentTime = 0;
-    soundEnabled = true;
-    const btn = document.getElementById('soundBtn');
-    if (btn) {
-      btn.textContent = '🔊 Âm thanh đã bật';
-      btn.disabled = true;
-      btn.style.opacity = '0.7';
-    }
-    showToast('Âm thanh chúc mừng đã được bật 🎵');
-  }).catch(() => {
-    showToast('Trình duyệt đang chặn âm thanh, thử lại sau.');
-  });
-}
-
 function initHistoryBtn() {
   const panel    = document.getElementById('historyPanel');
   const toggleBtn = document.getElementById('historyToggleBtn');
@@ -4814,38 +4200,6 @@ async function loadHistoryPanel() {
     }
   }
 }
-function searchOrder() {
-  const raw   = document.getElementById('dlOrderCode').value.trim();
-  const msgEl = document.getElementById('dlMsg');
-
-  if (!raw) return;
-
-  msgEl.className  = 'download-msg';
-  msgEl.style.display = 'block';
-
-  if (!window.allOrders || window.allOrders.length === 0) {
-    msgEl.textContent = '⚠️ Dữ liệu chưa tải xong, vui lòng thử lại.';
-    msgEl.classList.add('err');
-    return;
-  }
-
-  const found = window.allOrders.find(o => {
-    const full = o.order_code || '';
-    const afterUnderscore = full.includes('_') ? full.split('_').slice(1).join('_') : full;
-    return afterUnderscore.toLowerCase() === raw.toLowerCase()
-        || full.toLowerCase() === raw.toLowerCase();
-  });
-
-  if (!found) {
-    msgEl.textContent = '📦 Đơn hàng đã được gian hàng gửi đi';
-    msgEl.classList.add('err');
-    return;
-  }
-
-  msgEl.style.display = 'none';
-  openTakeOrder(found);
-}
-
 let productSearchTimer = null;
 
 function closeProductSearchModal() {
@@ -5022,11 +4376,7 @@ function renderMienBacTable(data) {
     <td style="max-width:220px;white-space:normal;word-break:break-word;line-height:1.5">${o.product || '—'}</td>
     <td style="text-align:center">${o.quantity || '—'}</td>
     <td><b>${o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—'}</b></td>
-    <td>
-      ${o.restricted
-        ? `<span class="restricted-mask">••••••••</span>`
-        : `<button class="btn-copy-order-main btn-take-order" type="button" onclick='openTakeOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>GET</button>`}
-    </td>
+      <td>${o.restricted ? `<span class="restricted-mask">••••••••</span>` : (o.status || '—')}</td>
   </tr>`).join('');
 }
 
