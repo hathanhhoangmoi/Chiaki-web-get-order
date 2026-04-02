@@ -2183,10 +2183,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
 ">
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
     <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
-    <div class="sync-stage-switch">
-      <button class="sync-stage-btn active" id="syncStageBtnWaiting" type="button" onclick="switchSyncStage('da_xac_nhan')">CHỜ LẤY HÀNG</button>
-      <button class="sync-stage-btn" id="syncStageBtnPending" type="button" onclick="switchSyncStage('cho_xnhan')">CHỜ XÁC NHẬN</button>
-    </div>
     <select id="sortSelect" onchange="changeSortOrder()">
       <option value="default">📁 Mặc định</option>
       <option value="total_desc">💰 Giá trị cao → thấp</option>
@@ -2604,7 +2600,7 @@ let currentPage = 1;
 const limit = 200;
 let hanoiVisible = false;
 let currentSort = 'default';
-let currentSyncStage = 'da_xac_nhan';
+let currentSyncStage = '';
 let activeExternalOrderCode = '';
 let activeExternalScope = 'phuong';
 let lastSyncDelta = null;
@@ -3848,16 +3844,6 @@ function selectShop(id) {
 }
 }
 
-function switchSyncStage(stage) {
-  currentSyncStage = stage === 'cho_xnhan' ? 'cho_xnhan' : 'da_xac_nhan';
-  const btnWaiting = document.getElementById('syncStageBtnWaiting');
-  const btnPending = document.getElementById('syncStageBtnPending');
-  if (btnWaiting) btnWaiting.classList.toggle('active', currentSyncStage === 'da_xac_nhan');
-  if (btnPending) btnPending.classList.toggle('active', currentSyncStage === 'cho_xnhan');
-  currentPage = 1;
-  loadSummary();
-  loadOrders();
-}
 function showBlockedNotice(shopId) {
   const tab = document.querySelector(`.tab[data-id="${shopId}"]`);
   const shopName = tab ? tab.textContent.trim().split(' ')[0] : shopId;
@@ -4590,18 +4576,46 @@ async function doSync() {
   }
 }
 
+const SYNC_PANEL_CONFIG = {
+  waiting: {
+    shops: () => syncShops,
+    messageId: 'syncMsg',
+    selectId: 'syncShopId',
+    fileNameId: 'syncFileName',
+    linkButtonId: 'chiakiLink',
+    bulkSummaryId: 'comboBulkSummary',
+  },
+  pending: {
+    shops: () => pendingSyncShops,
+    messageId: 'syncMsgPending',
+    selectId: 'syncShopIdPending',
+    fileNameId: 'syncFileNamePending',
+    linkButtonId: 'chiakiLinkPending',
+    bulkSummaryId: 'comboBulkSummaryPending',
+  }
+};
+
+function getSyncPanelConfig(stage) {
+  return SYNC_PANEL_CONFIG[stage];
+}
+
+function updateChiakiLinkByStage(stage) {
+  const config = getSyncPanelConfig(stage);
+  const select = document.getElementById(config.selectId);
+  const shops = config.shops();
+  if (select && !select.value && shops.length) {
+    select.value = shops[0].id;
+  }
+}
+
 function updateChiakiLink() {
-  const select = document.getElementById('syncShopId');
-  if (select && !select.value && syncShops.length) {
-    select.value = syncShops[0].id;
-  }
+  updateChiakiLinkByStage('waiting');
 }
+
 function updateChiakiLinkPending() {
-  const select = document.getElementById('syncShopIdPending');
-  if (select && !select.value && pendingSyncShops.length) {
-    select.value = pendingSyncShops[0].id;
-  }
+  updateChiakiLinkByStage('pending');
 }
+
 let syncFile = null;
 function handleSyncDrop(event) {
   event.preventDefault();
@@ -4610,16 +4624,29 @@ function handleSyncDrop(event) {
   if (file) handleSyncFile(file);
 }
   
-function handleSyncFile(file) {
+function handleSyncFileByStage(stage, file) {
   if (!file) return;
-  syncFile = file;
-  document.getElementById('syncFileName').textContent = `📄 ${file.name}`;
-  document.getElementById('btnSync').disabled = false;
-}
-function handleSyncFilePending(file) {
-  if (!file) return;
-  const nameEl = document.getElementById('syncFileNamePending');
+  const config = getSyncPanelConfig(stage);
+  if (stage === 'waiting') {
+    syncFile = file;
+  }
+  if (stage === 'pending') {
+    pendingSyncFile = file;
+  }
+  const nameEl = document.getElementById(config.fileNameId);
   if (nameEl) nameEl.textContent = `📄 ${file.name}`;
+  if (stage === 'waiting') {
+    const btnSync = document.getElementById('btnSync');
+    if (btnSync) btnSync.disabled = false;
+  }
+}
+
+function handleSyncFile(file) {
+  handleSyncFileByStage('waiting', file);
+}
+
+function handleSyncFilePending(file) {
+  handleSyncFileByStage('pending', file);
 }
  
 async function doSyncUpload() {
@@ -4684,6 +4711,7 @@ let syncDownloadTimer = null;
 let syncDownloadRunning = false;
 let pendingSyncShops = [];
 let pendingComboFileMap = {};
+let pendingSyncFile = null;
 let pendingSyncDownloadTimer = null;
 let pendingSyncDownloadRunning = false;
 
@@ -4702,11 +4730,20 @@ function sortComboFiles(files) {
   });
 }
 
-function updateComboBulkSummary(message = '', type = '') {
-  const summary = document.getElementById('comboBulkSummary');
+function updateComboBulkSummaryByStage(stage, message = '', type = '') {
+  const config = getSyncPanelConfig(stage);
+  const summary = document.getElementById(config.bulkSummaryId);
   if (!summary) return;
   summary.textContent = message;
   summary.style.color = type === 'err' ? '#dc2626' : '#a06070';
+}
+
+function updateComboBulkSummary(message = '', type = '') {
+  updateComboBulkSummaryByStage('waiting', message, type);
+}
+
+function updateComboBulkSummaryPending(message = '', type = '') {
+  updateComboBulkSummaryByStage('pending', message, type);
 }
 
 function escapeHtml(value) {
@@ -4718,270 +4755,204 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function populateSyncShopSelect() {
-  const select = document.getElementById('syncShopId');
+function populateSyncShopSelectByStage(stage) {
+  const config = getSyncPanelConfig(stage);
+  const select = document.getElementById(config.selectId);
   if (!select) return;
 
+  const shops = config.shops();
   const selected = select.value;
-  const options = syncShops.map(shop =>
+  const options = shops.map(shop =>
     `<option value="${escapeHtml(shop.id)}">${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}</option>`
   ).join('');
 
   select.innerHTML = `<option value="">Mời chọn</option>${options}`;
-  if (syncShops.some(shop => shop.id === selected)) {
+  if (shops.some(shop => shop.id === selected)) {
     select.value = selected;
   }
-  updateChiakiLink();
+  updateChiakiLinkByStage(stage);
+}
+
+function populateSyncShopSelect() {
+  populateSyncShopSelectByStage('waiting');
 }
 
 function populateSyncShopSelectPending() {
-  const select = document.getElementById('syncShopIdPending');
-  if (!select) return;
+  populateSyncShopSelectByStage('pending');
+}
 
-  const selected = select.value;
-  const options = pendingSyncShops.map(shop =>
-    `<option value="${escapeHtml(shop.id)}">${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}</option>`
-  ).join('');
-
-  select.innerHTML = `<option value="">Mời chọn</option>${options}`;
-  if (pendingSyncShops.some(shop => shop.id === selected)) {
-    select.value = selected;
-  }
-  updateChiakiLinkPending();
+function setSyncMessageByStage(stage, message, type = '') {
+  const config = getSyncPanelConfig(stage);
+  const msg = document.getElementById(config.messageId);
+  if (!msg) return;
+  msg.textContent = message;
+  msg.className = type ? `sync-msg ${type}` : 'sync-msg';
 }
 
 function setSyncMessage(message, type = '') {
-  const msg = document.getElementById('syncMsg');
-  if (!msg) return;
-  msg.textContent = message;
-  msg.className = type ? `sync-msg ${type}` : 'sync-msg';
+  setSyncMessageByStage('waiting', message, type);
 }
 
 function setSyncMessagePending(message, type = '') {
-  const msg = document.getElementById('syncMsgPending');
-  if (!msg) return;
-  msg.textContent = message;
-  msg.className = type ? `sync-msg ${type}` : 'sync-msg';
+  setSyncMessageByStage('pending', message, type);
+}
+
+function finishDownloadAllShopsByStage(stage, message, type = 'ok') {
+  const config = getSyncPanelConfig(stage);
+  const btn = document.getElementById(config.linkButtonId);
+  const timer = stage === 'waiting' ? syncDownloadTimer : pendingSyncDownloadTimer;
+  if (stage === 'waiting') syncDownloadRunning = false;
+  else pendingSyncDownloadRunning = false;
+  if (timer) {
+    clearTimeout(timer);
+    if (stage === 'waiting') syncDownloadTimer = null;
+    else pendingSyncDownloadTimer = null;
+  }
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '🔗 Tải toàn bộ shop';
+  }
+  setSyncMessageByStage(stage, message, type);
 }
 
 function finishDownloadAllShops(message, type = 'ok') {
-  const btn = document.getElementById('chiakiLink');
-  syncDownloadRunning = false;
-  if (syncDownloadTimer) {
-    clearTimeout(syncDownloadTimer);
-    syncDownloadTimer = null;
-  }
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '🔗 Tải toàn bộ shop';
-  }
-  setSyncMessage(message, type);
+  finishDownloadAllShopsByStage('waiting', message, type);
 }
 
 function finishDownloadAllShopsPending(message, type = 'ok') {
-  const btn = document.getElementById('chiakiLinkPending');
-  pendingSyncDownloadRunning = false;
-  if (pendingSyncDownloadTimer) {
-    clearTimeout(pendingSyncDownloadTimer);
-    pendingSyncDownloadTimer = null;
+  finishDownloadAllShopsByStage('pending', message, type);
+}
+
+function downloadAllShopFilesByStage(stage) {
+  const isPending = stage === 'pending';
+  const btn = document.getElementById(isPending ? 'chiakiLinkPending' : 'chiakiLink');
+  const shops = isPending ? pendingSyncShops : syncShops;
+  const setMessage = isPending ? setSyncMessagePending : setSyncMessage;
+  const finish = (message, type = 'ok') => finishDownloadAllShopsByStage(stage, message, type);
+
+  if (isPending ? pendingSyncDownloadRunning : syncDownloadRunning) return;
+  if (!shops.length) {
+    setMessage('Chưa tải được danh sách shop để mở file.', 'err');
+    return;
   }
+
+  if (isPending) pendingSyncDownloadRunning = true;
+  else syncDownloadRunning = true;
   if (btn) {
-    btn.disabled = false;
-    btn.textContent = '🔗 Tải toàn bộ shop';
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang mở tab tải...';
   }
-  setSyncMessagePending(message, type);
+
+  fetch(`/api/sync-download-links?status=${isPending ? 'pending' : 'receive_wating'}`, {
+    cache: 'no-store',
+    headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không tải được link tải file');
+      const queue = Array.isArray(data.shops) ? data.shops.map(shop => ({
+        id: shop.shop_id,
+        name: shop.shop_name,
+        url: shop.download_url
+      })) : [];
+      if (!queue.length) throw new Error('Không có shop để mở file.');
+
+      const popupTabs = [];
+      for (let i = 0; i < queue.length; i++) {
+        const popup = window.open('', '_blank');
+        if (!popup) {
+          popupTabs.forEach(tab => { try { tab.close(); } catch {} });
+          throw new Error(`Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`);
+        }
+        popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
+        popupTabs.push(popup);
+      }
+
+      let index = 0;
+      const openNext = () => {
+        const shop = queue[index];
+        const popup = popupTabs[index];
+        if (!popup || popup.closed) {
+          finish(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
+          return;
+        }
+        popup.location.href = shop.url;
+
+        index += 1;
+        if (index >= queue.length) {
+          finish(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
+          return;
+        }
+
+        if (btn) btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
+        setMessage(`Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`, 'ok');
+        if (isPending) pendingSyncDownloadTimer = setTimeout(openNext, 10000);
+        else syncDownloadTimer = setTimeout(openNext, 10000);
+      };
+
+      setMessage(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
+      openNext();
+    })
+    .catch(e => finish(e.message, 'err'));
 }
 
 function downloadAllShopFiles() {
-  const btn = document.getElementById('chiakiLink');
-  if (syncDownloadRunning) return;
-
-  if (!syncShops.length) {
-    setSyncMessage('Chưa tải được danh sách shop để mở file.', 'err');
-    return;
-  }
-
-  syncDownloadRunning = true;
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Đang mở tab tải...';
-  }
-  fetch('/api/sync-download-links?status=receive_wating', {
-    cache: 'no-store',
-    headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
-  })
-    .then(r => r.json().then(data => ({ ok: r.ok, data })))
-    .then(({ ok, data }) => {
-      if (!ok) throw new Error(data.error || 'Không tải được link tải file');
-      const queue = Array.isArray(data.shops) ? data.shops.map(shop => ({
-        id: shop.shop_id,
-        name: shop.shop_name,
-        url: shop.download_url
-      })) : [];
-      if (!queue.length) throw new Error('Không có shop để mở file.');
-
-      const popupTabs = [];
-      for (let i = 0; i < queue.length; i++) {
-        const popup = window.open('', '_blank');
-        if (!popup) {
-          popupTabs.forEach(tab => { try { tab.close(); } catch {} });
-          throw new Error(`Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`);
-        }
-        popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
-        popupTabs.push(popup);
-      }
-
-      let index = 0;
-      const openNext = () => {
-        const shop = queue[index];
-        const popup = popupTabs[index];
-        if (!popup || popup.closed) {
-          finishDownloadAllShops(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
-          return;
-        }
-        popup.location.href = shop.url;
-
-        index += 1;
-        if (index >= queue.length) {
-          finishDownloadAllShops(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
-          return;
-        }
-
-        if (btn) btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
-        setSyncMessage(`Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`, 'ok');
-        syncDownloadTimer = setTimeout(openNext, 10000);
-      };
-
-      setSyncMessage(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
-      openNext();
-    })
-    .catch(e => finishDownloadAllShops(e.message, 'err'));
+  downloadAllShopFilesByStage('waiting');
 }
 
 function downloadAllShopFilesPending() {
-  const btn = document.getElementById('chiakiLinkPending');
-  if (pendingSyncDownloadRunning) return;
+  downloadAllShopFilesByStage('pending');
+}
 
-  if (!pendingSyncShops.length) {
-    setSyncMessagePending('Chưa tải được danh sách shop để mở file.', 'err');
-    return;
+async function loadSyncShopsByStage(stage) {
+  const isPending = stage === 'pending';
+  try {
+    const shopsRes = await fetch('/api/shops-list', { cache: 'no-store' });
+    const shopsData = shopsRes.ok ? await shopsRes.json() : [];
+
+    const shopsPayload = Array.isArray(shopsData)
+      ? shopsData
+      : Array.isArray(shopsData?.shops)
+        ? shopsData.shops
+        : [];
+    const shops = shopsPayload.map(shop => ({
+      id: String(shop.shop_id || '').trim(),
+      name: String(shop.shop_name || shop.shop_id || '').trim()
+    })).filter(shop => shop.id);
+
+    if (isPending) {
+      pendingSyncShops = shops;
+      populateSyncShopSelectPending();
+      initComboRowsPending();
+    } else {
+      syncShops = shops;
+      window.shopIdNameMap = Object.fromEntries(syncShops.map(shop => [shop.id, shop.name]));
+      populateSyncShopSelect();
+      initComboRows();
+    }
+  } catch (e) {
+    console.error(`loadSyncShops(${stage}) error`, e);
+    const container = document.getElementById(isPending ? 'comboRowsPending' : 'comboRows');
+    if (isPending) {
+      pendingSyncShops = [];
+      populateSyncShopSelectPending();
+    } else {
+      syncShops = [];
+      window.shopIdNameMap = {};
+      populateSyncShopSelect();
+    }
+    if (container) {
+      container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
+    }
   }
-
-  pendingSyncDownloadRunning = true;
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Đang mở tab tải...';
-  }
-  fetch('/api/sync-download-links?status=pending', {
-    cache: 'no-store',
-    headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
-  })
-    .then(r => r.json().then(data => ({ ok: r.ok, data })))
-    .then(({ ok, data }) => {
-      if (!ok) throw new Error(data.error || 'Không tải được link tải file');
-      const queue = Array.isArray(data.shops) ? data.shops.map(shop => ({
-        id: shop.shop_id,
-        name: shop.shop_name,
-        url: shop.download_url
-      })) : [];
-      if (!queue.length) throw new Error('Không có shop để mở file.');
-
-      const popupTabs = [];
-      for (let i = 0; i < queue.length; i++) {
-        const popup = window.open('', '_blank');
-        if (!popup) {
-          popupTabs.forEach(tab => { try { tab.close(); } catch {} });
-          throw new Error(`Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`);
-        }
-        popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
-        popupTabs.push(popup);
-      }
-
-      let index = 0;
-      const openNext = () => {
-        const shop = queue[index];
-        const popup = popupTabs[index];
-        if (!popup || popup.closed) {
-          finishDownloadAllShopsPending(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
-          return;
-        }
-        popup.location.href = shop.url;
-
-        index += 1;
-        if (index >= queue.length) {
-          finishDownloadAllShopsPending(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
-          return;
-        }
-
-        if (btn) btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
-        setSyncMessagePending(`Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`, 'ok');
-        pendingSyncDownloadTimer = setTimeout(openNext, 10000);
-      };
-
-      setSyncMessagePending(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
-      openNext();
-    })
-    .catch(e => finishDownloadAllShopsPending(e.message, 'err'));
 }
 
 async function loadSyncShops() {
-  try {
-    const shopsRes = await fetch('/api/shops-list', { cache: 'no-store' });
-    const shopsData = shopsRes.ok ? await shopsRes.json() : [];
-
-    const shopsPayload = Array.isArray(shopsData)
-      ? shopsData
-      : Array.isArray(shopsData?.shops)
-        ? shopsData.shops
-        : [];
-    syncShops = shopsPayload.map(shop => ({
-          id: String(shop.shop_id || '').trim(),
-          name: String(shop.shop_name || shop.shop_id || '').trim()
-        })).filter(shop => shop.id);
-    window.shopIdNameMap = Object.fromEntries(syncShops.map(shop => [shop.id, shop.name]));
-
-    populateSyncShopSelect();
-    initComboRows();
-  } catch (e) {
-    console.error('loadSyncShops error', e);
-    syncShops = [];
-    window.shopIdNameMap = {};
-    populateSyncShopSelect();
-
-    const container = document.getElementById('comboRows');
-    if (container) {
-      container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
-    }
-  }
+  await loadSyncShopsByStage('waiting');
 }
 
 async function loadSyncShopsPending() {
-  try {
-    const shopsRes = await fetch('/api/shops-list', { cache: 'no-store' });
-    const shopsData = shopsRes.ok ? await shopsRes.json() : [];
-
-    const shopsPayload = Array.isArray(shopsData)
-      ? shopsData
-      : Array.isArray(shopsData?.shops)
-        ? shopsData.shops
-        : [];
-    pendingSyncShops = shopsPayload.map(shop => ({
-          id: String(shop.shop_id || '').trim(),
-          name: String(shop.shop_name || shop.shop_id || '').trim()
-        })).filter(shop => shop.id);
-
-    populateSyncShopSelectPending();
-    initComboRowsPending();
-  } catch (e) {
-    console.error('loadSyncShopsPending error', e);
-    pendingSyncShops = [];
-    populateSyncShopSelectPending();
-
-    const container = document.getElementById('comboRowsPending');
-    if (container) {
-      container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
-    }
-  }
+  await loadSyncShopsByStage('pending');
 }
 
 function initComboRows() {
