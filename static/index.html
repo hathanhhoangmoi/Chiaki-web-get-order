@@ -1406,7 +1406,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#F5BAD5,#BAD6FD);border-radius:10px}
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#BAD6FD,#570301)}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -1787,10 +1786,6 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <div class="info-row"><span class="info-label">Mã vận đơn</span><span class="info-value" id="irShippingCode">—</span></div>
       <div class="info-row"><span class="info-label">Trạng thái giao</span><span class="info-value" id="irDeliveryStatus">—</span></div>
       <div class="info-row"><span class="info-label">Shipper lấy hàng</span><span class="info-value" id="irShipperReceive">—</span></div>
-    </div>
-    <!-- Button Export PDF 4x6 inch -->
-    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
-      <button id="btnExportPdf" class="btn-modal-confirm" onclick="exportShippingLabel()" style="background:#ff6b35;border-radius:50px;display:none;">📄 IN PHIẾU GIAO HÀNG</button>
     </div>
 <div class="info-btns">
   <button class="btn-info-search" id="infoSearchBtn" onclick="fetchOrderInfo()" style="flex:1">🔍 Tra cứu đơn hàng</button>
@@ -3475,8 +3470,6 @@ function closeOrderInfoModal() {
   document.getElementById('infoError').classList.remove('show');
   document.getElementById('infoOrderCode').value = '';
   document.getElementById('infoKeyStatus').textContent = '';
-  const pdfBtn = document.getElementById('btnExportPdf');
-  if (pdfBtn) pdfBtn.style.display = 'none';
 }
 
 async function fetchOrderInfo() {
@@ -3655,23 +3648,10 @@ if (statusBanner) {
     document.getElementById('irDeliveryStatus').textContent  = data.delivery_status === 'successful' ? '✨ Đã giao thành công' : (data.delivery_status || '—');
     document.getElementById('irShipperReceive').textContent  = data.shipper_receive_time  || '—';
 
-    window.currentInfoData = {
-  shop_name:      data.shop_name      || '—',
-  shipping_code:  data.shipping_code  || '—',
-  order_code:     data.order_code     || '—',
-  customer_name:  data.customer_name  || '—',
-  address:        data.address        || '—',
-  product:        data.product        || '—',
-  order_date:     data.order_date     || '—',
-  prepaid_amount: data.prepaid_amount || '—'
-};
-    
     document.getElementById('infoKeyStatus').textContent =
       data.remaining === -1 || data.remaining === null
       ? '✅ Key không giới hạn lượt'
       : `✅ Còn ${data.remaining} lượt sử dụng cho key này`;
-    const pdfBtn = document.getElementById('btnExportPdf');
-    if (pdfBtn) pdfBtn.style.display = 'block';
     resultEl.classList.add('show');
   } catch(e) {
     errEl.textContent = 'Lỗi kết nối: ' + e.message;
