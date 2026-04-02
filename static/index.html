@@ -236,12 +236,19 @@ body{
   display:grid;
   gap:10px;
 }
+.external-stats-row.row-1{grid-template-columns:minmax(0,1fr)}
 .external-stats-row.row-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .external-stats-row.row-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .external-stat{
   padding:14px 16px;border-radius:22px;
   background:rgba(255,255,255,.42);
   border:1px solid rgba(255,255,255,.8);
+}
+.external-stat.history-only .external-stat-sub{
+  margin-top:0;
+  font-size:12px;
+  color:#8b6672;
+  line-height:1.7;
 }
 .external-stat.clickable{cursor:pointer;transition:all .18s}
 .external-stat.clickable:hover{
@@ -1651,6 +1658,12 @@ select.sync-input{font-family:inherit;cursor:pointer}
             <div class="external-stat-sub">Số tiền đã được thanh toán</div>
           </div>
         </div>
+        <div class="external-stats-row row-1">
+          <div class="external-stat history-only">
+            <div class="external-stat-label">🗓️ LỊCH SỬ THANH TOÁN</div>
+            <div class="external-stat-sub" id="externalPaymentHistoryContent">Chưa có ngày thanh toán</div>
+          </div>
+        </div>
       </div>
 
       <div class="external-toolbar">
@@ -2983,7 +2996,8 @@ function renderExternalOrdersDashboard() {
   const feeContentEl = document.getElementById('externalFeeContent');
   const payoutEl = document.getElementById('externalPayoutToPhuong');
   const paidToPhuongEl = document.getElementById('externalPaidToPhuong');
-  if (!grid || !meta || !permission || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl || !paidToPhuongEl) return;
+  const paymentHistoryEl = document.getElementById('externalPaymentHistoryContent');
+  if (!grid || !meta || !permission || !inTransitEl || !deliveredEl || !returnedEl || !inTransitRevenueEl || !deliveredRevenueEl || !feeAmountEl || !feeContentEl || !payoutEl || !paidToPhuongEl || !paymentHistoryEl) return;
 
   if (!canViewExternalScope(activeExternalScope)) {
     permission.style.display = 'block';
@@ -2999,6 +3013,7 @@ function renderExternalOrdersDashboard() {
     feeContentEl.textContent = 'Không có dữ liệu để hiển thị';
     payoutEl.textContent = formatExternalCurrency(0);
     paidToPhuongEl.textContent = formatExternalCurrency(0);
+    paymentHistoryEl.textContent = 'Không có dữ liệu để hiển thị';
     return;
   }
 
@@ -3030,6 +3045,21 @@ function renderExternalOrdersDashboard() {
   const totalFee = feeItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const collectedFee = feeItems.filter(item => item.collected).reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const outstandingFee = totalFee - collectedFee;
+  const paymentHistory = Array.from(new Set(
+    items
+      .filter(item => item.is_paid && item.updated_at)
+      .map(item => {
+        const value = new Date(item.updated_at);
+        if (Number.isNaN(value.getTime())) return null;
+        return value.toISOString().slice(0, 10);
+      })
+      .filter(Boolean)
+  ))
+    .sort((a, b) => b.localeCompare(a))
+    .map(value => {
+      const [year, month, day] = value.split('-');
+      return `${day}/${month}/${year}`;
+    });
 
   inTransitEl.textContent = inTransit.toLocaleString('vi');
   deliveredEl.textContent = delivered.toLocaleString('vi');
@@ -3040,6 +3070,7 @@ function renderExternalOrdersDashboard() {
   feeContentEl.textContent = 'Click để xem chi tiết';
   payoutEl.textContent = formatExternalCurrency(deliveredRevenueUnpaid - outstandingFee);
   paidToPhuongEl.textContent = formatExternalCurrency(deliveredRevenuePaid - collectedFee);
+  paymentHistoryEl.textContent = paymentHistory.length ? paymentHistory.join(' • ') : 'Chưa có ngày thanh toán';
 
   meta.textContent = items.length
     ? `${items.length.toLocaleString('vi')} mã đơn đang được theo dõi cho ${getExternalScopeLabel()}.`
