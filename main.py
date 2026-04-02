@@ -23,7 +23,7 @@ from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, 
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
-    "HATHANHHOANG": 0,
+    "HOANG5611": 0,
     "PHONE-KEY-PHUONG2000": 0,
 }
 KEY_LIMIT = 10
