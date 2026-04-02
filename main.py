@@ -398,7 +398,7 @@ def get_external_order_config(db: Session, scope: str = "phuong"):
     _, config_model = get_external_models(scope)
     config = db.query(config_model).filter(config_model.id == 1).first()
     if not config:
-        config = config_model(id=1, fee_items_json="[]")
+        config = config_model(id=1, fee_items_json='{"fee_items":[],"payment_history":[]}')
         db.add(config)
         db.commit()
         db.refresh(config)
@@ -407,15 +407,25 @@ def get_external_order_config(db: Session, scope: str = "phuong"):
 
 def serialize_external_order_config(config: ExternalOrderConfig):
     fee_items = []
+    payment_history = []
     try:
-        raw = config.fee_items_json or "[]"
+        raw = config.fee_items_json or '{"fee_items":[],"payment_history":[]}'
         parsed = _json.loads(raw)
         if isinstance(parsed, list):
             fee_items = parsed
+        elif isinstance(parsed, dict):
+            fee_items_raw = parsed.get("fee_items")
+            payment_history_raw = parsed.get("payment_history")
+            if isinstance(fee_items_raw, list):
+                fee_items = fee_items_raw
+            if isinstance(payment_history_raw, list):
+                payment_history = payment_history_raw
     except Exception:
         fee_items = []
+        payment_history = []
     return {
         "fee_items": fee_items,
+        "payment_history": payment_history,
         "updated_at": config.updated_at.isoformat() if config.updated_at else None,
     }
 
@@ -651,6 +661,24 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
                 "collected": collected,
             })
 
+    payment_history_in = body.get("payment_history")
+    payment_history = []
+    if isinstance(payment_history_in, list):
+        for item in payment_history_in:
+            if not isinstance(item, dict):
+                continue
+            paid_date = str(item.get("date", "") or "").strip()
+            try:
+                amount = int(item.get("amount") or 0)
+            except Exception:
+                amount = 0
+            if not paid_date and amount == 0:
+                continue
+            payment_history.append({
+                "date": paid_date,
+                "amount": amount,
+            })
+
     tracking_model, _ = get_external_models(scope)
     db.query(tracking_model).delete()
     for item in normalized:
@@ -662,7 +690,10 @@ def save_external_orders(request: Request, body: dict, db: Session = Depends(get
             updated_at=datetime.now(),
         ))
     config = get_external_order_config(db, scope)
-    config.fee_items_json = _json.dumps(fee_items, ensure_ascii=False)
+    config.fee_items_json = _json.dumps({
+        "fee_items": fee_items,
+        "payment_history": payment_history,
+    }, ensure_ascii=False)
     config.updated_at = datetime.now()
     db.commit()
 
