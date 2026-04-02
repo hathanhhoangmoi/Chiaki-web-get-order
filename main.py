@@ -1,16 +1,13 @@
-import io
 import json as _json
 import re
 from datetime import datetime, timedelta
 from urllib.parse import quote
-
 import httpx
 from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
-
 from database import engine, get_db, migrate
 from fetcher import sync_shop, parse_excel
 from models import (
@@ -26,7 +23,7 @@ from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, 
 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
-    "HOANG5611": 0,
+    "HATHANHHOANG": 0,
     "PHONE-KEY-PHUONG2000": 0,
 }
 KEY_LIMIT = 10
@@ -37,7 +34,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HOANG5611", "PHONE-KEY-PHUONG2000"}
+UNLIMITED_KEYS = {"HATHANHHOANG", "PHONE-KEY-PHUONG2000"}
 
 app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -192,7 +189,6 @@ def get_user_capabilities(user_id: str) -> dict:
         "manage_external_orders": can_manage_external_orders(normalized),
         "view_hoang_orders": can_view_hoang_orders(normalized),
         "admin_tools": normalized in {"Hoang5611", "LOGIN-KEY-PHUONG2000"},
-        "manage_taken_history": can_view_hoang_orders(normalized),
         "view_history_panel": can_view_hoang_orders(normalized),
     }
 
@@ -834,57 +830,6 @@ def get_auth_capabilities(request: Request):
         "ok": True,
         "capabilities": get_user_capabilities(user_id),
     }
-@app.get("/api/export-order/{order_code}")
-async def export_order(order_code: str, request: Request, db: Session = Depends(get_db)):
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment
-
-    # Tìm đơn trong DB — dùng SQLAlchemy như các endpoint khác
-    order = db.query(Order).filter(Order.order_code == order_code).first()
-
-    if not order:
-        return JSONResponse({"error": "Không tìm thấy đơn hàng"}, status_code=404)
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Đơn hàng"
-
-    headers = [
-        ("Mã đơn",        order.order_code or ""),
-        ("Ngày tạo",      order.order_date or ""),
-        ("Gian hàng",     order.shop_name or ""),
-        ("Tên khách",     order.customer_name or order.buyer_name or ""),
-        ("Số điện thoại", order.phone or ""),
-        ("Địa chỉ",       order.address or ""),
-        ("Sản phẩm",      order.product or ""),
-        ("Số lượng",      order.quantity or ""),
-        ("Tổng tiền",     order.total or ""),
-        ("Trạng thái",    order.status or ""),
-    ]
-
-    for i, (label, value) in enumerate(headers, start=1):
-        c_label = ws.cell(row=i, column=1, value=label)
-        c_label.font = Font(bold=True, color="5B4B8A", size=11)
-        c_label.fill = PatternFill("solid", fgColor="EDE8FF")
-        c_label.alignment = Alignment(horizontal="left", vertical="center")
-
-        c_val = ws.cell(row=i, column=2, value=str(value) if value else "")
-        c_val.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
-
-    ws.column_dimensions["A"].width = 22
-    ws.column_dimensions["B"].width = 48
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-
-    filename = f"don-hang-{order_code}.xlsx"
-    return StreamingResponse(
-        buf,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
-    )
-
 @app.post("/api/auth/verify-id")
 async def verify_id(body: dict):
     user_id = body.get("id", "").strip()
