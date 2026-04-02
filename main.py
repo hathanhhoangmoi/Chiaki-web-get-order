@@ -35,7 +35,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HATHANHHOANG", "PHONE-KEY-PHUONG2000"}
+UNLIMITED_KEYS = {"HOANG5611", "PHONE-KEY-PHUONG2000"}
 
 app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -202,8 +202,17 @@ def normalize_sync_text(value: str | None) -> str:
     return "".join(ch for ch in normalized if not unicodedata.combining(ch))
 
 
-def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str | None = None) -> bool:
+def normalize_view_sync_stage(sync_stage: str | None) -> str:
     stage = str(sync_stage or "").strip().lower()
+    if stage in {"confirm", "pending"}:
+        return "confirm"
+    if stage in {"pickup", "waiting"}:
+        return "pickup"
+    return stage
+
+
+def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str | None = None) -> bool:
+    stage = normalize_view_sync_stage(sync_stage)
     if not stage:
         return True
 
@@ -211,17 +220,17 @@ def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str
     if not normalized_status:
         return False
 
-    if stage == "pending":
+    if stage == "confirm":
         return "cho x.nhan" in normalized_status
 
-    if stage == "waiting":
+    if stage == "pickup":
         return "da xac nhan(y.cau x.hang)" in normalized_status
 
     return True
 
 
 def filter_orders_by_sync_stage(rows: list, sync_stage: str | None) -> list:
-    stage = str(sync_stage or "").strip().lower()
+    stage = normalize_view_sync_stage(sync_stage)
     if not stage:
         return rows
     filtered_rows = []
@@ -238,16 +247,16 @@ def filter_orders_by_sync_stage(rows: list, sync_stage: str | None) -> list:
 
 
 def apply_sync_stage_filter(query, sync_stage: str | None):
-    stage = str(sync_stage or "").strip().lower()
+    stage = normalize_view_sync_stage(sync_stage)
     status_col = func.lower(func.coalesce(Order.status, ""))
 
-    if stage == "pending":
+    if stage == "confirm":
         return query.filter(or_(
             status_col.like("%chờ x.nhận%"),
             status_col.like("%cho x.nhan%")
         ))
 
-    if stage == "waiting":
+    if stage == "pickup":
         return query.filter(or_(
             status_col.like("%đã xác nhận(y.cầu x.hàng)%"),
             status_col.like("%da xac nhan(y.cau x.hang)%")
@@ -416,7 +425,7 @@ async def root():
         return f.read()
 
 @app.get("/api/summary")
-def get_summary(sync_stage: str = Query("waiting"), db: Session = Depends(get_db)):
+def get_summary(sync_stage: str = Query("pickup"), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
     filtered_orders = filter_orders_by_sync_stage(db.query(Order).all(), sync_stage)
     total = len({str(getattr(order, "order_code", "") or "").strip() for order in filtered_orders if getattr(order, "order_code", None)})
@@ -452,7 +461,7 @@ def get_orders(
     page: int = Query(1, ge=1),
     limit: int = Query(200, le=200),
     sort: str = Query("default"),
-    sync_stage: str = Query("waiting"),
+    sync_stage: str = Query("pickup"),
     db: Session = Depends(get_db)
 ):
     user_id = request.headers.get('X-User-ID', '')
