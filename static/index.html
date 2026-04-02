@@ -1903,12 +1903,12 @@ select.sync-input{font-family:inherit;cursor:pointer}
         <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('panelSyncOrders')" title="Thu gọn / mở rộng"></button>
         <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
       </div>
-      <div class="panel-inline-title">Đồng bộ đơn hàng</div>
+      <div class="panel-inline-title">Đồng bộ đơn hàng CHỜ LẤY HÀNG</div>
     </div>
     <div class="panel-body">
 
     <div class="info-modal-icon">🗂️</div>
-    <div class="info-modal-title">Đồng bộ đơn hàng</div>
+    <div class="info-modal-title">Đồng bộ đơn hàng CHỜ LẤY HÀNG</div>
     <div class="info-modal-sub">Tải toàn bộ file shop rồi gửi file vào đúng dòng tương ứng bên dưới</div>
 
     <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
@@ -1927,7 +1927,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="sync-file-name" id="syncFileName"></div>
     <div class="info-error" id="syncMsg" style="margin-top:6px"></div>
     <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
-      <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng</div>
+      <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng CHỜ LẤY HÀNG</div>
       <div
         id="comboBulkDropzone"
         style="border:1.5px dashed rgba(186,214,253,.65);border-radius:18px;padding:16px 14px;text-align:center;background:rgba(255,255,255,.42);cursor:pointer;margin-bottom:10px"
@@ -1966,6 +1966,83 @@ select.sync-input{font-family:inherit;cursor:pointer}
         🔁 SYNC
       </button>
       <div class="info-error" id="comboMsg" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="info-modal-bg" id="syncPanelPending" style="display:none;margin-top:16px">
+  <div class="info-modal collapsible-panel collapsed" id="panelSyncOrdersPending">
+    <div class="panel-chrome">
+      <div class="panel-window-controls">
+        <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+        <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('panelSyncOrdersPending')" title="Thu gọn / mở rộng"></button>
+        <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
+      </div>
+      <div class="panel-inline-title">Đồng bộ đơn hàng CHỜ XÁC NHẬN</div>
+    </div>
+    <div class="panel-body">
+
+    <div class="info-modal-icon">🗂️</div>
+    <div class="info-modal-title">Đồng bộ đơn hàng CHỜ XÁC NHẬN</div>
+    <div class="info-modal-sub">Tải toàn bộ file shop rồi gửi file vào đúng dòng tương ứng bên dưới</div>
+
+    <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
+    <div class="sync-hint">Nhấn một lần để mở lần lượt tab tải file của toàn bộ shop. Mỗi 10 giây sẽ mở 1 tab mới.</div>
+    <select class="info-input" id="syncShopIdPending" onchange="updateChiakiLinkPending()"
+            style="display:none">
+      <option value="">Mời chọn</option>
+    </select>
+    <button class="btn-info-search" id="chiakiLinkPending" type="button"
+       onclick="downloadAllShopFilesPending()"
+       style="display:block;width:100%;text-align:center;text-decoration:none;padding:11px;margin-bottom:8px">
+      🔗 Tải toàn bộ shop
+    </button>
+    <input type="file" id="syncFileInputPending" accept=".xlsx,.xls"
+           style="display:none" onchange="handleSyncFilePending(this.files[0])"/>
+    <div class="sync-file-name" id="syncFileNamePending"></div>
+    <div class="info-error" id="syncMsgPending" style="margin-top:6px"></div>
+    <div style="margin-top:18px;border-top:1px solid rgba(198,181,255,.25);padding-top:16px;">
+      <div class="info-modal-title" style="font-size:14px;margin-bottom:12px">📎 Đồng bộ đơn hàng CHỜ XÁC NHẬN</div>
+      <div
+        id="comboBulkDropzonePending"
+        style="border:1.5px dashed rgba(186,214,253,.65);border-radius:18px;padding:16px 14px;text-align:center;background:rgba(255,255,255,.42);cursor:pointer;margin-bottom:10px"
+        onclick="document.getElementById('comboBulkInputPending').click()"
+        ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dragover')"
+        ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
+        ondrop="handleComboBulkDropPending(event)"
+      >
+        <div style="font-size:13px;font-weight:700;color:#570301">📂 Kéo thả nhiều file Excel vào đây</div>
+        <div style="font-size:11px;color:#a06070;margin-top:4px">
+          File sẽ được gán theo thứ tự shop: file đầu là shop đầu tiên, file thứ 2 là shop tiếp theo...
+        </div>
+        <div style="font-size:11px;color:#9b8bb4;margin-top:6px">
+          Ví dụ: <code>danh-sach-don-hang.xlsx</code>, <code>danh-sach-don-hang (1).xlsx</code>, ...
+        </div>
+      </div>
+      <input type="file" id="comboBulkInputPending" accept=".xlsx,.xls" multiple style="display:none"
+             onchange="handleComboBulkFilesPending(this.files)"/>
+      <div id="comboBulkSummaryPending" style="font-size:12px;color:#a06070;margin-bottom:12px;min-height:18px"></div>
+      <div class="sync-shop-panel collapsible-panel collapsed" id="comboShopListPanelPending">
+        <div class="panel-chrome">
+          <div class="panel-window-controls">
+            <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+            <button class="panel-dot panel-dot-yellow" type="button" onclick="togglePanelCollapse('comboShopListPanelPending')" title="Thu gọn / mở rộng"></button>
+            <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
+          </div>
+          <div class="panel-inline-title">Danh sách các gian hàng</div>
+        </div>
+        <div class="panel-body">
+          <div id="comboRowsPending" style="display:flex;border-radius:50px;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+      <button class="btn-info-search" id="btnComboSyncPending"
+              style="margin-top:12px;width:100%;background:linear-gradient(to right,#ffc3a0,#ffafbd);color:#1e3a5f;box-shadow:0 4px 14px rgba(255,175,189,.4)"
+              onclick="doComboSyncPending()">
+        🔁 SYNC
+      </button>
+      <div class="info-error" id="comboMsgPending" style="margin-top:8px"></div>
     </div>
   </div>
 </div>
@@ -3789,6 +3866,7 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
   const showAdminPanels = isAdminId(id);
   const curlPanel = document.getElementById('adminCurlPanel');
   const syncPanel = document.getElementById('syncPanel');
+  const syncPanelPending = document.getElementById('syncPanelPending');
   const curlResultBg = document.getElementById('curlResultBg');
 
   if (curlPanel) {
@@ -3796,6 +3874,9 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
   }
   if (syncPanel) {
     syncPanel.style.display = showAdminPanels ? 'flex' : 'none';
+  }
+  if (syncPanelPending) {
+    syncPanelPending.style.display = showAdminPanels ? 'flex' : 'none';
   }
   if (!showAdminPanels && curlResultBg) {
     curlResultBg.style.display = 'none';
@@ -4462,6 +4543,12 @@ function updateChiakiLink() {
     select.value = syncShops[0].id;
   }
 }
+function updateChiakiLinkPending() {
+  const select = document.getElementById('syncShopIdPending');
+  if (select && !select.value && pendingSyncShops.length) {
+    select.value = pendingSyncShops[0].id;
+  }
+}
 let syncFile = null;
 function handleSyncDrop(event) {
   event.preventDefault();
@@ -4475,6 +4562,11 @@ function handleSyncFile(file) {
   syncFile = file;
   document.getElementById('syncFileName').textContent = `📄 ${file.name}`;
   document.getElementById('btnSync').disabled = false;
+}
+function handleSyncFilePending(file) {
+  if (!file) return;
+  const nameEl = document.getElementById('syncFileNamePending');
+  if (nameEl) nameEl.textContent = `📄 ${file.name}`;
 }
  
 async function doSyncUpload() {
@@ -4536,6 +4628,10 @@ let syncShops = [];
 let comboFileMap = {}; // index → File
 let syncDownloadTimer = null;
 let syncDownloadRunning = false;
+let pendingSyncShops = [];
+let pendingComboFileMap = {};
+let pendingSyncDownloadTimer = null;
+let pendingSyncDownloadRunning = false;
 
 function getComboFileSequence(fileName = '') {
   const normalized = String(fileName || '').trim();
@@ -4584,8 +4680,31 @@ function populateSyncShopSelect() {
   updateChiakiLink();
 }
 
+function populateSyncShopSelectPending() {
+  const select = document.getElementById('syncShopIdPending');
+  if (!select) return;
+
+  const selected = select.value;
+  const options = pendingSyncShops.map(shop =>
+    `<option value="${escapeHtml(shop.id)}">${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}</option>`
+  ).join('');
+
+  select.innerHTML = `<option value="">Mời chọn</option>${options}`;
+  if (pendingSyncShops.some(shop => shop.id === selected)) {
+    select.value = selected;
+  }
+  updateChiakiLinkPending();
+}
+
 function setSyncMessage(message, type = '') {
   const msg = document.getElementById('syncMsg');
+  if (!msg) return;
+  msg.textContent = message;
+  msg.className = type ? `sync-msg ${type}` : 'sync-msg';
+}
+
+function setSyncMessagePending(message, type = '') {
+  const msg = document.getElementById('syncMsgPending');
   if (!msg) return;
   msg.textContent = message;
   msg.className = type ? `sync-msg ${type}` : 'sync-msg';
@@ -4605,6 +4724,20 @@ function finishDownloadAllShops(message, type = 'ok') {
   setSyncMessage(message, type);
 }
 
+function finishDownloadAllShopsPending(message, type = 'ok') {
+  const btn = document.getElementById('chiakiLinkPending');
+  pendingSyncDownloadRunning = false;
+  if (pendingSyncDownloadTimer) {
+    clearTimeout(pendingSyncDownloadTimer);
+    pendingSyncDownloadTimer = null;
+  }
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '🔗 Tải toàn bộ shop';
+  }
+  setSyncMessagePending(message, type);
+}
+
 function downloadAllShopFiles() {
   const btn = document.getElementById('chiakiLink');
   if (syncDownloadRunning) return;
@@ -4619,7 +4752,7 @@ function downloadAllShopFiles() {
     btn.disabled = true;
     btn.textContent = '⏳ Đang mở tab tải...';
   }
-  fetch('/api/sync-download-links', {
+  fetch('/api/sync-download-links?status=receive_wating', {
     cache: 'no-store',
     headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
   })
@@ -4671,6 +4804,72 @@ function downloadAllShopFiles() {
     .catch(e => finishDownloadAllShops(e.message, 'err'));
 }
 
+function downloadAllShopFilesPending() {
+  const btn = document.getElementById('chiakiLinkPending');
+  if (pendingSyncDownloadRunning) return;
+
+  if (!pendingSyncShops.length) {
+    setSyncMessagePending('Chưa tải được danh sách shop để mở file.', 'err');
+    return;
+  }
+
+  pendingSyncDownloadRunning = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang mở tab tải...';
+  }
+  fetch('/api/sync-download-links?status=pending', {
+    cache: 'no-store',
+    headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Không tải được link tải file');
+      const queue = Array.isArray(data.shops) ? data.shops.map(shop => ({
+        id: shop.shop_id,
+        name: shop.shop_name,
+        url: shop.download_url
+      })) : [];
+      if (!queue.length) throw new Error('Không có shop để mở file.');
+
+      const popupTabs = [];
+      for (let i = 0; i < queue.length; i++) {
+        const popup = window.open('', '_blank');
+        if (!popup) {
+          popupTabs.forEach(tab => { try { tab.close(); } catch {} });
+          throw new Error(`Trình duyệt đã chặn popup ở shop ${queue[i].id} · ${queue[i].name}. Hãy cho phép popup rồi thử lại.`);
+        }
+        popup.document.write(`<title>Dang cho tai file ${queue[i].id}</title><body style="font-family:sans-serif;padding:24px">Dang cho tai file cho shop ${queue[i].id} · ${queue[i].name}...</body>`);
+        popupTabs.push(popup);
+      }
+
+      let index = 0;
+      const openNext = () => {
+        const shop = queue[index];
+        const popup = popupTabs[index];
+        if (!popup || popup.closed) {
+          finishDownloadAllShopsPending(`Tab chờ của shop ${shop.id} · ${shop.name} đã bị đóng trước khi tải.`, 'err');
+          return;
+        }
+        popup.location.href = shop.url;
+
+        index += 1;
+        if (index >= queue.length) {
+          finishDownloadAllShopsPending(`Đã mở ${queue.length}/${queue.length} tab tải file.`, 'ok');
+          return;
+        }
+
+        if (btn) btn.textContent = `⏳ Đã mở ${index}/${queue.length} tab...`;
+        setSyncMessagePending(`Đã mở ${index}/${queue.length} tab. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau 10 giây.`, 'ok');
+        pendingSyncDownloadTimer = setTimeout(openNext, 10000);
+      };
+
+      setSyncMessagePending(`Bắt đầu mở ${queue.length} tab tải file. Shop đầu tiên sẽ mở ngay.`, 'ok');
+      openNext();
+    })
+    .catch(e => finishDownloadAllShopsPending(e.message, 'err'));
+}
+
 async function loadSyncShops() {
   try {
     const shopsRes = await fetch('/api/shops-list', { cache: 'no-store' });
@@ -4701,6 +4900,36 @@ async function loadSyncShops() {
     }
   }
 }
+
+async function loadSyncShopsPending() {
+  try {
+    const shopsRes = await fetch('/api/shops-list', { cache: 'no-store' });
+    const shopsData = shopsRes.ok ? await shopsRes.json() : [];
+
+    const shopsPayload = Array.isArray(shopsData)
+      ? shopsData
+      : Array.isArray(shopsData?.shops)
+        ? shopsData.shops
+        : [];
+    pendingSyncShops = shopsPayload.map(shop => ({
+          id: String(shop.shop_id || '').trim(),
+          name: String(shop.shop_name || shop.shop_id || '').trim()
+        })).filter(shop => shop.id);
+
+    populateSyncShopSelectPending();
+    initComboRowsPending();
+  } catch (e) {
+    console.error('loadSyncShopsPending error', e);
+    pendingSyncShops = [];
+    populateSyncShopSelectPending();
+
+    const container = document.getElementById('comboRowsPending');
+    if (container) {
+      container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không tải được danh sách shop.</div>';
+    }
+  }
+}
+
 function initComboRows() {
   const container = document.getElementById('comboRows');
   if (!container) return;
@@ -4731,6 +4960,37 @@ function initComboRows() {
   `).join('');
   updateComboBulkSummary(Object.keys(comboFileMap).length ? `Đã gán ${Object.keys(comboFileMap).length}/${syncShops.length} file cho shop.` : '');
 }
+
+function initComboRowsPending() {
+  const container = document.getElementById('comboRowsPending');
+  if (!container) return;
+  if (!pendingSyncShops.length) {
+    container.innerHTML = '<div style="font-size:12px;color:#a06070;padding:8px 2px">Không có shop để hiển thị.</div>';
+    updateComboBulkSummaryPending('');
+    return;
+  }
+
+  container.innerHTML = pendingSyncShops.map((shop, i) => `
+    <div class="combo-row">
+      <div class="combo-shop-label" title="${escapeHtml(shop.id)} · ${escapeHtml(shop.name)}">
+        <span class="combo-shop-id">${escapeHtml(shop.id)}</span>
+        <span class="combo-shop-name">${escapeHtml(shop.name)}</span>
+      </div>
+      <div class="combo-drop-cell"
+           id="comboUploadBtnPending_${i}"
+           onclick="document.getElementById('comboInputPending_${i}').click()"
+           ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dragover')"
+           ondragleave="event.stopPropagation(); this.classList.remove('dragover')"
+           ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dragover'); handleComboFilePending(${i}, event.dataTransfer.files[0])">
+        📎 Upload
+      </div>
+      <input type="file" id="comboInputPending_${i}" accept=".xlsx,.xls"
+             style="display:none"
+             onchange="handleComboFilePending(${i}, this.files[0])"/>
+    </div>
+  `).join('');
+  updateComboBulkSummaryPending(Object.keys(pendingComboFileMap).length ? `Đã gán ${Object.keys(pendingComboFileMap).length}/${pendingSyncShops.length} file cho shop.` : '');
+}
   
 function handleComboFile(index, file) {
   if (!file) return;
@@ -4743,12 +5003,30 @@ function handleComboFile(index, file) {
   updateComboBulkSummary(`Đã gán ${Object.keys(comboFileMap).length}/${syncShops.length} file cho shop.`);
 }
 
+function handleComboFilePending(index, file) {
+  if (!file) return;
+  pendingComboFileMap[index] = file;
+  const btn = document.getElementById(`comboUploadBtnPending_${index}`);
+  const shortName = file.name.length > 14 ? file.name.slice(0,12) + '…' : file.name;
+  btn.textContent = `✅ ${shortName}`;
+  btn.classList.add('has-file');
+  updateComboBulkSummaryPending(`Đã gán ${Object.keys(pendingComboFileMap).length}/${pendingSyncShops.length} file cho shop.`);
+}
+
 function handleComboBulkDrop(event) {
   event.preventDefault();
   event.stopPropagation();
   const zone = document.getElementById('comboBulkDropzone');
   if (zone) zone.classList.remove('dragover');
   handleComboBulkFiles(event.dataTransfer?.files || []);
+}
+
+function handleComboBulkDropPending(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  const zone = document.getElementById('comboBulkDropzonePending');
+  if (zone) zone.classList.remove('dragover');
+  handleComboBulkFilesPending(event.dataTransfer?.files || []);
 }
 
 function handleComboBulkFiles(fileList) {
@@ -4785,6 +5063,49 @@ function handleComboBulkFiles(fileList) {
     message += ` Bỏ qua ${skipped} file dư.`;
   }
   updateComboBulkSummary(message, skipped ? 'err' : '');
+}
+
+function updateComboBulkSummaryPending(message = '', type = '') {
+  const summary = document.getElementById('comboBulkSummaryPending');
+  if (!summary) return;
+  summary.textContent = message;
+  summary.style.color = type === 'err' ? '#dc2626' : '#a06070';
+}
+
+function handleComboBulkFilesPending(fileList) {
+  const files = sortComboFiles(Array.from(fileList || []).filter(file => /\.(xlsx|xls)$/i.test(file.name || '')));
+  if (!files.length) {
+    updateComboBulkSummaryPending('Không có file Excel hợp lệ để gán.', 'err');
+    return;
+  }
+  if (!pendingSyncShops.length) {
+    updateComboBulkSummaryPending('Chưa có danh sách shop để gán file.', 'err');
+    return;
+  }
+
+  pendingComboFileMap = {};
+  const assignedCount = Math.min(files.length, pendingSyncShops.length);
+
+  for (let i = 0; i < pendingSyncShops.length; i++) {
+    const uploadBtn = document.getElementById(`comboUploadBtnPending_${i}`);
+    const input = document.getElementById(`comboInputPending_${i}`);
+    if (uploadBtn) {
+      uploadBtn.textContent = '📎 Upload';
+      uploadBtn.classList.remove('has-file');
+    }
+    if (input) input.value = '';
+  }
+
+  for (let i = 0; i < assignedCount; i++) {
+    handleComboFilePending(i, files[i]);
+  }
+
+  const skipped = files.length > pendingSyncShops.length ? files.length - pendingSyncShops.length : 0;
+  let message = `Đã gán ${assignedCount}/${pendingSyncShops.length} file theo thứ tự shop.`;
+  if (skipped > 0) {
+    message += ` Bỏ qua ${skipped} file dư.`;
+  }
+  updateComboBulkSummaryPending(message, skipped ? 'err' : '');
 }
 
 async function doComboSync() {
@@ -4853,6 +5174,78 @@ async function doComboSync() {
   const bulkInput = document.getElementById('comboBulkInput');
   if (bulkInput) bulkInput.value = '';
   updateComboBulkSummary('');
+
+  currentPage = 1;
+  await loadOrders();
+  await loadSummary();
+}
+
+async function doComboSyncPending() {
+  const btn  = document.getElementById('btnComboSyncPending');
+  const msg  = document.getElementById('comboMsgPending');
+
+  const rows = [];
+  for (let i = 0; i < pendingSyncShops.length; i++) {
+    const shopId = pendingSyncShops[i]?.id;
+    const file   = pendingComboFileMap[i];
+    if (shopId && file) rows.push({ shopId, file });
+  }
+
+  if (!rows.length) {
+    msg.textContent = 'Vui lòng upload file cho ít nhất 1 shop.';
+    msg.className = 'sync-msg err';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = `⏳ Đang sync 0/${rows.length}...`;
+  msg.className = 'sync-msg';
+
+  const results = [];
+  let totalAdded = 0;
+  let totalRemoved = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const { shopId, file } = rows[i];
+    btn.textContent = `⏳ Đang sync ${i+1}/${rows.length}...`;
+
+    const formData = new FormData();
+    formData.append('shop_id', shopId);
+    formData.append('file', file);
+
+    try {
+      const res  = await fetch('/api/sync-upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.ok) {
+        totalAdded += Number(data.added_count || 0);
+        totalRemoved += Number(data.removed_count || 0);
+        results.push(`✅ ${data.shop_name}: ${data.synced} đơn · +${Number(data.added_count || 0)} mới · -${Number(data.removed_count || 0)} đã bàn giao/huỷ`);
+      } else {
+        results.push(`❌ Shop ${shopId}: ${data.error}`);
+      }
+    } catch (e) {
+      results.push(`❌ Shop ${shopId}: lỗi kết nối`);
+    }
+  }
+
+  msg.innerHTML = results.join('<br>');
+  msg.className = 'sync-msg ok';
+  lastSyncDelta = { added: totalAdded, removed: totalRemoved };
+  msg.innerHTML += `<br><br><b>Tổng lượt đồng bộ này:</b> Đơn đặt hàng mới: +${totalAdded} · Đơn đã bàn giao ĐVVC/huỷ: -${totalRemoved}`;
+  btn.disabled = false;
+
+  pendingComboFileMap = {};
+  for (let i = 0; i < pendingSyncShops.length; i++) {
+    const uploadBtn = document.getElementById(`comboUploadBtnPending_${i}`);
+    if (uploadBtn) {
+      uploadBtn.textContent = '📎 Upload';
+      uploadBtn.classList.remove('has-file');
+    }
+    const input = document.getElementById(`comboInputPending_${i}`);
+    if (input) input.value = '';
+  }
+  const bulkInput = document.getElementById('comboBulkInputPending');
+  if (bulkInput) bulkInput.value = '';
+  updateComboBulkSummaryPending('');
 
   currentPage = 1;
   await loadOrders();
@@ -5287,6 +5680,7 @@ function copyTransferCurlResult() {
   });
 }
 loadSyncShops();
+loadSyncShopsPending();
 if (checkIdGate()) { init(); }
 </script>
 </body>
