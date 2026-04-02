@@ -548,6 +548,33 @@ body{
   color:#a06070;
   line-height:1.6;
 }
+.sync-stage-switch{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.sync-stage-btn{
+  padding:7px 14px;
+  border-radius:999px;
+  border:1px solid rgba(186,214,253,.45);
+  background:rgba(255,255,255,.45);
+  color:#7a3040;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  transition:all .18s;
+}
+.sync-stage-btn:hover{
+  background:rgba(255,255,255,.72);
+  color:#570301;
+}
+.sync-stage-btn.active{
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff7ed;
+  border-color:transparent;
+  box-shadow:0 6px 16px rgba(249,115,22,.24);
+}
 table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.3);backdrop-filter:blur(20px)}
 thead th{
   padding:11px 14px;text-align:left;font-size:11px;font-weight:600;
@@ -803,6 +830,15 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
   padding:0;
 }
 .info-modal-bg.show{display:flex}
+.download-panel #syncPanelPending{
+  width:100%;
+  justify-content:flex-start;
+  align-items:flex-start;
+}
+.download-panel #panelSyncOrdersPending{
+  width:100%;
+  max-width:100%;
+}
 .info-modal{
   position:relative;
   width:100%;max-width:100%;
@@ -2147,6 +2183,10 @@ select.sync-input{font-family:inherit;cursor:pointer}
 ">
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
     <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
+    <div class="sync-stage-switch">
+      <button class="sync-stage-btn active" id="syncStageBtnWaiting" type="button" onclick="switchSyncStage('waiting')">CHỜ LẤY HÀNG</button>
+      <button class="sync-stage-btn" id="syncStageBtnPending" type="button" onclick="switchSyncStage('pending')">CHỜ XÁC NHẬN</button>
+    </div>
     <select id="sortSelect" onchange="changeSortOrder()">
       <option value="default">📁 Mặc định</option>
       <option value="total_desc">💰 Giá trị cao → thấp</option>
@@ -2564,6 +2604,7 @@ let currentPage = 1;
 const limit = 200;
 let hanoiVisible = false;
 let currentSort = 'default';
+let currentSyncStage = 'waiting';
 let activeExternalOrderCode = '';
 let activeExternalScope = 'phuong';
 let lastSyncDelta = null;
@@ -3175,7 +3216,7 @@ async function init() {
 
 async function loadSummary() {
   try {
-    const data = await fetch('/api/summary').then(r => r.json());
+    const data = await fetch(`/api/summary?sync_stage=${encodeURIComponent(currentSyncStage)}`).then(r => r.json());
     document.getElementById('totalOrders').textContent = data.total_orders.toLocaleString('vi');
     document.getElementById('totalShops').textContent  = data.total_shops;
     document.getElementById('tabAll').textContent      = data.total_orders.toLocaleString('vi');
@@ -3214,6 +3255,7 @@ async function loadOrders() {
     let url = `api/orders?page=${currentPage}&limit=${limit}`;
 if (currentShop) url += `&shop_id=${currentShop}`;
 if (currentSort !== 'default') url += `&sort=${currentSort}`;
+if (currentSyncStage) url += `&sync_stage=${encodeURIComponent(currentSyncStage)}`;
 
     const response = await fetch(url, {
       headers: {
@@ -3798,12 +3840,23 @@ function selectShop(id) {
   currentShop = id; currentPage = 1;
   document.querySelectorAll('.tab').forEach(t =>
     t.classList.toggle('active', t.dataset.id === id));
-  loadOrders();
+  loadSummary();
   if (currentOrderTab === 'delivering') {
   loadDeliveringOrders();
 } else {
   loadOrders();
 }
+}
+
+function switchSyncStage(stage) {
+  currentSyncStage = stage === 'pending' ? 'pending' : 'waiting';
+  const btnWaiting = document.getElementById('syncStageBtnWaiting');
+  const btnPending = document.getElementById('syncStageBtnPending');
+  if (btnWaiting) btnWaiting.classList.toggle('active', currentSyncStage === 'waiting');
+  if (btnPending) btnPending.classList.toggle('active', currentSyncStage === 'pending');
+  currentPage = 1;
+  loadSummary();
+  loadOrders();
 }
 function showBlockedNotice(shopId) {
   const tab = document.querySelector(`.tab[data-id="${shopId}"]`);
