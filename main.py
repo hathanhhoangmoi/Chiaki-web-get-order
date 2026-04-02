@@ -207,24 +207,12 @@ def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str
     if not stage:
         return True
 
-    combined_text = " ".join(part for part in [
-        normalize_sync_text(status),
-        normalize_sync_text(raw_text),
-    ] if part)
-    if not combined_text:
+    normalized_status = normalize_sync_text(status)
+    if not normalized_status:
         return False
 
     if stage == "pending":
-        keywords = (
-            "cho xac nhan",
-            "request_in",
-            "pending",
-            "xac nhan",
-            "cho duyet",
-            "da tiep nhan",
-            "confirm",
-        )
-        return any(keyword in combined_text for keyword in keywords)
+        return "cho xac nhan" in normalized_status
 
     if stage == "waiting":
         keywords = (
@@ -238,7 +226,7 @@ def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str
             "lay hang",
             "pickup",
         )
-        return any(keyword in combined_text for keyword in keywords)
+        return any(keyword in normalized_status for keyword in keywords)
 
     return True
 
@@ -267,9 +255,7 @@ def apply_sync_stage_filter(query, sync_stage: str | None):
     if stage == "pending":
         return query.filter(or_(
             status_col.like("%chờ xác nhận%"),
-            status_col.like("%cho xac nhan%"),
-            status_col.like("%request_in%"),
-            status_col.like("%pending%")
+            status_col.like("%cho xac nhan%")
         ))
 
     if stage == "waiting":
