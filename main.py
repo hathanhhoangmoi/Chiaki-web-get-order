@@ -199,7 +199,8 @@ def normalize_sync_text(value: str | None) -> str:
     if not text:
         return ""
     normalized = unicodedata.normalize("NFKD", text)
-    return "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    normalized = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    return re.sub(r"\s+", " ", normalized).strip()
 
 
 def normalize_view_sync_stage(sync_stage: str | None) -> str:
@@ -221,10 +222,10 @@ def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str
         return False
 
     if stage == "confirm":
-        return "cho x.nhan" in normalized_status
+        return normalized_status == "cho x.nhan"
 
     if stage == "pickup":
-        return "da xac nhan(y.cau x.hang)" in normalized_status
+        return normalized_status == "da xac nhan(y.cau x.hang)"
 
     return True
 
@@ -252,14 +253,14 @@ def apply_sync_stage_filter(query, sync_stage: str | None):
 
     if stage == "confirm":
         return query.filter(or_(
-            status_col.like("%chờ x.nhận%"),
-            status_col.like("%cho x.nhan%")
+            status_col == "chờ x.nhận",
+            status_col == "cho x.nhan"
         ))
 
     if stage == "pickup":
         return query.filter(or_(
-            status_col.like("%đã xác nhận(y.cầu x.hàng)%"),
-            status_col.like("%da xac nhan(y.cau x.hang)%")
+            status_col == "đã xác nhận(y.cầu x.hàng)",
+            status_col == "da xac nhan(y.cau x.hang)"
         ))
 
     return query
@@ -440,8 +441,6 @@ def get_summary(sync_stage: str = Query("pickup"), db: Session = Depends(get_db)
     shop_entries = []
     for s in shops:
         order_count = len(order_count_by_shop.get(s.shop_id, set()))
-        if order_count <= 0:
-            continue
         shop_entries.append({
             "shop_id": s.shop_id,
             "shop_name": s.shop_name,
