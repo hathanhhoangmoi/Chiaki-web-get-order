@@ -2184,8 +2184,8 @@ select.sync-input{font-family:inherit;cursor:pointer}
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
     <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
     <div class="sync-stage-switch">
-      <button class="sync-stage-btn active" id="syncStageBtnWaiting" type="button" onclick="switchSyncStage('pickup')">CHỜ LẤY HÀNG</button>
-      <button class="sync-stage-btn" id="syncStageBtnPending" type="button" onclick="switchSyncStage('confirm')">CHỜ XÁC NHẬN</button>
+      <button class="sync-stage-btn active" id="syncStageBtnWaiting" type="button" onclick="switchSyncStage('da_xac_nhan')">CHỜ LẤY HÀNG</button>
+      <button class="sync-stage-btn" id="syncStageBtnPending" type="button" onclick="switchSyncStage('cho_xnhan')">CHỜ XÁC NHẬN</button>
     </div>
     <select id="sortSelect" onchange="changeSortOrder()">
       <option value="default">📁 Mặc định</option>
@@ -2604,7 +2604,7 @@ let currentPage = 1;
 const limit = 200;
 let hanoiVisible = false;
 let currentSort = 'default';
-let currentSyncStage = 'pickup';
+let currentSyncStage = 'da_xac_nhan';
 let activeExternalOrderCode = '';
 let activeExternalScope = 'phuong';
 let lastSyncDelta = null;
@@ -3849,11 +3849,11 @@ function selectShop(id) {
 }
 
 function switchSyncStage(stage) {
-  currentSyncStage = stage === 'confirm' ? 'confirm' : 'pickup';
+  currentSyncStage = stage === 'cho_xnhan' ? 'cho_xnhan' : 'da_xac_nhan';
   const btnWaiting = document.getElementById('syncStageBtnWaiting');
   const btnPending = document.getElementById('syncStageBtnPending');
-  if (btnWaiting) btnWaiting.classList.toggle('active', currentSyncStage === 'pickup');
-  if (btnPending) btnPending.classList.toggle('active', currentSyncStage === 'confirm');
+  if (btnWaiting) btnWaiting.classList.toggle('active', currentSyncStage === 'da_xac_nhan');
+  if (btnPending) btnPending.classList.toggle('active', currentSyncStage === 'cho_xnhan');
   currentPage = 1;
   loadSummary();
   loadOrders();
