@@ -1,5 +1,6 @@
 import json as _json
 import re
+import unicodedata
 from datetime import datetime, timedelta
 from urllib.parse import quote
 import httpx
@@ -34,7 +35,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HATHANHHOANG", "PHONE-KEY-PHUONG2000"}
+UNLIMITED_KEYS = {"HOANG5611", "PHONE-KEY-PHUONG2000"}
 
 app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -193,6 +194,53 @@ def get_user_capabilities(user_id: str) -> dict:
     }
 
 
+def normalize_sync_text(value: str | None) -> str:
+    text = str(value or "").strip().lower()
+    if not text:
+        return ""
+    normalized = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch))
+
+
+def matches_sync_stage(status: str | None, sync_stage: str | None) -> bool:
+    stage = str(sync_stage or "").strip().lower()
+    if not stage:
+        return True
+
+    normalized_status = normalize_sync_text(status)
+    if not normalized_status:
+        return False
+
+    if stage == "pending":
+        keywords = (
+            "cho xac nhan",
+            "request_in",
+            "pending",
+        )
+        return any(keyword in normalized_status for keyword in keywords)
+
+    if stage == "waiting":
+        keywords = (
+            "cho lay hang",
+            "cho lay",
+            "da nhan don hang",
+            "request_out",
+            "out_products_in_progress",
+            "receive_wating",
+            "mvc",
+        )
+        return any(keyword in normalized_status for keyword in keywords)
+
+    return True
+
+
+def filter_orders_by_sync_stage(rows: list, sync_stage: str | None) -> list:
+    stage = str(sync_stage or "").strip().lower()
+    if not stage:
+        return rows
+    return [row for row in rows if matches_sync_stage(getattr(row, "status", ""), stage)]
+
+
 def apply_sync_stage_filter(query, sync_stage: str | None):
     stage = str(sync_stage or "").strip().lower()
     status_col = func.lower(func.coalesce(Order.status, ""))
@@ -223,6 +271,12 @@ def apply_sync_stage_filter(query, sync_stage: str | None):
 
 
 def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str:
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status == "pending":
+        normalized_status = "request_in"
+    elif normalized_status == "waiting":
+        normalized_status = "receive_wating"
+
     today = datetime.now()
     since = today - timedelta(days=14)
 
@@ -232,7 +286,7 @@ def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str
     range_date = f"{fmt(since)}+-+{fmt(today)}"
     return (
         f"https://api.chiaki.vn/api/{shop_id}/export-excel-order"
-        f"?source=seller&page_index=1&page_size=500&status={status}"
+        f"?source=seller&page_index=1&page_size=500&status={normalized_status}"
         f"&range_date={range_date}"
         f"&date_type=created_at&order=create-desc"
         f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
@@ -380,16 +434,19 @@ async def root():
 @app.get("/api/summary")
 def get_summary(sync_stage: str = Query("waiting"), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
-    total = apply_sync_stage_filter(
-        db.query(func.count(func.distinct(Order.order_code))),
-        sync_stage
-    ).scalar() or 0
+    filtered_orders = filter_orders_by_sync_stage(db.query(Order).all(), sync_stage)
+    total = len({str(getattr(order, "order_code", "") or "").strip() for order in filtered_orders if getattr(order, "order_code", None)})
+    order_count_by_shop: dict[str, set[str]] = {}
+    for order in filtered_orders:
+        shop_id = str(getattr(order, "shop_id", "") or "").strip()
+        order_code = str(getattr(order, "order_code", "") or "").strip()
+        if not shop_id or not order_code:
+            continue
+        order_count_by_shop.setdefault(shop_id, set()).add(order_code)
+
     shop_entries = []
     for s in shops:
-        order_count = apply_sync_stage_filter(
-            db.query(func.count(func.distinct(Order.order_code))).filter(Order.shop_id == s.shop_id),
-            sync_stage
-        ).scalar() or 0
+        order_count = len(order_count_by_shop.get(s.shop_id, set()))
         if order_count <= 0:
             continue
         shop_entries.append({
@@ -426,12 +483,11 @@ def get_orders(
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
-    q = apply_sync_stage_filter(q, sync_stage)
     if not is_full_access_user(user_id):
         q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
-    orders = q.all()
+    orders = filter_orders_by_sync_stage(q.all(), sync_stage)
     aggregated_orders = sort_aggregated_orders(aggregate_orders(orders), sort)
     total = len(aggregated_orders)
     page_rows = aggregated_orders[(page - 1) * limit: page * limit]
@@ -1165,6 +1221,7 @@ async def sync_now(body: dict, db: Session = Depends(get_db)):
 @app.post("/api/sync-upload")
 async def sync_upload(
     shop_id: str = Form(...),
+    sync_stage: str = Form("waiting"),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -1175,10 +1232,12 @@ async def sync_upload(
 
         shop_url, shop_name = shops[shop_id]
         content = await file.read()
+        existing_shop_orders = db.query(Order).filter(Order.shop_id == shop_id).all()
+        existing_stage_orders = filter_orders_by_sync_stage(existing_shop_orders, sync_stage)
         old_codes = {
-            str(code).strip()
-            for (code,) in db.query(Order.order_code).filter(Order.shop_id == shop_id).all()
-            if code
+            str(getattr(order, "order_code", "")).strip()
+            for order in existing_stage_orders
+            if getattr(order, "order_code", None)
         }
 
         # Kiểm tra có phải Excel không (magic bytes PK = xlsx)
@@ -1189,11 +1248,18 @@ async def sync_upload(
         if orders is None:
             return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel. Kiểm tra lại cột header."}, status_code=422)
 
-        deleted = db.query(Order).filter(Order.shop_id == shop_id).delete()
+        deleted = 0
+        for existing_order in existing_stage_orders:
+            db.delete(existing_order)
+            deleted += 1
         for o in orders:
             db.add(Order(**o))
         db.commit()
-        new_codes = {str(item.get("order_code", "")).strip() for item in orders if item.get("order_code")}
+        new_codes = {
+            str(item.get("order_code", "")).strip()
+            for item in orders
+            if item.get("order_code") and matches_sync_stage(item.get("status"), sync_stage)
+        }
 
         meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
         if meta:
