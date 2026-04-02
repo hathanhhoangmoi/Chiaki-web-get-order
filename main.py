@@ -193,6 +193,35 @@ def get_user_capabilities(user_id: str) -> dict:
     }
 
 
+def apply_sync_stage_filter(query, sync_stage: str | None):
+    stage = str(sync_stage or "").strip().lower()
+    status_col = func.lower(func.coalesce(Order.status, ""))
+
+    if stage == "pending":
+        return query.filter(or_(
+            status_col.like("%chờ xác nhận%"),
+            status_col.like("%cho xac nhan%"),
+            status_col.like("%request_in%"),
+            status_col.like("%pending%")
+        ))
+
+    if stage == "waiting":
+        return query.filter(or_(
+            status_col.like("%chờ lấy hàng%"),
+            status_col.like("%cho lay hang%"),
+            status_col.like("%chờ lấy%"),
+            status_col.like("%cho lay%"),
+            status_col.like("%đã nhận đơn hàng%"),
+            status_col.like("%da nhan don hang%"),
+            status_col.like("%request_out%"),
+            status_col.like("%out_products_in_progress%"),
+            status_col.like("%receive_wating%"),
+            status_col.like("%mvc%")
+        ))
+
+    return query
+
+
 def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str:
     today = datetime.now()
     since = today - timedelta(days=14)
@@ -349,21 +378,30 @@ async def root():
         return f.read()
 
 @app.get("/api/summary")
-def get_summary(db: Session = Depends(get_db)):
+def get_summary(sync_stage: str = Query("waiting"), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
-    total = db.query(func.count(func.distinct(Order.order_code))).scalar() or 0
+    total = apply_sync_stage_filter(
+        db.query(func.count(func.distinct(Order.order_code))),
+        sync_stage
+    ).scalar() or 0
+    shop_entries = []
+    for s in shops:
+        order_count = apply_sync_stage_filter(
+            db.query(func.count(func.distinct(Order.order_code))).filter(Order.shop_id == s.shop_id),
+            sync_stage
+        ).scalar() or 0
+        if order_count <= 0:
+            continue
+        shop_entries.append({
+            "shop_id": s.shop_id,
+            "shop_name": s.shop_name,
+            "order_count": order_count,
+            "last_sync": s.last_sync.isoformat() if s.last_sync else None,
+        })
     return {
         "total_orders": total,
-        "total_shops": len(shops),
-        "shops": [
-            {
-                "shop_id": s.shop_id,
-                "shop_name": s.shop_name,
-                "order_count": db.query(func.count(func.distinct(Order.order_code))).filter(Order.shop_id == s.shop_id).scalar() or 0,
-                "last_sync": s.last_sync.isoformat() if s.last_sync else None,
-            }
-            for s in shops
-        ]
+        "total_shops": len(shop_entries),
+        "shops": shop_entries
     }
 
 @app.get("/api/orders")
@@ -373,6 +411,7 @@ def get_orders(
     page: int = Query(1, ge=1),
     limit: int = Query(200, le=200),
     sort: str = Query("default"),
+    sync_stage: str = Query("waiting"),
     db: Session = Depends(get_db)
 ):
     user_id = request.headers.get('X-User-ID', '')
@@ -387,6 +426,7 @@ def get_orders(
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
+    q = apply_sync_stage_filter(q, sync_stage)
     if not is_full_access_user(user_id):
         q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
