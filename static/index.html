@@ -4643,6 +4643,7 @@ async function doSyncUpload() {
 
   const formData = new FormData();
   formData.append('shop_id', shopId);
+  formData.append('sync_stage', 'waiting');
   formData.append('file', syncFile);
 
   try {
@@ -5191,6 +5192,7 @@ async function doComboSync() {
 
     const formData = new FormData();
     formData.append('shop_id', shopId);
+    formData.append('sync_stage', 'waiting');
     formData.append('file', file);
 
     try {
@@ -5263,6 +5265,7 @@ async function doComboSyncPending() {
 
     const formData = new FormData();
     formData.append('shop_id', shopId);
+    formData.append('sync_stage', 'pending');
     formData.append('file', file);
 
     try {
