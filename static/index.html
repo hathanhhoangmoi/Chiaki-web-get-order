@@ -330,6 +330,12 @@ body{
 .external-track-main{
   display:flex;flex-direction:column;min-height:0;background:#fff;
 }
+.external-track-frame-wrap{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  background:#fff;
+}
 .external-track-head{
   display:flex;align-items:center;justify-content:space-between;
   gap:10px;padding:18px 20px 14px;border-bottom:1px solid rgba(186,214,253,.22);
@@ -341,7 +347,12 @@ body{
   background:rgba(186,214,253,.2);color:#570301;cursor:pointer;font-size:18px;
 }
 .external-track-iframe{
-  flex:1;width:100%;border:none;background:#fff;
+  width:125%;
+  height:125%;
+  border:none;
+  background:#fff;
+  transform:scale(.8);
+  transform-origin:top left;
 }
 .external-track-row{
   display:flex;justify-content:space-between;gap:10px;
@@ -1845,7 +1856,9 @@ select.sync-input{font-family:inherit;cursor:pointer}
         </div>
         <button class="external-track-close" type="button" onclick="closeExternalTrackModal()">✕</button>
       </div>
-      <iframe class="external-track-iframe" id="externalTrackIframe" src="about:blank" loading="lazy"></iframe>
+      <div class="external-track-frame-wrap">
+        <iframe class="external-track-iframe" id="externalTrackIframe" src="about:blank" loading="lazy"></iframe>
+      </div>
     </div>
   </div>
 </div>
