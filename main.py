@@ -35,7 +35,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HOANG5611", "PHONE-KEY-PHUONG2000"}
+UNLIMITED_KEYS = {"HATHANHHOANG", "PHONE-KEY-PHUONG2000"}
 
 app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -202,13 +202,16 @@ def normalize_sync_text(value: str | None) -> str:
     return "".join(ch for ch in normalized if not unicodedata.combining(ch))
 
 
-def matches_sync_stage(status: str | None, sync_stage: str | None) -> bool:
+def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str | None = None) -> bool:
     stage = str(sync_stage or "").strip().lower()
     if not stage:
         return True
 
-    normalized_status = normalize_sync_text(status)
-    if not normalized_status:
+    combined_text = " ".join(part for part in [
+        normalize_sync_text(status),
+        normalize_sync_text(raw_text),
+    ] if part)
+    if not combined_text:
         return False
 
     if stage == "pending":
@@ -216,8 +219,12 @@ def matches_sync_stage(status: str | None, sync_stage: str | None) -> bool:
             "cho xac nhan",
             "request_in",
             "pending",
+            "xac nhan",
+            "cho duyet",
+            "da tiep nhan",
+            "confirm",
         )
-        return any(keyword in normalized_status for keyword in keywords)
+        return any(keyword in combined_text for keyword in keywords)
 
     if stage == "waiting":
         keywords = (
@@ -228,8 +235,10 @@ def matches_sync_stage(status: str | None, sync_stage: str | None) -> bool:
             "out_products_in_progress",
             "receive_wating",
             "mvc",
+            "lay hang",
+            "pickup",
         )
-        return any(keyword in normalized_status for keyword in keywords)
+        return any(keyword in combined_text for keyword in keywords)
 
     return True
 
@@ -238,7 +247,17 @@ def filter_orders_by_sync_stage(rows: list, sync_stage: str | None) -> list:
     stage = str(sync_stage or "").strip().lower()
     if not stage:
         return rows
-    return [row for row in rows if matches_sync_stage(getattr(row, "status", ""), stage)]
+    filtered_rows = []
+    for row in rows:
+        if isinstance(row, dict):
+            status = row.get("status", "")
+            raw_text = row.get("raw_data", "")
+        else:
+            status = getattr(row, "status", "")
+            raw_text = getattr(row, "raw_data", "")
+        if matches_sync_stage(status, stage, raw_text):
+            filtered_rows.append(row)
+    return filtered_rows
 
 
 def apply_sync_stage_filter(query, sync_stage: str | None):
@@ -1258,7 +1277,7 @@ async def sync_upload(
         new_codes = {
             str(item.get("order_code", "")).strip()
             for item in orders
-            if item.get("order_code") and matches_sync_stage(item.get("status"), sync_stage)
+            if item.get("order_code") and matches_sync_stage(item.get("status"), sync_stage, item.get("raw_data"))
         }
 
         meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
