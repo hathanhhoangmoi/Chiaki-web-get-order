@@ -291,9 +291,7 @@ def apply_sync_stage_filter(query, sync_stage: str | None):
 
 def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str:
     normalized_status = str(status or "").strip().lower()
-    if normalized_status == "pending":
-        normalized_status = "request_in"
-    elif normalized_status == "waiting":
+    if normalized_status == "waiting":
         normalized_status = "receive_wating"
 
     today = datetime.now()
