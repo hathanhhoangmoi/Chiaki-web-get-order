@@ -213,6 +213,14 @@ body{
   grid-template-columns:minmax(0,1.6fr) minmax(140px,.7fr) auto auto;
   gap:8px;align-items:center;
 }
+.external-payment-history-list{
+  display:flex;flex-direction:column;gap:8px;margin-top:10px;
+}
+.external-payment-history-row{
+  display:grid;
+  grid-template-columns:minmax(170px,.9fr) minmax(140px,.8fr) auto;
+  gap:8px;align-items:center;
+}
 .external-fee-check{
   display:inline-flex;align-items:center;gap:6px;
   font-size:11px;color:#7a3040;font-weight:700;white-space:nowrap;
@@ -249,6 +257,20 @@ body{
   font-size:12px;
   color:#8b6672;
   line-height:1.7;
+}
+.external-history-preview{
+  display:flex;flex-direction:column;gap:6px;
+}
+.external-history-line{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:12px;color:#8b6672;line-height:1.6;
+}
+.external-history-line strong{
+  color:#570301;
+  font-weight:800;
+}
+.external-history-empty{
+  font-size:12px;color:#8b6672;line-height:1.7;
 }
 .external-stat.clickable{cursor:pointer;transition:all .18s}
 .external-stat.clickable:hover{
@@ -418,6 +440,7 @@ body{
 }
 .external-fee-item:last-child{border-bottom:none}
 .external-fee-item-name{font-size:13px;font-weight:700;color:#570301;word-break:break-word}
+.external-fee-item-note{font-size:11px;color:#8b6672}
 .external-fee-item-amount{font-size:13px;font-weight:800;color:#570301}
 .external-fee-summary{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
@@ -1601,11 +1624,17 @@ select.sync-input{font-family:inherit;cursor:pointer}
         ></textarea>
         <div class="external-config-label" style="margin-top:12px">Config Danh Sách Phí</div>
         <div class="external-fee-list" id="externalFeeList"></div>
+        <div class="external-config-label" style="margin-top:14px">Config Lịch Sử Thanh Toán</div>
+        <div class="external-payment-history-list" id="externalPaymentHistoryList"></div>
         <div class="external-config-hint">
           Mỗi dòng là 1 đơn. Tổng phí = tổng các phí đã liệt kê - phí đã thu.
         </div>
+        <div class="external-config-hint">
+          Lịch sử thanh toán nhập thủ công theo từng giao dịch, không tự động cập nhật từ trạng thái đơn.
+        </div>
         <div class="external-config-btns">
           <button class="btn-external-secondary" type="button" onclick="addExternalFeeRow()">＋ Thêm dòng phí</button>
+          <button class="btn-external-secondary" type="button" onclick="addExternalPaymentHistoryRow()">＋ Thêm lịch sử thanh toán</button>
           <button class="btn btn-primary" type="button" onclick="saveExternalOrdersConfig()">💾 Lưu danh sách</button>
           <button class="btn-external-secondary" type="button" onclick="clearExternalOrdersConfig()">🗑️ Xóa toàn bộ</button>
         </div>
@@ -1659,7 +1688,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
           </div>
         </div>
         <div class="external-stats-row row-1">
-          <div class="external-stat history-only">
+          <div class="external-stat history-only clickable" onclick="openExternalPaymentHistoryModal()">
             <div class="external-stat-label">🗓️ LỊCH SỬ THANH TOÁN</div>
             <div class="external-stat-sub" id="externalPaymentHistoryContent">Chưa có ngày thanh toán</div>
           </div>
@@ -1704,6 +1733,35 @@ select.sync-input{font-family:inherit;cursor:pointer}
         </div>
       </div>
       <div id="externalFeeModalList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="external-fee-modal" id="externalPaymentHistoryModal" onclick="if(event.target===this) closeExternalPaymentHistoryModal()">
+  <div class="external-fee-dialog">
+    <div class="external-fee-head">
+      <div>
+        <div class="external-track-head-title">Lịch sử thanh toán</div>
+        <div class="external-track-head-sub">Toàn bộ giao dịch thanh toán được nhập thủ công trong phần config</div>
+      </div>
+      <button class="external-track-close" type="button" onclick="closeExternalPaymentHistoryModal()">✕</button>
+    </div>
+    <div class="external-fee-body">
+      <div class="external-fee-summary">
+        <div class="external-fee-summary-card">
+          <div class="external-fee-summary-label">Số giao dịch</div>
+          <div class="external-fee-summary-value" id="externalPaymentHistoryModalCount">0</div>
+        </div>
+        <div class="external-fee-summary-card">
+          <div class="external-fee-summary-label">Tổng thanh toán</div>
+          <div class="external-fee-summary-value" id="externalPaymentHistoryModalTotal">0₫</div>
+        </div>
+        <div class="external-fee-summary-card">
+          <div class="external-fee-summary-label">Gần nhất</div>
+          <div class="external-fee-summary-value" id="externalPaymentHistoryModalLatest">—</div>
+        </div>
+      </div>
+      <div id="externalPaymentHistoryModalList"></div>
     </div>
   </div>
 </div>
@@ -2640,10 +2698,10 @@ let lastSyncDelta = null;
 window.shopIdNameMap = {};
 window.userCapabilities = {};
 window.externalOrdersData = [];
-window.externalOrdersConfig = { fee_items: [] };
+window.externalOrdersConfig = { fee_items: [], payment_history: [] };
 window.externalOrdersState = {
-  phuong: { items: [], config: { fee_items: [] } },
-  hoang: { items: [], config: { fee_items: [] } }
+  phuong: { items: [], config: { fee_items: [], payment_history: [] } },
+  hoang: { items: [], config: { fee_items: [], payment_history: [] } }
 };
 
 function getExternalScopeLabel(scope = activeExternalScope) {
@@ -2689,14 +2747,28 @@ function canViewExternalScope(scope = activeExternalScope, id = localStorage.get
   return hasCapability('view_hoang_orders');
 }
 
+function normalizeExternalConfig(config) {
+  const source = config && typeof config === 'object' ? config : {};
+  return {
+    fee_items: Array.isArray(source.fee_items) ? source.fee_items : [],
+    payment_history: Array.isArray(source.payment_history) ? source.payment_history : [],
+    updated_at: source.updated_at || null
+  };
+}
+
 function getExternalScopeState(scope = activeExternalScope) {
-  return window.externalOrdersState?.[scope] || { items: [], config: { fee_items: [] } };
+  const fallback = { items: [], config: { fee_items: [], payment_history: [] } };
+  const state = window.externalOrdersState?.[scope] || fallback;
+  return {
+    items: Array.isArray(state.items) ? state.items : [],
+    config: normalizeExternalConfig(state.config)
+  };
 }
 
 function setExternalScopeState(scope, items, config) {
   window.externalOrdersState[scope] = {
     items: Array.isArray(items) ? items : [],
-    config: config || { fee_items: [] }
+    config: normalizeExternalConfig(config)
   };
   if (scope === activeExternalScope) {
     window.externalOrdersData = window.externalOrdersState[scope].items;
@@ -2745,6 +2817,15 @@ function getExternalFeeItemsFromInputs() {
   }).filter(item => item.content || item.amount);
 }
 
+function getExternalPaymentHistoryFromInputs() {
+  const rows = [...document.querySelectorAll('.external-payment-history-row')];
+  return rows.map(row => {
+    const date = row.querySelector('[data-payment-field="date"]')?.value.trim() || '';
+    const amount = parseExternalCodValue(row.querySelector('[data-payment-field="amount"]')?.value || 0);
+    return { date, amount };
+  }).filter(item => item.date || item.amount);
+}
+
 function renderExternalFeeRows() {
   const container = document.getElementById('externalFeeList');
   if (!container) return;
@@ -2781,6 +2862,37 @@ function renderExternalFeeRows() {
   `).join('');
 }
 
+function renderExternalPaymentHistoryRows() {
+  const container = document.getElementById('externalPaymentHistoryList');
+  if (!container) return;
+  const canEdit = canConfigExternalOrders();
+  const historyItems = Array.isArray(window.externalOrdersConfig?.payment_history) ? window.externalOrdersConfig.payment_history : [];
+  const items = historyItems.length ? historyItems : [{ date: '', amount: 0 }];
+  container.innerHTML = items.map((item, index) => `
+    <div class="external-payment-history-row">
+      <input
+        class="external-config-input"
+        data-payment-field="date"
+        type="date"
+        value="${escapeHtml(item.date || '')}"
+        ${canEdit ? '' : 'disabled'}
+      />
+      <input
+        class="external-config-input"
+        data-payment-field="amount"
+        type="text"
+        inputmode="numeric"
+        placeholder="Giá trị thanh toán..."
+        value="${Number(item.amount || 0)}"
+        ${canEdit ? '' : 'disabled'}
+      />
+      ${canEdit
+        ? `<button class="external-fee-remove" type="button" onclick="removeExternalPaymentHistoryRow(${index})">✕</button>`
+        : '<div></div>'}
+    </div>
+  `).join('');
+}
+
 function addExternalFeeRow() {
   if (!canConfigExternalOrders()) return;
   const feeItems = Array.isArray(window.externalOrdersConfig?.fee_items) ? [...window.externalOrdersConfig.fee_items] : [];
@@ -2789,12 +2901,47 @@ function addExternalFeeRow() {
   renderExternalFeeRows();
 }
 
+function addExternalPaymentHistoryRow() {
+  if (!canConfigExternalOrders()) return;
+  const paymentHistory = Array.isArray(window.externalOrdersConfig?.payment_history) ? [...window.externalOrdersConfig.payment_history] : [];
+  paymentHistory.push({ date: '', amount: 0 });
+  window.externalOrdersConfig = { ...window.externalOrdersConfig, payment_history: paymentHistory };
+  renderExternalPaymentHistoryRows();
+}
+
 function removeExternalFeeRow(index) {
   if (!canConfigExternalOrders()) return;
   const feeItems = Array.isArray(window.externalOrdersConfig?.fee_items) ? [...window.externalOrdersConfig.fee_items] : [];
   feeItems.splice(index, 1);
   window.externalOrdersConfig = { ...window.externalOrdersConfig, fee_items: feeItems };
   renderExternalFeeRows();
+}
+
+function removeExternalPaymentHistoryRow(index) {
+  if (!canConfigExternalOrders()) return;
+  const paymentHistory = Array.isArray(window.externalOrdersConfig?.payment_history) ? [...window.externalOrdersConfig.payment_history] : [];
+  paymentHistory.splice(index, 1);
+  window.externalOrdersConfig = { ...window.externalOrdersConfig, payment_history: paymentHistory };
+  renderExternalPaymentHistoryRows();
+}
+
+function formatExternalPaymentHistoryDate(value) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    const [year, month, day] = String(value).split('-');
+    return `${day}/${month}/${year}`;
+  }
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return String(value);
+  return dt.toLocaleDateString('vi-VN');
+}
+
+function sortExternalPaymentHistory(items) {
+  return [...items].sort((a, b) => {
+    const aTime = a.date ? new Date(a.date).getTime() : 0;
+    const bTime = b.date ? new Date(b.date).getTime() : 0;
+    return bTime - aTime;
+  });
 }
 
 function getExternalStatusMeta(status) {
@@ -2853,6 +3000,7 @@ function saveExternalOrdersConfig() {
   if (!canConfigExternalOrders()) return;
   const text = document.getElementById('externalOrdersInput')?.value || '';
   const feeItems = getExternalFeeItemsFromInputs();
+  const paymentHistory = getExternalPaymentHistoryFromInputs();
   const currentMap = Object.fromEntries((window.externalOrdersData || []).map(item => [item.code, item]));
   const items = parseExternalOrdersText(text).map(item => ({
     ...item,
@@ -2865,12 +3013,12 @@ function saveExternalOrdersConfig() {
       'Content-Type': 'application/json',
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
-    body: JSON.stringify({ scope: activeExternalScope, items, fee_items: feeItems })
+    body: JSON.stringify({ scope: activeExternalScope, items, fee_items: feeItems, payment_history: paymentHistory })
   })
     .then(r => r.json().then(data => ({ ok: r.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không lưu được cấu hình');
-      setExternalScopeState(activeExternalScope, data.items, data.config || { fee_items: [] });
+      setExternalScopeState(activeExternalScope, data.items, data.config || { fee_items: [], payment_history: [] });
       hydrateActiveExternalState();
       hydrateExternalOrdersInput();
       renderExternalOrdersDashboard();
@@ -2888,17 +3036,19 @@ function clearExternalOrdersConfig() {
       'Content-Type': 'application/json',
       'X-User-ID': localStorage.getItem('chiaki_id') || ''
     },
-    body: JSON.stringify({ scope: activeExternalScope, items: [], fee_items: [] })
+    body: JSON.stringify({ scope: activeExternalScope, items: [], fee_items: [], payment_history: [] })
   })
     .then(r => r.json().then(data => ({ ok: r.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không xóa được cấu hình');
-      setExternalScopeState(activeExternalScope, [], data.config || { fee_items: [] });
+      setExternalScopeState(activeExternalScope, [], data.config || { fee_items: [], payment_history: [] });
       hydrateActiveExternalState();
       const input = document.getElementById('externalOrdersInput');
       if (input) input.value = '';
       renderExternalFeeRows();
+      renderExternalPaymentHistoryRows();
       closeExternalTrackModal();
+      closeExternalPaymentHistoryModal();
       renderExternalOrdersDashboard();
       showToast(`Đã xóa toàn bộ đơn ngoại sàn của ${getExternalScopeLabel()}`);
     })
@@ -2911,6 +3061,7 @@ function hydrateExternalOrdersInput() {
   const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
   input.value = items.map(item => `${item.code}|${item.cod || 0}`).join('\n');
   renderExternalFeeRows();
+  renderExternalPaymentHistoryRows();
 }
 
 async function loadExternalOrders(scope = activeExternalScope) {
@@ -2928,7 +3079,7 @@ async function loadExternalOrders(scope = activeExternalScope) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Không tải được đơn ngoại sàn');
-    setExternalScopeState(scope, data.items, data.config || { fee_items: [] });
+    setExternalScopeState(scope, data.items, data.config || { fee_items: [], payment_history: [] });
     if (scope === activeExternalScope) {
       hydrateActiveExternalState();
       hydrateExternalOrdersInput();
@@ -2936,7 +3087,7 @@ async function loadExternalOrders(scope = activeExternalScope) {
     }
   } catch (e) {
     console.error('loadExternalOrders error:', e);
-    setExternalScopeState(scope, [], { fee_items: [] });
+    setExternalScopeState(scope, [], { fee_items: [], payment_history: [] });
     if (scope === activeExternalScope) {
       hydrateActiveExternalState();
       renderExternalOrdersDashboard();
@@ -2980,10 +3131,48 @@ function closeExternalFeeModal() {
   if (modal) modal.classList.remove('show');
 }
 
+function openExternalPaymentHistoryModal() {
+  const modal = document.getElementById('externalPaymentHistoryModal');
+  const list = document.getElementById('externalPaymentHistoryModalList');
+  const countEl = document.getElementById('externalPaymentHistoryModalCount');
+  const totalEl = document.getElementById('externalPaymentHistoryModalTotal');
+  const latestEl = document.getElementById('externalPaymentHistoryModalLatest');
+  const paymentHistory = sortExternalPaymentHistory(
+    Array.isArray(window.externalOrdersConfig?.payment_history) ? window.externalOrdersConfig.payment_history : []
+  );
+  const total = paymentHistory.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  if (countEl) countEl.textContent = paymentHistory.length.toLocaleString('vi');
+  if (totalEl) totalEl.textContent = formatExternalCurrency(total);
+  if (latestEl) latestEl.textContent = paymentHistory.length ? formatExternalPaymentHistoryDate(paymentHistory[0].date) : '—';
+  if (list) {
+    if (!paymentHistory.length) {
+      list.innerHTML = '<div class="external-empty">Chưa có lịch sử thanh toán nào được cấu hình.</div>';
+    } else {
+      list.innerHTML = paymentHistory.map(item => `
+        <div class="external-fee-item">
+          <div>
+            <div class="external-fee-item-name">${escapeHtml(formatExternalPaymentHistoryDate(item.date) || 'Chưa có ngày')}</div>
+            <div class="external-fee-item-note">Giao dịch thanh toán thủ công</div>
+          </div>
+          <div class="external-fee-item-amount">${formatExternalCurrency(item.amount || 0)}</div>
+          <span class="external-status-pill external-status-paid">Đã thanh toán</span>
+        </div>
+      `).join('');
+    }
+  }
+  if (modal) modal.classList.add('show');
+}
+
+function closeExternalPaymentHistoryModal() {
+  const modal = document.getElementById('externalPaymentHistoryModal');
+  if (modal) modal.classList.remove('show');
+}
+
 function renderExternalOrdersDashboard() {
   const items = Array.isArray(window.externalOrdersData) ? window.externalOrdersData : [];
-  const config = window.externalOrdersConfig || { fee_items: [] };
+  const config = normalizeExternalConfig(window.externalOrdersConfig);
   const feeItems = Array.isArray(config.fee_items) ? config.fee_items : [];
+  const paymentHistory = sortExternalPaymentHistory(Array.isArray(config.payment_history) ? config.payment_history : []);
   const grid = document.getElementById('externalOrdersGrid');
   const meta = document.getElementById('externalOrdersMeta');
   const permission = document.getElementById('externalOrdersPermission');
@@ -3045,22 +3234,6 @@ function renderExternalOrdersDashboard() {
   const totalFee = feeItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const collectedFee = feeItems.filter(item => item.collected).reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const outstandingFee = totalFee - collectedFee;
-  const paymentHistory = Array.from(new Set(
-    items
-      .filter(item => item.is_paid && item.updated_at)
-      .map(item => {
-        const value = new Date(item.updated_at);
-        if (Number.isNaN(value.getTime())) return null;
-        return value.toISOString().slice(0, 10);
-      })
-      .filter(Boolean)
-  ))
-    .sort((a, b) => b.localeCompare(a))
-    .map(value => {
-      const [year, month, day] = value.split('-');
-      return `${day}/${month}/${year}`;
-    });
-
   inTransitEl.textContent = inTransit.toLocaleString('vi');
   deliveredEl.textContent = delivered.toLocaleString('vi');
   returnedEl.textContent = returned.toLocaleString('vi');
@@ -3070,7 +3243,14 @@ function renderExternalOrdersDashboard() {
   feeContentEl.textContent = 'Click để xem chi tiết';
   payoutEl.textContent = formatExternalCurrency(deliveredRevenueUnpaid - outstandingFee);
   paidToPhuongEl.textContent = formatExternalCurrency(deliveredRevenuePaid - collectedFee);
-  paymentHistoryEl.textContent = paymentHistory.length ? paymentHistory.join(' • ') : 'Chưa có ngày thanh toán';
+  paymentHistoryEl.innerHTML = paymentHistory.length
+    ? `<div class="external-history-preview">${paymentHistory.slice(0, 3).map(item => `
+        <div class="external-history-line">
+          <span>${escapeHtml(formatExternalPaymentHistoryDate(item.date) || 'Chưa có ngày')}</span>
+          <strong>${escapeHtml(formatExternalCurrency(item.amount || 0))}</strong>
+        </div>
+      `).join('')}</div>`
+    : '<div class="external-history-empty">Chưa có lịch sử thanh toán</div>';
 
   meta.textContent = items.length
     ? `${items.length.toLocaleString('vi')} mã đơn đang được theo dõi cho ${getExternalScopeLabel()}.`
