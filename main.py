@@ -212,21 +212,10 @@ def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str
         return False
 
     if stage == "pending":
-        return "cho xac nhan" in normalized_status
+        return "cho x.nhan" in normalized_status
 
     if stage == "waiting":
-        keywords = (
-            "cho lay hang",
-            "cho lay",
-            "da nhan don hang",
-            "request_out",
-            "out_products_in_progress",
-            "receive_wating",
-            "mvc",
-            "lay hang",
-            "pickup",
-        )
-        return any(keyword in normalized_status for keyword in keywords)
+        return "da xac nhan(y.cau x.hang)" in normalized_status
 
     return True
 
@@ -254,22 +243,14 @@ def apply_sync_stage_filter(query, sync_stage: str | None):
 
     if stage == "pending":
         return query.filter(or_(
-            status_col.like("%chờ xác nhận%"),
-            status_col.like("%cho xac nhan%")
+            status_col.like("%chờ x.nhận%"),
+            status_col.like("%cho x.nhan%")
         ))
 
     if stage == "waiting":
         return query.filter(or_(
-            status_col.like("%chờ lấy hàng%"),
-            status_col.like("%cho lay hang%"),
-            status_col.like("%chờ lấy%"),
-            status_col.like("%cho lay%"),
-            status_col.like("%đã nhận đơn hàng%"),
-            status_col.like("%da nhan don hang%"),
-            status_col.like("%request_out%"),
-            status_col.like("%out_products_in_progress%"),
-            status_col.like("%receive_wating%"),
-            status_col.like("%mvc%")
+            status_col.like("%đã xác nhận(y.cầu x.hàng)%"),
+            status_col.like("%da xac nhan(y.cau x.hang)%")
         ))
 
     return query
