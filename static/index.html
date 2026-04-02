@@ -592,15 +592,21 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 .shop-chip{
   display:inline-flex;
   align-items:center;
-  justify-content:center;
-  padding:4px 10px;
+  gap:6px;
+  padding:5px 12px;
   border:none;
   border-radius:999px;
-  background:linear-gradient(135deg,#f59e0b,#f97316);
-  color:#fff7ed;
+  background:linear-gradient(135deg,#f6f4bf,#d8efcf);
+  color:#4b5563;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+.shop-chip::before{
+  content:"●";
+  color:#7abf73;
   font-size:10px;
-  font-weight:800;
-  letter-spacing:.08em;
+  line-height:1;
 }
 .empty{padding:48px;text-align:center;color:#c09090;background:rgba(255,255,255,.25)}
 .empty-icon{font-size:40px;margin-bottom:10px}
