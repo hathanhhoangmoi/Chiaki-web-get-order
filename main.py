@@ -426,7 +426,7 @@ async def root():
         return f.read()
 
 @app.get("/api/summary")
-def get_summary(sync_stage: str = Query("pickup"), db: Session = Depends(get_db)):
+def get_summary(sync_stage: str = Query(""), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
     filtered_orders = filter_orders_by_sync_stage(db.query(Order).all(), sync_stage)
     total = len({str(getattr(order, "order_code", "") or "").strip() for order in filtered_orders if getattr(order, "order_code", None)})
@@ -460,7 +460,7 @@ def get_orders(
     page: int = Query(1, ge=1),
     limit: int = Query(200, le=200),
     sort: str = Query("default"),
-    sync_stage: str = Query("pickup"),
+    sync_stage: str = Query(""),
     db: Session = Depends(get_db)
 ):
     user_id = request.headers.get('X-User-ID', '')
