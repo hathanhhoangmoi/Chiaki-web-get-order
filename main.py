@@ -893,7 +893,7 @@ def get_shops_list():
     return sorted(result, key=lambda x: x["shop_name"])
 
 @app.get("/api/sync-download-links")
-def get_sync_download_links(request: Request):
+def get_sync_download_links(request: Request, status: str = Query("receive_wating")):
     user_id = request.headers.get("X-User-ID", "").strip()
     if not get_user_capabilities(user_id).get("admin_tools"):
         return JSONResponse({"error": "Không có quyền truy cập."}, status_code=403)
@@ -905,7 +905,7 @@ def get_sync_download_links(request: Request):
                 "shop_id": shop_id,
                 "shop_name": shop_name,
                 "shop_url": shop_url,
-                "download_url": build_shop_download_url(shop_id),
+                "download_url": build_shop_download_url(shop_id, status=status),
             }
             for shop_id, (shop_url, shop_name) in shops
         ]
