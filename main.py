@@ -66,14 +66,6 @@ def should_hide_order(order, user_id: str) -> bool:
         total = 0
     return shop_id in SENSITIVE_SHOPS or total >= SENSITIVE_TOTAL_THRESHOLD
 
-def to_vietnam_time_iso(dt):
-    if not dt:
-        return None
-    try:
-        return (dt + timedelta(hours=7)).isoformat()
-    except Exception:
-        return None
-
 def serialize_order(o):
     return {
         "order_code":    o.order_code,
@@ -87,7 +79,7 @@ def serialize_order(o):
         "quantity":      o.quantity,
         "total":         o.total,
         "status":        o.status,
-        "fetched_at":    to_vietnam_time_iso(o.fetched_at),
+        "fetched_at":    o.fetched_at.isoformat() if o.fetched_at else None,
         "restricted":    False,
     }
 
@@ -398,7 +390,7 @@ def serialize_external_order(o: ExternalOrderTracking):
         "cod": int(o.cod_amount or 0),
         "status": o.status or "unknown",
         "is_paid": bool(o.is_paid),
-        "updated_at": to_vietnam_time_iso(o.updated_at),
+        "updated_at": o.updated_at.isoformat() if o.updated_at else None,
     }
 
 
@@ -434,7 +426,7 @@ def serialize_external_order_config(config: ExternalOrderConfig):
     return {
         "fee_items": fee_items,
         "payment_history": payment_history,
-        "updated_at": to_vietnam_time_iso(config.updated_at),
+        "updated_at": config.updated_at.isoformat() if config.updated_at else None,
     }
 
 # ── API Endpoints ──────────────────────────────────────────
@@ -463,7 +455,7 @@ def get_summary(sync_stage: str = Query(""), db: Session = Depends(get_db)):
             "shop_id": s.shop_id,
             "shop_name": s.shop_name,
             "order_count": order_count,
-            "last_sync": to_vietnam_time_iso(s.last_sync),
+            "last_sync": s.last_sync.isoformat() if s.last_sync else None,
         })
     return {
         "total_orders": total,
@@ -1264,10 +1256,9 @@ async def sync_upload(
         shop_url, shop_name = shops[shop_id]
         content = await file.read()
         existing_shop_orders = db.query(Order).filter(Order.shop_id == shop_id).all()
-        existing_stage_orders = filter_orders_by_sync_stage(existing_shop_orders, sync_stage)
         old_codes = {
             str(getattr(order, "order_code", "")).strip()
-            for order in existing_stage_orders
+            for order in existing_shop_orders
             if getattr(order, "order_code", None)
         }
 
@@ -1280,7 +1271,7 @@ async def sync_upload(
             return JSONResponse({"error": "Không đọc được dữ liệu từ file Excel. Kiểm tra lại cột header."}, status_code=422)
 
         deleted = 0
-        for existing_order in existing_stage_orders:
+        for existing_order in existing_shop_orders:
             db.delete(existing_order)
             deleted += 1
         for o in orders:
@@ -1289,7 +1280,7 @@ async def sync_upload(
         new_codes = {
             str(item.get("order_code", "")).strip()
             for item in orders
-            if item.get("order_code") and matches_sync_stage(item.get("status"), sync_stage, item.get("raw_data"))
+            if item.get("order_code")
         }
 
         meta = db.query(ShopMeta).filter(ShopMeta.shop_id == shop_id).first()
