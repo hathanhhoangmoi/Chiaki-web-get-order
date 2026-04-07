@@ -1726,6 +1726,380 @@ select.sync-input{font-family:inherit;cursor:pointer}
   color:#3f4d46;
   box-shadow:0 4px 12px rgba(122,191,115,.2);
 }
+.table-actions-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.table-actions-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.btn-taken-orders{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#fb923c,#f43f5e);
+  color:#fff7ed;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(244,114,67,.22);
+}
+.btn-taken-orders-count{
+  min-width:26px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  font-size:11px;
+  text-align:center;
+}
+.desktop-order-actions,
+.compact-order-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.btn-take-order{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 14px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#fb7185,#f97316);
+  color:#fff7ed;
+  font-family:inherit;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 8px 18px rgba(249,115,22,.18);
+  transition:all .15s;
+}
+.btn-take-order:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 20px rgba(249,115,22,.24);
+}
+.btn-take-order:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+.compact-order-btn.secondary{
+  background:linear-gradient(135deg,#fca5a5,#fb7185);
+  box-shadow:0 6px 14px rgba(244,114,182,.18);
+}
+.taken-orders-readonly{
+  display:none;
+  margin-bottom:14px;
+  padding:16px 18px;
+  border-radius:28px;
+  background:rgba(255,255,255,.52);
+  border:1px solid rgba(255,255,255,.78);
+  box-shadow:0 10px 28px rgba(87,3,1,.08);
+  backdrop-filter:blur(22px);
+}
+.taken-orders-readonly-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.taken-orders-readonly-title{
+  font-size:15px;
+  font-weight:800;
+  color:#570301;
+}
+.taken-orders-readonly-sub{
+  margin-top:4px;
+  font-size:12px;
+  color:#a06070;
+  line-height:1.6;
+}
+.taken-orders-readonly-count{
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(245,186,213,.22);
+  color:#9a355c;
+  font-size:12px;
+  font-weight:800;
+}
+.taken-orders-readonly-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+}
+.taken-orders-readonly-item{
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(186,214,253,.24);
+}
+.taken-orders-readonly-code{
+  font-family:monospace;
+  font-size:13px;
+  font-weight:800;
+  color:#4b5563;
+}
+.taken-orders-readonly-status{
+  margin-top:8px;
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(186,214,253,.2);
+  color:#5b4b8a;
+  font-size:11px;
+  font-weight:800;
+}
+.taken-orders-modal-bg{
+  position:fixed;
+  inset:0;
+  z-index:7400;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(87,3,1,.22);
+  backdrop-filter:blur(10px);
+}
+.taken-orders-modal-bg.show{display:flex}
+.taken-orders-modal{
+  width:min(1100px,100%);
+  max-height:calc(100vh - 36px);
+  overflow:auto;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(255,255,255,.88);
+  border-radius:30px;
+  box-shadow:0 26px 60px rgba(87,3,1,.18);
+  padding:24px;
+}
+.taken-orders-modal-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.taken-orders-modal-title{
+  font-size:20px;
+  font-weight:800;
+  color:#570301;
+}
+.taken-orders-modal-sub{
+  margin-top:6px;
+  font-size:13px;
+  color:#a06070;
+  line-height:1.7;
+}
+.taken-orders-close{
+  width:40px;
+  height:40px;
+  border:none;
+  border-radius:999px;
+  background:rgba(245,186,213,.25);
+  color:#570301;
+  font:inherit;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+}
+.taken-orders-preview{
+  padding:18px;
+  border-radius:24px;
+  background:linear-gradient(135deg,rgba(255,245,233,.92),rgba(255,252,246,.88));
+  border:1px solid rgba(251,146,60,.18);
+  box-shadow:0 12px 30px rgba(249,115,22,.08);
+}
+.taken-orders-preview-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.taken-orders-preview-title{
+  font-size:16px;
+  font-weight:800;
+  color:#7c2d12;
+}
+.taken-orders-preview-meta{
+  margin-top:4px;
+  font-size:12px;
+  color:#b45309;
+}
+.taken-orders-status-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.74);
+  color:#9a3412;
+  font-size:12px;
+  font-weight:800;
+}
+.taken-orders-preview-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.taken-orders-detail-row{
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.74);
+  border:1px solid rgba(251,146,60,.12);
+}
+.taken-orders-detail-label{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#c2410c;
+}
+.taken-orders-detail-value{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.65;
+  color:#4a2418;
+  word-break:break-word;
+  white-space:pre-wrap;
+}
+.taken-orders-modal-note{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(186,214,253,.16);
+  color:#5b4b8a;
+  font-size:12px;
+  line-height:1.6;
+}
+.taken-orders-list{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.taken-order-card{
+  padding:16px 18px;
+  border-radius:22px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(186,214,253,.26);
+  box-shadow:0 6px 16px rgba(87,3,1,.05);
+  transition:all .15s;
+}
+.taken-order-card.active{
+  border-color:rgba(249,115,22,.28);
+  box-shadow:0 12px 26px rgba(249,115,22,.08);
+}
+.taken-order-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.taken-order-card-code{
+  font-family:monospace;
+  font-size:14px;
+  font-weight:800;
+  color:#4b5563;
+}
+.taken-order-card-sub{
+  margin-top:6px;
+  font-size:12px;
+  color:#a06070;
+  line-height:1.6;
+}
+.taken-order-card-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.taken-order-card-select{
+  padding:9px 12px;
+  border:1.5px solid rgba(186,214,253,.4);
+  border-radius:14px;
+  background:rgba(255,255,255,.9);
+  color:#570301;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+}
+.taken-order-card-delete{
+  padding:9px 12px;
+  border:none;
+  border-radius:14px;
+  background:rgba(244,114,182,.14);
+  color:#9d174d;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+.taken-order-card-body{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.taken-order-card-mini{
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(248,250,252,.9);
+  border:1px solid rgba(186,214,253,.16);
+}
+.taken-order-card-mini-label{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#9b8bb4;
+}
+.taken-order-card-mini-value{
+  margin-top:6px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.6;
+  color:#4a2418;
+  word-break:break-word;
+}
+.taken-orders-empty{
+  padding:20px;
+  border-radius:22px;
+  background:rgba(255,255,255,.7);
+  border:1px dashed rgba(186,214,253,.42);
+  text-align:center;
+  color:#a06070;
+  font-size:13px;
+  line-height:1.7;
+}
+@media (max-width: 1100px){
+  .taken-order-card-body,
+  .taken-orders-preview-grid{grid-template-columns:1fr}
+}
+@media (max-width: 760px){
+  .table-actions-row,
+  .table-actions-right{align-items:flex-start}
+  .taken-orders-modal{padding:18px 16px;border-radius:24px}
+  .taken-orders-preview-head,
+  .taken-order-card-head{flex-direction:column}
+}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:rgba(186,214,253,.15);border-radius:10px}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#F5BAD5,#BAD6FD);border-radius:10px}
@@ -2361,6 +2735,21 @@ select.sync-input{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
+<div class="taken-orders-modal-bg" id="takenOrdersModal" onclick="if(event.target===this) closeTakenOrdersModal()">
+  <div class="taken-orders-modal">
+    <div class="taken-orders-modal-head">
+      <div>
+        <div class="taken-orders-modal-title">Đơn đã lấy</div>
+        <div class="taken-orders-modal-sub">Danh sách đơn đã được lấy thông tin qua `order-info` với key `HOANG5611`.</div>
+      </div>
+      <button class="taken-orders-close" type="button" onclick="closeTakenOrdersModal()">✕</button>
+    </div>
+    <div id="takenOrdersPreview"></div>
+    <div class="taken-orders-modal-note" id="takenOrdersModalNote" style="display:none"></div>
+    <div class="taken-orders-list" id="takenOrdersList"></div>
+  </div>
+</div>
+
 <div class="info-modal-bg" id="syncPanelPending" style="display:none;margin-top:16px">
   <div class="info-modal collapsible-panel collapsed" id="panelSyncOrdersPending">
     <div class="panel-chrome">
@@ -2534,18 +2923,37 @@ select.sync-input{font-family:inherit;cursor:pointer}
   padding: 12px 18px;
   margin-bottom: 12px;
 ">
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-    <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
-    <select id="sortSelect" onchange="changeSortOrder()">
-      <option value="default">📁 Mặc định</option>
-      <option value="total_desc">💰 Giá trị cao → thấp</option>
-      <option value="total_asc">💰 Giá trị thấp → cao</option>
-      <option value="date_desc">📅 Ngày đặt mới nhất</option>
-      <option value="date_asc">📅 Ngày đặt cũ nhất</option>
-    </select>
-    <div class="table-count" id="tableCount"></div>
+  <div class="table-actions-row">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="table-title" style="color:#065f46">🔽 Lọc đơn hàng</div>
+      <select id="sortSelect" onchange="changeSortOrder()">
+        <option value="default">📁 Mặc định</option>
+        <option value="total_desc">💰 Giá trị cao → thấp</option>
+        <option value="total_asc">💰 Giá trị thấp → cao</option>
+        <option value="date_desc">📅 Ngày đặt mới nhất</option>
+        <option value="date_asc">📅 Ngày đặt cũ nhất</option>
+      </select>
+      <div class="table-count" id="tableCount"></div>
+    </div>
+    <div class="table-actions-right">
+      <button id="takenOrdersBtn" class="btn-taken-orders" type="button" style="display:none" onclick="openTakenOrdersModal()">
+        ĐƠN ĐÃ LẤY
+        <span class="btn-taken-orders-count" id="takenOrdersCountBadge">0</span>
+      </button>
+      <div class="table-sync-info" id="tableSyncInfo">Chưa có thông tin đồng bộ.</div>
+    </div>
   </div>
-  <div class="table-sync-info" id="tableSyncInfo">Chưa có thông tin đồng bộ.</div>
+</div>
+
+<div class="taken-orders-readonly" id="takenOrdersReadOnlyPanel">
+  <div class="taken-orders-readonly-head">
+    <div>
+      <div class="taken-orders-readonly-title">Đơn đã lấy</div>
+      <div class="taken-orders-readonly-sub">Các ID khác chỉ xem được mã đơn và trạng thái hiện tại.</div>
+    </div>
+    <div class="taken-orders-readonly-count" id="takenOrdersReadOnlyCount">0 đơn</div>
+  </div>
+  <div class="taken-orders-readonly-list" id="takenOrdersReadOnlyList"></div>
 </div>
 
   <!-- Panel đơn thường -->
@@ -2965,6 +3373,8 @@ window.externalOrdersState = {
   phuong: { items: [], config: { fee_items: [], payment_history: [] } },
   hoang: { items: [], config: { fee_items: [], payment_history: [] } }
 };
+window.takenOrdersState = { items: [], manage: false, loaded: false };
+window.latestTakenOrderId = null;
 
 function getExternalScopeLabel(scope = activeExternalScope) {
   return scope === 'hoang' ? "Hoàng's Order" : "Phương's Order";
@@ -2972,6 +3382,22 @@ function getExternalScopeLabel(scope = activeExternalScope) {
 
 function hasCapability(name) {
   return !!window.userCapabilities?.[name];
+}
+
+function canManageTakenOrders(id = localStorage.getItem(ID_KEY) || '') {
+  return hasCapability('manage_taken_orders') || String(id || '').trim().toUpperCase() === 'HOANG5611';
+}
+
+function canViewTakenOrders() {
+  return hasCapability('view_taken_orders');
+}
+
+function formatTakenOrderStatusLabel(status) {
+  const map = {
+    waiting_waybill: 'Chờ tạo MVĐ',
+    created_waybill: 'Đã tạo MVĐ'
+  };
+  return map[status] || 'Chờ tạo MVĐ';
 }
 
 function formatSyncDate(value) {
@@ -3692,6 +4118,7 @@ async function init() {
     const [summaryData] = await Promise.all([
       loadSummary(),
       loadOrders(),
+      loadTakenOrders(),
       loadExternalOrders(),
       loadSyncShops(),
       loadSyncShopsPending()
@@ -3717,6 +4144,7 @@ async function init() {
     loadChartData();
     loadMienBac();
     loadExternalOrders();
+    loadTakenOrders({ silent: true });
   }, 300_000);
 }
 
@@ -3766,7 +4194,7 @@ function applyCompactTouchUiMode() {
 }
 
 function getMainTableColspan() {
-  return isCompactViewport() ? 6 : 9;
+  return isCompactViewport() ? 6 : (canManageTakenOrders() ? 10 : 9);
 }
 
 function escapeTextHtml(value) {
@@ -3827,6 +4255,286 @@ function formatOrderTotal(value) {
   return Number.isFinite(number) ? `${number.toLocaleString('vi')}₫` : '—';
 }
 
+function stripMarkup(value) {
+  return String(value ?? '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function updateTakenOrdersVisibility() {
+  const button = document.getElementById('takenOrdersBtn');
+  const panel = document.getElementById('takenOrdersReadOnlyPanel');
+  const manage = canManageTakenOrders();
+  const canView = canViewTakenOrders();
+
+  if (button) {
+    button.style.display = manage ? 'inline-flex' : 'none';
+  }
+  if (panel) {
+    panel.style.display = canView && !manage ? 'block' : 'none';
+  }
+}
+
+function renderTakenOrdersReadOnlyPanel() {
+  const panel = document.getElementById('takenOrdersReadOnlyPanel');
+  const countEl = document.getElementById('takenOrdersReadOnlyCount');
+  const listEl = document.getElementById('takenOrdersReadOnlyList');
+  if (!panel || !countEl || !listEl) return;
+
+  const items = Array.isArray(window.takenOrdersState?.items) ? window.takenOrdersState.items : [];
+  countEl.textContent = `${items.length.toLocaleString('vi')} đơn`;
+  listEl.innerHTML = items.length
+    ? items.map(item => `
+        <div class="taken-orders-readonly-item">
+          <div class="taken-orders-readonly-code">${escapeTextHtml(item.lookup_order_code || item.order_code || '—')}</div>
+          <div class="taken-orders-readonly-status">${escapeTextHtml(item.take_status_label || formatTakenOrderStatusLabel(item.take_status))}</div>
+        </div>
+      `).join('')
+    : `<div class="taken-orders-empty">Chưa có đơn nào được lấy.</div>`;
+}
+
+function renderTakenOrdersPreview(item) {
+  const previewEl = document.getElementById('takenOrdersPreview');
+  const noteEl = document.getElementById('takenOrdersModalNote');
+  if (!previewEl || !noteEl) return;
+
+  if (!item) {
+    previewEl.innerHTML = `<div class="taken-orders-empty">Chưa có đơn nào được chọn để xem chi tiết.</div>`;
+    noteEl.style.display = 'none';
+    noteEl.textContent = '';
+    return;
+  }
+
+  const details = [
+    ['Mã đơn', item.lookup_order_code || item.order_code || '—'],
+    ['Gian hàng', item.shop_name || '—'],
+    ['Ngày đặt', item.order_date || '—'],
+    ['Tên khách', item.customer_name || '—'],
+    ['SĐT', item.phone || '—'],
+    ['Địa chỉ', item.address || '—'],
+    ['Sản phẩm', item.product || '—'],
+    ['Số lượng', item.quantity ?? '—'],
+    ['Thành tiền', item.prepaid_amount || '—'],
+    ['Trạng thái thanh toán', item.payment_status || '—'],
+  ];
+
+  previewEl.innerHTML = `
+    <div class="taken-orders-preview">
+      <div class="taken-orders-preview-head">
+        <div>
+          <div class="taken-orders-preview-title">Thông tin đơn đã lấy</div>
+          <div class="taken-orders-preview-meta">Lấy lúc ${escapeTextHtml(item.taken_at ? new Date(item.taken_at).toLocaleString('vi-VN') : '—')}</div>
+        </div>
+        <div class="taken-orders-status-pill">${escapeTextHtml(item.take_status_label || formatTakenOrderStatusLabel(item.take_status))}</div>
+      </div>
+      <div class="taken-orders-preview-grid">
+        ${details.map(([label, value]) => `
+          <div class="taken-orders-detail-row">
+            <div class="taken-orders-detail-label">${escapeTextHtml(label)}</div>
+            <div class="taken-orders-detail-value">${escapeTextHtml(stripMarkup(value))}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  noteEl.textContent = 'Chỉ ID HOANG5611 được đổi trạng thái hoặc xoá từng đơn đã lấy.';
+  noteEl.style.display = 'block';
+}
+
+function selectTakenOrder(id) {
+  window.latestTakenOrderId = id;
+  renderTakenOrdersModal(id);
+}
+
+function renderTakenOrdersModal(selectedId = window.latestTakenOrderId) {
+  const listEl = document.getElementById('takenOrdersList');
+  const badgeEl = document.getElementById('takenOrdersCountBadge');
+  if (badgeEl) {
+    badgeEl.textContent = String((window.takenOrdersState?.items || []).length || 0);
+  }
+  if (!listEl) return;
+
+  const items = Array.isArray(window.takenOrdersState?.items) ? window.takenOrdersState.items : [];
+  const selected = items.find(item => item.id === selectedId) || items[0] || null;
+  renderTakenOrdersPreview(selected);
+
+  listEl.innerHTML = items.length
+    ? items.map(item => `
+        <div class="taken-order-card ${selected && selected.id === item.id ? 'active' : ''}">
+          <div class="taken-order-card-head">
+            <div style="cursor:pointer" onclick="selectTakenOrder(${item.id})">
+              <div class="taken-order-card-code">${escapeTextHtml(item.lookup_order_code || item.order_code || '—')}</div>
+              <div class="taken-order-card-sub">${escapeTextHtml(item.shop_name || '—')} · ${escapeTextHtml(item.order_date || '—')}</div>
+            </div>
+            <div class="taken-order-card-actions">
+              <select class="taken-order-card-select" onchange="updateTakenOrderStatus(${item.id}, this.value)">
+                <option value="waiting_waybill" ${item.take_status === 'waiting_waybill' ? 'selected' : ''}>Chờ tạo MVĐ</option>
+                <option value="created_waybill" ${item.take_status === 'created_waybill' ? 'selected' : ''}>Đã tạo MVĐ</option>
+              </select>
+              <button class="taken-order-card-delete" type="button" onclick="deleteTakenOrder(${item.id})">Xoá</button>
+            </div>
+          </div>
+          <div class="taken-order-card-body">
+            <div class="taken-order-card-mini">
+              <div class="taken-order-card-mini-label">Khách hàng</div>
+              <div class="taken-order-card-mini-value">${escapeTextHtml(item.customer_name || '—')}</div>
+            </div>
+            <div class="taken-order-card-mini">
+              <div class="taken-order-card-mini-label">Thành tiền</div>
+              <div class="taken-order-card-mini-value">${escapeTextHtml(item.prepaid_amount || '—')}</div>
+            </div>
+            <div class="taken-order-card-mini">
+              <div class="taken-order-card-mini-label">Thanh toán</div>
+              <div class="taken-order-card-mini-value">${escapeTextHtml(item.payment_status || '—')}</div>
+            </div>
+          </div>
+        </div>
+      `).join('')
+    : `<div class="taken-orders-empty">Chưa có đơn nào được lấy. Hãy bấm <b>LẤY ĐƠN</b> ở cuối từng dòng đơn hàng.</div>`;
+}
+
+async function loadTakenOrders(options = {}) {
+  const id = localStorage.getItem(ID_KEY) || '';
+  if (!id) {
+    window.takenOrdersState = { items: [], manage: false, loaded: true };
+    updateTakenOrdersVisibility();
+    renderTakenOrdersReadOnlyPanel();
+    renderTakenOrdersModal();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/taken-orders', {
+      cache: 'no-store',
+      headers: { 'X-User-ID': id }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Không tải được danh sách đơn đã lấy.');
+    window.takenOrdersState = {
+      items: Array.isArray(data.items) ? data.items : [],
+      manage: !!data.manage,
+      loaded: true,
+    };
+    if (window.latestTakenOrderId && !window.takenOrdersState.items.some(item => item.id === window.latestTakenOrderId)) {
+      window.latestTakenOrderId = window.takenOrdersState.items[0]?.id || null;
+    }
+  } catch (error) {
+    if (!options.silent) {
+      console.error('loadTakenOrders error:', error);
+    }
+  }
+
+  updateTakenOrdersVisibility();
+  renderTakenOrdersReadOnlyPanel();
+  renderTakenOrdersModal();
+}
+
+function ensureTakenOrdersModalRoot() {
+  const modal = document.getElementById('takenOrdersModal');
+  if (!modal) return null;
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+  return modal;
+}
+
+function openTakenOrdersModal(selectedId = window.latestTakenOrderId) {
+  if (!canManageTakenOrders()) return;
+  const modal = ensureTakenOrdersModalRoot();
+  if (!modal) return;
+  window.latestTakenOrderId = selectedId || window.latestTakenOrderId;
+  renderTakenOrdersModal(window.latestTakenOrderId);
+  modal.classList.add('show');
+}
+
+function closeTakenOrdersModal() {
+  const modal = ensureTakenOrdersModalRoot();
+  if (modal) modal.classList.remove('show');
+}
+
+async function takeOrder(orderCode, button) {
+  if (!canManageTakenOrders()) return;
+  const rawOrderCode = String(orderCode || '').trim();
+  if (!rawOrderCode) return;
+
+  const original = button?.textContent || 'LẤY ĐƠN';
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Đang lấy...';
+  }
+
+  try {
+    const res = await fetch('/api/taken-orders/take', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem(ID_KEY) || ''
+      },
+      body: JSON.stringify({ order_code: rawOrderCode })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Không lấy được đơn.');
+    window.latestTakenOrderId = data.item?.id || null;
+    await loadTakenOrders({ silent: true });
+    openTakenOrdersModal(window.latestTakenOrderId);
+    showToast(`✅ Đã lấy đơn ${normalizeLookupOrderCode(rawOrderCode)}`);
+  } catch (error) {
+    showToast(`❌ ${error.message}`);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  }
+}
+
+async function updateTakenOrderStatus(id, status) {
+  if (!canManageTakenOrders()) return;
+  try {
+    const res = await fetch('/api/taken-orders/status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem(ID_KEY) || ''
+      },
+      body: JSON.stringify({ id, status })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Không cập nhật được trạng thái.');
+    window.latestTakenOrderId = data.item?.id || id;
+    await loadTakenOrders({ silent: true });
+  } catch (error) {
+    showToast(`❌ ${error.message}`);
+  }
+}
+
+async function deleteTakenOrder(id) {
+  if (!canManageTakenOrders()) return;
+  try {
+    const res = await fetch('/api/taken-orders/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem(ID_KEY) || ''
+      },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Không xoá được đơn.');
+    if (window.latestTakenOrderId === id) {
+      window.latestTakenOrderId = null;
+    }
+    await loadTakenOrders({ silent: true });
+  } catch (error) {
+    showToast(`❌ ${error.message}`);
+  }
+}
+
 function buildMobileOrderDetailRows(order, detail) {
   const mergedPhone = detail?.phone || 'Không lấy được SĐT';
   const mergedStatus = detail?.status || order?.status || '—';
@@ -3849,8 +4557,17 @@ function buildMobileOrderDetailRows(order, detail) {
   };
 }
 
-function renderMobileOrderDetail(order, detail = null, note = '') {
+function ensureMobileOrderDetailModalRoot() {
   const modal = document.getElementById('mobileOrderDetailModal');
+  if (!modal) return null;
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+  return modal;
+}
+
+function renderMobileOrderDetail(order, detail = null, note = '') {
+  const modal = ensureMobileOrderDetailModalRoot();
   const sub = document.getElementById('mobileOrderDetailSub');
   const status = document.getElementById('mobileOrderDetailStatus');
   const rows = document.getElementById('mobileOrderDetailRows');
@@ -3872,7 +4589,7 @@ function renderMobileOrderDetail(order, detail = null, note = '') {
 }
 
 function closeMobileOrderDetailModal() {
-  const modal = document.getElementById('mobileOrderDetailModal');
+  const modal = ensureMobileOrderDetailModalRoot();
   if (modal) modal.classList.remove('show');
 }
 
@@ -3881,7 +4598,7 @@ async function openMobileOrderDetail(orderCode) {
   const order = orderMap[orderCode];
   if (!order || order.restricted) return;
 
-  const modal = document.getElementById('mobileOrderDetailModal');
+  const modal = ensureMobileOrderDetailModalRoot();
   if (!modal) return;
   modal.classList.add('show');
   renderMobileOrderDetail(order, null, 'Đang lấy SĐT từ tra cứu đơn hàng...');
@@ -3915,6 +4632,7 @@ async function openMobileOrderDetail(orderCode) {
 function renderMainTableHeader() {
   const head = document.getElementById('mainTableHead');
   if (!head) return;
+  const canTake = canManageTakenOrders();
 
   head.innerHTML = isCompactViewport()
     ? `<tr>
@@ -3935,6 +4653,7 @@ function renderMainTableHeader() {
         <th>Số lượng</th>
         <th>Tổng tiền</th>
         <th>Trạng thái</th>
+        ${canTake ? '<th>Thao tác</th>' : ''}
       </tr>`;
 }
 
@@ -3943,6 +4662,7 @@ function renderMainOrdersRows(data) {
   if (!tbody) return;
 
   const compact = isCompactViewport();
+  const canTake = canManageTakenOrders();
   window.orderRowMap = {};
 
   if (!data.data || data.data.length === 0) {
@@ -3971,7 +4691,12 @@ function renderMainOrdersRows(data) {
           <td class="compact-order-cell">${R ? M() : escapeTextHtml(shortenAddressForCompact(o.address))}</td>
           <td class="compact-order-cell">${R ? M() : escapeTextHtml(shortenProductForCompact(o.product))}</td>
           <td><b>${R ? M() : escapeTextHtml(formatOrderTotal(o.total))}</b></td>
-          <td>${R ? `<span class="restricted-mask">—</span>` : `<button class="compact-order-btn" type="button" onclick="openMobileOrderDetail('${escapedOrderCode}')">Chi tiết</button>`}</td>
+          <td>${R ? `<span class="restricted-mask">—</span>` : `
+            <div class="compact-order-actions">
+              <button class="compact-order-btn" type="button" onclick="openMobileOrderDetail('${escapedOrderCode}')">Chi tiết</button>
+              ${canTake ? `<button class="compact-order-btn secondary" type="button" onclick="takeOrder('${escapedOrderCode}', this)">LẤY ĐƠN</button>` : ''}
+            </div>
+          `}</td>
         </tr>`;
     }
 
@@ -3989,6 +4714,7 @@ function renderMainOrdersRows(data) {
         <td style="text-align:center">${R ? M() : escapeTextHtml(o.quantity || '—')}</td>
         <td><b>${R ? M() : escapeTextHtml(formatOrderTotal(o.total))}</b></td>
         <td>${R ? `<span class="restricted-mask">••••••••</span>` : escapeTextHtml(o.status || '—')}</td>
+        ${canTake ? `<td>${R ? `<span class="restricted-mask">—</span>` : `<div class="desktop-order-actions"><button class="btn-take-order" type="button" onclick="takeOrder('${escapedOrderCode}', this)">LẤY ĐƠN</button></div>`}</td>` : ''}
       </tr>`;
   }).join('');
 }
@@ -4643,9 +5369,12 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
     curlResultBg.style.display = 'none';
   }
   if (externalWrap) {
-    externalWrap.style.display = id === 'Hoang5611' ? 'block' : 'none';
+    externalWrap.style.display = hasCapability('view_hoang_orders') ? 'block' : 'none';
   }
   updateExternalOrdersAccess(id);
+  updateTakenOrdersVisibility();
+  renderTakenOrdersReadOnlyPanel();
+  renderTakenOrdersModal();
 }
 
 async function refreshUserCapabilities() {
@@ -4725,6 +5454,8 @@ function checkIdGate() {
     return true;
   }
   window.userCapabilities = {};
+  window.takenOrdersState = { items: [], manage: false, loaded: true };
+  window.latestTakenOrderId = null;
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   document.getElementById('idGate').style.display = 'flex';
@@ -4832,6 +5563,8 @@ function changeId() {
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   window.userCapabilities = {};
+  window.takenOrdersState = { items: [], manage: false, loaded: true };
+  window.latestTakenOrderId = null;
   location.reload();
 }
 
@@ -6490,6 +7223,7 @@ document.addEventListener('click', event => {
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   closeMobileOrderDetailModal();
+  closeTakenOrdersModal();
   const panel = document.querySelector('.download-panel');
   if (panel && panel.classList.contains('mobile-open')) {
     panel.classList.remove('mobile-open');
