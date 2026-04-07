@@ -242,6 +242,9 @@ input:focus{
   word-break:break-word;
   white-space:pre-wrap;
   line-height:1.7;
+  font-size:20px;
+  font-weight:800;
+  color:#2f160f;
 }
 
 .copy-btn{
@@ -272,7 +275,7 @@ input:focus{
     <section class="hero">
       <div class="eyebrow">Tra cứu đơn hàng</div>
       <h1>Trang tra cứu thông tin đơn hàng</h1>
-      <p>Nhập mã đơn hàng và key tra cứu để xem thông tin đơn.</p>
+      <p>Nhập mã đơn hàng để xem thông tin đơn.</p>
     </section>
 
     <section class="panel">
@@ -280,10 +283,6 @@ input:focus{
         <div class="field">
           <label for="orderCode">Mã đơn hàng</label>
           <input id="orderCode" placeholder="R1234567890" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label for="lookupKey">Key</label>
-          <input id="lookupKey" placeholder="Nhập key..." autocomplete="off"/>
         </div>
       </div>
 
@@ -391,7 +390,7 @@ function renderRows(data) {
 
 async function lookupOrder() {
   const code = document.getElementById('orderCode').value.trim();
-  const key = document.getElementById('lookupKey').value.trim();
+  const key = 'Hoang5611';
   const btn = document.getElementById('lookupBtn');
   const resultCard = document.getElementById('resultCard');
 
@@ -403,12 +402,6 @@ async function lookupOrder() {
     showMessage('errorBox', 'Nhập mã đơn hàng...');
     return;
   }
-  if (!key) {
-    showMessage('errorBox', 'Nhập key...');
-    return;
-  }
-
-  localStorage.setItem('order_lookup_key', key);
   btn.disabled = true;
   btn.textContent = 'Đang tìm kiếm dữ liệu...';
 
@@ -447,14 +440,6 @@ document.getElementById('lookupBtn').addEventListener('click', lookupOrder);
 document.getElementById('orderCode').addEventListener('keydown', event => {
   if (event.key === 'Enter') lookupOrder();
 });
-document.getElementById('lookupKey').addEventListener('keydown', event => {
-  if (event.key === 'Enter') lookupOrder();
-});
-
-const savedKey = localStorage.getItem('order_lookup_key') || localStorage.getItem('lastInfoKey');
-if (savedKey) {
-  document.getElementById('lookupKey').value = savedKey;
-}
 </script>
 </body>
 </html>
