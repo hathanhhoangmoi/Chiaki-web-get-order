@@ -1429,6 +1429,24 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
   background:linear-gradient(135deg,#f59e0b,#f97316,#BAD6FD);
   transition:width .25s ease;
 }
+.shop-download-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+.shop-download-actions .btn{
+  flex:1 1 160px;
+}
+.shop-download-btn-secondary{
+  background:rgba(186,214,253,.22);
+  color:#570301;
+  box-shadow:none;
+}
+.shop-download-btn-secondary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 20px rgba(87,3,1,.08);
+}
 body.compact-touch-ui .header{
   padding:14px 16px;
   gap:12px;
@@ -2679,7 +2697,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="info-modal-sub">Tải toàn bộ file shop rồi gửi file vào đúng dòng tương ứng bên dưới</div>
 
     <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
-    <div class="sync-hint">Nhấn một lần để mở popup giữa màn hình và tải lần lượt file của toàn bộ shop. File sẽ tự lưu theo tên <code>IDSHOP_Tên gian hàng.xlsx</code>.</div>
+    <div class="sync-hint">Nhấn một lần để mở 1 popup giữa màn hình. Popup sẽ lần lượt mở link GET từng shop để bạn xử lý Cloudflare rồi chuyển shop tiếp theo.</div>
     <select class="info-input" id="syncShopId" onchange="updateChiakiLink()"
             style="display:none">
       <option value="">Mời chọn</option>
@@ -2758,7 +2776,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="mobile-detail-head">
       <div>
         <div class="mobile-detail-title">Tải file shop</div>
-        <div class="mobile-detail-sub" id="shopDownloadModalSub">Popup này sẽ tải tuần tự từng gian hàng và lưu file theo tên shop.</div>
+        <div class="mobile-detail-sub" id="shopDownloadModalSub">Popup này sẽ lần lượt mở link GET từng gian hàng để xử lý Cloudflare.</div>
       </div>
       <button class="mobile-detail-close" id="shopDownloadModalClose" type="button" onclick="closeShopDownloadModal()">✕</button>
     </div>
@@ -2767,7 +2785,12 @@ select.sync-input{font-family:inherit;cursor:pointer}
       <div class="shop-download-progress-bar" id="shopDownloadProgressBar"></div>
     </div>
     <div class="mobile-detail-rows" id="shopDownloadModalRows"></div>
-    <div class="mobile-detail-note show" id="shopDownloadModalNote">Các file sẽ được lưu theo mẫu IDSHOP_Tên gian hàng.xlsx.</div>
+    <div class="mobile-detail-note show" id="shopDownloadModalNote">Chế độ này mở trực tiếp link Chiaki để vượt Cloudflare, nên tên file thực tế sẽ do Chiaki và trình duyệt quyết định.</div>
+    <div class="shop-download-actions">
+      <button class="btn btn-primary" id="shopDownloadOpenBtn" type="button" onclick="reopenCurrentShopDownloadPopup()">Mở lại popup</button>
+      <button class="btn btn-primary" id="shopDownloadNextBtn" type="button" onclick="advanceShopDownloadSession()">Mở shop tiếp theo</button>
+      <button class="btn shop-download-btn-secondary" id="shopDownloadStopBtn" type="button" onclick="cancelShopDownloadSession()">Dừng</button>
+    </div>
   </div>
 </div>
 
@@ -2803,7 +2826,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
     <div class="info-modal-sub">Tải toàn bộ file shop rồi gửi file vào đúng dòng tương ứng bên dưới</div>
 
     <label class="sync-label">Tải file đơn hàng từ Chiaki</label>
-    <div class="sync-hint">Nhấn một lần để mở popup giữa màn hình và tải lần lượt file của toàn bộ shop. File sẽ tự lưu theo tên <code>IDSHOP_Tên gian hàng.xlsx</code>.</div>
+    <div class="sync-hint">Nhấn một lần để mở 1 popup giữa màn hình. Popup sẽ lần lượt mở link GET từng shop để bạn xử lý Cloudflare rồi chuyển shop tiếp theo.</div>
     <select class="info-input" id="syncShopIdPending" onchange="updateChiakiLinkPending()"
             style="display:none">
       <option value="">Mời chọn</option>
@@ -6245,7 +6268,6 @@ async function doSyncUpload() {
 
 let syncShops = [];
 let comboFileMap = {}; // index → File
-const SHOP_DOWNLOAD_DELAY_MS = 10000;
 let syncDownloadTimer = null;
 let syncDownloadRunning = false;
 let pendingSyncShops = [];
@@ -6253,6 +6275,8 @@ let pendingComboFileMap = {};
 let pendingSyncFile = null;
 let pendingSyncDownloadTimer = null;
 let pendingSyncDownloadRunning = false;
+let shopDownloadPopup = null;
+let activeShopDownloadSession = null;
 
 function isAnyShopDownloadRunning() {
   return syncDownloadRunning || pendingSyncDownloadRunning;
@@ -6276,7 +6300,7 @@ function closeShopDownloadModal() {
 function renderShopDownloadModal({
   stage,
   total = 0,
-  completedCount = 0,
+  currentIndex = -1,
   currentShop = null,
   nextShop = null,
   phase = 'idle',
@@ -6289,34 +6313,37 @@ function renderShopDownloadModal({
   const note = document.getElementById('shopDownloadModalNote');
   const progressBar = document.getElementById('shopDownloadProgressBar');
   const closeBtn = document.getElementById('shopDownloadModalClose');
-  if (!modal || !sub || !status || !rows || !note || !progressBar || !closeBtn) return;
+  const reopenBtn = document.getElementById('shopDownloadOpenBtn');
+  const nextBtn = document.getElementById('shopDownloadNextBtn');
+  const stopBtn = document.getElementById('shopDownloadStopBtn');
+  if (!modal || !sub || !status || !rows || !note || !progressBar || !closeBtn || !reopenBtn || !nextBtn || !stopBtn) return;
 
   const stageLabel = getShopDownloadStageLabel(stage);
-  sub.textContent = `Đang tải tuần tự danh sách đơn ${stageLabel}. File sẽ lưu theo tên IDSHOP_Tên gian hàng.xlsx.`;
+  sub.textContent = `Popup trình duyệt sẽ mở tuần tự link GET cho danh sách đơn ${stageLabel} để bạn vượt Cloudflare thủ công.`;
 
   if (phase === 'done') {
-    status.textContent = `Hoàn tất ${completedCount}/${total}`;
+    status.textContent = `Hoàn tất ${total}/${total}`;
   } else if (phase === 'error') {
-    status.textContent = `Bị gián đoạn tại ${completedCount}/${total}`;
-  } else if (phase === 'waiting') {
-    status.textContent = `Đã tải ${completedCount}/${total} · chờ lượt tiếp theo`;
-  } else if (phase === 'downloading') {
-    status.textContent = `Đang tải ${Math.min(completedCount + 1, total)}/${total}`;
+    status.textContent = currentIndex >= 0 ? `Bị gián đoạn tại ${currentIndex + 1}/${total}` : 'Bị gián đoạn';
+  } else if (phase === 'active') {
+    status.textContent = `Đang mở ${Math.min(currentIndex + 1, total)}/${total}`;
   } else {
     status.textContent = 'Sẵn sàng tải';
   }
 
-  const progress = total > 0 ? Math.max(0, Math.min(100, Math.round((completedCount / total) * 100))) : 0;
+  const progress = total > 0 && currentIndex >= 0
+    ? Math.max(0, Math.min(100, Math.round(((currentIndex + 1) / total) * 100)))
+    : 0;
   progressBar.style.width = `${phase === 'done' ? 100 : progress}%`;
 
-  const currentLabel = currentShop ? `${currentShop.id} · ${currentShop.name}` : (phase === 'done' ? 'Đã tải xong toàn bộ' : '—');
+  const currentLabel = currentShop ? `${currentShop.id} · ${currentShop.name}` : (phase === 'done' ? 'Đã mở xong toàn bộ' : '—');
   const nextLabel = nextShop ? `${nextShop.id} · ${nextShop.name}` : 'Không còn shop tiếp theo';
   const currentFileName = currentShop?.fileName || '—';
   rows.innerHTML = [
     ['Danh sách', `Đơn ${stageLabel}`],
-    ['Đã tải xong', `${completedCount}/${total || 0} file`],
-    ['Đang xử lý', currentLabel],
-    ['Tên file', currentFileName],
+    ['Vị trí hiện tại', currentIndex >= 0 && total > 0 ? `${currentIndex + 1}/${total}` : `0/${total || 0}`],
+    ['Đang mở popup', currentLabel],
+    ['Tên mong muốn', currentFileName],
     ['Kế tiếp', nextLabel],
   ].map(([label, value]) => `
     <div class="mobile-detail-row">
@@ -6325,12 +6352,157 @@ function renderShopDownloadModal({
     </div>
   `).join('');
 
-  note.textContent = message || 'Các file sẽ được tải lần lượt và lưu đúng theo tên từng gian hàng.';
+  note.textContent = message || 'Nếu Cloudflare hiện ra trong popup, hãy xác minh xong rồi bấm mở shop tiếp theo.';
   note.classList.add('show');
-  closeBtn.disabled = phase === 'downloading' || phase === 'waiting';
+  closeBtn.disabled = phase === 'active';
   closeBtn.style.opacity = closeBtn.disabled ? '.45' : '1';
   closeBtn.style.cursor = closeBtn.disabled ? 'not-allowed' : 'pointer';
+  reopenBtn.disabled = !currentShop;
+  nextBtn.disabled = phase === 'idle';
+  nextBtn.textContent = phase === 'done' ? 'Đóng phiên' : (nextShop ? 'Mở shop tiếp theo' : 'Hoàn tất');
+  stopBtn.style.display = phase === 'done' ? 'none' : '';
   modal.classList.add('show');
+}
+
+function openCenteredShopDownloadPopup(url) {
+  const width = Math.min(1280, Math.max(980, Math.round(window.screen.availWidth * 0.78)));
+  const height = Math.min(900, Math.max(720, Math.round(window.screen.availHeight * 0.88)));
+  const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
+  const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
+  const features = `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+  const popup = (!shopDownloadPopup || shopDownloadPopup.closed)
+    ? window.open(url, 'chiakiShopDownloadPopup', features)
+    : shopDownloadPopup;
+
+  if (!popup) {
+    throw new Error('Trình duyệt đã chặn popup. Hãy cho phép popup cho trang này rồi thử lại.');
+  }
+
+  if (popup !== shopDownloadPopup) {
+    shopDownloadPopup = popup;
+  } else {
+    popup.location.href = url;
+  }
+  try { popup.focus(); } catch (_) {}
+  return popup;
+}
+
+async function copyTextToClipboard(text) {
+  const normalizedText = String(text || '').trim();
+  if (!normalizedText) return false;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(normalizedText);
+      return true;
+    }
+  } catch (_) {}
+
+  try {
+    const el = document.createElement('textarea');
+    el.value = normalizedText;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function openShopDownloadPopupForShop(shop) {
+  openCenteredShopDownloadPopup(shop.url);
+  return copyTextToClipboard(shop.name);
+}
+
+function getActiveShopDownloadItem() {
+  if (!activeShopDownloadSession) return null;
+  return activeShopDownloadSession.queue[activeShopDownloadSession.index] || null;
+}
+
+function updateActiveShopDownloadModal(message = '') {
+  if (!activeShopDownloadSession) return;
+  const { stage, queue, index } = activeShopDownloadSession;
+  renderShopDownloadModal({
+    stage,
+    total: queue.length,
+    currentIndex: index,
+    currentShop: queue[index] || null,
+    nextShop: queue[index + 1] || null,
+    phase: 'active',
+    message: message || 'Nếu Cloudflare hiện ra trong popup, hãy xác minh xong rồi bấm mở shop tiếp theo.'
+  });
+}
+
+function finishShopDownloadSession(message, type = 'ok', phase = 'done') {
+  const session = activeShopDownloadSession;
+  if (!session) return;
+  const { stage, queue, index } = session;
+  renderShopDownloadModal({
+    stage,
+    total: queue.length,
+    currentIndex: index,
+    currentShop: queue[index] || null,
+    nextShop: null,
+    phase,
+    message
+  });
+  activeShopDownloadSession = null;
+  finishDownloadAllShopsByStage(stage, message, type);
+}
+
+async function reopenCurrentShopDownloadPopup() {
+  const currentShop = getActiveShopDownloadItem();
+  if (!currentShop) return;
+  try {
+    const copied = await openShopDownloadPopupForShop(currentShop);
+    updateActiveShopDownloadModal(`Đã mở lại popup cho ${currentShop.id} · ${currentShop.name}.${copied ? ` Đã tự copy tên shop: ${currentShop.name}.` : ' Không tự copy được tên shop vào clipboard.'} Hãy xử lý Cloudflare trong popup này.`);
+  } catch (error) {
+    finishShopDownloadSession(error.message, 'err', 'error');
+  }
+}
+
+async function advanceShopDownloadSession() {
+  if (!activeShopDownloadSession) {
+    closeShopDownloadModal();
+    return;
+  }
+
+  const { queue } = activeShopDownloadSession;
+  if (activeShopDownloadSession.index >= queue.length - 1) {
+    finishShopDownloadSession(`Đã mở xong ${queue.length}/${queue.length} shop trong popup giữa màn hình.`, 'ok', 'done');
+    return;
+  }
+
+  activeShopDownloadSession.index += 1;
+  const currentShop = getActiveShopDownloadItem();
+  try {
+    const copied = await openShopDownloadPopupForShop(currentShop);
+    const config = getSyncPanelConfig(activeShopDownloadSession.stage);
+    const btn = document.getElementById(config.linkButtonId);
+    if (btn) btn.textContent = `⏳ Đang mở ${activeShopDownloadSession.index + 1}/${queue.length}...`;
+    updateActiveShopDownloadModal(`Đã chuyển sang ${currentShop.id} · ${currentShop.name}.${copied ? ` Đã tự copy tên shop: ${currentShop.name}.` : ' Không tự copy được tên shop vào clipboard.'} Nếu Cloudflare hiện ra, hãy xác minh rồi tiếp tục.`);
+    const setMessage = activeShopDownloadSession.stage === 'pending' ? setSyncMessagePending : setSyncMessage;
+    setMessage(`Đã mở popup shop ${activeShopDownloadSession.index + 1}/${queue.length}: ${currentShop.id} · ${currentShop.name}.${copied ? ` Đã copy tên shop.` : ''}`, 'ok');
+  } catch (error) {
+    finishShopDownloadSession(error.message, 'err', 'error');
+  }
+}
+
+function cancelShopDownloadSession() {
+  const session = activeShopDownloadSession;
+  if (!session) {
+    closeShopDownloadModal();
+    return;
+  }
+  if (shopDownloadPopup && !shopDownloadPopup.closed) {
+    try { shopDownloadPopup.close(); } catch (_) {}
+  }
+  shopDownloadPopup = null;
+  activeShopDownloadSession = null;
+  finishDownloadAllShopsByStage(session.stage, 'Đã dừng phiên mở popup tải file.', 'err');
+  closeShopDownloadModal();
 }
 
 function getDownloadFileNameFromHeader(contentDisposition = '') {
@@ -6518,7 +6690,7 @@ function downloadAllShopFilesByStage(stage) {
     headers: { 'X-User-ID': localStorage.getItem('chiaki_id') || '' }
   })
     .then(r => r.json().then(data => ({ ok: r.ok, data })))
-    .then(({ ok, data }) => {
+    .then(async ({ ok, data }) => {
       if (!ok) throw new Error(data.error || 'Không tải được link tải file');
       const queue = Array.isArray(data.shops) ? data.shops.map(shop => ({
         id: shop.shop_id,
@@ -6528,83 +6700,22 @@ function downloadAllShopFilesByStage(stage) {
       })) : [];
       if (!queue.length) throw new Error('Không có shop để tải file.');
 
-      let index = 0;
-      const openNext = async () => {
-        const shop = queue[index];
-        const nextShop = queue[index + 1] || null;
-        try {
-          if (btn) btn.textContent = `⏳ Đang tải ${index + 1}/${queue.length}...`;
-          renderShopDownloadModal({
-            stage,
-            total: queue.length,
-            completedCount: index,
-            currentShop: shop,
-            nextShop,
-            phase: 'downloading',
-            message: `Đang tải file cho ${shop.id} · ${shop.name}. File sẽ lưu là ${shop.fileName}.`
-          });
-          await downloadSingleShopFile(stage, shop);
-        } catch (error) {
-          renderShopDownloadModal({
-            stage,
-            total: queue.length,
-            completedCount: index,
-            currentShop: shop,
-            nextShop,
-            phase: 'error',
-            message: error.message
-          });
-          finish(error.message, 'err');
-          return;
-        }
-
-        index += 1;
-        if (index >= queue.length) {
-          renderShopDownloadModal({
-            stage,
-            total: queue.length,
-            completedCount: queue.length,
-            currentShop: null,
-            nextShop: null,
-            phase: 'done',
-            message: `Đã tải xong ${queue.length}/${queue.length} file. Bạn có thể đóng popup này.`
-          });
-          finish(`Đã tải xong ${queue.length}/${queue.length} file theo thứ tự từng shop.`, 'ok');
-          return;
-        }
-
-        if (btn) btn.textContent = `⏳ Đã tải ${index}/${queue.length} file...`;
-        renderShopDownloadModal({
-          stage,
-          total: queue.length,
-          completedCount: index,
-          currentShop: queue[index],
-          nextShop: queue[index + 1] || null,
-          phase: 'waiting',
-          message: `Đã tải xong ${shop.id} · ${shop.name}. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau ${SHOP_DOWNLOAD_DELAY_MS / 1000} giây.`
-        });
-        setMessage(`Đã tải ${index}/${queue.length} file. Tiếp theo: ${queue[index].id} · ${queue[index].name} sau ${SHOP_DOWNLOAD_DELAY_MS / 1000} giây.`, 'ok');
-        if (isPending) pendingSyncDownloadTimer = setTimeout(openNext, SHOP_DOWNLOAD_DELAY_MS);
-        else syncDownloadTimer = setTimeout(openNext, SHOP_DOWNLOAD_DELAY_MS);
-      };
-
-      renderShopDownloadModal({
-        stage,
-        total: queue.length,
-        completedCount: 0,
-        currentShop: queue[0],
-        nextShop: queue[1] || null,
-        phase: 'downloading',
-        message: `Bắt đầu tải ${queue.length} file. Shop đầu tiên sẽ chạy ngay trong popup này.`
-      });
-      setMessage(`Bắt đầu tải ${queue.length} file. Shop đầu tiên sẽ chạy ngay trong popup này.`, 'ok');
-      openNext();
+      activeShopDownloadSession = { stage, queue, index: 0 };
+      try {
+        const copied = await openShopDownloadPopupForShop(queue[0]);
+        if (btn) btn.textContent = `⏳ Đang mở 1/${queue.length}...`;
+        updateActiveShopDownloadModal(`Đã mở popup cho ${queue[0].id} · ${queue[0].name}.${copied ? ` Đã tự copy tên shop: ${queue[0].name}.` : ' Không tự copy được tên shop vào clipboard.'} Hãy xử lý Cloudflare trong popup rồi bấm "Mở shop tiếp theo".`);
+        setMessage(`Đã mở popup shop 1/${queue.length}: ${queue[0].id} · ${queue[0].name}.${copied ? ` Đã copy tên shop.` : ''} Xử lý Cloudflare rồi bấm "Mở shop tiếp theo".`, 'ok');
+      } catch (error) {
+        activeShopDownloadSession = null;
+        throw error;
+      }
     })
     .catch(e => {
       renderShopDownloadModal({
         stage,
         total: 0,
-        completedCount: 0,
+        currentIndex: -1,
         currentShop: null,
         nextShop: null,
         phase: 'error',
