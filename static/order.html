@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Tra cứu đơn hàng</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root{
   --bg-1:#fff6e8;
@@ -23,7 +23,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  font-family:'Poppins',sans-serif;
+  font-family:'Inter',sans-serif;
   min-height:100vh;
   color:var(--text);
   background:
@@ -310,28 +310,12 @@ input:focus{
 
 <script>
 const fieldDefinitions = [
-  { key: 'order_code', label: 'Mã đơn hàng' },
-  { key: 'status', label: 'Trạng thái' },
-  { key: 'shop_name', label: 'Shop' },
-  { key: 'order_date', label: 'Ngày đặt' },
   { key: 'customer_name', label: 'Tên khách hàng' },
-  { key: 'customer_id', label: 'ID khách hàng' },
   { key: 'phone', label: 'Số điện thoại' },
-  { key: 'email', label: 'Email' },
   { key: 'address', label: 'Địa chỉ' },
   { key: 'product', label: 'Sản phẩm' },
   { key: 'quantity', label: 'Số lượng' },
   { key: 'prepaid_amount', label: 'Giá trị đơn' },
-  { key: 'payment', label: 'Thanh toán' },
-  { key: 'source', label: 'Nguồn' },
-  { key: 'source_from', label: 'Nguồn chi tiết' },
-  { key: 'shipping_code', label: 'Mã vận chuyển' },
-  { key: 'delivery_status', label: 'Trạng thái giao hàng' },
-  { key: 'delivery_location_id', label: 'Mã tỉnh/thành' },
-  { key: 'district_delivery_id', label: 'Mã quận/huyện' },
-  { key: 'commune_delivery_id', label: 'Mã phường/xã' },
-  { key: 'shipper_receive_time', label: 'Thời gian shipper nhận' },
-  { key: 'url_history', label: 'Lịch sử URL', formatter: value => Array.isArray(value) ? value.join('\n') : value },
 ];
 
 function showMessage(id, text) {
