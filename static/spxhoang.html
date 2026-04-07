@@ -244,9 +244,11 @@ h1{
 
 .hero-stat-value{
   margin-top:10px;
-  font-size:32px;
+  font-size:clamp(24px,2.6vw,32px);
   font-weight:800;
   letter-spacing:-.04em;
+  line-height:1.12;
+  overflow-wrap:anywhere;
 }
 
 .hero-stat-sub{
@@ -355,9 +357,11 @@ h1{
 
 .kpi-value{
   margin-top:10px;
-  font-size:28px;
+  font-size:clamp(22px,2.3vw,28px);
   font-weight:800;
   letter-spacing:-.04em;
+  line-height:1.12;
+  overflow-wrap:anywhere;
 }
 
 .kpi-sub{
@@ -608,9 +612,11 @@ tbody td:last-child{
 
 .mini-value{
   margin-top:8px;
-  font-size:24px;
+  font-size:clamp(20px,2vw,24px);
   font-weight:800;
   letter-spacing:-.04em;
+  line-height:1.14;
+  overflow-wrap:anywhere;
 }
 
 .list{
@@ -646,10 +652,12 @@ tbody td:last-child{
 }
 
 .amount{
-  font-size:18px;
+  font-size:clamp(15px,1.6vw,18px);
   font-weight:800;
   letter-spacing:-.03em;
-  white-space:nowrap;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-align:right;
 }
 
 .empty{
@@ -1004,19 +1012,6 @@ tbody td:last-child{
           </div>
         </section>
 
-        <section class="card fee-card">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Khoản phí</div>
-              <div class="card-sub">Các khoản phí đang cấu hình.</div>
-            </div>
-            <div class="pill" id="feeMeta">0 khoản</div>
-          </div>
-          <div class="side-pad">
-            <div class="list" id="feeList"></div>
-          </div>
-        </section>
-
         <section class="card history-card">
           <div class="card-head">
             <div>
@@ -1201,10 +1196,20 @@ function renderHero(metrics, config) {
 }
 
 function renderCodValue(item) {
-  if ((item.status || 'unknown') === 'returned') {
-    return '<strong>Chờ hàng hoàn về</strong>';
-  }
   return `<strong>${formatMoney(item.cod || 0)}</strong>`;
+}
+
+function renderPaymentState(item) {
+  if ((item.status || 'unknown') === 'returned') {
+    return {
+      text: 'Chờ hàng hoàn về',
+      className: ''
+    };
+  }
+  return {
+    text: item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
+    className: item.is_paid ? 'ok' : ''
+  };
 }
 
 function renderKpis(metrics) {
@@ -1259,8 +1264,11 @@ function renderMoney(metrics) {
 
 function renderFeeList(config) {
   const items = normalizeConfig(config).fee_items;
-  document.getElementById('feeMeta').textContent = `${items.length.toLocaleString('vi-VN')} khoản`;
-  document.getElementById('feeList').innerHTML = items.length ? items.map(item => `
+  const feeMetaEl = document.getElementById('feeMeta');
+  const feeListEl = document.getElementById('feeList');
+  if (!feeMetaEl || !feeListEl) return;
+  feeMetaEl.textContent = `${items.length.toLocaleString('vi-VN')} khoản`;
+  feeListEl.innerHTML = items.length ? items.map(item => `
     <div class="list-item">
       <div class="list-row">
         <div>
@@ -1359,6 +1367,7 @@ function renderOrdersTable() {
   tbody.innerHTML = rows.map(item => {
     const meta = statusMeta(item.status || 'unknown');
     const codeKey = safeCodeKey(item.code || '');
+    const paymentState = renderPaymentState(item);
     return `
       <tr>
         <td class="orders-cell-code">
@@ -1377,7 +1386,7 @@ function renderOrdersTable() {
         <td class="orders-cell-cod">
           <div>${renderCodValue(item)}</div>
           <div style="margin-top:8px">
-            <span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>
+            <span class="paid-chip ${paymentState.className}">${paymentState.text}</span>
           </div>
           ${state.viewOnly ? '' : `
             <div style="margin-top:8px">
@@ -1647,8 +1656,10 @@ async function refreshDashboard() {
     document.getElementById('refreshMeta').textContent = `Lần làm mới gần nhất: ${new Date().toLocaleString('vi-VN')}. Tự động làm mới mỗi 5 phút.`;
   } catch (error) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty">Lỗi tải dữ liệu: ${escapeHtml(error.message)}</div></td></tr>`;
-    document.getElementById('feeList').innerHTML = `<div class="empty">Chưa lấy được dữ liệu khoản phí.</div>`;
-    document.getElementById('paymentHistoryList').innerHTML = `<div class="empty">Chưa lấy được lịch sử thanh toán.</div>`;
+    const feeListEl = document.getElementById('feeList');
+    const paymentHistoryEl = document.getElementById('paymentHistoryList');
+    if (feeListEl) feeListEl.innerHTML = `<div class="empty">Chưa lấy được dữ liệu khoản phí.</div>`;
+    if (paymentHistoryEl) paymentHistoryEl.innerHTML = `<div class="empty">Chưa lấy được lịch sử thanh toán.</div>`;
   }
 }
 
