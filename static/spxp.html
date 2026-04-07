@@ -158,7 +158,7 @@ h1{
 .hero-meta{
   margin-top:22px;
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   gap:12px;
 }
 
@@ -905,6 +905,11 @@ tbody td{
           <div class="hero-stat-sub">Tổng doanh thu các đơn đã giao thành công.</div>
         </div>
         <div class="hero-stat">
+          <div class="hero-stat-label">Tổng phí</div>
+          <div class="hero-stat-value" id="heroTotalFee">0₫</div>
+          <div class="hero-stat-sub">Tổng toàn bộ khoản phí đang cấu hình.</div>
+        </div>
+        <div class="hero-stat">
           <div class="hero-stat-label">CHỜ THANH TOÁN</div>
           <div class="hero-stat-value" id="heroNetPayout">0₫</div>
           <div class="hero-stat-sub">Doanh thu chưa thanh toán trừ các khoản phí còn treo.</div>
@@ -1216,6 +1221,7 @@ function renderHero(metrics, config) {
   document.getElementById('heroTotalOrders').textContent = state.items.length.toLocaleString('vi-VN');
   document.getElementById('heroTotalCod').textContent = formatMoney(metrics.totalCod);
   document.getElementById('heroDeliveredRevenue').textContent = formatMoney(metrics.deliveredRevenue);
+  document.getElementById('heroTotalFee').textContent = formatMoney(metrics.totalFee);
   document.getElementById('heroNetPayout').textContent = formatMoney(metrics.needTransfer);
   document.getElementById('heroPaidOut').textContent = formatMoney(metrics.paidOut);
   document.getElementById('heroLastUpdated').textContent = config.updated_at
