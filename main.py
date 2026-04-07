@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from urllib.parse import quote
 import httpx
 from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import desc, func, or_
+from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session
 from database import engine, get_db, migrate
 from fetcher import sync_shop, parse_excel
@@ -191,6 +191,10 @@ def can_view_hoang_orders(user_id: str) -> bool:
     return str(user_id or "").strip().upper() == TAKEN_ORDER_ADMIN_KEY
 
 
+def can_delete_orders(user_id: str) -> bool:
+    return str(user_id or "").strip().upper() == TAKEN_ORDER_ADMIN_KEY
+
+
 def get_user_capabilities(user_id: str) -> dict:
     normalized = str(user_id or "").strip()
     normalized_upper = normalized.upper()
@@ -280,6 +284,11 @@ def normalize_view_sync_stage(sync_stage: str | None) -> str:
     return stage
 
 
+def normalize_storage_sync_stage(sync_stage: str | None) -> str:
+    stage = normalize_view_sync_stage(sync_stage)
+    return stage or "pickup"
+
+
 def matches_sync_stage(status: str | None, sync_stage: str | None, raw_text: str | None = None) -> bool:
     stage = normalize_view_sync_stage(sync_stage)
     if not stage:
@@ -305,11 +314,17 @@ def filter_orders_by_sync_stage(rows: list, sync_stage: str | None) -> list:
     filtered_rows = []
     for row in rows:
         if isinstance(row, dict):
+            row_stage = normalize_view_sync_stage(row.get("sync_stage", ""))
             status = row.get("status", "")
             raw_text = row.get("raw_data", "")
         else:
+            row_stage = normalize_view_sync_stage(getattr(row, "sync_stage", ""))
             status = getattr(row, "status", "")
             raw_text = getattr(row, "raw_data", "")
+        if row_stage:
+            if row_stage == stage:
+                filtered_rows.append(row)
+            continue
         if matches_sync_stage(status, stage, raw_text):
             filtered_rows.append(row)
     return filtered_rows
@@ -317,21 +332,29 @@ def filter_orders_by_sync_stage(rows: list, sync_stage: str | None) -> list:
 
 def apply_sync_stage_filter(query, sync_stage: str | None):
     stage = normalize_view_sync_stage(sync_stage)
+    if not stage:
+        return query
+
+    stage_col = func.lower(func.coalesce(Order.sync_stage, ""))
     status_col = func.lower(func.coalesce(Order.status, ""))
-
+    fallback_filters = []
     if stage == "confirm":
-        return query.filter(or_(
+        fallback_filters = [
             status_col == "chờ x.nhận",
-            status_col == "cho x.nhan"
-        ))
-
-    if stage == "pickup":
-        return query.filter(or_(
+            status_col == "cho x.nhan",
+        ]
+    elif stage == "pickup":
+        fallback_filters = [
             status_col == "đã xác nhận(y.cầu x.hàng)",
-            status_col == "da xac nhan(y.cau x.hang)"
-        ))
+            status_col == "da xac nhan(y.cau x.hang)",
+        ]
 
-    return query
+    if fallback_filters:
+        return query.filter(or_(
+            stage_col == stage,
+            and_(stage_col == "", or_(*fallback_filters))
+        ))
+    return query.filter(stage_col == stage)
 
 
 def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str:
@@ -366,14 +389,6 @@ def build_shop_download_filename(shop_id: str, shop_name: str) -> str:
     normalized_shop_id = re.sub(r"[^0-9A-Za-z_-]+", "", str(shop_id or "").strip()) or "SHOP"
     normalized_shop_name = sanitize_download_filename_part(shop_name)
     return f"{normalized_shop_id}_{normalized_shop_name}.xlsx"
-
-
-def build_ascii_fallback_filename(filename: str) -> str:
-    ascii_name = unicodedata.normalize("NFKD", str(filename or ""))
-    ascii_name = ascii_name.encode("ascii", "ignore").decode("ascii")
-    ascii_name = re.sub(r'[^A-Za-z0-9._ -]+', "", ascii_name)
-    ascii_name = re.sub(r"\s+", " ", ascii_name).strip(" .")
-    return ascii_name or "download.xlsx"
 
 
 def escape_for_shell_double_quotes(value: str) -> str:
@@ -550,7 +565,7 @@ async def spxhoang_dashboard_page():
 @app.get("/api/summary")
 def get_summary(sync_stage: str = Query(""), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
-    filtered_orders = filter_orders_by_sync_stage(db.query(Order).all(), sync_stage)
+    filtered_orders = apply_sync_stage_filter(db.query(Order), sync_stage).all()
     total = len({str(getattr(order, "order_code", "") or "").strip() for order in filtered_orders if getattr(order, "order_code", None)})
     order_count_by_shop: dict[str, set[str]] = {}
     for order in filtered_orders:
@@ -597,11 +612,12 @@ def get_orders(
     q = db.query(Order)
     if shop_id:
         q = q.filter(Order.shop_id == shop_id)
+    q = apply_sync_stage_filter(q, sync_stage)
     if not is_full_access_user(user_id):
         q = q.filter(~Order.shop_id.in_(SENSITIVE_SHOPS)).filter(
             or_(Order.total == None, Order.total < SENSITIVE_TOTAL_THRESHOLD)
         )
-    orders = filter_orders_by_sync_stage(q.all(), sync_stage)
+    orders = q.all()
     aggregated_orders = sort_aggregated_orders(aggregate_orders(orders), sort)
     total = len(aggregated_orders)
     page_rows = aggregated_orders[(page - 1) * limit: page * limit]
@@ -610,6 +626,38 @@ def get_orders(
         "total": total,
         "page": page,
         "data": page_rows
+    }
+
+
+@app.post("/api/orders/delete")
+def delete_order(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not can_delete_orders(user_id):
+        return JSONResponse({"error": "Không có quyền xoá đơn."}, status_code=403)
+
+    order_code = str(body.get("order_code", "")).strip()
+    if not order_code:
+        return JSONResponse({"error": "Thiếu mã đơn hàng."}, status_code=422)
+
+    sync_stage = normalize_view_sync_stage(body.get("sync_stage"))
+    query = db.query(Order).filter(Order.order_code == order_code)
+    if sync_stage:
+        query = apply_sync_stage_filter(query, sync_stage)
+
+    rows = query.all()
+    if not rows:
+        return JSONResponse({"error": "Không tìm thấy đơn để xoá."}, status_code=404)
+
+    deleted = 0
+    for row in rows:
+        db.delete(row)
+        deleted += 1
+    db.commit()
+
+    return {
+        "ok": True,
+        "order_code": order_code,
+        "deleted": deleted,
     }
 
 @app.get("/api/orders/search-products")
@@ -1267,82 +1315,6 @@ def get_sync_download_links(request: Request, status: str = Query("receive_watin
     }
 
 
-@app.get("/api/sync-download-file")
-async def download_sync_shop_file(request: Request, shop_id: str = Query(...), status: str = Query("receive_wating")):
-    user_id = request.headers.get("X-User-ID", "").strip()
-    if not get_user_capabilities(user_id).get("admin_tools"):
-        return JSONResponse({"error": "Không có quyền truy cập."}, status_code=403)
-
-    normalized_shop_id = str(shop_id or "").strip()
-    shops = get_shops_map()
-    shop_meta = shops.get(normalized_shop_id)
-    if not shop_meta:
-        return JSONResponse({"error": "Không tìm thấy gian hàng cần tải."}, status_code=404)
-
-    _, shop_name = shop_meta
-    download_url = build_shop_download_url(normalized_shop_id, status=status)
-    headers = {
-        "accept": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/octet-stream,*/*",
-        "accept-language": "vi,en-US;q=0.9,en;q=0.8",
-        "cache-control": "no-cache",
-        "pragma": "no-cache",
-        "referer": download_url,
-        "user-agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/135.0.0.0 Safari/537.36"
-        ),
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-            response = await client.get(download_url, headers=headers)
-    except Exception as exc:
-        return JSONResponse(
-            {"error": f"Không tải được file từ Chiaki cho shop {normalized_shop_id}: {exc}"},
-            status_code=502,
-        )
-
-    if response.status_code != 200:
-        return JSONResponse(
-            {"error": f"Chiaki trả về HTTP {response.status_code} cho shop {normalized_shop_id}."},
-            status_code=502,
-        )
-
-    content_type = (response.headers.get("content-type") or "").lower()
-    if "html" in content_type or "json" in content_type:
-        preview = response.text[:300].strip()
-        detail = f" Phản hồi: {preview}" if preview else ""
-        return JSONResponse(
-            {"error": f"Chiaki không trả file Excel cho shop {normalized_shop_id}.{detail}"},
-            status_code=502,
-        )
-
-    content = response.content
-    if not content:
-        return JSONResponse(
-            {"error": f"Chiaki trả về file rỗng cho shop {normalized_shop_id}."},
-            status_code=502,
-        )
-
-    filename = build_shop_download_filename(normalized_shop_id, shop_name)
-    fallback_filename = build_ascii_fallback_filename(filename)
-    media_type = response.headers.get("content-type") or "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-    return Response(
-        content=content,
-        media_type=media_type,
-        headers={
-            "Cache-Control": "no-store",
-            "Content-Disposition": (
-                f'attachment; filename="{fallback_filename}"; '
-                f"filename*=UTF-8''{quote(filename)}"
-            ),
-            "X-Download-Filename": filename,
-        },
-    )
-
-
 @app.post("/api/tools/cancel-order-curl")
 async def create_cancel_order_curl(request: Request, body: dict):
     user_id = request.headers.get("X-User-ID", "").strip()
@@ -1565,9 +1537,13 @@ async def sync_upload(
         if shop_id not in shops:
             return JSONResponse({"error": f"Không tìm thấy shop {shop_id}"}, status_code=404)
 
+        storage_stage = normalize_storage_sync_stage(sync_stage)
         shop_url, shop_name = shops[shop_id]
         content = await file.read()
-        existing_shop_orders = db.query(Order).filter(Order.shop_id == shop_id).all()
+        existing_shop_orders = apply_sync_stage_filter(
+            db.query(Order).filter(Order.shop_id == shop_id),
+            storage_stage,
+        ).all()
         old_codes = {
             str(getattr(order, "order_code", "")).strip()
             for order in existing_shop_orders
@@ -1587,6 +1563,7 @@ async def sync_upload(
             db.delete(existing_order)
             deleted += 1
         for o in orders:
+            o["sync_stage"] = storage_stage
             db.add(Order(**o))
         db.commit()
         new_codes = {
