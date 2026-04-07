@@ -95,7 +95,7 @@ body.locked{overflow:hidden}
   width:100%;
   margin-top:18px;
   padding:15px 16px;
-  border-radius:18px;
+  border-radius:24px;
   border:1px solid rgba(83,57,45,.12);
   background:#fff;
   font:inherit;
@@ -113,7 +113,7 @@ body.locked{overflow:hidden}
   margin-top:12px;
   padding:14px 18px;
   border:none;
-  border-radius:18px;
+  border-radius:24px;
   background:linear-gradient(135deg,#9edcff,#57bdf7);
   color:#123b56;
   font:inherit;
@@ -222,7 +222,7 @@ h1{
 .hero-meta{
   margin-top:22px;
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   gap:12px;
 }
 
@@ -464,7 +464,7 @@ h1{
 
 .filter-btn{
   padding:12px 14px;
-  border-radius:16px;
+  border-radius:22px;
   background:#fff;
   border:1px solid var(--line);
   color:var(--muted);
@@ -574,7 +574,7 @@ tbody td:last-child{
   align-items:center;
   gap:8px;
   padding:10px 14px;
-  border-radius:14px;
+  border-radius:20px;
   background:#f8eef6;
   color:#814868;
   text-decoration:none;
@@ -635,7 +635,7 @@ tbody td:last-child{
 
 .list-title{
   font-size:14px;
-  font-weight:700;
+  font-weight:500;
 }
 
 .list-sub{
@@ -742,7 +742,7 @@ tbody td:last-child{
 .icon-btn{
   padding:10px 12px;
   border:none;
-  border-radius:14px;
+  border-radius:20px;
   background:#f8eef6;
   color:#814868;
   font:inherit;
@@ -772,7 +772,7 @@ tbody td:last-child{
 .order-update-btn{
   padding:10px 12px;
   border:none;
-  border-radius:14px;
+  border-radius:20px;
   background:linear-gradient(135deg,#a9e4ff,#63c6ff);
   color:#123b56;
   font:inherit;
@@ -789,7 +789,7 @@ tbody td:last-child{
   align-items:center;
   justify-content:center;
   padding:10px 12px;
-  border-radius:14px;
+  border-radius:20px;
   font-size:12px;
   color:#814868;
   text-decoration:none;
@@ -872,9 +872,14 @@ tbody td:last-child{
           <div class="hero-stat-sub" id="heroLastUpdated">Chưa có dữ liệu đồng bộ.</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-label">Tổng COD hiệu lực</div>
+          <div class="hero-stat-label">Tổng doanh thu đơn tạo</div>
           <div class="hero-stat-value" id="heroTotalCod">0₫</div>
-          <div class="hero-stat-sub">Không tính các đơn đang ở trạng thái hoàn tiền.</div>
+          <div class="hero-stat-sub">Tổng doanh thu của tất cả đơn đã config.</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Tổng doanh thu đã giao</div>
+          <div class="hero-stat-value" id="heroDeliveredRevenue">0₫</div>
+          <div class="hero-stat-sub">Tổng doanh thu các đơn đã giao thành công.</div>
         </div>
         <div class="hero-stat">
           <div class="hero-stat-label">Doanh thu hàng hoàn</div>
@@ -882,7 +887,7 @@ tbody td:last-child{
           <div class="hero-stat-sub">Tổng COD của các đơn đang ở trạng thái hoàn tiền.</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-label">Chưa thanh toán</div>
+          <div class="hero-stat-label">CHỜ THANH TOÁN</div>
           <div class="hero-stat-value" id="heroNetPayout">0₫</div>
           <div class="hero-stat-sub">Doanh thu chưa thanh toán trừ các khoản phí còn treo.</div>
         </div>
@@ -980,7 +985,7 @@ tbody td:last-child{
           <div class="side-pad">
             <div class="mini-grid">
               <div class="mini-card">
-                <div class="mini-label">Cần chuyển ngay</div>
+                <div class="mini-label">CHỜ THANH TOÁN</div>
                 <div class="mini-value" id="moneyNeedTransfer">0₫</div>
               </div>
               <div class="mini-card">
@@ -1150,7 +1155,7 @@ function computeMetrics(items, config) {
   const paymentHistory = Array.isArray(config.payment_history) ? [...config.payment_history] : [];
   paymentHistory.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
-  const totalCod = sum(items.filter(item => item.status !== 'returned'), item => item.cod);
+  const totalCod = sum(items, item => item.cod);
   const totalFee = sum(feeItems, item => item.amount);
   const collectedFee = sum(feeItems.filter(item => item.collected), item => item.amount);
   const outstandingFee = totalFee - collectedFee;
@@ -1186,6 +1191,7 @@ function computeMetrics(items, config) {
 function renderHero(metrics, config) {
   document.getElementById('heroTotalOrders').textContent = state.items.length.toLocaleString('vi-VN');
   document.getElementById('heroTotalCod').textContent = formatMoney(metrics.totalCod);
+  document.getElementById('heroDeliveredRevenue').textContent = formatMoney(metrics.deliveredRevenue);
   document.getElementById('heroReturnedRevenue').textContent = formatMoney(metrics.returnedRevenue);
   document.getElementById('heroNetPayout').textContent = formatMoney(metrics.needTransfer);
   document.getElementById('heroPaidOut').textContent = formatMoney(metrics.paidOut);
