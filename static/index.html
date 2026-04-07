@@ -1411,6 +1411,55 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
   display:none;
 }
 .mobile-detail-note.show{display:block}
+body.compact-touch-ui .header{
+  padding:14px 16px;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+body.compact-touch-ui .header-left{
+  width:100%;
+  align-items:flex-start;
+  position:relative;
+}
+body.compact-touch-ui .header-actions{
+  width:100%;
+  justify-content:space-between;
+}
+body.compact-touch-ui .mobile-download-toggle{display:inline-flex}
+body.compact-touch-ui .container{
+  margin:0;
+  padding:16px;
+}
+body.compact-touch-ui .fee-notice-wrap{
+  margin:16px;
+}
+body.compact-touch-ui .download-panel{
+  left:16px;
+  top:84px;
+  width:min(420px,calc(100vw - 32px));
+  max-height:calc(100vh - 100px);
+  border-radius:26px;
+  padding:16px 14px 14px;
+  z-index:7100;
+}
+body.compact-touch-ui .table-wrap{border-radius:28px}
+body.compact-touch-ui .table-header{
+  padding:14px 16px;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+body.compact-touch-ui thead th,
+body.compact-touch-ui tbody td{
+  padding:10px 12px;
+}
+body.compact-touch-ui .external-orders-wrap,
+body.compact-touch-ui #chartPanel,
+body.compact-touch-ui #shopTabsPanel,
+body.compact-touch-ui #panelOrderInfo{
+  display:none !important;
+}
 #btnGetPhone{
   background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
   box-shadow:0 4px 18px rgba(245,186,213,.4);
@@ -3690,7 +3739,13 @@ async function loadSummary() {
 }
 
 function isCompactViewport() {
-  return window.matchMedia('(max-width: 1100px)').matches;
+  const width = window.innerWidth || document.documentElement.clientWidth || 0;
+  const touchPoints = navigator.maxTouchPoints || 0;
+  return width <= 860 || (width <= 1366 && touchPoints > 0);
+}
+
+function applyCompactTouchUiMode() {
+  document.body.classList.toggle('compact-touch-ui', isCompactViewport());
 }
 
 function getMainTableColspan() {
@@ -4593,6 +4648,7 @@ async function refreshUserCapabilities() {
 }
 
 function syncDownloadPanelVisibility() {
+  applyCompactTouchUiMode();
   const panel = document.querySelector('.download-panel');
   const toggle = document.getElementById('mobileDownloadToggle');
   const id = localStorage.getItem(ID_KEY);
@@ -6421,6 +6477,7 @@ document.addEventListener('keydown', event => {
 });
 
 window.addEventListener('resize', () => {
+  applyCompactTouchUiMode();
   syncDownloadPanelVisibility();
   clearTimeout(window._mainOrdersResizeTimer);
   window._mainOrdersResizeTimer = setTimeout(() => {
@@ -6431,6 +6488,7 @@ window.addEventListener('resize', () => {
   }, 160);
 });
 
+applyCompactTouchUiMode();
 loadSyncShops();
 loadSyncShopsPending();
 if (checkIdGate()) { init(); }
