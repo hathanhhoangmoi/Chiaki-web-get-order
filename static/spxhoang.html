@@ -129,6 +129,78 @@ body.locked{overflow:hidden}
   font-weight:600;
 }
 
+.spx-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:70;
+  background:rgba(45,32,25,.24);
+  backdrop-filter:blur(10px);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.spx-modal.show{display:flex}
+.spx-modal-card{
+  width:min(1180px,100%);
+  height:min(820px,calc(100vh - 36px));
+  display:flex;
+  flex-direction:column;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(83,57,45,.10);
+  border-radius:28px;
+  box-shadow:0 24px 60px rgba(69,47,36,.16);
+  overflow:hidden;
+}
+.spx-modal-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 20px;
+  border-bottom:1px solid rgba(83,57,45,.08);
+  background:linear-gradient(180deg, rgba(255,249,239,.95), rgba(255,255,255,.96));
+}
+.spx-modal-title{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.03em;
+}
+.spx-modal-sub{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--muted);
+}
+.spx-modal-close{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:999px;
+  background:#fff3e5;
+  color:#8c541f;
+  font:inherit;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+}
+.spx-modal-frame-wrap{
+  flex:1;
+  overflow:auto;
+  background:#f7f3ee;
+}
+.spx-modal-zoom-stage{
+  width:133.3334%;
+  height:133.3334%;
+  transform:scale(.75);
+  transform-origin:top left;
+}
+.spx-modal-frame{
+  width:100%;
+  height:100%;
+  border:none;
+  background:#fff;
+}
+
 .shell{
   width:min(1380px,calc(100% - 28px));
   margin:18px auto 36px;
@@ -612,7 +684,7 @@ tbody td:last-child{
 
 .mini-value{
   margin-top:8px;
-  font-size:clamp(20px,2vw,24px);
+  font-size:clamp(17px,1.7vw,20px);
   font-weight:800;
   letter-spacing:-.04em;
   line-height:1.14;
@@ -853,6 +925,23 @@ tbody td:last-child{
       <input id="passInput" class="gate-input" type="password" placeholder="Nhập pass..." autocomplete="off" />
       <button id="gateBtn" class="gate-btn" type="button">Mở dashboard</button>
       <div class="gate-error" id="gateError"></div>
+    </div>
+  </div>
+
+  <div class="spx-modal" id="spxModal" onclick="if(event.target===this) closeSpxModal()">
+    <div class="spx-modal-card">
+      <div class="spx-modal-head">
+        <div>
+          <div class="spx-modal-title" id="spxModalTitle">SPX Viewer</div>
+          <div class="spx-modal-sub" id="spxModalSub">Popup đang mở ở zoom 75%.</div>
+        </div>
+        <button class="spx-modal-close" type="button" onclick="closeSpxModal()">✕</button>
+      </div>
+      <div class="spx-modal-frame-wrap">
+        <div class="spx-modal-zoom-stage">
+          <iframe id="spxModalFrame" class="spx-modal-frame" src="about:blank" loading="lazy"></iframe>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1326,6 +1415,20 @@ function paymentOptions(selected) {
   ].map(([value, label]) => `<option value="${value}" ${String(Number(!!selected)) === value ? 'selected' : ''}>${label}</option>`).join('');
 }
 
+function openSpxModal(codeKey) {
+  const code = decodeURIComponent(codeKey || '');
+  if (!state.unlocked || !code) return;
+  document.getElementById('spxModalTitle').textContent = `SPX Viewer • ${code}`;
+  document.getElementById('spxModalSub').textContent = 'Popup đang mở ở zoom 75% cho đúng mã đơn này.';
+  document.getElementById('spxModalFrame').src = `https://spx.vn/track?${encodeURIComponent(code)}`;
+  document.getElementById('spxModal').classList.add('show');
+}
+
+function closeSpxModal() {
+  document.getElementById('spxModal').classList.remove('show');
+  document.getElementById('spxModalFrame').src = 'about:blank';
+}
+
 function booleanOptions(selected, falseLabel, trueLabel) {
   return [
     ['0', falseLabel],
@@ -1401,7 +1504,7 @@ function renderOrdersTable() {
           <div class="order-action-cell">
             <div class="order-action-footer">
               ${state.viewOnly ? '' : `<button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>`}
-              <a class="order-inline-link" href="https://spx.vn/track?${encodeURIComponent(item.code || '')}" target="_blank" rel="noopener noreferrer">Mở SPX</a>
+              <button class="order-inline-link" type="button" onclick="openSpxModal('${codeKey}')">Mở SPX</button>
             </div>
           </div>
         </td>
@@ -1637,6 +1740,7 @@ function toggleViewMode() {
   if (!state.unlocked) return;
   state.viewOnly = !state.viewOnly;
   sessionStorage.setItem(VIEW_MODE_KEY, state.viewOnly ? '1' : '0');
+  closeSpxModal();
   if (!state.viewOnly) hydrateConfigInputs();
   updateViewModeUi();
 }
@@ -1689,6 +1793,10 @@ function submitPass() {
 document.getElementById('gateBtn').addEventListener('click', submitPass);
 document.getElementById('passInput').addEventListener('keydown', event => {
   if (event.key === 'Enter') submitPass();
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') closeSpxModal();
 });
 
 document.getElementById('searchInput').addEventListener('input', event => {
