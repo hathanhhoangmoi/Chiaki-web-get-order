@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tra cứu đơn hàng</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --bg-1:#fff6e8;
+  --bg-2:#ffe3d5;
+  --bg-3:#f5fbff;
+  --card:rgba(255,255,255,.78);
+  --border:rgba(176,97,69,.16);
+  --text:#4a2418;
+  --muted:#8a5a4c;
+  --primary:#d55d37;
+  --primary-2:#f2994a;
+  --shadow:0 18px 60px rgba(143,77,48,.14);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Be Vietnam Pro',sans-serif;
+  min-height:100vh;
+  color:var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255,196,128,.42), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(255,141,110,.24), transparent 28%),
+    linear-gradient(140deg,var(--bg-1),var(--bg-3) 52%,#fff2eb);
+}
+
+.shell{
+  width:min(920px,calc(100% - 32px));
+  margin:40px auto;
+}
+
+.hero,.panel,.result-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:28px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(18px);
+}
+
+.hero{
+  padding:28px;
+  margin-bottom:18px;
+}
+
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.72);
+  color:var(--primary);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+h1{
+  margin:18px 0 10px;
+  font-size:clamp(30px,5vw,46px);
+  line-height:1.05;
+}
+
+.hero p{
+  margin:0;
+  max-width:620px;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.panel{
+  padding:22px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.field.full{grid-column:1 / -1}
+
+label{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+input{
+  width:100%;
+  padding:15px 16px;
+  border-radius:18px;
+  border:1.5px solid rgba(213,93,55,.18);
+  background:rgba(255,255,255,.92);
+  color:var(--text);
+  font:inherit;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s, transform .2s;
+}
+
+input:focus{
+  border-color:rgba(213,93,55,.52);
+  box-shadow:0 0 0 4px rgba(213,93,55,.12);
+  transform:translateY(-1px);
+}
+
+.actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:18px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:none;
+  cursor:pointer;
+  font:inherit;
+  font-weight:800;
+  border-radius:999px;
+}
+
+.btn-primary{
+  padding:14px 22px;
+  color:#fffaf6;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  box-shadow:0 12px 28px rgba(213,93,55,.22);
+}
+
+.btn-primary:disabled{
+  opacity:.62;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+.hint{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.message{
+  display:none;
+  margin-top:16px;
+  padding:14px 16px;
+  border-radius:18px;
+  font-size:14px;
+  line-height:1.6;
+}
+
+.message.error{
+  background:rgba(220,38,38,.08);
+  border:1px solid rgba(220,38,38,.16);
+  color:#991b1b;
+}
+
+.message.success{
+  background:rgba(22,163,74,.08);
+  border:1px solid rgba(22,163,74,.16);
+  color:#166534;
+}
+
+.result-card{
+  display:none;
+  margin-top:18px;
+  padding:22px;
+}
+
+.result-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+
+.result-title{
+  font-size:22px;
+  font-weight:800;
+}
+
+.result-sub{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.remaining{
+  padding:10px 14px;
+  border-radius:16px;
+  background:rgba(255,243,230,.92);
+  color:#b45309;
+  font-size:13px;
+  font-weight:800;
+}
+
+.rows{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:minmax(130px,180px) minmax(0,1fr) auto;
+  gap:12px;
+  align-items:start;
+  padding:14px 16px;
+  border-radius:20px;
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(176,97,69,.12);
+}
+
+.row-label{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding-top:5px;
+}
+
+.row-value{
+  min-width:0;
+  word-break:break-word;
+  white-space:pre-wrap;
+  line-height:1.7;
+}
+
+.copy-btn{
+  padding:9px 14px;
+  border-radius:999px;
+  background:rgba(213,93,55,.1);
+  color:var(--primary);
+  min-width:74px;
+}
+
+.copy-btn.copied{
+  background:rgba(22,163,74,.14);
+  color:#166534;
+}
+
+@media (max-width:700px){
+  .shell{width:min(100% - 20px,920px);margin:20px auto}
+  .hero,.panel,.result-card{border-radius:24px}
+  .form-grid{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr}
+  .row-label{padding-top:0}
+  .copy-btn{justify-self:start}
+}
+</style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">Tra cứu đơn hàng</div>
+      <h1>Trang tra cứu riêng cho `/order`</h1>
+      <p>Nhập mã đơn hàng và key tra cứu để xem thông tin đơn. Mỗi dòng kết quả có nút copy riêng để sao chép nhanh.</p>
+    </section>
+
+    <section class="panel">
+      <div class="form-grid">
+        <div class="field">
+          <label for="orderCode">Mã đơn hàng</label>
+          <input id="orderCode" placeholder="Ví dụ: DH123456789" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="lookupKey">Key tra cứu</label>
+          <input id="lookupKey" placeholder="Nhập key tra cứu" autocomplete="off"/>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="lookupBtn" class="btn btn-primary" type="button">Tra cứu</button>
+        <div class="hint">URL sử dụng: <strong>/order</strong></div>
+      </div>
+
+      <div id="errorBox" class="message error"></div>
+      <div id="successBox" class="message success"></div>
+    </section>
+
+    <section id="resultCard" class="result-card">
+      <div class="result-head">
+        <div>
+          <div class="result-title">Kết quả tra cứu</div>
+          <div id="resultSub" class="result-sub"></div>
+        </div>
+        <div id="remainingBox" class="remaining"></div>
+      </div>
+      <div id="resultRows" class="rows"></div>
+    </section>
+  </main>
+
+<script>
+const fieldDefinitions = [
+  { key: 'order_code', label: 'Mã đơn hàng' },
+  { key: 'status', label: 'Trạng thái' },
+  { key: 'shop_name', label: 'Shop' },
+  { key: 'order_date', label: 'Ngày đặt' },
+  { key: 'customer_name', label: 'Tên khách hàng' },
+  { key: 'customer_id', label: 'ID khách hàng' },
+  { key: 'phone', label: 'Số điện thoại' },
+  { key: 'email', label: 'Email' },
+  { key: 'address', label: 'Địa chỉ' },
+  { key: 'product', label: 'Sản phẩm' },
+  { key: 'quantity', label: 'Số lượng' },
+  { key: 'prepaid_amount', label: 'Giá trị đơn' },
+  { key: 'payment', label: 'Thanh toán' },
+  { key: 'source', label: 'Nguồn' },
+  { key: 'source_from', label: 'Nguồn chi tiết' },
+  { key: 'shipping_code', label: 'Mã vận chuyển' },
+  { key: 'delivery_status', label: 'Trạng thái giao hàng' },
+  { key: 'delivery_location_id', label: 'Mã tỉnh/thành' },
+  { key: 'district_delivery_id', label: 'Mã quận/huyện' },
+  { key: 'commune_delivery_id', label: 'Mã phường/xã' },
+  { key: 'shipper_receive_time', label: 'Thời gian shipper nhận' },
+  { key: 'url_history', label: 'Lịch sử URL', formatter: value => Array.isArray(value) ? value.join('\n') : value },
+];
+
+function showMessage(id, text) {
+  const el = document.getElementById(id);
+  if (!text) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.textContent = text;
+  el.style.display = 'block';
+}
+
+function normalizeDisplayValue(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (Array.isArray(value)) return value.length ? value.join('\n') : '—';
+  return String(value);
+}
+
+async function copyValue(button, value) {
+  const original = button.textContent;
+  try {
+    await navigator.clipboard.writeText(value);
+  } catch (_) {
+    const input = document.createElement('textarea');
+    input.value = value;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+  }
+  button.textContent = 'Da copy';
+  button.classList.add('copied');
+  setTimeout(() => {
+    button.textContent = original;
+    button.classList.remove('copied');
+  }, 1200);
+}
+
+function renderRows(data) {
+  const rowsEl = document.getElementById('resultRows');
+  rowsEl.innerHTML = '';
+
+  fieldDefinitions.forEach(field => {
+    const rawValue = typeof field.formatter === 'function'
+      ? field.formatter(data[field.key])
+      : data[field.key];
+    const value = normalizeDisplayValue(rawValue);
+
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.textContent = field.label;
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'row-value';
+    valueEl.textContent = value;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'btn copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => copyValue(copyBtn, value));
+
+    row.appendChild(label);
+    row.appendChild(valueEl);
+    row.appendChild(copyBtn);
+    rowsEl.appendChild(row);
+  });
+}
+
+async function lookupOrder() {
+  const code = document.getElementById('orderCode').value.trim();
+  const key = document.getElementById('lookupKey').value.trim();
+  const btn = document.getElementById('lookupBtn');
+  const resultCard = document.getElementById('resultCard');
+
+  showMessage('errorBox', '');
+  showMessage('successBox', '');
+  resultCard.style.display = 'none';
+
+  if (!code) {
+    showMessage('errorBox', 'Vui lòng nhập mã đơn hàng.');
+    return;
+  }
+  if (!key) {
+    showMessage('errorBox', 'Vui lòng nhập key tra cứu.');
+    return;
+  }
+
+  localStorage.setItem('order_lookup_key', key);
+  btn.disabled = true;
+  btn.textContent = 'Dang tra cuu...';
+
+  try {
+    const res = await fetch('/api/order-info', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem('chiaki_id') || ''
+      },
+      body: JSON.stringify({ order_code: code, key })
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      showMessage('errorBox', data.error || 'Tra cứu thất bại.');
+      return;
+    }
+
+    renderRows(data);
+    document.getElementById('resultSub').textContent = `Đơn hàng ${data.order_code || code}`;
+    document.getElementById('remainingBox').textContent = data.remaining === -1
+      ? 'Key khong gioi han'
+      : `Con lai: ${data.remaining} luot`;
+    resultCard.style.display = 'block';
+    showMessage('successBox', 'Đã tải thông tin đơn hàng.');
+  } catch (error) {
+    showMessage('errorBox', `Lỗi kết nối: ${error.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Tra cứu';
+  }
+}
+
+document.getElementById('lookupBtn').addEventListener('click', lookupOrder);
+document.getElementById('orderCode').addEventListener('keydown', event => {
+  if (event.key === 'Enter') lookupOrder();
+});
+document.getElementById('lookupKey').addEventListener('keydown', event => {
+  if (event.key === 'Enter') lookupOrder();
+});
+
+const savedKey = localStorage.getItem('order_lookup_key') || localStorage.getItem('lastInfoKey');
+if (savedKey) {
+  document.getElementById('lookupKey').value = savedKey;
+}
+</script>
+</body>
+</html>
