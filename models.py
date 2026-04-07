@@ -65,3 +65,24 @@ class ExternalOrderConfigHoang(Base):
     id = Column(Integer, primary_key=True, default=1)
     fee_items_json = Column(Text)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class TakenOrder(Base):
+    __tablename__ = "taken_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_code = Column(String, unique=True, index=True)
+    lookup_order_code = Column(String, index=True)
+    shop_name = Column(String)
+    order_date = Column(String)
+    customer_name = Column(String)
+    phone = Column(String)
+    address = Column(Text)
+    product = Column(Text)
+    quantity = Column(Integer, default=0)
+    prepaid_amount = Column(String)
+    payment_status = Column(String)
+    take_status = Column(String, default="waiting_waybill")
+    taken_by = Column(String)
+    taken_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
