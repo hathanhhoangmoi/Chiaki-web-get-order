@@ -114,8 +114,8 @@ body.locked{overflow:hidden}
   padding:14px 18px;
   border:none;
   border-radius:18px;
-  background:linear-gradient(135deg,#f4c178,#f7a45d);
-  color:#402113;
+  background:linear-gradient(135deg,#9edcff,#57bdf7);
+  color:#123b56;
   font:inherit;
   font-weight:700;
   cursor:pointer;
@@ -204,10 +204,10 @@ h1{
 
 .btn-primary{
   padding:12px 18px;
-  background:linear-gradient(135deg,#f2c6ce,#d9b2ff);
-  color:#341d39;
+  background:linear-gradient(135deg,#a9e4ff,#63c6ff);
+  color:#123b56;
   font-weight:700;
-  box-shadow:0 12px 26px rgba(217,178,255,.20);
+  box-shadow:0 12px 26px rgba(99,198,255,.24);
 }
 
 .btn-secondary{
@@ -473,8 +473,8 @@ h1{
 }
 
 .filter-btn.active{
-  background:linear-gradient(135deg,#f2c6ce,#d9b2ff);
-  color:#341d39;
+  background:linear-gradient(135deg,#a9e4ff,#63c6ff);
+  color:#123b56;
   border-color:transparent;
 }
 
@@ -486,11 +486,12 @@ h1{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:760px;
+  min-width:680px;
+  table-layout:fixed;
 }
 
 thead th{
-  padding:0 0 14px;
+  padding:0 14px 14px 0;
   font-size:11px;
   font-weight:700;
   text-transform:uppercase;
@@ -500,10 +501,36 @@ thead th{
 }
 
 tbody td{
-  padding:16px 0;
+  padding:16px 14px 16px 0;
   border-top:1px solid rgba(83,57,45,.08);
   vertical-align:top;
   font-size:14px;
+}
+
+thead th:last-child,
+tbody td:last-child{
+  padding-right:0;
+}
+
+.orders-col-code{width:34%}
+.orders-col-cod{width:22%}
+.orders-col-updated{width:18%}
+.orders-col-actions{width:26%}
+
+.orders-cell-code,
+.orders-cell-cod{
+  min-width:0;
+}
+
+.orders-cell-updated{
+  color:var(--muted);
+  font-size:13px;
+  white-space:nowrap;
+}
+
+.orders-cell-actions{
+  width:1%;
+  white-space:nowrap;
 }
 
 .mono{
@@ -727,7 +754,8 @@ tbody td{
   display:flex;
   flex-direction:column;
   gap:8px;
-  min-width:180px;
+  min-width:0;
+  align-items:flex-start;
 }
 .order-action-row{
   display:grid;
@@ -739,13 +767,14 @@ tbody td{
   gap:8px;
   flex-wrap:wrap;
   align-items:center;
+  justify-content:flex-start;
 }
 .order-update-btn{
   padding:10px 12px;
   border:none;
   border-radius:14px;
-  background:linear-gradient(135deg,#f2c6ce,#d9b2ff);
-  color:#341d39;
+  background:linear-gradient(135deg,#a9e4ff,#63c6ff);
+  color:#123b56;
   font:inherit;
   font-size:12px;
   font-weight:700;
@@ -756,10 +785,22 @@ tbody td{
   cursor:not-allowed;
 }
 .order-inline-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 12px;
+  border-radius:14px;
   font-size:12px;
   color:#814868;
   text-decoration:none;
   font-weight:600;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(129,72,104,.22);
+}
+
+.orders-cell-code .order-editor-select,
+.orders-cell-cod .order-editor-select{
+  max-width:170px;
 }
 
 .view-only-tag{
@@ -1272,17 +1313,17 @@ function safeCodeKey(code) {
 function renderOrdersTableHead() {
   document.getElementById('ordersTableHead').innerHTML = state.viewOnly ? `
     <tr>
-      <th>Mã đơn</th>
-      <th>COD</th>
-      <th>Cập nhật</th>
-      <th>Liên kết</th>
+      <th class="orders-col-code">Mã đơn</th>
+      <th class="orders-col-cod">COD</th>
+      <th class="orders-col-updated">Cập nhật</th>
+      <th class="orders-col-actions">Liên kết</th>
     </tr>
   ` : `
     <tr>
-      <th>Mã đơn</th>
-      <th>COD</th>
-      <th>Cập nhật</th>
-      <th>Thao tác</th>
+      <th class="orders-col-code">Mã đơn</th>
+      <th class="orders-col-cod">COD</th>
+      <th class="orders-col-updated">Cập nhật</th>
+      <th class="orders-col-actions">Thao tác</th>
     </tr>
   `;
 }
@@ -1301,7 +1342,7 @@ function renderOrdersTable() {
     const codeKey = safeCodeKey(item.code || '');
     return `
       <tr>
-        <td>
+        <td class="orders-cell-code">
           <div class="mono">${escapeHtml(item.code || '—')}</div>
           <div style="margin-top:8px">
             <span class="status-badge ${meta.className}">${meta.label}</span>
@@ -1314,7 +1355,7 @@ function renderOrdersTable() {
             </div>
           `}
         </td>
-        <td>
+        <td class="orders-cell-cod">
           <div><strong>${formatMoney(item.cod || 0)}</strong></div>
           <div style="margin-top:8px">
             <span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>
@@ -1327,8 +1368,8 @@ function renderOrdersTable() {
             </div>
           `}
         </td>
-        <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
-        <td>
+        <td class="orders-cell-updated">${escapeHtml(formatDateTime(item.updated_at))}</td>
+        <td class="orders-cell-actions">
           <div class="order-action-cell">
             <div class="order-action-footer">
               ${state.viewOnly ? '' : `<button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>`}
