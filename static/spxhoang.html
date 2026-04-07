@@ -682,11 +682,12 @@ tbody td{
 }
 .editor-input,.editor-select,.order-editor-select{
   width:100%;
-  padding:11px 12px;
-  border-radius:14px;
+  padding:8px 10px;
+  border-radius:12px;
   border:1px solid rgba(83,57,45,.12);
   background:#fff;
   font:inherit;
+  font-size:12px;
   color:var(--ink);
   outline:none;
 }
@@ -902,15 +903,13 @@ tbody td{
               <thead>
                 <tr>
                   <th>Mã đơn</th>
-                  <th>Trạng thái</th>
                   <th>COD</th>
-                  <th>Thanh toán</th>
                   <th>Cập nhật</th>
                   <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody id="ordersTableBody">
-                <tr><td colspan="6"><div class="empty">Nhập pass để tải dữ liệu.</div></td></tr>
+                <tr><td colspan="4"><div class="empty">Nhập pass để tải dữ liệu.</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -1266,7 +1265,7 @@ function renderOrdersTable() {
   document.getElementById('ordersCountMeta').textContent = `${rows.length.toLocaleString('vi-VN')} đơn`;
   const tbody = document.getElementById('ordersTableBody');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`;
     return;
   }
 
@@ -1278,21 +1277,25 @@ function renderOrdersTable() {
         <td>
           <div class="mono">${escapeHtml(item.code || '—')}</div>
           <div style="margin-top:8px">
+            <span class="status-badge ${meta.className}">${meta.label}</span>
+          </div>
+          <div style="margin-top:8px">
             <select class="order-editor-select" id="orderStatus_${codeKey}">
               ${statusOptions(item.status || 'unknown')}
             </select>
           </div>
         </td>
-        <td><span class="status-badge ${meta.className}">${meta.label}</span></td>
         <td>
           <div><strong>${formatMoney(item.cod || 0)}</strong></div>
+          <div style="margin-top:8px">
+            <span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>
+          </div>
           <div style="margin-top:8px">
             <select class="order-editor-select" id="orderPaid_${codeKey}">
               ${paymentOptions(item.is_paid)}
             </select>
           </div>
         </td>
-        <td><span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
         <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
         <td>
           <div class="order-action-cell">
@@ -1519,7 +1522,7 @@ function renderDashboard(payload) {
 async function refreshDashboard() {
   if (!state.unlocked) return;
   const tbody = document.getElementById('ordersTableBody');
-  tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Đang tải dữ liệu từ hệ thống...</div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4"><div class="empty">Đang tải dữ liệu từ hệ thống...</div></td></tr>`;
   try {
     const res = await fetch('/api/external-orders?scope=hoang', {
       cache: 'no-store',
@@ -1530,7 +1533,7 @@ async function refreshDashboard() {
     renderDashboard(data);
     document.getElementById('refreshMeta').textContent = `Lần làm mới gần nhất: ${new Date().toLocaleString('vi-VN')}. Tự động làm mới mỗi 5 phút.`;
   } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Lỗi tải dữ liệu: ${escapeHtml(error.message)}</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty">Lỗi tải dữ liệu: ${escapeHtml(error.message)}</div></td></tr>`;
     document.getElementById('feeList').innerHTML = `<div class="empty">Chưa lấy được dữ liệu khoản phí.</div>`;
     document.getElementById('paymentHistoryList').innerHTML = `<div class="empty">Chưa lấy được lịch sử thanh toán.</div>`;
   }
