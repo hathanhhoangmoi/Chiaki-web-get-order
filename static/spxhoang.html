@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SPXHOANG Dashboard</title>
+<title>Đơn SPX của Hoàng</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -799,9 +799,9 @@ tbody td{
       <div class="hero-top">
         <div>
           <div class="eyebrow">SPXHOANG • Hoàng's Order</div>
-          <h1>Theo dõi đơn giao ngoại sàn của Hoàng theo dạng analytics</h1>
+          <h1>Theo dõi đơn SPX của Hoàng</h1>
           <div class="hero-copy">
-            Trang riêng cho Hoàng's Order với trọng tâm là trạng thái vận chuyển, COD, phí, số dư cần thanh toán và lịch sử giao dịch. Mở vào là thấy ngay tình trạng đơn và dòng tiền hiện tại.
+            Trang riêng cho Hoàng's Order với trọng tâm là trạng thái vận chuyển, COD, phí, số dư cần thanh toán và lịch sử giao dịch.
           </div>
         </div>
         <div class="hero-actions">
@@ -822,7 +822,7 @@ tbody td{
           <div class="hero-stat-sub">Không tính các đơn đang ở trạng thái hoàn hàng.</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-label">Cần chuyển hiện tại</div>
+          <div class="hero-stat-label">Chưa thanh toán</div>
           <div class="hero-stat-value" id="heroNetPayout">0₫</div>
           <div class="hero-stat-sub">Doanh thu chưa thanh toán trừ các khoản phí còn treo.</div>
         </div>
@@ -840,7 +840,7 @@ tbody td{
           <div class="card-head">
             <div>
               <div class="card-title">Tổng quan vận hành</div>
-              <div class="card-sub">Các KPI chính để nhìn nhanh trạng thái đơn giao ngoại sàn của Hoàng.</div>
+              <div class="card-sub">Các chỉ số chính.</div>
             </div>
             <div class="pill">Scope: Hoàng's Order</div>
           </div>
@@ -881,8 +881,8 @@ tbody td{
         <section class="card orders-card">
           <div class="card-head">
             <div>
-              <div class="card-title">Danh sách đơn ngoại sàn</div>
-              <div class="card-sub">Bảng lọc nhanh theo mã đơn, trạng thái và tình trạng thanh toán của Hoàng.</div>
+              <div class="card-title">Danh sách đơn</div>
+              <div class="card-sub">Bảng lọc nhanh theo mã đơn, trạng thái và tình trạng thanh toán.</div>
             </div>
             <div class="pill" id="ordersCountMeta">0 đơn</div>
           </div>
@@ -950,7 +950,7 @@ tbody td{
           <div class="card-head">
             <div>
               <div class="card-title">Khoản phí</div>
-              <div class="card-sub">Các khoản phí đang cấu hình cho Hoàng's Order.</div>
+              <div class="card-sub">Các khoản phí đang cấu hình.</div>
             </div>
             <div class="pill" id="feeMeta">0 khoản</div>
           </div>
@@ -977,7 +977,7 @@ tbody td{
           <div class="card-head">
             <div>
               <div class="card-title">Config dữ liệu</div>
-              <div class="card-sub">Điền từng dòng rõ ràng cho đơn hàng, khoản phí và lịch sử thanh toán. Mọi thay đổi sẽ lưu trực tiếp vào Hoàng's Order.</div>
+              <div class="card-sub">Mọi thay đổi sẽ lưu trực tiếp vào Hoàng's Order.</div>
             </div>
             <div class="pill">POST `/api/external-orders`</div>
           </div>
@@ -998,7 +998,7 @@ tbody td{
 
             <div class="config-label">Lịch sử thanh toán</div>
             <div class="editor-toolbar">
-              <div class="editor-hint">Mỗi dòng là một giao dịch đã thanh toán cho Hoàng.</div>
+              <div class="editor-hint">Mỗi dòng là một giao dịch đã thanh toán..</div>
               <button class="icon-btn" type="button" onclick="addPaymentEditorRow()">+ Thêm giao dịch</button>
             </div>
             <div class="editor-list" id="configPaymentList"></div>
