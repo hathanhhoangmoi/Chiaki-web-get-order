@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Tra cứu đơn hàng</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
 :root{
   --bg-1:#fff6e8;
@@ -23,7 +23,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  font-family:'Be Vietnam Pro',sans-serif;
+  font-family:'Poppins',sans-serif;
   min-height:100vh;
   color:var(--text);
   background:
@@ -279,17 +279,17 @@ input:focus{
       <div class="form-grid">
         <div class="field">
           <label for="orderCode">Mã đơn hàng</label>
-          <input id="orderCode" placeholder="Ví dụ: DH123456789" autocomplete="off"/>
+          <input id="orderCode" placeholder="R1234567890" autocomplete="off"/>
         </div>
         <div class="field">
-          <label for="lookupKey">Key tra cứu</label>
-          <input id="lookupKey" placeholder="Nhập key tra cứu" autocomplete="off"/>
+          <label for="lookupKey">Key</label>
+          <input id="lookupKey" placeholder="Nhập key..." autocomplete="off"/>
         </div>
       </div>
 
       <div class="actions">
         <button id="lookupBtn" class="btn btn-primary" type="button">Tra cứu</button>
-        <div class="hint">URL sử dụng: <strong>/order</strong></div>
+        <div class="hint">Trang chính: <strong>banhangcungchang.onrender.com</strong></div>
       </div>
 
       <div id="errorBox" class="message error"></div>
@@ -447,8 +447,8 @@ async function lookupOrder() {
     renderRows(data);
     document.getElementById('resultSub').textContent = `Đơn hàng ${data.order_code || code}`;
     document.getElementById('remainingBox').textContent = data.remaining === -1
-      ? 'Key khong gioi han'
-      : `Con lai: ${data.remaining} luot`;
+      ? 'Không giới hạn'
+      : `Còn lai: ${data.remaining} lượt`;
     resultCard.style.display = 'block';
     showMessage('successBox', 'Đã tải thông tin đơn hàng.');
   } catch (error) {
