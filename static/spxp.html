@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SPXP Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root{
+  --bg:#f4efe8;
+  --bg-soft:#fbf7f1;
+  --surface:rgba(255,255,255,.78);
+  --surface-strong:#ffffff;
+  --ink:#2d2019;
+  --muted:#7b675d;
+  --line:rgba(83,57,45,.10);
+  --shadow:0 18px 50px rgba(69,47,36,.10);
+  --brand:#c66a3d;
+  --brand-2:#e3a85d;
+  --green:#1f8c63;
+  --green-bg:#daf5ea;
+  --amber:#b66a12;
+  --amber-bg:#fff0d5;
+  --red:#b44d46;
+  --red-bg:#ffe0dd;
+  --slate:#53606e;
+  --slate-bg:#e6edf4;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(228,168,93,.20), transparent 30%),
+    radial-gradient(circle at 85% 15%, rgba(198,106,61,.14), transparent 26%),
+    linear-gradient(180deg,#f8f2eb 0%,#f5f1ea 44%,#f1ece4 100%);
+}
+
+.shell{
+  width:min(1380px,calc(100% - 28px));
+  margin:18px auto 36px;
+}
+
+.hero{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.34), transparent 28%),
+    linear-gradient(135deg,#33251f,#6d412c 54%,#ad6b41 100%);
+  color:#fff8f1;
+  border-radius:32px;
+  padding:28px;
+  box-shadow:0 24px 60px rgba(60,37,28,.18);
+}
+
+.hero::after{
+  content:"";
+  position:absolute;
+  inset:auto -60px -70px auto;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,.18), transparent 70%);
+}
+
+.hero-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  flex-wrap:wrap;
+}
+
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.12);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+h1{
+  margin:16px 0 10px;
+  font-size:clamp(34px,5vw,58px);
+  line-height:.98;
+  letter-spacing:-.04em;
+}
+
+.hero-copy{
+  max-width:720px;
+  font-size:15px;
+  line-height:1.8;
+  color:rgba(255,248,241,.78);
+}
+
+.hero-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:none;
+  cursor:pointer;
+  font:inherit;
+  border-radius:999px;
+  transition:transform .2s, box-shadow .2s, background .2s;
+}
+
+.btn:hover{transform:translateY(-1px)}
+
+.btn-primary{
+  padding:12px 18px;
+  background:linear-gradient(135deg,#f4c178,#f7a45d);
+  color:#402113;
+  font-weight:800;
+  box-shadow:0 12px 26px rgba(244,193,120,.24);
+}
+
+.btn-secondary{
+  padding:12px 18px;
+  background:rgba(255,255,255,.10);
+  color:#fff8f1;
+  border:1px solid rgba(255,255,255,.18);
+  font-weight:700;
+}
+
+.hero-meta{
+  margin-top:22px;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.hero-stat{
+  padding:18px 16px;
+  border-radius:24px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(12px);
+}
+
+.hero-stat-label{
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,248,241,.72);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.hero-stat-value{
+  margin-top:10px;
+  font-size:32px;
+  font-weight:900;
+  letter-spacing:-.04em;
+}
+
+.hero-stat-sub{
+  margin-top:8px;
+  font-size:12px;
+  color:rgba(255,248,241,.68);
+  line-height:1.6;
+}
+
+.layout{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:minmax(0,1.7fr) minmax(320px,.9fr);
+  gap:18px;
+}
+
+.stack{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:28px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(18px);
+}
+
+.card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:22px 22px 0;
+  flex-wrap:wrap;
+}
+
+.card-title{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.03em;
+}
+
+.card-sub{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.kpi-grid{
+  padding:18px 22px 22px;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.kpi{
+  padding:18px 16px;
+  border-radius:24px;
+  background:var(--surface-strong);
+  border:1px solid rgba(83,57,45,.08);
+}
+
+.kpi-label{
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.kpi-value{
+  margin-top:10px;
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:-.04em;
+}
+
+.kpi-sub{
+  margin-top:8px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.kpi.warm .kpi-value{color:var(--brand)}
+.kpi.good .kpi-value{color:var(--green)}
+.kpi.warn .kpi-value{color:var(--amber)}
+.kpi.calm .kpi-value{color:#365b8a}
+
+.bar-section{
+  padding:18px 22px 22px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+
+.bar-card{
+  padding:18px;
+  border-radius:24px;
+  background:var(--surface-strong);
+  border:1px solid rgba(83,57,45,.08);
+}
+
+.bar-card-title{
+  font-size:13px;
+  font-weight:800;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+
+.bar-list{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.bar-item{display:flex;flex-direction:column;gap:8px}
+
+.bar-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  font-size:13px;
+}
+
+.bar-label{font-weight:700}
+.bar-value{color:var(--muted);font-weight:700}
+
+.track{
+  width:100%;
+  height:10px;
+  border-radius:999px;
+  background:#efe9e1;
+  overflow:hidden;
+}
+
+.fill{
+  height:100%;
+  border-radius:inherit;
+}
+
+.fill.in-transit{background:linear-gradient(90deg,#f0a84d,#f7c063)}
+.fill.delivered{background:linear-gradient(90deg,#1f8c63,#48c68f)}
+.fill.returned{background:linear-gradient(90deg,#d77065,#ef9a8f)}
+.fill.paid{background:linear-gradient(90deg,#365b8a,#7193cc)}
+.fill.unpaid{background:linear-gradient(90deg,#7b675d,#b9a89c)}
+
+.table-tools{
+  padding:18px 22px 0;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.search{
+  flex:1;
+  min-width:220px;
+  padding:14px 16px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:#fff;
+  font:inherit;
+  color:var(--ink);
+  outline:none;
+}
+
+.search:focus{
+  border-color:rgba(198,106,61,.35);
+  box-shadow:0 0 0 4px rgba(198,106,61,.10);
+}
+
+.filter-group{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.filter-btn{
+  padding:12px 14px;
+  border-radius:16px;
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+
+.filter-btn.active{
+  background:linear-gradient(135deg,#f4c178,#f7a45d);
+  color:#402113;
+  border-color:transparent;
+}
+
+.table-wrap{
+  padding:18px 22px 22px;
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:760px;
+}
+
+thead th{
+  padding:0 0 14px;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  text-align:left;
+}
+
+tbody td{
+  padding:16px 0;
+  border-top:1px solid rgba(83,57,45,.08);
+  vertical-align:top;
+  font-size:14px;
+}
+
+.mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:13px;
+  font-weight:800;
+}
+
+.order-link{
+  text-decoration:none;
+  color:inherit;
+}
+
+.status-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.status-in_transit{background:var(--amber-bg);color:var(--amber)}
+.status-delivered{background:var(--green-bg);color:var(--green)}
+.status-returned{background:var(--red-bg);color:var(--red)}
+.status-unknown{background:var(--slate-bg);color:var(--slate)}
+.paid-chip{
+  display:inline-flex;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#eef3f8;
+  color:#4f657c;
+  font-size:12px;
+  font-weight:800;
+}
+.paid-chip.ok{
+  background:var(--green-bg);
+  color:var(--green);
+}
+
+.open-link{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:14px;
+  background:#fff4e6;
+  color:#8c541f;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:800;
+  border:1px solid rgba(182,106,18,.12);
+}
+
+.side-pad{
+  padding:18px 22px 22px;
+}
+
+.mini-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.mini-card{
+  padding:16px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid rgba(83,57,45,.08);
+}
+
+.mini-label{
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+}
+
+.mini-value{
+  margin-top:8px;
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-.04em;
+}
+
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.list-item{
+  padding:16px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid rgba(83,57,45,.08);
+}
+
+.list-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.list-title{
+  font-size:14px;
+  font-weight:800;
+}
+
+.list-sub{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.amount{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.03em;
+  white-space:nowrap;
+}
+
+.empty{
+  padding:32px 18px;
+  border-radius:22px;
+  background:#fff;
+  border:1px dashed rgba(83,57,45,.16);
+  color:var(--muted);
+  text-align:center;
+  line-height:1.8;
+}
+
+.footer-note{
+  margin-top:16px;
+  font-size:12px;
+  color:var(--muted);
+  text-align:right;
+}
+
+@media (max-width: 1180px){
+  .layout{grid-template-columns:1fr}
+}
+
+@media (max-width: 980px){
+  .hero-meta,.kpi-grid,.bar-section{grid-template-columns:1fr 1fr}
+}
+
+@media (max-width: 720px){
+  .shell{width:min(100% - 16px,1380px);margin:10px auto 24px}
+  .hero{border-radius:26px;padding:20px}
+  .hero-meta,.kpi-grid,.bar-section,.mini-grid{grid-template-columns:1fr}
+  .card,.list-item,.mini-card{border-radius:24px}
+  .card-head,.table-tools,.table-wrap,.side-pad{padding-left:16px;padding-right:16px}
+  h1{font-size:34px}
+}
+</style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">SPXP • Phương's Order</div>
+          <h1>Theo dõi đơn giao ngoại sàn trực quan, rõ số liệu</h1>
+          <div class="hero-copy">
+            Trang riêng cho đơn giao ngoại sàn của Phương. Tập trung vào trạng thái vận chuyển, COD, phí, công nợ cần chuyển và lịch sử thanh toán để nhìn vào là hiểu ngay tình hình hiện tại.
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" onclick="refreshDashboard()">Làm mới dữ liệu</button>
+          <a class="btn btn-secondary" href="/" style="text-decoration:none">Về dashboard chính</a>
+        </div>
+      </div>
+
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <div class="hero-stat-label">Tổng đơn theo dõi</div>
+          <div class="hero-stat-value" id="heroTotalOrders">0</div>
+          <div class="hero-stat-sub" id="heroLastUpdated">Chưa có dữ liệu đồng bộ.</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Tổng COD đang theo dõi</div>
+          <div class="hero-stat-value" id="heroTotalCod">0₫</div>
+          <div class="hero-stat-sub">Gồm tất cả trạng thái trong Phương's Order.</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Cần chuyển hiện tại</div>
+          <div class="hero-stat-value" id="heroNetPayout">0₫</div>
+          <div class="hero-stat-sub">Doanh thu chưa thanh toán trừ các khoản phí còn treo.</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Đã thanh toán</div>
+          <div class="hero-stat-value" id="heroPaidOut">0₫</div>
+          <div class="hero-stat-sub">COD đã ghi nhận trả tiền cho Phương.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="stack">
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Tổng quan vận hành</div>
+              <div class="card-sub">Các KPI cốt lõi để nắm trạng thái giao hàng, doanh thu và dòng tiền trong một màn hình.</div>
+            </div>
+            <div class="pill" id="dashboardScopeTag">Scope: Phương's Order</div>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi warm">
+              <div class="kpi-label">Đang giao</div>
+              <div class="kpi-value" id="kpiInTransitCount">0</div>
+              <div class="kpi-sub" id="kpiInTransitRevenue">0₫</div>
+            </div>
+            <div class="kpi good">
+              <div class="kpi-label">Giao thành công</div>
+              <div class="kpi-value" id="kpiDeliveredCount">0</div>
+              <div class="kpi-sub" id="kpiDeliveredRevenue">0₫</div>
+            </div>
+            <div class="kpi warn">
+              <div class="kpi-label">Hoàn hàng</div>
+              <div class="kpi-value" id="kpiReturnedCount">0</div>
+              <div class="kpi-sub" id="kpiReturnedRevenue">0₫</div>
+            </div>
+            <div class="kpi calm">
+              <div class="kpi-label">Chưa xử lý</div>
+              <div class="kpi-value" id="kpiUnknownCount">0</div>
+              <div class="kpi-sub" id="kpiUnknownRevenue">0₫</div>
+            </div>
+          </div>
+          <div class="bar-section">
+            <div class="bar-card">
+              <div class="bar-card-title">Phân bổ trạng thái đơn</div>
+              <div class="bar-list" id="statusBarList"></div>
+            </div>
+            <div class="bar-card">
+              <div class="bar-card-title">Tiến độ thanh toán COD đã giao</div>
+              <div class="bar-list" id="paymentBarList"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Danh sách đơn ngoại sàn</div>
+              <div class="card-sub">Bảng theo dõi chi tiết từng mã đơn, có thể lọc theo trạng thái hoặc tình trạng thanh toán và mở nhanh SPX.</div>
+            </div>
+            <div class="pill" id="ordersCountMeta">0 đơn</div>
+          </div>
+          <div class="table-tools">
+            <input id="searchInput" class="search" type="text" placeholder="Tìm theo mã đơn..." />
+            <div class="filter-group" id="statusFilters">
+              <button class="btn filter-btn active" type="button" data-filter="all">Tất cả</button>
+              <button class="btn filter-btn" type="button" data-filter="in_transit">Đang giao</button>
+              <button class="btn filter-btn" type="button" data-filter="delivered">Đã giao</button>
+              <button class="btn filter-btn" type="button" data-filter="returned">Hoàn</button>
+              <button class="btn filter-btn" type="button" data-filter="unknown">Chưa xử lý</button>
+              <button class="btn filter-btn" type="button" data-filter="paid">Đã thanh toán</button>
+              <button class="btn filter-btn" type="button" data-filter="unpaid">Chưa thanh toán</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Trạng thái</th>
+                  <th>COD</th>
+                  <th>Thanh toán</th>
+                  <th>Cập nhật</th>
+                  <th>SPX</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+                <tr><td colspan="6"><div class="empty">Đang tải dữ liệu...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="stack">
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Dòng tiền</div>
+              <div class="card-sub">Tập trung vào khoản cần chuyển, khoản đã thanh toán và tổng phí còn treo.</div>
+            </div>
+          </div>
+          <div class="side-pad">
+            <div class="mini-grid">
+              <div class="mini-card">
+                <div class="mini-label">Cần chuyển ngay</div>
+                <div class="mini-value" id="moneyNeedTransfer">0₫</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Đã thanh toán</div>
+                <div class="mini-value" id="moneyTransferred">0₫</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Phí còn treo</div>
+                <div class="mini-value" id="moneyOutstandingFee">0₫</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Tổng lịch sử thanh toán</div>
+                <div class="mini-value" id="moneyPaymentHistory">0₫</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Khoản phí</div>
+              <div class="card-sub">Nhìn nhanh các khoản khấu trừ đang cấu hình cho Phương's Order.</div>
+            </div>
+            <div class="pill" id="feeMeta">0 khoản</div>
+          </div>
+          <div class="side-pad">
+            <div class="list" id="feeList"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Lịch sử thanh toán</div>
+              <div class="card-sub">Các giao dịch thanh toán đã nhập thủ công trong cấu hình hệ thống.</div>
+            </div>
+            <div class="pill" id="paymentMeta">0 giao dịch</div>
+          </div>
+          <div class="side-pad">
+            <div class="list" id="paymentHistoryList"></div>
+            <div class="footer-note" id="refreshMeta">Tự động làm mới mỗi 5 phút.</div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+<script>
+const state = {
+  items: [],
+  config: { fee_items: [], payment_history: [] },
+  filter: 'all',
+  query: '',
+};
+
+function normalizeConfig(config) {
+  const source = config && typeof config === 'object' ? config : {};
+  return {
+    fee_items: Array.isArray(source.fee_items) ? source.fee_items : [],
+    payment_history: Array.isArray(source.payment_history) ? source.payment_history : [],
+    updated_at: source.updated_at || null,
+  };
+}
+
+function formatMoney(value) {
+  return `${Number(value || 0).toLocaleString('vi-VN')}₫`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatDateTime(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString('vi-VN');
+}
+
+function formatDate(value) {
+  if (!value) return '—';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    const [y, m, d] = String(value).split('-');
+    return `${d}/${m}/${y}`;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString('vi-VN');
+}
+
+function statusMeta(status) {
+  const map = {
+    in_transit: { label: 'Đang giao', className: 'status-in_transit' },
+    delivered: { label: 'Đã giao thành công', className: 'status-delivered' },
+    returned: { label: 'Hoàn hàng', className: 'status-returned' },
+    unknown: { label: 'Chưa xử lý', className: 'status-unknown' },
+  };
+  return map[status] || map.unknown;
+}
+
+function sum(list, getValue) {
+  return (list || []).reduce((total, item) => total + Number(getValue(item) || 0), 0);
+}
+
+function computeMetrics(items, config) {
+  const groups = {
+    in_transit: items.filter(item => item.status === 'in_transit'),
+    delivered: items.filter(item => item.status === 'delivered'),
+    returned: items.filter(item => item.status === 'returned'),
+    unknown: items.filter(item => !item.status || item.status === 'unknown'),
+  };
+
+  const deliveredPaid = groups.delivered.filter(item => item.is_paid);
+  const deliveredUnpaid = groups.delivered.filter(item => !item.is_paid);
+  const feeItems = Array.isArray(config.fee_items) ? config.fee_items : [];
+  const paymentHistory = Array.isArray(config.payment_history) ? [...config.payment_history] : [];
+  paymentHistory.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+  const totalCod = sum(items, item => item.cod);
+  const totalFee = sum(feeItems, item => item.amount);
+  const collectedFee = sum(feeItems.filter(item => item.collected), item => item.amount);
+  const outstandingFee = totalFee - collectedFee;
+  const deliveredRevenue = sum(groups.delivered, item => item.cod);
+  const deliveredRevenuePaid = sum(deliveredPaid, item => item.cod);
+  const deliveredRevenueUnpaid = sum(deliveredUnpaid, item => item.cod);
+  const returnedRevenue = sum(groups.returned, item => item.cod);
+  const unknownRevenue = sum(groups.unknown, item => item.cod);
+  const inTransitRevenue = sum(groups.in_transit, item => item.cod);
+  const paymentHistoryTotal = sum(paymentHistory, item => item.amount);
+
+  return {
+    groups,
+    totalCod,
+    totalFee,
+    collectedFee,
+    outstandingFee,
+    deliveredRevenue,
+    deliveredRevenuePaid,
+    deliveredRevenueUnpaid,
+    returnedRevenue,
+    unknownRevenue,
+    inTransitRevenue,
+    paymentHistoryTotal,
+    needTransfer: deliveredRevenueUnpaid - outstandingFee,
+    paidOut: deliveredRevenuePaid - collectedFee,
+    deliveredPaidCount: deliveredPaid.length,
+    deliveredUnpaidCount: deliveredUnpaid.length,
+    paymentHistory,
+  };
+}
+
+function renderHero(metrics, config) {
+  document.getElementById('heroTotalOrders').textContent = state.items.length.toLocaleString('vi-VN');
+  document.getElementById('heroTotalCod').textContent = formatMoney(metrics.totalCod);
+  document.getElementById('heroNetPayout').textContent = formatMoney(metrics.needTransfer);
+  document.getElementById('heroPaidOut').textContent = formatMoney(metrics.paidOut);
+  document.getElementById('heroLastUpdated').textContent = config.updated_at
+    ? `Config cập nhật: ${formatDateTime(config.updated_at)}`
+    : 'Chưa có mốc cập nhật config.';
+}
+
+function renderKpis(metrics) {
+  document.getElementById('kpiInTransitCount').textContent = metrics.groups.in_transit.length.toLocaleString('vi-VN');
+  document.getElementById('kpiInTransitRevenue').textContent = formatMoney(metrics.inTransitRevenue);
+  document.getElementById('kpiDeliveredCount').textContent = metrics.groups.delivered.length.toLocaleString('vi-VN');
+  document.getElementById('kpiDeliveredRevenue').textContent = formatMoney(metrics.deliveredRevenue);
+  document.getElementById('kpiReturnedCount').textContent = metrics.groups.returned.length.toLocaleString('vi-VN');
+  document.getElementById('kpiReturnedRevenue').textContent = formatMoney(metrics.returnedRevenue);
+  document.getElementById('kpiUnknownCount').textContent = metrics.groups.unknown.length.toLocaleString('vi-VN');
+  document.getElementById('kpiUnknownRevenue').textContent = formatMoney(metrics.unknownRevenue);
+}
+
+function renderBars(metrics) {
+  const totalOrders = Math.max(state.items.length, 1);
+  const totalDelivered = Math.max(metrics.groups.delivered.length, 1);
+  document.getElementById('statusBarList').innerHTML = [
+    ['Đang giao', metrics.groups.in_transit.length, 'in-transit'],
+    ['Đã giao', metrics.groups.delivered.length, 'delivered'],
+    ['Hoàn hàng', metrics.groups.returned.length, 'returned'],
+    ['Chưa xử lý', metrics.groups.unknown.length, 'unpaid'],
+  ].map(([label, value, fill]) => `
+    <div class="bar-item">
+      <div class="bar-meta">
+        <div class="bar-label">${label}</div>
+        <div class="bar-value">${value.toLocaleString('vi-VN')} đơn</div>
+      </div>
+      <div class="track"><div class="fill ${fill}" style="width:${(value / totalOrders) * 100}%"></div></div>
+    </div>
+  `).join('');
+
+  document.getElementById('paymentBarList').innerHTML = [
+    ['Đã thanh toán', metrics.deliveredPaidCount, 'paid'],
+    ['Chưa thanh toán', metrics.deliveredUnpaidCount, 'unpaid'],
+  ].map(([label, value, fill]) => `
+    <div class="bar-item">
+      <div class="bar-meta">
+        <div class="bar-label">${label}</div>
+        <div class="bar-value">${value.toLocaleString('vi-VN')} đơn</div>
+      </div>
+      <div class="track"><div class="fill ${fill}" style="width:${(value / totalDelivered) * 100}%"></div></div>
+    </div>
+  `).join('');
+}
+
+function renderMoney(metrics) {
+  document.getElementById('moneyNeedTransfer').textContent = formatMoney(metrics.needTransfer);
+  document.getElementById('moneyTransferred').textContent = formatMoney(metrics.paidOut);
+  document.getElementById('moneyOutstandingFee').textContent = formatMoney(metrics.outstandingFee);
+  document.getElementById('moneyPaymentHistory').textContent = formatMoney(metrics.paymentHistoryTotal);
+}
+
+function renderFeeList(config) {
+  const items = normalizeConfig(config).fee_items;
+  document.getElementById('feeMeta').textContent = `${items.length.toLocaleString('vi-VN')} khoản`;
+  document.getElementById('feeList').innerHTML = items.length ? items.map(item => `
+    <div class="list-item">
+      <div class="list-row">
+        <div>
+          <div class="list-title">${escapeHtml(item.content || 'Không có nội dung')}</div>
+          <div class="list-sub">${item.collected ? 'Đã thu' : 'Chưa thu'}</div>
+        </div>
+        <div class="amount">${formatMoney(item.amount || 0)}</div>
+      </div>
+    </div>
+  `).join('') : `<div class="empty">Chưa có khoản phí nào được cấu hình.</div>`;
+}
+
+function renderPaymentHistory(metrics) {
+  const items = metrics.paymentHistory;
+  document.getElementById('paymentMeta').textContent = `${items.length.toLocaleString('vi-VN')} giao dịch`;
+  document.getElementById('paymentHistoryList').innerHTML = items.length ? items.map(item => `
+    <div class="list-item">
+      <div class="list-row">
+        <div>
+          <div class="list-title">${escapeHtml(formatDate(item.date))}</div>
+          <div class="list-sub">Thanh toán đã ghi nhận thủ công</div>
+        </div>
+        <div class="amount">${formatMoney(item.amount || 0)}</div>
+      </div>
+    </div>
+  `).join('') : `<div class="empty">Chưa có lịch sử thanh toán nào.</div>`;
+}
+
+function filteredOrders() {
+  const query = state.query.trim().toLowerCase();
+  return state.items.filter(item => {
+    const codeMatch = !query || String(item.code || '').toLowerCase().includes(query);
+    if (!codeMatch) return false;
+    if (state.filter === 'all') return true;
+    if (state.filter === 'paid') return !!item.is_paid;
+    if (state.filter === 'unpaid') return !item.is_paid;
+    return (item.status || 'unknown') === state.filter;
+  });
+}
+
+function renderOrdersTable() {
+  const rows = filteredOrders();
+  document.getElementById('ordersCountMeta').textContent = `${rows.length.toLocaleString('vi-VN')} đơn`;
+  const tbody = document.getElementById('ordersTableBody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(item => {
+    const meta = statusMeta(item.status || 'unknown');
+    return `
+      <tr>
+        <td class="mono">${escapeHtml(item.code || '—')}</td>
+        <td><span class="status-badge ${meta.className}">${meta.label}</span></td>
+        <td><strong>${formatMoney(item.cod || 0)}</strong></td>
+        <td><span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
+        <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
+        <td><a class="open-link" href="https://spx.vn/track?${encodeURIComponent(item.code || '')}" target="_blank" rel="noopener noreferrer">Mở SPX</a></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderDashboard(payload) {
+  state.items = Array.isArray(payload.items) ? payload.items : [];
+  state.config = normalizeConfig(payload.config);
+  const metrics = computeMetrics(state.items, state.config);
+  renderHero(metrics, state.config);
+  renderKpis(metrics);
+  renderBars(metrics);
+  renderMoney(metrics);
+  renderFeeList(state.config);
+  renderPaymentHistory(metrics);
+  renderOrdersTable();
+}
+
+async function refreshDashboard() {
+  const tbody = document.getElementById('ordersTableBody');
+  tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Đang tải dữ liệu từ hệ thống...</div></td></tr>`;
+  try {
+    const res = await fetch('/api/external-orders?scope=phuong', { cache: 'no-store' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Không tải được dữ liệu đơn ngoại sàn.');
+    renderDashboard(data);
+    document.getElementById('refreshMeta').textContent = `Lần làm mới gần nhất: ${new Date().toLocaleString('vi-VN')}. Tự động làm mới mỗi 5 phút.`;
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Lỗi tải dữ liệu: ${escapeHtml(error.message)}</div></td></tr>`;
+    document.getElementById('feeList').innerHTML = `<div class="empty">Chưa lấy được dữ liệu khoản phí.</div>`;
+    document.getElementById('paymentHistoryList').innerHTML = `<div class="empty">Chưa lấy được lịch sử thanh toán.</div>`;
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', event => {
+  state.query = event.target.value || '';
+  renderOrdersTable();
+});
+
+document.getElementById('statusFilters').addEventListener('click', event => {
+  const target = event.target.closest('[data-filter]');
+  if (!target) return;
+  state.filter = target.dataset.filter || 'all';
+  [...document.querySelectorAll('#statusFilters [data-filter]')].forEach(button => {
+    button.classList.toggle('active', button === target);
+  });
+  renderOrdersTable();
+});
+
+refreshDashboard();
+setInterval(refreshDashboard, 300000);
+</script>
+</body>
+</html>
