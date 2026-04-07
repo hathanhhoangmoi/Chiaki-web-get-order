@@ -435,6 +435,12 @@ async def root():
     with open("static/index.html", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/order", response_class=HTMLResponse)
+@app.get("/order/", response_class=HTMLResponse)
+async def order_lookup_page():
+    with open("static/order.html", encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/api/summary")
 def get_summary(sync_stage: str = Query(""), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
