@@ -276,6 +276,24 @@ h1{
   box-shadow:var(--shadow);
   backdrop-filter:blur(18px);
 }
+.card.overview-card{
+  background:linear-gradient(180deg, rgba(255,245,248,.96), rgba(255,250,252,.88));
+}
+.card.orders-card{
+  background:linear-gradient(180deg, rgba(244,250,255,.96), rgba(251,254,255,.88));
+}
+.card.money-card{
+  background:linear-gradient(180deg, rgba(244,252,248,.96), rgba(251,255,253,.88));
+}
+.card.fee-card{
+  background:linear-gradient(180deg, rgba(255,249,239,.96), rgba(255,253,248,.9));
+}
+.card.history-card{
+  background:linear-gradient(180deg, rgba(247,244,255,.96), rgba(252,251,255,.9));
+}
+.card.config-card{
+  background:linear-gradient(180deg, rgba(255,247,242,.96), rgba(255,252,249,.9));
+}
 
 .card-head{
   display:flex;
@@ -489,7 +507,7 @@ tbody td{
 }
 
 .mono{
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:'Inter',sans-serif;
   font-size:13px;
   font-weight:700;
 }
@@ -817,7 +835,7 @@ tbody td{
 
     <section class="layout">
       <div class="stack">
-        <section class="card">
+        <section class="card overview-card">
           <div class="card-head">
             <div>
               <div class="card-title">Tổng quan vận hành</div>
@@ -859,7 +877,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card orders-card">
           <div class="card-head">
             <div>
               <div class="card-title">Danh sách đơn ngoại sàn</div>
@@ -900,7 +918,7 @@ tbody td{
       </div>
 
       <aside class="stack">
-        <section class="card">
+        <section class="card money-card">
           <div class="card-head">
             <div>
               <div class="card-title">Dòng tiền</div>
@@ -929,7 +947,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card fee-card">
           <div class="card-head">
             <div>
               <div class="card-title">Khoản phí</div>
@@ -942,7 +960,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card history-card">
           <div class="card-head">
             <div>
               <div class="card-title">Lịch sử thanh toán</div>
@@ -956,7 +974,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card config-card">
           <div class="card-head">
             <div>
               <div class="card-title">Config dữ liệu</div>
@@ -1257,21 +1275,27 @@ function renderOrdersTable() {
     const codeKey = safeCodeKey(item.code || '');
     return `
       <tr>
-        <td class="mono">${escapeHtml(item.code || '—')}</td>
+        <td>
+          <div class="mono">${escapeHtml(item.code || '—')}</div>
+          <div style="margin-top:8px">
+            <select class="order-editor-select" id="orderStatus_${codeKey}">
+              ${statusOptions(item.status || 'unknown')}
+            </select>
+          </div>
+        </td>
         <td><span class="status-badge ${meta.className}">${meta.label}</span></td>
-        <td><strong>${formatMoney(item.cod || 0)}</strong></td>
+        <td>
+          <div><strong>${formatMoney(item.cod || 0)}</strong></div>
+          <div style="margin-top:8px">
+            <select class="order-editor-select" id="orderPaid_${codeKey}">
+              ${paymentOptions(item.is_paid)}
+            </select>
+          </div>
+        </td>
         <td><span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
         <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
         <td>
           <div class="order-action-cell">
-            <div class="order-action-row">
-              <select class="order-editor-select" id="orderStatus_${codeKey}">
-                ${statusOptions(item.status || 'unknown')}
-              </select>
-              <select class="order-editor-select" id="orderPaid_${codeKey}">
-                ${paymentOptions(item.is_paid)}
-              </select>
-            </div>
             <div class="order-action-footer">
               <button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>
               <a class="order-inline-link" href="https://spx.vn/track?${encodeURIComponent(item.code || '')}" target="_blank" rel="noopener noreferrer">Mở SPX</a>
