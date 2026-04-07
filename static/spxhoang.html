@@ -762,6 +762,19 @@ tbody td{
   font-weight:600;
 }
 
+.view-only-tag{
+  margin-top:8px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#eef3f8;
+  color:#4f657c;
+  font-size:12px;
+  font-weight:700;
+}
+
 @media (max-width: 1180px){
   .layout{grid-template-columns:1fr}
 }
@@ -805,6 +818,7 @@ tbody td{
           </div>
         </div>
         <div class="hero-actions">
+          <button class="btn btn-secondary" id="viewModeBtn" type="button" onclick="toggleViewMode()">View as: Chỉ xem</button>
           <button class="btn btn-primary" type="button" onclick="refreshDashboard()">Làm mới dữ liệu</button>
           <a class="btn btn-secondary" href="/" rel="noopener noreferrer">Về dashboard chính</a>
         </div>
@@ -900,14 +914,7 @@ tbody td{
           </div>
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Mã đơn</th>
-                  <th>COD</th>
-                  <th>Cập nhật</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
+              <thead id="ordersTableHead"></thead>
               <tbody id="ordersTableBody">
                 <tr><td colspan="4"><div class="empty">Nhập pass để tải dữ liệu.</div></td></tr>
               </tbody>
@@ -973,7 +980,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card config-card">
+        <section class="card config-card" id="configCard">
           <div class="card-head">
             <div>
               <div class="card-title">Config dữ liệu</div>
@@ -1018,6 +1025,7 @@ tbody td{
 const ACCESS_PASS = 'Hoang5611';
 const ACCESS_KEY = 'spxhoang_access';
 const ACCESS_ID = 'Hoang5611';
+const VIEW_MODE_KEY = 'spxhoang_view_only';
 
 const state = {
   items: [],
@@ -1025,6 +1033,7 @@ const state = {
   filter: 'all',
   query: '',
   unlocked: false,
+  viewOnly: false,
 };
 
 function normalizeConfig(config) {
@@ -1260,6 +1269,24 @@ function safeCodeKey(code) {
   return encodeURIComponent(String(code || ''));
 }
 
+function renderOrdersTableHead() {
+  document.getElementById('ordersTableHead').innerHTML = state.viewOnly ? `
+    <tr>
+      <th>Mã đơn</th>
+      <th>COD</th>
+      <th>Cập nhật</th>
+      <th>Liên kết</th>
+    </tr>
+  ` : `
+    <tr>
+      <th>Mã đơn</th>
+      <th>COD</th>
+      <th>Cập nhật</th>
+      <th>Thao tác</th>
+    </tr>
+  `;
+}
+
 function renderOrdersTable() {
   const rows = filteredOrders();
   document.getElementById('ordersCountMeta').textContent = `${rows.length.toLocaleString('vi-VN')} đơn`;
@@ -1279,28 +1306,32 @@ function renderOrdersTable() {
           <div style="margin-top:8px">
             <span class="status-badge ${meta.className}">${meta.label}</span>
           </div>
-          <div style="margin-top:8px">
-            <select class="order-editor-select" id="orderStatus_${codeKey}">
-              ${statusOptions(item.status || 'unknown')}
-            </select>
-          </div>
+          ${state.viewOnly ? `<div class="view-only-tag">Chỉ xem</div>` : `
+            <div style="margin-top:8px">
+              <select class="order-editor-select" id="orderStatus_${codeKey}">
+                ${statusOptions(item.status || 'unknown')}
+              </select>
+            </div>
+          `}
         </td>
         <td>
           <div><strong>${formatMoney(item.cod || 0)}</strong></div>
           <div style="margin-top:8px">
             <span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>
           </div>
-          <div style="margin-top:8px">
-            <select class="order-editor-select" id="orderPaid_${codeKey}">
-              ${paymentOptions(item.is_paid)}
-            </select>
-          </div>
+          ${state.viewOnly ? '' : `
+            <div style="margin-top:8px">
+              <select class="order-editor-select" id="orderPaid_${codeKey}">
+                ${paymentOptions(item.is_paid)}
+              </select>
+            </div>
+          `}
         </td>
         <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
         <td>
           <div class="order-action-cell">
             <div class="order-action-footer">
-              <button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>
+              ${state.viewOnly ? '' : `<button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>`}
               <a class="order-inline-link" href="https://spx.vn/track?${encodeURIComponent(item.code || '')}" target="_blank" rel="noopener noreferrer">Mở SPX</a>
             </div>
           </div>
@@ -1430,7 +1461,7 @@ function collectPaymentEditorRows() {
 
 async function updateOrderRow(codeKey, button) {
   const code = decodeURIComponent(codeKey || '');
-  if (!state.unlocked || !code) return;
+  if (!state.unlocked || state.viewOnly || !code) return;
   const current = (state.items || []).find(item => item.code === code);
   if (!current) return;
   const statusValue = document.getElementById(`orderStatus_${codeKey}`)?.value || current.status || 'unknown';
@@ -1474,7 +1505,7 @@ async function updateOrderRow(codeKey, button) {
 }
 
 async function saveConfig() {
-  if (!state.unlocked) return;
+  if (!state.unlocked || state.viewOnly) return;
   const statusEl = document.getElementById('configStatus');
   statusEl.textContent = 'Đang lưu config...';
   statusEl.style.color = '#7b675d';
@@ -1515,8 +1546,30 @@ function renderDashboard(payload) {
   renderMoney(metrics);
   renderFeeList(state.config);
   renderPaymentHistory(metrics);
+  renderOrdersTableHead();
   renderOrdersTable();
-  hydrateConfigInputs();
+  if (!state.viewOnly) hydrateConfigInputs();
+}
+
+function updateViewModeUi() {
+  const button = document.getElementById('viewModeBtn');
+  const configCard = document.getElementById('configCard');
+  if (button) {
+    button.textContent = state.viewOnly ? 'View as: Config' : 'View as: Chỉ xem';
+  }
+  if (configCard) {
+    configCard.style.display = state.viewOnly ? 'none' : '';
+  }
+  renderOrdersTableHead();
+  renderOrdersTable();
+}
+
+function toggleViewMode() {
+  if (!state.unlocked) return;
+  state.viewOnly = !state.viewOnly;
+  sessionStorage.setItem(VIEW_MODE_KEY, state.viewOnly ? '1' : '0');
+  if (!state.viewOnly) hydrateConfigInputs();
+  updateViewModeUi();
 }
 
 async function refreshDashboard() {
@@ -1544,7 +1597,9 @@ function unlockDashboard() {
   document.getElementById('gate').style.display = 'none';
   document.getElementById('appShell').classList.add('ready');
   state.unlocked = true;
+  state.viewOnly = sessionStorage.getItem(VIEW_MODE_KEY) === '1';
   sessionStorage.setItem(ACCESS_KEY, '1');
+  updateViewModeUi();
   refreshDashboard();
 }
 
