@@ -442,6 +442,12 @@ async def order_lookup_page():
     with open("static/order.html", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/SPXP", response_class=HTMLResponse)
+@app.get("/SPXP/", response_class=HTMLResponse)
+async def spxp_dashboard_page():
+    with open("static/spxp.html", encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/api/summary")
 def get_summary(sync_stage: str = Query(""), db: Session = Depends(get_db)):
     shops = db.query(ShopMeta).all()
