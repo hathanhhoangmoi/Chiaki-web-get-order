@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SPXP Dashboard</title>
+<title>Đơn SPX của Phương</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -135,6 +135,17 @@ h1{
   border:1px solid rgba(255,255,255,.18);
   font-weight:600;
 }
+.btn-config{
+  padding:12px 18px;
+  background:rgba(255,255,255,.14);
+  color:#fff8f1;
+  border:1px solid rgba(255,255,255,.2);
+  font-weight:700;
+}
+.btn-config.active{
+  background:linear-gradient(135deg,#f4d4df,#f5e0ff);
+  color:#4b2c39;
+}
 
 .hero-meta{
   margin-top:22px;
@@ -192,6 +203,24 @@ h1{
   border-radius:28px;
   box-shadow:var(--shadow);
   backdrop-filter:blur(18px);
+}
+.card.overview-card{
+  background:linear-gradient(180deg, rgba(255,245,248,.96), rgba(255,250,252,.88));
+}
+.card.orders-card{
+  background:linear-gradient(180deg, rgba(244,250,255,.96), rgba(251,254,255,.88));
+}
+.card.money-card{
+  background:linear-gradient(180deg, rgba(244,252,248,.96), rgba(251,255,253,.88));
+}
+.card.fee-card{
+  background:linear-gradient(180deg, rgba(255,249,239,.96), rgba(255,253,248,.90));
+}
+.card.history-card{
+  background:linear-gradient(180deg, rgba(247,244,255,.96), rgba(252,251,255,.90));
+}
+.card.config-card{
+  background:linear-gradient(180deg, rgba(255,247,242,.96), rgba(255,252,249,.90));
 }
 
 .card-head{
@@ -543,6 +572,163 @@ tbody td{
   color:var(--muted);
   text-align:right;
 }
+.config-gate{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:60;
+  background:rgba(45,32,25,.22);
+  backdrop-filter:blur(8px);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.config-gate.show{display:flex}
+.config-gate-card{
+  width:min(420px,100%);
+  padding:24px 22px;
+  border-radius:28px;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(83,57,45,.10);
+  box-shadow:0 24px 60px rgba(69,47,36,.14);
+}
+.config-gate-title{
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:-.04em;
+}
+.config-gate-sub{
+  margin-top:8px;
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.7;
+}
+.config-gate-input{
+  width:100%;
+  margin-top:16px;
+  padding:14px 16px;
+  border-radius:18px;
+  border:1px solid rgba(83,57,45,.12);
+  background:#fff;
+  font:inherit;
+  color:var(--ink);
+  outline:none;
+}
+.config-gate-input:focus{
+  border-color:rgba(198,106,61,.35);
+  box-shadow:0 0 0 4px rgba(198,106,61,.10);
+}
+.config-gate-error{
+  min-height:18px;
+  margin-top:10px;
+  color:#b44d46;
+  font-size:13px;
+  font-weight:600;
+}
+.config-label{
+  margin:14px 0 8px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.config-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.config-status{
+  min-height:20px;
+  margin-top:12px;
+  font-size:12px;
+  font-weight:600;
+  color:var(--muted);
+}
+.editor-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.editor-row{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(120px,.8fr) minmax(110px,.7fr) auto;
+  gap:8px;
+  padding:10px;
+  border-radius:18px;
+  background:#fff;
+  border:1px solid rgba(83,57,45,.08);
+  align-items:center;
+}
+.editor-row.compact{
+  grid-template-columns:minmax(0,1.1fr) minmax(140px,.8fr) auto;
+}
+.editor-input,.editor-select,.order-editor-select{
+  width:100%;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid rgba(83,57,45,.12);
+  background:#fff;
+  font:inherit;
+  font-size:12px;
+  color:var(--ink);
+  outline:none;
+}
+.editor-input:focus,.editor-select:focus,.order-editor-select:focus{
+  border-color:rgba(198,106,61,.35);
+  box-shadow:0 0 0 4px rgba(198,106,61,.10);
+}
+.editor-input.code{
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:700;
+}
+.editor-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+.editor-hint{
+  font-size:12px;
+  color:var(--muted);
+}
+.icon-btn{
+  padding:10px 12px;
+  border:none;
+  border-radius:14px;
+  background:#fff3e5;
+  color:#8c541f;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.order-action-cell{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:150px;
+}
+.order-update-btn{
+  padding:10px 12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f4c178,#f7a45d);
+  color:#402113;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.order-update-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+.view-only-hidden{display:none !important}
 
 @media (max-width: 1180px){
   .layout{grid-template-columns:1fr}
@@ -558,11 +744,21 @@ tbody td{
   .hero-meta,.kpi-grid,.bar-section,.mini-grid{grid-template-columns:1fr}
   .card,.list-item,.mini-card{border-radius:24px}
   .card-head,.table-tools,.table-wrap,.side-pad{padding-left:16px;padding-right:16px}
+  .editor-row,.editor-row.compact{grid-template-columns:1fr}
   h1{font-size:34px}
 }
 </style>
 </head>
 <body>
+  <div class="config-gate" id="configGate" onclick="if(event.target===this) closeConfigGate()">
+    <div class="config-gate-card">
+      <div class="config-gate-title">Mở CONFIG</div>
+      <div class="config-gate-sub">Nhập mã sửa thông tin đơn hàng để bật chế độ chỉnh sửa cho route SPXP.</div>
+      <input id="configGateInput" class="config-gate-input" type="password" placeholder="Nhập mã..." autocomplete="off" />
+      <button class="btn btn-primary" type="button" style="width:100%;margin-top:12px" onclick="submitConfigAccess()">Xác nhận</button>
+      <div class="config-gate-error" id="configGateError"></div>
+    </div>
+  </div>
   <main class="shell">
     <section class="hero">
       <div class="hero-top">
@@ -574,8 +770,9 @@ tbody td{
           </div>
         </div>
         <div class="hero-actions">
-          <button class="btn btn-primary" type="button" onclick="refreshDashboard()">Cập nhật dữ liệu mới nhất</button>
-          <a class="btn btn-secondary" href="/" style="text-decoration:none">Tới trang danh sách đơn hàng</a>
+          <button class="btn btn-config" id="configModeBtn" type="button" onclick="openConfigGate()">CONFIG</button>
+          <button class="btn btn-primary" type="button" onclick="refreshDashboard()">Làm mới dữ liệu</button>
+          <a class="btn btn-secondary" href="/" style="text-decoration:none">Về dashboard chính</a>
         </div>
       </div>
 
@@ -605,7 +802,7 @@ tbody td{
 
     <section class="layout">
       <div class="stack">
-        <section class="card">
+        <section class="card overview-card">
           <div class="card-head">
             <div>
               <div class="card-title">Tổng quan vận hành</div>
@@ -647,11 +844,11 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card orders-card">
           <div class="card-head">
             <div>
               <div class="card-title">Danh sách đơn ngoại sàn</div>
-              <div class="card-sub">Bảng theo dõi chi tiết từng mã đơn, lọc theo trạng thái hoặc tình trạng thanh toán.</div>
+              <div class="card-sub" id="ordersCardSub">Bảng theo dõi chi tiết từng mã đơn, lọc theo trạng thái hoặc tình trạng thanh toán.</div>
             </div>
             <div class="pill" id="ordersCountMeta">0 đơn</div>
           </div>
@@ -669,7 +866,7 @@ tbody td{
           </div>
           <div class="table-wrap">
             <table>
-              <thead>
+              <thead id="ordersTableHead">
                 <tr>
                   <th>Mã đơn</th>
                   <th>Trạng thái</th>
@@ -687,7 +884,7 @@ tbody td{
       </div>
 
       <aside class="stack">
-        <section class="card">
+        <section class="card money-card">
           <div class="card-head">
             <div>
               <div class="card-title">Dòng tiền</div>
@@ -716,7 +913,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card fee-card">
           <div class="card-head">
             <div>
               <div class="card-title">Khoản phí</div>
@@ -729,7 +926,7 @@ tbody td{
           </div>
         </section>
 
-        <section class="card">
+        <section class="card history-card">
           <div class="card-head">
             <div>
               <div class="card-title">Lịch sử thanh toán</div>
@@ -743,16 +940,58 @@ tbody td{
           </div>
         </section>
 
+        <section class="card config-card" id="configCard" style="display:none">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Config dữ liệu</div>
+              <div class="card-sub">Chế độ chỉnh sửa đã bật. Bạn có thể cấu hình danh sách đơn, phí, lịch sử thanh toán và cập nhật từng đơn trực tiếp.</div>
+            </div>
+            <div class="pill">Edit mode</div>
+          </div>
+          <div class="side-pad">
+            <div class="config-label">Danh sách đơn hàng</div>
+            <div class="editor-toolbar">
+              <div class="editor-hint">Mỗi dòng gồm mã đơn, COD, trạng thái và tình trạng thanh toán.</div>
+              <button class="icon-btn" type="button" onclick="addOrderEditorRow()">+ Thêm đơn</button>
+            </div>
+            <div class="editor-list" id="configOrdersList"></div>
+
+            <div class="config-label">Khoản phí</div>
+            <div class="editor-toolbar">
+              <div class="editor-hint">Điền nội dung phí, số tiền và đánh dấu đã thu hay chưa.</div>
+              <button class="icon-btn" type="button" onclick="addFeeEditorRow()">+ Thêm phí</button>
+            </div>
+            <div class="editor-list" id="configFeesList"></div>
+
+            <div class="config-label">Lịch sử thanh toán</div>
+            <div class="editor-toolbar">
+              <div class="editor-hint">Mỗi dòng là một giao dịch đã thanh toán cho Phương.</div>
+              <button class="icon-btn" type="button" onclick="addPaymentEditorRow()">+ Thêm giao dịch</button>
+            </div>
+            <div class="editor-list" id="configPaymentList"></div>
+
+            <div class="config-actions">
+              <button class="btn btn-primary" type="button" onclick="saveConfig()">Lưu config</button>
+              <button class="btn filter-btn" type="button" onclick="hydrateConfigInputs()">Tải lại từ dữ liệu hiện tại</button>
+            </div>
+            <div class="config-status" id="configStatus"></div>
+          </div>
+        </section>
+
       </aside>
     </section>
   </main>
 
 <script>
+const CONFIG_PASS = 'Hoang5611';
+const CONFIG_ACCESS_KEY = 'spxp_config_access';
+const CONFIG_USER_ID = 'Hoang5611';
 const state = {
   items: [],
   config: { fee_items: [], payment_history: [] },
   filter: 'all',
   query: '',
+  editMode: false,
 };
 
 function normalizeConfig(config) {
@@ -960,27 +1199,355 @@ function filteredOrders() {
   });
 }
 
+function statusOptions(selected = 'unknown') {
+  const options = [
+    ['unknown', 'Chưa xử lý'],
+    ['in_transit', 'Đang giao'],
+    ['delivered', 'Đã giao thành công'],
+    ['returned', 'Hoàn hàng'],
+  ];
+  return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function paymentOptions(selected) {
+  return [
+    ['0', 'Chưa thanh toán'],
+    ['1', 'Đã thanh toán'],
+  ].map(([value, label]) => `<option value="${value}" ${String(Number(!!selected)) === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function booleanOptions(selected, falseLabel, trueLabel) {
+  return [
+    ['0', falseLabel],
+    ['1', trueLabel],
+  ].map(([value, label]) => `<option value="${value}" ${String(Number(!!selected)) === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function safeCodeKey(code) {
+  return encodeURIComponent(String(code || ''));
+}
+
+function updateConfigModeUi() {
+  const configCard = document.getElementById('configCard');
+  const button = document.getElementById('configModeBtn');
+  const sub = document.getElementById('ordersCardSub');
+  if (configCard) configCard.style.display = state.editMode ? 'block' : 'none';
+  if (button) {
+    button.classList.toggle('active', state.editMode);
+    button.textContent = state.editMode ? 'CONFIG ĐANG MỞ' : 'CONFIG';
+  }
+  if (sub) {
+    sub.textContent = state.editMode
+      ? 'Chế độ chỉnh sửa đang bật. Bạn có thể cập nhật trạng thái, thanh toán và cấu hình toàn bộ dữ liệu đơn ngoại sàn.'
+      : 'Bảng theo dõi chi tiết từng mã đơn, lọc theo trạng thái hoặc tình trạng thanh toán.';
+  }
+}
+
+function openConfigGate() {
+  if (state.editMode) return;
+  document.getElementById('configGate').classList.add('show');
+  document.getElementById('configGateError').textContent = '';
+  document.getElementById('configGateInput').value = '';
+  document.getElementById('configGateInput').focus();
+}
+
+function closeConfigGate() {
+  document.getElementById('configGate').classList.remove('show');
+}
+
+function enableConfigMode() {
+  state.editMode = true;
+  sessionStorage.setItem(CONFIG_ACCESS_KEY, '1');
+  closeConfigGate();
+  updateConfigModeUi();
+  renderOrdersTable();
+  hydrateConfigInputs();
+}
+
+function submitConfigAccess() {
+  const value = String(document.getElementById('configGateInput').value || '').trim();
+  const error = document.getElementById('configGateError');
+  if (value !== CONFIG_PASS) {
+    error.textContent = 'Mã không đúng.';
+    return;
+  }
+  error.textContent = '';
+  enableConfigMode();
+}
+
+function renderOrdersTableHead() {
+  const head = document.getElementById('ordersTableHead');
+  if (!head) return;
+  head.innerHTML = state.editMode
+    ? `<tr>
+        <th>Mã đơn</th>
+        <th>COD</th>
+        <th>Cập nhật</th>
+        <th>Thao tác</th>
+      </tr>`
+    : `<tr>
+        <th>Mã đơn</th>
+        <th>Trạng thái</th>
+        <th>COD</th>
+        <th>Thanh toán</th>
+        <th>Cập nhật</th>
+      </tr>`;
+}
+
 function renderOrdersTable() {
   const rows = filteredOrders();
   document.getElementById('ordersCountMeta').textContent = `${rows.length.toLocaleString('vi-VN')} đơn`;
   const tbody = document.getElementById('ordersTableBody');
+  renderOrdersTableHead();
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${state.editMode ? 4 : 5}"><div class="empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`;
     return;
   }
 
   tbody.innerHTML = rows.map(item => {
     const meta = statusMeta(item.status || 'unknown');
+    if (!state.editMode) {
+      return `
+        <tr>
+          <td class="mono">${escapeHtml(item.code || '—')}</td>
+          <td><span class="status-badge ${meta.className}">${meta.label}</span></td>
+          <td><strong>${formatMoney(item.cod || 0)}</strong></td>
+          <td><span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
+          <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
+        </tr>
+      `;
+    }
+    const codeKey = safeCodeKey(item.code || '');
     return `
       <tr>
-        <td class="mono">${escapeHtml(item.code || '—')}</td>
-        <td><span class="status-badge ${meta.className}">${meta.label}</span></td>
-        <td><strong>${formatMoney(item.cod || 0)}</strong></td>
-        <td><span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
+        <td>
+          <div class="mono">${escapeHtml(item.code || '—')}</div>
+          <div style="margin-top:8px">
+            <span class="status-badge ${meta.className}">${meta.label}</span>
+          </div>
+          <div style="margin-top:8px">
+            <select class="order-editor-select" id="orderStatus_${codeKey}">
+              ${statusOptions(item.status || 'unknown')}
+            </select>
+          </div>
+        </td>
+        <td>
+          <div><strong>${formatMoney(item.cod || 0)}</strong></div>
+          <div style="margin-top:8px">
+            <span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>
+          </div>
+          <div style="margin-top:8px">
+            <select class="order-editor-select" id="orderPaid_${codeKey}">
+              ${paymentOptions(item.is_paid)}
+            </select>
+          </div>
+        </td>
         <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
+        <td>
+          <div class="order-action-cell">
+            <button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>
+          </div>
+        </td>
       </tr>
     `;
   }).join('');
+}
+
+function renderOrderEditorRows(items = []) {
+  const container = document.getElementById('configOrdersList');
+  if (!container) return;
+  const rows = Array.isArray(items) && items.length ? items : [{ code: '', cod: 0, status: 'unknown', is_paid: false }];
+  container.innerHTML = rows.map((item, index) => `
+    <div class="editor-row">
+      <input class="editor-input code" data-order-field="code" data-index="${index}" placeholder="Mã đơn" value="${escapeHtml(item.code || '')}" />
+      <input class="editor-input" data-order-field="cod" data-index="${index}" placeholder="COD" inputmode="numeric" value="${Number(item.cod || 0)}" />
+      <select class="editor-select" data-order-field="status" data-index="${index}">
+        ${statusOptions(item.status || 'unknown')}
+      </select>
+      <button class="icon-btn" type="button" onclick="removeOrderEditorRow(${index})">Xóa</button>
+      <select class="editor-select" data-order-field="paid" data-index="${index}" style="grid-column:1 / span 2">
+        ${paymentOptions(item.is_paid)}
+      </select>
+    </div>
+  `).join('');
+}
+
+function renderFeeEditorRows(items = []) {
+  const container = document.getElementById('configFeesList');
+  if (!container) return;
+  const rows = Array.isArray(items) && items.length ? items : [{ content: '', amount: 0, collected: false }];
+  container.innerHTML = rows.map((item, index) => `
+    <div class="editor-row compact">
+      <input class="editor-input" data-fee-field="content" data-index="${index}" placeholder="Nội dung phí" value="${escapeHtml(item.content || '')}" />
+      <input class="editor-input" data-fee-field="amount" data-index="${index}" placeholder="Số tiền" inputmode="numeric" value="${Number(item.amount || 0)}" />
+      <button class="icon-btn" type="button" onclick="removeFeeEditorRow(${index})">Xóa</button>
+      <select class="editor-select" data-fee-field="collected" data-index="${index}" style="grid-column:1 / span 2">
+        ${booleanOptions(item.collected, 'Chưa thu', 'Đã thu')}
+      </select>
+    </div>
+  `).join('');
+}
+
+function renderPaymentEditorRows(items = []) {
+  const container = document.getElementById('configPaymentList');
+  if (!container) return;
+  const rows = Array.isArray(items) && items.length ? items : [{ date: '', amount: 0 }];
+  container.innerHTML = rows.map((item, index) => `
+    <div class="editor-row compact">
+      <input class="editor-input" data-payment-field="date" data-index="${index}" type="date" value="${escapeHtml(item.date || '')}" />
+      <input class="editor-input" data-payment-field="amount" data-index="${index}" placeholder="Số tiền" inputmode="numeric" value="${Number(item.amount || 0)}" />
+      <button class="icon-btn" type="button" onclick="removePaymentEditorRow(${index})">Xóa</button>
+    </div>
+  `).join('');
+}
+
+function collectOrderEditorRows() {
+  const rows = [...document.querySelectorAll('#configOrdersList .editor-row')];
+  const seen = new Set();
+  return rows.map(row => {
+    const code = String(row.querySelector('[data-order-field="code"]')?.value || '').trim().toUpperCase();
+    const cod = Number(String(row.querySelector('[data-order-field="cod"]')?.value || '').replace(/[^\d]/g, '') || 0);
+    const status = String(row.querySelector('[data-order-field="status"]')?.value || 'unknown');
+    const is_paid = String(row.querySelector('[data-order-field="paid"]')?.value || '0') === '1';
+    if (!code || seen.has(code)) return null;
+    seen.add(code);
+    return { code, cod, status, is_paid };
+  }).filter(Boolean);
+}
+
+function collectFeeEditorRows() {
+  const rows = [...document.querySelectorAll('#configFeesList .editor-row')];
+  return rows.map(row => ({
+    content: String(row.querySelector('[data-fee-field="content"]')?.value || '').trim(),
+    amount: Number(String(row.querySelector('[data-fee-field="amount"]')?.value || '').replace(/[^\d]/g, '') || 0),
+    collected: String(row.querySelector('[data-fee-field="collected"]')?.value || '0') === '1',
+  })).filter(item => item.content || item.amount);
+}
+
+function collectPaymentEditorRows() {
+  const rows = [...document.querySelectorAll('#configPaymentList .editor-row')];
+  return rows.map(row => ({
+    date: String(row.querySelector('[data-payment-field="date"]')?.value || '').trim(),
+    amount: Number(String(row.querySelector('[data-payment-field="amount"]')?.value || '').replace(/[^\d]/g, '') || 0),
+  })).filter(item => item.date || item.amount);
+}
+
+function hydrateConfigInputs() {
+  if (!state.editMode) return;
+  renderOrderEditorRows(state.items);
+  renderFeeEditorRows(state.config.fee_items || []);
+  renderPaymentEditorRows(state.config.payment_history || []);
+  const statusEl = document.getElementById('configStatus');
+  if (statusEl) statusEl.textContent = '';
+}
+
+function addOrderEditorRow() {
+  renderOrderEditorRows([...collectOrderEditorRows(), { code: '', cod: 0, status: 'unknown', is_paid: false }]);
+}
+
+function addFeeEditorRow() {
+  renderFeeEditorRows([...collectFeeEditorRows(), { content: '', amount: 0, collected: false }]);
+}
+
+function addPaymentEditorRow() {
+  renderPaymentEditorRows([...collectPaymentEditorRows(), { date: '', amount: 0 }]);
+}
+
+function removeOrderEditorRow(index) {
+  const next = [...collectOrderEditorRows()];
+  next.splice(index, 1);
+  renderOrderEditorRows(next);
+}
+
+function removeFeeEditorRow(index) {
+  const next = [...collectFeeEditorRows()];
+  next.splice(index, 1);
+  renderFeeEditorRows(next);
+}
+
+function removePaymentEditorRow(index) {
+  const next = [...collectPaymentEditorRows()];
+  next.splice(index, 1);
+  renderPaymentEditorRows(next);
+}
+
+async function updateOrderRow(codeKey, button) {
+  const code = decodeURIComponent(codeKey || '');
+  const current = (state.items || []).find(item => item.code === code);
+  if (!state.editMode || !current) return;
+  const statusValue = document.getElementById(`orderStatus_${codeKey}`)?.value || current.status || 'unknown';
+  const paidValue = document.getElementById(`orderPaid_${codeKey}`)?.value === '1';
+  button.disabled = true;
+  const original = button.textContent;
+  button.textContent = 'Đang cập nhật...';
+  try {
+    if (statusValue !== (current.status || 'unknown')) {
+      const statusRes = await fetch('/api/external-orders/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': CONFIG_USER_ID
+        },
+        body: JSON.stringify({ scope: 'phuong', code, status: statusValue })
+      });
+      const statusData = await statusRes.json();
+      if (!statusRes.ok) throw new Error(statusData.error || 'Không cập nhật được trạng thái.');
+    }
+    if (paidValue !== !!current.is_paid) {
+      const paidRes = await fetch('/api/external-orders/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': CONFIG_USER_ID
+        },
+        body: JSON.stringify({ scope: 'phuong', code, is_paid: paidValue })
+      });
+      const paidData = await paidRes.json();
+      if (!paidRes.ok) throw new Error(paidData.error || 'Không cập nhật được thanh toán.');
+    }
+    await refreshDashboard();
+  } catch (error) {
+    const statusEl = document.getElementById('configStatus');
+    if (statusEl) {
+      statusEl.textContent = error.message;
+      statusEl.style.color = '#b44d46';
+    }
+  } finally {
+    button.disabled = false;
+    button.textContent = original;
+  }
+}
+
+async function saveConfig() {
+  if (!state.editMode) return;
+  const statusEl = document.getElementById('configStatus');
+  statusEl.textContent = 'Đang lưu config...';
+  statusEl.style.color = '#7b675d';
+  try {
+    const body = {
+      scope: 'phuong',
+      items: collectOrderEditorRows(),
+      fee_items: collectFeeEditorRows(),
+      payment_history: collectPaymentEditorRows(),
+    };
+    const res = await fetch('/api/external-orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': CONFIG_USER_ID
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Không lưu được config.');
+    renderDashboard(data);
+    hydrateConfigInputs();
+    statusEl.textContent = 'Đã lưu config thành công.';
+    statusEl.style.color = '#1f8c63';
+  } catch (error) {
+    statusEl.textContent = error.message;
+    statusEl.style.color = '#b44d46';
+  }
 }
 
 
@@ -995,11 +1562,12 @@ function renderDashboard(payload) {
   renderFeeList(state.config);
   renderPaymentHistory(metrics);
   renderOrdersTable();
+  if (state.editMode) hydrateConfigInputs();
 }
 
 async function refreshDashboard() {
   const tbody = document.getElementById('ordersTableBody');
-  tbody.innerHTML = `<tr><td colspan="5"><div class="empty">Đang tải dữ liệu từ hệ thống...</div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="${state.editMode ? 4 : 5}"><div class="empty">Đang tải dữ liệu từ hệ thống...</div></td></tr>`;
   try {
     const res = await fetch('/api/external-orders?scope=phuong', { cache: 'no-store' });
     const data = await res.json();
@@ -1007,7 +1575,7 @@ async function refreshDashboard() {
     renderDashboard(data);
     document.getElementById('refreshMeta').textContent = `Lần làm mới gần nhất: ${new Date().toLocaleString('vi-VN')}. Tự động làm mới mỗi 5 phút.`;
   } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">Lỗi tải dữ liệu: ${escapeHtml(error.message)}</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${state.editMode ? 4 : 5}"><div class="empty">Lỗi tải dữ liệu: ${escapeHtml(error.message)}</div></td></tr>`;
     document.getElementById('feeList').innerHTML = `<div class="empty">Chưa lấy được dữ liệu khoản phí.</div>`;
     document.getElementById('paymentHistoryList').innerHTML = `<div class="empty">Chưa lấy được lịch sử thanh toán.</div>`;
   }
@@ -1027,6 +1595,15 @@ document.getElementById('statusFilters').addEventListener('click', event => {
   });
   renderOrdersTable();
 });
+
+document.getElementById('configGateInput').addEventListener('keydown', event => {
+  if (event.key === 'Enter') submitConfigAccess();
+});
+
+if (sessionStorage.getItem(CONFIG_ACCESS_KEY) === '1') {
+  state.editMode = true;
+}
+updateConfigModeUi();
 
 refreshDashboard();
 setInterval(refreshDashboard, 300000);
