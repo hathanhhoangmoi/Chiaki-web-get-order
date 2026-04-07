@@ -271,8 +271,8 @@ input:focus{
   <main class="shell">
     <section class="hero">
       <div class="eyebrow">Tra cứu đơn hàng</div>
-      <h1>Trang tra cứu riêng cho `/order`</h1>
-      <p>Nhập mã đơn hàng và key tra cứu để xem thông tin đơn. Mỗi dòng kết quả có nút copy riêng để sao chép nhanh.</p>
+      <h1>Trang tra cứu thông tin đơn hàng</h1>
+      <p>Nhập mã đơn hàng và key tra cứu để xem thông tin đơn.</p>
     </section>
 
     <section class="panel">
@@ -363,7 +363,7 @@ async function copyValue(button, value) {
     document.execCommand('copy');
     document.body.removeChild(input);
   }
-  button.textContent = 'Da copy';
+  button.textContent = 'Đã sao chép';
   button.classList.add('copied');
   setTimeout(() => {
     button.textContent = original;
@@ -416,17 +416,17 @@ async function lookupOrder() {
   resultCard.style.display = 'none';
 
   if (!code) {
-    showMessage('errorBox', 'Vui lòng nhập mã đơn hàng.');
+    showMessage('errorBox', 'Nhập mã đơn hàng...');
     return;
   }
   if (!key) {
-    showMessage('errorBox', 'Vui lòng nhập key tra cứu.');
+    showMessage('errorBox', 'Nhập key...');
     return;
   }
 
   localStorage.setItem('order_lookup_key', key);
   btn.disabled = true;
-  btn.textContent = 'Dang tra cuu...';
+  btn.textContent = 'Đang tìm kiếm dữ liệu...';
 
   try {
     const res = await fetch('/api/order-info', {
