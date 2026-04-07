@@ -19,6 +19,7 @@ from models import (
     ExternalOrderTrackingHoang,
     Order,
     ShopMeta,
+    TakenOrder,
 )
 from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, get_shops_map
 
@@ -42,7 +43,8 @@ app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ── Helper functions ───────────────────────────────────────
-FULL_ACCESS_IDS = {"Hoang5611"}
+FULL_ACCESS_IDS = {"HOANG5611"}
+TAKEN_ORDER_ADMIN_KEY = "HOANG5611"
 SENSITIVE_SHOPS = {"4647", "4732"}
 SENSITIVE_TOTAL_THRESHOLD = 2_500_000
 PHONE_KEY_PHUONG_ALLOWED_SHOPS = {"4917", "4940", "5096", "5125", "5114"}
@@ -50,11 +52,16 @@ LOGIN_ID_META = {
     "LOGIN-KEY-PHUONG2000": {"hours": 1, "label": "Phương"},
     "LOGIN-KEY-CHANGTESTUSER": {"hours": 9999999999, "label": "Hoàng"},
     "Hoang5611": {"hours": 9999999999, "label": "Hoàng"},
+    "HOANG5611": {"hours": 9999999999, "label": "Hoàng"},
     "unlimited_id": {"hours": 9999999999, "label": "Unlimited"},
 }
 
 def is_full_access_user(user_id: str) -> bool:
-    return str(user_id or "").strip() in FULL_ACCESS_IDS
+    return str(user_id or "").strip().upper() in FULL_ACCESS_IDS
+
+
+def is_taken_orders_admin(user_id: str) -> bool:
+    return str(user_id or "").strip().upper() == TAKEN_ORDER_ADMIN_KEY
 
 def should_hide_order(order, user_id: str) -> bool:
     if not order or is_full_access_user(user_id):
@@ -177,22 +184,82 @@ def build_sync_delta(old_codes: set[str], new_codes: set[str]) -> dict:
 
 
 def can_manage_external_orders(user_id: str) -> bool:
-    return str(user_id or "").strip() == "Hoang5611"
+    return str(user_id or "").strip().upper() == TAKEN_ORDER_ADMIN_KEY
 
 
 def can_view_hoang_orders(user_id: str) -> bool:
-    return str(user_id or "").strip() == "Hoang5611"
+    return str(user_id or "").strip().upper() == TAKEN_ORDER_ADMIN_KEY
 
 
 def get_user_capabilities(user_id: str) -> dict:
     normalized = str(user_id or "").strip()
+    normalized_upper = normalized.upper()
     return {
         "full_access": is_full_access_user(normalized),
         "manage_external_orders": can_manage_external_orders(normalized),
         "view_hoang_orders": can_view_hoang_orders(normalized),
-        "admin_tools": normalized in {"Hoang5611", "LOGIN-KEY-PHUONG2000"},
+        "admin_tools": normalized_upper == TAKEN_ORDER_ADMIN_KEY or normalized == "LOGIN-KEY-PHUONG2000",
         "view_history_panel": can_view_hoang_orders(normalized),
+        "manage_taken_orders": is_taken_orders_admin(normalized),
+        "view_taken_orders": bool(normalized),
     }
+
+
+def normalize_lookup_order_code(full_code: str | None) -> str:
+    raw = str(full_code or "").strip()
+    if not raw:
+        return ""
+    parts = [part.strip() for part in raw.split("_") if part.strip()]
+    return parts[-1] if parts else raw
+
+
+def build_payment_status_text(payment_type: str | None, is_approved: str | None, prepaid_time: str | None) -> str:
+    normalized_type = str(payment_type or "").strip().lower()
+    approved = str(is_approved or "").strip()
+    prepaid_time_text = str(prepaid_time or "").strip()
+
+    if normalized_type in {"home", "cod"}:
+        return "COD — Thu tiền khi nhận hàng"
+    if normalized_type in {"atm", "online", "bank"} and approved == "1":
+        text = f"Đã thanh toán online ({normalized_type.upper()})"
+        if prepaid_time_text:
+            text += f" lúc {prepaid_time_text}"
+        return text
+    if normalized_type in {"atm", "online", "bank"} and approved != "1":
+        return f"Chờ xác nhận thanh toán ({normalized_type.upper()})"
+    return f"Không rõ ({payment_type or 'Không rõ'})"
+
+
+TAKEN_ORDER_STATUS_LABELS = {
+    "waiting_waybill": "Chờ tạo MVĐ",
+    "created_waybill": "Đã tạo MVĐ",
+}
+
+
+def serialize_taken_order(row: TakenOrder, include_details: bool = False) -> dict:
+    payload = {
+        "id": row.id,
+        "order_code": row.order_code,
+        "lookup_order_code": row.lookup_order_code or normalize_lookup_order_code(row.order_code),
+        "take_status": row.take_status or "waiting_waybill",
+        "take_status_label": TAKEN_ORDER_STATUS_LABELS.get(row.take_status or "waiting_waybill", "Chờ tạo MVĐ"),
+    }
+    if include_details:
+        payload.update({
+            "taken_by": row.taken_by or "",
+            "taken_at": row.taken_at.isoformat() if row.taken_at else None,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            "shop_name": row.shop_name or "—",
+            "order_date": row.order_date or "—",
+            "customer_name": row.customer_name or "—",
+            "phone": row.phone or "—",
+            "address": row.address or "—",
+            "product": row.product or "—",
+            "quantity": row.quantity if row.quantity is not None else "—",
+            "prepaid_amount": row.prepaid_amount or "—",
+            "payment_status": row.payment_status or "—",
+        })
+    return payload
 
 
 def normalize_sync_text(value: str | None) -> str:
@@ -357,6 +424,11 @@ async def fetch_order_info_data(order_code: str, key: str, user_id: str, db: Ses
         "meta": meta,
         "db_order": db_order,
         "payment_type": d.get("payment_type", ""),
+        "payment_status": build_payment_status_text(
+            d.get("payment_type", ""),
+            d.get("is_approved_prepaid", "0"),
+            d.get("prepaid_time"),
+        ),
         "shop_name": db_shop_name,
         "product": db_product,
         "phone": phone,
@@ -779,6 +851,138 @@ def update_external_order_payment(request: Request, body: dict, db: Session = De
         "item": serialize_external_order(row),
     }
 
+
+@app.get("/api/taken-orders")
+def get_taken_orders(request: Request, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not user_id:
+        return JSONResponse({"error": "Chưa có ID truy cập."}, status_code=403)
+
+    include_details = is_taken_orders_admin(user_id)
+    rows = db.query(TakenOrder).order_by(desc(TakenOrder.updated_at), desc(TakenOrder.id)).all()
+    return {
+        "ok": True,
+        "manage": include_details,
+        "items": [serialize_taken_order(row, include_details=include_details) for row in rows],
+    }
+
+
+@app.post("/api/taken-orders/take")
+async def take_order(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not is_taken_orders_admin(user_id):
+        return JSONResponse({"error": "Không có quyền lấy đơn."}, status_code=403)
+
+    raw_order_code = str(body.get("order_code", "")).strip()
+    lookup_order_code = normalize_lookup_order_code(raw_order_code)
+    if not lookup_order_code:
+        return JSONResponse({"error": "Thiếu mã đơn hàng."}, status_code=422)
+
+    try:
+        order_info = await fetch_order_info_data(lookup_order_code, TAKEN_ORDER_ADMIN_KEY, user_id, db)
+    except PermissionError as e:
+        return JSONResponse({"error": str(e)}, status_code=403)
+    except LookupError as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=422)
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi khi lấy thông tin đơn: {e}"}, status_code=500)
+
+    quantity_value = order_info["raw"].get("quantity")
+    if quantity_value in (None, "", "—"):
+        db_order = order_info.get("db_order")
+        quantity_value = db_order.quantity if db_order else 0
+    try:
+        quantity_value = int(quantity_value or 0)
+    except Exception:
+        quantity_value = 0
+
+    existing = (
+        db.query(TakenOrder)
+        .filter(
+            or_(
+                TakenOrder.order_code == raw_order_code,
+                TakenOrder.lookup_order_code == lookup_order_code,
+            )
+        )
+        .first()
+    )
+
+    if not existing:
+        existing = TakenOrder(
+            order_code=raw_order_code or lookup_order_code,
+            lookup_order_code=lookup_order_code,
+            take_status="waiting_waybill",
+            taken_by=user_id,
+            taken_at=datetime.now(),
+        )
+        db.add(existing)
+
+    existing.order_code = raw_order_code or lookup_order_code
+    existing.lookup_order_code = lookup_order_code
+    existing.shop_name = order_info.get("shop_name") or "—"
+    existing.order_date = order_info.get("order_date") or "—"
+    existing.customer_name = order_info.get("customer_name") or "—"
+    existing.phone = order_info.get("phone") or "—"
+    existing.address = order_info.get("address") or "—"
+    existing.product = order_info.get("product") or "—"
+    existing.quantity = quantity_value
+    existing.prepaid_amount = order_info.get("prepaid_amount_text") or "—"
+    existing.payment_status = order_info.get("payment_status") or "—"
+    existing.taken_by = user_id
+    existing.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(existing)
+
+    return {
+        "ok": True,
+        "item": serialize_taken_order(existing, include_details=True),
+    }
+
+
+@app.post("/api/taken-orders/status")
+def update_taken_order_status(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not is_taken_orders_admin(user_id):
+        return JSONResponse({"error": "Không có quyền cập nhật trạng thái."}, status_code=403)
+
+    order_id = body.get("id")
+    status = str(body.get("status", "")).strip()
+    if not order_id or status not in TAKEN_ORDER_STATUS_LABELS:
+        return JSONResponse({"error": "Dữ liệu không hợp lệ."}, status_code=422)
+
+    row = db.query(TakenOrder).filter(TakenOrder.id == order_id).first()
+    if not row:
+        return JSONResponse({"error": "Không tìm thấy đơn đã lấy."}, status_code=404)
+
+    row.take_status = status
+    row.updated_at = datetime.now()
+    db.commit()
+    db.refresh(row)
+
+    return {"ok": True, "item": serialize_taken_order(row, include_details=True)}
+
+
+@app.post("/api/taken-orders/delete")
+def delete_taken_order(request: Request, body: dict, db: Session = Depends(get_db)):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not is_taken_orders_admin(user_id):
+        return JSONResponse({"error": "Không có quyền xoá đơn."}, status_code=403)
+
+    order_id = body.get("id")
+    if not order_id:
+        return JSONResponse({"error": "Thiếu ID đơn."}, status_code=422)
+
+    row = db.query(TakenOrder).filter(TakenOrder.id == order_id).first()
+    if not row:
+        return JSONResponse({"error": "Không tìm thấy đơn đã lấy."}, status_code=404)
+
+    db.delete(row)
+    db.commit()
+    return {"ok": True, "id": order_id}
+
 @app.post("/api/order-info")
 async def get_order_info(request: Request, body: dict, db: Session = Depends(get_db)):
     order_code = body.get("order_code", "").strip()
@@ -837,16 +1041,7 @@ async def get_order_info(request: Request, body: dict, db: Session = Depends(get
         is_approved    = d.get("is_approved_prepaid", "0")
         prepaid_time   = d.get("prepaid_time")
 
-        if payment_type in ("home", "cod"):
-            payment_status = "💵 COD — Thu tiền khi nhận hàng"
-        elif payment_type in ("atm", "online", "bank") and is_approved == "1":
-            payment_status = f"✅ Đã thanh toán online ({payment_type.upper()})"
-            if prepaid_time:
-                payment_status += f" lúc {prepaid_time}"
-        elif payment_type in ("atm", "online", "bank") and is_approved != "1":
-            payment_status = f"⏳ Chờ xác nhận thanh toán ({payment_type.upper()})"
-        else:
-            payment_status = f"— ({payment_type or 'Không rõ'})"
+        payment_status = build_payment_status_text(payment_type, is_approved, prepaid_time)
         db_order = db.query(Order).filter(
         Order.order_code.like(f"%_{order_code}")
             ).first()
@@ -925,7 +1120,7 @@ async def check_key(body: dict):
 @app.get("/api/order-info/history")
 async def get_key_history(request: Request):
     user_id = request.headers.get('X-User-ID', '')
-    if user_id != 'Hoang5611':
+    if not is_taken_orders_admin(user_id):
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
 
     result = []
@@ -956,7 +1151,7 @@ async def login_log(body: dict, request: Request):
 @app.get("/api/auth/login-history")
 async def get_login_history(request: Request):
     user_id = request.headers.get('X-User-ID', '')
-    if user_id != 'Hoang5611':
+    if not is_taken_orders_admin(user_id):
         return JSONResponse({"error": "Không có quyền."}, status_code=403)
     return {"data": LOGIN_HISTORY, "total": len(LOGIN_HISTORY)}
 
