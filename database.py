@@ -78,6 +78,34 @@ def migrate():
     except Exception as e:
         print(f"[migrate] external_order_config: {e}")
 
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS taken_orders (
+                    id INTEGER PRIMARY KEY,
+                    order_code VARCHAR UNIQUE,
+                    lookup_order_code VARCHAR,
+                    shop_name VARCHAR,
+                    order_date VARCHAR,
+                    customer_name VARCHAR,
+                    phone VARCHAR,
+                    address TEXT,
+                    product TEXT,
+                    quantity INTEGER DEFAULT 0,
+                    prepaid_amount TEXT,
+                    payment_status TEXT,
+                    take_status VARCHAR DEFAULT 'waiting_waybill',
+                    taken_by VARCHAR,
+                    taken_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_taken_orders_lookup_order_code ON taken_orders (lookup_order_code)"))
+            conn.commit()
+            print("[migrate] Đã đảm bảo bảng taken_orders")
+    except Exception as e:
+        print(f"[migrate] taken_orders: {e}")
+
     # Đổi order_code từ unique → index thường
     try:
         with engine.connect() as conn:
