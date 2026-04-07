@@ -26,6 +26,7 @@ def migrate():
     with engine.connect() as conn:
         new_columns = [
             ("customer_name", "VARCHAR"),
+            ("sync_stage", "VARCHAR"),
         ]
         for col_name, col_type in new_columns:
             try:
@@ -34,6 +35,28 @@ def migrate():
                 print(f"[migrate] Đã thêm cột: {col_name}")
             except Exception:
                 pass
+        try:
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_sync_stage ON orders (sync_stage)"))
+            conn.commit()
+        except Exception:
+            pass
+        try:
+            conn.execute(text("""
+                UPDATE orders
+                SET sync_stage = 'confirm'
+                WHERE (sync_stage IS NULL OR sync_stage = '')
+                  AND lower(coalesce(status, '')) IN ('chờ x.nhận', 'cho x.nhan')
+            """))
+            conn.execute(text("""
+                UPDATE orders
+                SET sync_stage = 'pickup'
+                WHERE (sync_stage IS NULL OR sync_stage = '')
+                  AND lower(coalesce(status, '')) IN ('đã xác nhận(y.cầu x.hàng)', 'da xac nhan(y.cau x.hang)')
+            """))
+            conn.commit()
+            print("[migrate] Đã backfill sync_stage cho orders")
+        except Exception as e:
+            print(f"[migrate] sync_stage backfill: {e}")
 
     try:
         with engine.connect() as conn:
