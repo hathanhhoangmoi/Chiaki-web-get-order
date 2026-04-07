@@ -623,22 +623,6 @@ tbody td{
   color:var(--muted);
   text-align:right;
 }
-.config-textarea{
-  width:100%;
-  min-height:120px;
-  padding:14px 16px;
-  border-radius:18px;
-  border:1px solid var(--line);
-  background:#fff;
-  font:12px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;
-  color:var(--ink);
-  resize:vertical;
-  outline:none;
-}
-.config-textarea:focus{
-  border-color:rgba(132,81,93,.35);
-  box-shadow:0 0 0 4px rgba(132,81,93,.10);
-}
 .config-label{
   margin:14px 0 8px;
   font-size:12px;
@@ -660,6 +644,104 @@ tbody td{
   font-weight:600;
   color:var(--muted);
 }
+.editor-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.editor-row{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(120px,.8fr) minmax(110px,.7fr) auto;
+  gap:8px;
+  padding:10px;
+  border-radius:18px;
+  background:#fff;
+  border:1px solid rgba(83,57,45,.08);
+  align-items:center;
+}
+.editor-row.compact{
+  grid-template-columns:minmax(0,1.1fr) minmax(140px,.8fr) auto;
+}
+.editor-input,.editor-select,.order-editor-select{
+  width:100%;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1px solid rgba(83,57,45,.12);
+  background:#fff;
+  font:inherit;
+  color:var(--ink);
+  outline:none;
+}
+.editor-input:focus,.editor-select:focus,.order-editor-select:focus{
+  border-color:rgba(132,81,93,.35);
+  box-shadow:0 0 0 4px rgba(132,81,93,.10);
+}
+.editor-input.code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12px;
+  font-weight:700;
+}
+.editor-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+.editor-hint{
+  font-size:12px;
+  color:var(--muted);
+}
+.icon-btn{
+  padding:10px 12px;
+  border:none;
+  border-radius:14px;
+  background:#f8eef6;
+  color:#814868;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.order-action-cell{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:180px;
+}
+.order-action-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.order-action-footer{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.order-update-btn{
+  padding:10px 12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f2c6ce,#d9b2ff);
+  color:#341d39;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.order-update-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+.order-inline-link{
+  font-size:12px;
+  color:#814868;
+  text-decoration:none;
+  font-weight:600;
+}
 
 @media (max-width: 1180px){
   .layout{grid-template-columns:1fr}
@@ -676,6 +758,7 @@ tbody td{
   .card,.list-item,.mini-card{border-radius:24px}
   .card-head,.table-tools,.table-wrap,.side-pad{padding-left:16px;padding-right:16px}
   .gate-card{padding:24px 18px;border-radius:24px}
+  .editor-row,.editor-row.compact,.order-action-row{grid-template-columns:1fr}
   h1{font-size:34px}
 }
 </style>
@@ -805,7 +888,7 @@ tbody td{
                   <th>COD</th>
                   <th>Thanh toán</th>
                   <th>Cập nhật</th>
-                  <th>SPX</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody id="ordersTableBody">
@@ -877,17 +960,32 @@ tbody td{
           <div class="card-head">
             <div>
               <div class="card-title">Config dữ liệu</div>
-              <div class="card-sub">Chỉnh danh sách đơn, phí và lịch sử thanh toán ngay trong route SPXHOANG.</div>
+              <div class="card-sub">Điền từng dòng rõ ràng cho đơn hàng, khoản phí và lịch sử thanh toán. Mọi thay đổi sẽ lưu trực tiếp vào Hoàng's Order.</div>
             </div>
             <div class="pill">POST `/api/external-orders`</div>
           </div>
           <div class="side-pad">
-            <div class="config-label">Danh sách đơn `MÃ_ĐƠN|COD`</div>
-            <textarea id="configOrdersInput" class="config-textarea" placeholder="SPXVN123456789|350000"></textarea>
-            <div class="config-label">Khoản phí `NỘI_DUNG|SỐ_TIỀN|0/1`</div>
-            <textarea id="configFeesInput" class="config-textarea" placeholder="Phí giao ngoài|100000|0"></textarea>
-            <div class="config-label">Lịch sử thanh toán `YYYY-MM-DD|SỐ_TIỀN`</div>
-            <textarea id="configPaymentInput" class="config-textarea" placeholder="2026-04-07|500000"></textarea>
+            <div class="config-label">Danh sách đơn hàng</div>
+            <div class="editor-toolbar">
+              <div class="editor-hint">Mỗi dòng gồm mã đơn, COD, trạng thái và tình trạng thanh toán.</div>
+              <button class="icon-btn" type="button" onclick="addOrderEditorRow()">+ Thêm đơn</button>
+            </div>
+            <div class="editor-list" id="configOrdersList"></div>
+
+            <div class="config-label">Khoản phí</div>
+            <div class="editor-toolbar">
+              <div class="editor-hint">Điền nội dung phí, số tiền và đánh dấu đã thu hay chưa.</div>
+              <button class="icon-btn" type="button" onclick="addFeeEditorRow()">+ Thêm phí</button>
+            </div>
+            <div class="editor-list" id="configFeesList"></div>
+
+            <div class="config-label">Lịch sử thanh toán</div>
+            <div class="editor-toolbar">
+              <div class="editor-hint">Mỗi dòng là một giao dịch đã thanh toán cho Hoàng.</div>
+              <button class="icon-btn" type="button" onclick="addPaymentEditorRow()">+ Thêm giao dịch</button>
+            </div>
+            <div class="editor-list" id="configPaymentList"></div>
+
             <div class="config-actions">
               <button class="btn btn-primary" type="button" onclick="saveConfig()">Lưu config</button>
               <button class="btn filter-btn" type="button" onclick="hydrateConfigInputs()">Tải lại từ dữ liệu hiện tại</button>
@@ -1117,6 +1215,34 @@ function filteredOrders() {
   });
 }
 
+function statusOptions(selected = 'unknown') {
+  const options = [
+    ['unknown', 'Chưa xử lý'],
+    ['in_transit', 'Đang giao'],
+    ['delivered', 'Đã giao thành công'],
+    ['returned', 'Hoàn hàng'],
+  ];
+  return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function paymentOptions(selected) {
+  return [
+    ['0', 'Chưa thanh toán'],
+    ['1', 'Đã thanh toán'],
+  ].map(([value, label]) => `<option value="${value}" ${String(Number(!!selected)) === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function booleanOptions(selected, falseLabel, trueLabel) {
+  return [
+    ['0', falseLabel],
+    ['1', trueLabel],
+  ].map(([value, label]) => `<option value="${value}" ${String(Number(!!selected)) === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function safeCodeKey(code) {
+  return encodeURIComponent(String(code || ''));
+}
+
 function renderOrdersTable() {
   const rows = filteredOrders();
   document.getElementById('ordersCountMeta').textContent = `${rows.length.toLocaleString('vi-VN')} đơn`;
@@ -1128,6 +1254,7 @@ function renderOrdersTable() {
 
   tbody.innerHTML = rows.map(item => {
     const meta = statusMeta(item.status || 'unknown');
+    const codeKey = safeCodeKey(item.code || '');
     return `
       <tr>
         <td class="mono">${escapeHtml(item.code || '—')}</td>
@@ -1135,69 +1262,188 @@ function renderOrdersTable() {
         <td><strong>${formatMoney(item.cod || 0)}</strong></td>
         <td><span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
         <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
-        <td><a class="open-link" href="https://spx.vn/track?${encodeURIComponent(item.code || '')}" target="_blank" rel="noopener noreferrer">Mở SPX</a></td>
+        <td>
+          <div class="order-action-cell">
+            <div class="order-action-row">
+              <select class="order-editor-select" id="orderStatus_${codeKey}">
+                ${statusOptions(item.status || 'unknown')}
+              </select>
+              <select class="order-editor-select" id="orderPaid_${codeKey}">
+                ${paymentOptions(item.is_paid)}
+              </select>
+            </div>
+            <div class="order-action-footer">
+              <button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>
+              <a class="order-inline-link" href="https://spx.vn/track?${encodeURIComponent(item.code || '')}" target="_blank" rel="noopener noreferrer">Mở SPX</a>
+            </div>
+          </div>
+        </td>
       </tr>
     `;
   }).join('');
 }
 
-function serializeOrderConfigText(items) {
-  return (items || []).map(item => `${item.code || ''}|${Number(item.cod || 0)}`).join('\n');
-}
-
-function serializeFeeConfigText(items) {
-  return (items || []).map(item => `${item.content || ''}|${Number(item.amount || 0)}|${item.collected ? 1 : 0}`).join('\n');
-}
-
-function serializePaymentConfigText(items) {
-  return (items || []).map(item => `${item.date || ''}|${Number(item.amount || 0)}`).join('\n');
-}
-
 function hydrateConfigInputs() {
-  document.getElementById('configOrdersInput').value = serializeOrderConfigText(state.items);
-  document.getElementById('configFeesInput').value = serializeFeeConfigText(state.config.fee_items || []);
-  document.getElementById('configPaymentInput').value = serializePaymentConfigText(state.config.payment_history || []);
+  renderOrderEditorRows(state.items);
+  renderFeeEditorRows(state.config.fee_items || []);
+  renderPaymentEditorRows(state.config.payment_history || []);
   document.getElementById('configStatus').textContent = '';
 }
 
-function parseOrderConfigText(text) {
-  const currentMap = Object.fromEntries((state.items || []).map(item => [String(item.code || '').toUpperCase(), item]));
+function renderOrderEditorRows(items = []) {
+  const container = document.getElementById('configOrdersList');
+  const rows = Array.isArray(items) && items.length ? items : [{ code: '', cod: 0, status: 'unknown', is_paid: false }];
+  container.innerHTML = rows.map((item, index) => `
+    <div class="editor-row">
+      <input class="editor-input code" data-order-field="code" data-index="${index}" placeholder="Mã đơn" value="${escapeHtml(item.code || '')}" />
+      <input class="editor-input" data-order-field="cod" data-index="${index}" placeholder="COD" inputmode="numeric" value="${Number(item.cod || 0)}" />
+      <select class="editor-select" data-order-field="status" data-index="${index}">
+        ${statusOptions(item.status || 'unknown')}
+      </select>
+      <button class="icon-btn" type="button" onclick="removeOrderEditorRow(${index})">Xóa</button>
+      <select class="editor-select" data-order-field="paid" data-index="${index}" style="grid-column:1 / span 2">
+        ${paymentOptions(item.is_paid)}
+      </select>
+    </div>
+  `).join('');
+}
+
+function renderFeeEditorRows(items = []) {
+  const container = document.getElementById('configFeesList');
+  const rows = Array.isArray(items) && items.length ? items : [{ content: '', amount: 0, collected: false }];
+  container.innerHTML = rows.map((item, index) => `
+    <div class="editor-row compact">
+      <input class="editor-input" data-fee-field="content" data-index="${index}" placeholder="Nội dung phí" value="${escapeHtml(item.content || '')}" />
+      <input class="editor-input" data-fee-field="amount" data-index="${index}" placeholder="Số tiền" inputmode="numeric" value="${Number(item.amount || 0)}" />
+      <button class="icon-btn" type="button" onclick="removeFeeEditorRow(${index})">Xóa</button>
+      <select class="editor-select" data-fee-field="collected" data-index="${index}" style="grid-column:1 / span 2">
+        ${booleanOptions(item.collected, 'Chưa thu', 'Đã thu')}
+      </select>
+    </div>
+  `).join('');
+}
+
+function renderPaymentEditorRows(items = []) {
+  const container = document.getElementById('configPaymentList');
+  const rows = Array.isArray(items) && items.length ? items : [{ date: '', amount: 0 }];
+  container.innerHTML = rows.map((item, index) => `
+    <div class="editor-row compact">
+      <input class="editor-input" data-payment-field="date" data-index="${index}" type="date" value="${escapeHtml(item.date || '')}" />
+      <input class="editor-input" data-payment-field="amount" data-index="${index}" placeholder="Số tiền" inputmode="numeric" value="${Number(item.amount || 0)}" />
+      <button class="icon-btn" type="button" onclick="removePaymentEditorRow(${index})">Xóa</button>
+    </div>
+  `).join('');
+}
+
+function addOrderEditorRow() {
+  const next = [...collectOrderEditorRows(), { code: '', cod: 0, status: 'unknown', is_paid: false }];
+  renderOrderEditorRows(next);
+}
+
+function addFeeEditorRow() {
+  const next = [...collectFeeEditorRows(), { content: '', amount: 0, collected: false }];
+  renderFeeEditorRows(next);
+}
+
+function addPaymentEditorRow() {
+  const next = [...collectPaymentEditorRows(), { date: '', amount: 0 }];
+  renderPaymentEditorRows(next);
+}
+
+function removeOrderEditorRow(index) {
+  const next = [...collectOrderEditorRows()];
+  next.splice(index, 1);
+  renderOrderEditorRows(next);
+}
+
+function removeFeeEditorRow(index) {
+  const next = [...collectFeeEditorRows()];
+  next.splice(index, 1);
+  renderFeeEditorRows(next);
+}
+
+function removePaymentEditorRow(index) {
+  const next = [...collectPaymentEditorRows()];
+  next.splice(index, 1);
+  renderPaymentEditorRows(next);
+}
+
+function collectOrderEditorRows() {
+  const rows = [...document.querySelectorAll('#configOrdersList .editor-row')];
   const seen = new Set();
-  return String(text || '').split('\n').map(line => line.trim()).filter(Boolean).map(line => {
-    const [rawCode, rawCod] = line.split('|');
-    const code = String(rawCode || '').trim().toUpperCase();
+  return rows.map(row => {
+    const code = String(row.querySelector('[data-order-field="code"]')?.value || '').trim().toUpperCase();
+    const cod = Number(String(row.querySelector('[data-order-field="cod"]')?.value || '').replace(/[^\d]/g, '') || 0);
+    const status = String(row.querySelector('[data-order-field="status"]')?.value || 'unknown');
+    const is_paid = String(row.querySelector('[data-order-field="paid"]')?.value || '0') === '1';
     if (!code || seen.has(code)) return null;
     seen.add(code);
-    const current = currentMap[code] || {};
-    const cod = Number(String(rawCod || '').replace(/[^\d]/g, '') || 0);
-    return {
-      code,
-      cod,
-      status: current.status || 'unknown',
-      is_paid: !!current.is_paid,
-    };
+    return { code, cod, status, is_paid };
   }).filter(Boolean);
 }
 
-function parseFeeConfigText(text) {
-  return String(text || '').split('\n').map(line => line.trim()).filter(Boolean).map(line => {
-    const parts = line.split('|');
-    return {
-      content: String(parts[0] || '').trim(),
-      amount: Number(String(parts[1] || '').replace(/[^\d]/g, '') || 0),
-      collected: ['1', 'true', 'yes', 'y'].includes(String(parts[2] || '').trim().toLowerCase()),
-    };
+function collectFeeEditorRows() {
+  const rows = [...document.querySelectorAll('#configFeesList .editor-row')];
+  return rows.map(row => {
+    const content = String(row.querySelector('[data-fee-field="content"]')?.value || '').trim();
+    const amount = Number(String(row.querySelector('[data-fee-field="amount"]')?.value || '').replace(/[^\d]/g, '') || 0);
+    const collected = String(row.querySelector('[data-fee-field="collected"]')?.value || '0') === '1';
+    return { content, amount, collected };
   }).filter(item => item.content || item.amount);
 }
 
-function parsePaymentConfigText(text) {
-  return String(text || '').split('\n').map(line => line.trim()).filter(Boolean).map(line => {
-    const parts = line.split('|');
-    return {
-      date: String(parts[0] || '').trim(),
-      amount: Number(String(parts[1] || '').replace(/[^\d]/g, '') || 0),
-    };
+function collectPaymentEditorRows() {
+  const rows = [...document.querySelectorAll('#configPaymentList .editor-row')];
+  return rows.map(row => {
+    const date = String(row.querySelector('[data-payment-field="date"]')?.value || '').trim();
+    const amount = Number(String(row.querySelector('[data-payment-field="amount"]')?.value || '').replace(/[^\d]/g, '') || 0);
+    return { date, amount };
   }).filter(item => item.date || item.amount);
+}
+
+async function updateOrderRow(codeKey, button) {
+  const code = decodeURIComponent(codeKey || '');
+  if (!state.unlocked || !code) return;
+  const current = (state.items || []).find(item => item.code === code);
+  if (!current) return;
+  const statusValue = document.getElementById(`orderStatus_${codeKey}`)?.value || current.status || 'unknown';
+  const paidValue = document.getElementById(`orderPaid_${codeKey}`)?.value === '1';
+  button.disabled = true;
+  const original = button.textContent;
+  button.textContent = 'Đang cập nhật...';
+  try {
+    if (statusValue !== (current.status || 'unknown')) {
+      const statusRes = await fetch('/api/external-orders/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': ACCESS_ID
+        },
+        body: JSON.stringify({ scope: 'hoang', code, status: statusValue })
+      });
+      const statusData = await statusRes.json();
+      if (!statusRes.ok) throw new Error(statusData.error || 'Không cập nhật được trạng thái.');
+    }
+    if (paidValue !== !!current.is_paid) {
+      const paidRes = await fetch('/api/external-orders/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': ACCESS_ID
+        },
+        body: JSON.stringify({ scope: 'hoang', code, is_paid: paidValue })
+      });
+      const paidData = await paidRes.json();
+      if (!paidRes.ok) throw new Error(paidData.error || 'Không cập nhật được thanh toán.');
+    }
+    await refreshDashboard();
+  } catch (error) {
+    document.getElementById('configStatus').textContent = error.message;
+    document.getElementById('configStatus').style.color = '#b44d46';
+  } finally {
+    button.disabled = false;
+    button.textContent = original;
+  }
 }
 
 async function saveConfig() {
@@ -1208,9 +1454,9 @@ async function saveConfig() {
   try {
     const body = {
       scope: 'hoang',
-      items: parseOrderConfigText(document.getElementById('configOrdersInput').value),
-      fee_items: parseFeeConfigText(document.getElementById('configFeesInput').value),
-      payment_history: parsePaymentConfigText(document.getElementById('configPaymentInput').value),
+      items: collectOrderEditorRows(),
+      fee_items: collectFeeEditorRows(),
+      payment_history: collectPaymentEditorRows(),
     };
     const res = await fetch('/api/external-orders', {
       method: 'POST',
