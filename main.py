@@ -25,6 +25,7 @@ from shops_config import BLOCKED_SHOPS, SELLER_ID, SELLER_TOKEN, SHOP_NAME_MAP, 
 # ── Key management cho order-info ─────────────────────────
 VALID_KEYS = {
     "HOANG5611": 0,
+    "Hoang5611": 0,
     "PHONE-KEY-PHUONG2000": 0,
 }
 KEY_LIMIT = 10
@@ -35,7 +36,7 @@ LOGIN_HISTORY: list = []  # [{key, event, time}]
 # Database setup
 Base.metadata.create_all(bind=engine)
 migrate()
-UNLIMITED_KEYS = {"HOANG5611", "PHONE-KEY-PHUONG2000"}
+UNLIMITED_KEYS = {"HOANG5611", "Hoang5611", "PHONE-KEY-PHUONG2000"}
 
 app = FastAPI(title="Chiaki Order Dashboard")
 app.mount("/static", StaticFiles(directory="static"), name="static")
