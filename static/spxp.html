@@ -158,7 +158,7 @@ h1{
 .hero-meta{
   margin-top:22px;
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:12px;
 }
 
@@ -400,7 +400,7 @@ h1{
 
 .filter-btn{
   padding:12px 14px;
-  border-radius:16px;
+  border-radius:22px;
   background:#fff;
   border:1px solid var(--line);
   color:var(--muted);
@@ -486,7 +486,7 @@ tbody td{
   align-items:center;
   gap:8px;
   padding:10px 14px;
-  border-radius:14px;
+  border-radius:20px;
   background:#fff4e6;
   color:#8c541f;
   text-decoration:none;
@@ -547,7 +547,7 @@ tbody td{
 
 .list-title{
   font-size:14px;
-  font-weight:700;
+  font-weight:500;
 }
 
 .list-sub{
@@ -615,7 +615,7 @@ tbody td{
   width:100%;
   margin-top:16px;
   padding:14px 16px;
-  border-radius:18px;
+  border-radius:24px;
   border:1px solid rgba(83,57,45,.12);
   background:#fff;
   font:inherit;
@@ -778,7 +778,7 @@ tbody td{
 .icon-btn{
   padding:10px 12px;
   border:none;
-  border-radius:14px;
+  border-radius:20px;
   background:#fff3e5;
   color:#8c541f;
   font:inherit;
@@ -800,7 +800,7 @@ tbody td{
 .order-update-btn{
   padding:10px 12px;
   border:none;
-  border-radius:14px;
+  border-radius:20px;
   background:linear-gradient(135deg,#f4c178,#f7a45d);
   color:#402113;
   font:inherit;
@@ -815,7 +815,7 @@ tbody td{
 .order-open-btn{
   padding:10px 12px;
   border:none;
-  border-radius:14px;
+  border-radius:20px;
   background:#fff3e5;
   color:#8c541f;
   font:inherit;
@@ -895,12 +895,17 @@ tbody td{
           <div class="hero-stat-sub" id="heroLastUpdated">Chưa có dữ liệu đồng bộ.</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-label">Tổng COD hiệu lực</div>
+          <div class="hero-stat-label">Tổng doanh thu đơn tạo</div>
           <div class="hero-stat-value" id="heroTotalCod">0₫</div>
-          <div class="hero-stat-sub">Không tính các đơn đang ở trạng thái hoàn hàng.</div>
+          <div class="hero-stat-sub">Tổng doanh thu của tất cả đơn đã config.</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-label">Cần chuyển hiện tại</div>
+          <div class="hero-stat-label">Tổng doanh thu đã giao</div>
+          <div class="hero-stat-value" id="heroDeliveredRevenue">0₫</div>
+          <div class="hero-stat-sub">Tổng doanh thu các đơn đã giao thành công.</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">CHỜ THANH TOÁN</div>
           <div class="hero-stat-value" id="heroNetPayout">0₫</div>
           <div class="hero-stat-sub">Doanh thu chưa thanh toán trừ các khoản phí còn treo.</div>
         </div>
@@ -1006,7 +1011,7 @@ tbody td{
           <div class="side-pad">
             <div class="mini-grid">
               <div class="mini-card">
-                <div class="mini-label">Cần chuyển ngay</div>
+                <div class="mini-label">CHỜ THANH TOÁN</div>
                 <div class="mini-value" id="moneyNeedTransfer">0₫</div>
               </div>
               <div class="mini-card">
@@ -1174,7 +1179,7 @@ function computeMetrics(items, config) {
   const paymentHistory = Array.isArray(config.payment_history) ? [...config.payment_history] : [];
   paymentHistory.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
-  const totalCod = sum(items.filter(item => item.status !== 'returned'), item => item.cod);
+  const totalCod = sum(items, item => item.cod);
   const totalFee = sum(feeItems, item => item.amount);
   const collectedFee = sum(feeItems.filter(item => item.collected), item => item.amount);
   const outstandingFee = totalFee - collectedFee;
@@ -1210,6 +1215,7 @@ function computeMetrics(items, config) {
 function renderHero(metrics, config) {
   document.getElementById('heroTotalOrders').textContent = state.items.length.toLocaleString('vi-VN');
   document.getElementById('heroTotalCod').textContent = formatMoney(metrics.totalCod);
+  document.getElementById('heroDeliveredRevenue').textContent = formatMoney(metrics.deliveredRevenue);
   document.getElementById('heroNetPayout').textContent = formatMoney(metrics.needTransfer);
   document.getElementById('heroPaidOut').textContent = formatMoney(metrics.paidOut);
   document.getElementById('heroLastUpdated').textContent = config.updated_at
