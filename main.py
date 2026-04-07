@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from urllib.parse import quote
 import httpx
 from fastapi import Depends, FastAPI, File, Form, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
@@ -353,6 +353,27 @@ def build_shop_download_url(shop_id: str, status: str = "receive_wating") -> str
         f"&date_type=created_at&order=create-desc"
         f"&Seller_id={SELLER_ID}&Seller_token={SELLER_TOKEN}"
     )
+
+
+def sanitize_download_filename_part(value: str, default: str = "Shop") -> str:
+    text = unicodedata.normalize("NFC", str(value or "").strip())
+    text = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', " ", text)
+    text = re.sub(r"\s+", " ", text).strip(" .")
+    return text or default
+
+
+def build_shop_download_filename(shop_id: str, shop_name: str) -> str:
+    normalized_shop_id = re.sub(r"[^0-9A-Za-z_-]+", "", str(shop_id or "").strip()) or "SHOP"
+    normalized_shop_name = sanitize_download_filename_part(shop_name)
+    return f"{normalized_shop_id}_{normalized_shop_name}.xlsx"
+
+
+def build_ascii_fallback_filename(filename: str) -> str:
+    ascii_name = unicodedata.normalize("NFKD", str(filename or ""))
+    ascii_name = ascii_name.encode("ascii", "ignore").decode("ascii")
+    ascii_name = re.sub(r'[^A-Za-z0-9._ -]+', "", ascii_name)
+    ascii_name = re.sub(r"\s+", " ", ascii_name).strip(" .")
+    return ascii_name or "download.xlsx"
 
 
 def escape_for_shell_double_quotes(value: str) -> str:
@@ -1239,10 +1260,87 @@ def get_sync_download_links(request: Request, status: str = Query("receive_watin
                 "shop_name": shop_name,
                 "shop_url": shop_url,
                 "download_url": build_shop_download_url(shop_id, status=status),
+                "file_name": build_shop_download_filename(shop_id, shop_name),
             }
             for shop_id, (shop_url, shop_name) in shops
         ]
     }
+
+
+@app.get("/api/sync-download-file")
+async def download_sync_shop_file(request: Request, shop_id: str = Query(...), status: str = Query("receive_wating")):
+    user_id = request.headers.get("X-User-ID", "").strip()
+    if not get_user_capabilities(user_id).get("admin_tools"):
+        return JSONResponse({"error": "Không có quyền truy cập."}, status_code=403)
+
+    normalized_shop_id = str(shop_id or "").strip()
+    shops = get_shops_map()
+    shop_meta = shops.get(normalized_shop_id)
+    if not shop_meta:
+        return JSONResponse({"error": "Không tìm thấy gian hàng cần tải."}, status_code=404)
+
+    _, shop_name = shop_meta
+    download_url = build_shop_download_url(normalized_shop_id, status=status)
+    headers = {
+        "accept": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/octet-stream,*/*",
+        "accept-language": "vi,en-US;q=0.9,en;q=0.8",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "referer": download_url,
+        "user-agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/135.0.0.0 Safari/537.36"
+        ),
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+            response = await client.get(download_url, headers=headers)
+    except Exception as exc:
+        return JSONResponse(
+            {"error": f"Không tải được file từ Chiaki cho shop {normalized_shop_id}: {exc}"},
+            status_code=502,
+        )
+
+    if response.status_code != 200:
+        return JSONResponse(
+            {"error": f"Chiaki trả về HTTP {response.status_code} cho shop {normalized_shop_id}."},
+            status_code=502,
+        )
+
+    content_type = (response.headers.get("content-type") or "").lower()
+    if "html" in content_type or "json" in content_type:
+        preview = response.text[:300].strip()
+        detail = f" Phản hồi: {preview}" if preview else ""
+        return JSONResponse(
+            {"error": f"Chiaki không trả file Excel cho shop {normalized_shop_id}.{detail}"},
+            status_code=502,
+        )
+
+    content = response.content
+    if not content:
+        return JSONResponse(
+            {"error": f"Chiaki trả về file rỗng cho shop {normalized_shop_id}."},
+            status_code=502,
+        )
+
+    filename = build_shop_download_filename(normalized_shop_id, shop_name)
+    fallback_filename = build_ascii_fallback_filename(filename)
+    media_type = response.headers.get("content-type") or "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "no-store",
+            "Content-Disposition": (
+                f'attachment; filename="{fallback_filename}"; '
+                f"filename*=UTF-8''{quote(filename)}"
+            ),
+            "X-Download-Filename": filename,
+        },
+    )
 
 
 @app.post("/api/tools/cancel-order-curl")
