@@ -3684,10 +3684,18 @@ function sortData(arr) {
 }
 
 async function init() {
+  if (window._dashboardInitDone) return;
+  window._dashboardInitDone = true;
   collapseDefaultPanels();
   try {
     await refreshUserCapabilities();
-    const [summaryData] = await Promise.all([loadSummary(), loadOrders(), loadExternalOrders()]);
+    const [summaryData] = await Promise.all([
+      loadSummary(),
+      loadOrders(),
+      loadExternalOrders(),
+      loadSyncShops(),
+      loadSyncShopsPending()
+    ]);
     if (summaryData && summaryData.shops) {
       fetchAndUpdateShopNames(summaryData.shops);
     }
@@ -3700,7 +3708,16 @@ async function init() {
     showLoading(false);
     console.error('Init error:', e);
   }
-  setInterval(() => { loadSummary(); loadOrders(); loadHanoi(); loadNuocHoa(); loadChartData(); loadMienBac(); loadExternalOrders(); }, 300_000);
+  if (window._dashboardRefreshTimer) clearInterval(window._dashboardRefreshTimer);
+  window._dashboardRefreshTimer = setInterval(() => {
+    loadSummary();
+    loadOrders();
+    loadHanoi();
+    loadNuocHoa();
+    loadChartData();
+    loadMienBac();
+    loadExternalOrders();
+  }, 300_000);
 }
 
 async function loadSummary() {
@@ -4611,6 +4628,7 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
   const syncPanel = document.getElementById('syncPanel');
   const syncPanelPending = document.getElementById('syncPanelPending');
   const curlResultBg = document.getElementById('curlResultBg');
+  const externalWrap = document.querySelector('.external-orders-wrap');
 
   if (curlPanel) {
     curlPanel.style.display = showAdminPanels ? 'block' : 'none';
@@ -4623,6 +4641,9 @@ function updateAdminOnlyPanels(id = localStorage.getItem(ID_KEY) || '') {
   }
   if (!showAdminPanels && curlResultBg) {
     curlResultBg.style.display = 'none';
+  }
+  if (externalWrap) {
+    externalWrap.style.display = id === 'Hoang5611' ? 'block' : 'none';
   }
   updateExternalOrdersAccess(id);
 }
@@ -6489,8 +6510,6 @@ window.addEventListener('resize', () => {
 });
 
 applyCompactTouchUiMode();
-loadSyncShops();
-loadSyncShopsPending();
 if (checkIdGate()) { init(); }
 </script>
 </body>
