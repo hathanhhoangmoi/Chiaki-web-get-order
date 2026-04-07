@@ -33,6 +33,7 @@ body{
   backdrop-filter:blur(30px);position:sticky;top:0;z-index:100;
 }
 .header-left{display:flex;align-items:center;gap:12px}
+.header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .logo{
   width:40px;height:40px;border-radius:13px;
   background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
@@ -40,6 +41,20 @@ body{
   box-shadow:0 4px 14px rgba(245,186,213,.5);
 }
 .header-sub{font-size:12px;color:#a06070;margin-top:2px}
+.mobile-download-toggle{
+  display:none;align-items:center;gap:8px;
+  padding:8px 14px;border:none;border-radius:18px;
+  background:rgba(255,255,255,.62);color:#7a3040;
+  font-family:inherit;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  border:1px solid rgba(198,181,255,.35);
+  box-shadow:0 8px 20px rgba(87,3,1,.08);
+}
+.mobile-download-toggle:hover{background:rgba(255,255,255,.85);color:#570301}
+.mobile-download-toggle.active{
+  background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
+  color:#570301;
+}
 .sync-info{font-size:12px;color:#a06070;text-align:right}
 .btn{
   padding:9px 18px;border:none;border-radius:12px;
@@ -1267,6 +1282,135 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 .download-msg.ok{display:block;background:rgba(247,229,148,.35);color:#7a4500}
 .download-msg.err{display:block;background:rgba(245,186,213,.4);color:#570301}
+.compact-order-code{
+  font-family:monospace;
+  font-size:11px;
+  font-weight:700;
+  color:#3b3551;
+}
+.compact-order-cell{
+  max-width:150px;
+  line-height:1.55;
+  white-space:normal;
+  word-break:break-word;
+}
+.compact-order-btn{
+  padding:8px 14px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff7ed;
+  font-family:inherit;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(249,115,22,.18);
+}
+.compact-order-btn:hover{transform:translateY(-1px)}
+.mobile-detail-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:7300;
+  background:rgba(77,40,30,.22);
+  backdrop-filter:blur(10px);
+  padding:18px;
+  align-items:center;
+  justify-content:center;
+}
+.mobile-detail-modal.show{display:flex}
+.mobile-detail-card{
+  width:min(640px,100%);
+  max-height:calc(100vh - 36px);
+  overflow:auto;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(255,255,255,.85);
+  border-radius:28px;
+  box-shadow:0 20px 50px rgba(87,3,1,.16);
+  padding:22px 20px;
+}
+.mobile-detail-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.mobile-detail-title{
+  font-size:18px;
+  font-weight:800;
+  color:#3b3551;
+}
+.mobile-detail-sub{
+  margin-top:6px;
+  font-size:12px;
+  color:#a06070;
+  line-height:1.6;
+}
+.mobile-detail-close{
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:999px;
+  background:rgba(245,186,213,.25);
+  color:#570301;
+  font:inherit;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+}
+.mobile-detail-status{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(186,214,253,.24);
+  color:#5b4b8a;
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:16px;
+}
+.mobile-detail-rows{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.mobile-detail-row{
+  display:grid;
+  grid-template-columns:minmax(108px,148px) minmax(0,1fr);
+  gap:10px;
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(186,214,253,.25);
+}
+.mobile-detail-label{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#a06070;
+}
+.mobile-detail-value{
+  font-size:14px;
+  font-weight:600;
+  line-height:1.65;
+  color:#570301;
+  word-break:break-word;
+  white-space:pre-wrap;
+}
+.mobile-detail-note{
+  margin-top:14px;
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(247,229,148,.28);
+  color:#7a4500;
+  font-size:12px;
+  line-height:1.6;
+  display:none;
+}
+.mobile-detail-note.show{display:block}
 #btnGetPhone{
   background:linear-gradient(135deg,#F5BAD5,#BAD6FD);
   box-shadow:0 4px 18px rgba(245,186,213,.4);
@@ -1280,6 +1424,41 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
 }
 #shippingLabelPrint{display:none}
 @media (max-width: 1100px){
+  .header{
+    padding:14px 16px;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .header-left{
+    width:100%;
+    align-items:flex-start;
+    position:relative;
+  }
+  .header-actions{
+    width:100%;
+    justify-content:space-between;
+  }
+  .mobile-download-toggle{display:inline-flex}
+  .container{margin:0;padding:16px}
+  .fee-notice-wrap,.external-orders-wrap{margin:16px}
+  .download-panel{
+    left:16px;
+    top:84px;
+    width:min(420px,calc(100vw - 32px));
+    max-height:calc(100vh - 100px);
+    border-radius:26px;
+    padding:16px 14px 14px;
+    z-index:7100;
+  }
+  .table-wrap{border-radius:28px}
+  .table-header{
+    padding:14px 16px;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  thead th,tbody td{padding:10px 12px}
   .external-orders-wrap{margin:16px}
   .external-stats-row.row-3,.external-stats-row.row-2{grid-template-columns:1fr}
   .external-track-dialog{grid-template-columns:1fr}
@@ -1288,6 +1467,16 @@ tbody td{padding:11px 14px;font-size:12px;color:#570301;vertical-align:middle}
   .external-fee-item{grid-template-columns:1fr}
   .external-fee-summary{grid-template-columns:1fr}
   .product-search-wrap{margin:16px 0}
+}
+@media (max-width: 760px){
+  .mobile-detail-modal{padding:10px}
+  .mobile-detail-card{
+    max-height:calc(100vh - 20px);
+    border-radius:22px;
+    padding:18px 16px;
+  }
+  .mobile-detail-row{grid-template-columns:1fr}
+  .mobile-detail-title{font-size:16px}
 }
 @media print{
   body > *:not(#shippingLabelPrint){display:none !important}
@@ -1519,13 +1708,22 @@ select.sync-input{font-family:inherit;cursor:pointer}
 
 <div class="header">
   <div class="header-left">
+    <button
+      id="mobileDownloadToggle"
+      class="mobile-download-toggle"
+      type="button"
+      onclick="toggleDownloadMenu()"
+      aria-expanded="false"
+    >
+      ☰ Công cụ
+    </button>
     <div class="logo">☁️</div>
     <div>
       <div style="font-size:17px;font-weight:700;color:#3b3551">Bán hàng Chiaki cùng Chang ✨</div>
       <div class="header-sub">Đồng bộ, xử lý đơn hàng Chiaki</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:12px">
+  <div class="header-actions">
     <div id="idDisplay" style="display:none">
       <div class="id-badge">
         🔑 <span id="maskedId">—</span>
@@ -2099,6 +2297,21 @@ select.sync-input{font-family:inherit;cursor:pointer}
 </div>
 </div>
 
+<div class="mobile-detail-modal" id="mobileOrderDetailModal" onclick="if(event.target===this) closeMobileOrderDetailModal()">
+  <div class="mobile-detail-card">
+    <div class="mobile-detail-head">
+      <div>
+        <div class="mobile-detail-title">Chi tiết đơn hàng</div>
+        <div class="mobile-detail-sub" id="mobileOrderDetailSub">Đang tải thông tin đơn hàng.</div>
+      </div>
+      <button class="mobile-detail-close" type="button" onclick="closeMobileOrderDetailModal()">✕</button>
+    </div>
+    <div class="mobile-detail-status" id="mobileOrderDetailStatus">Đang tải chi tiết</div>
+    <div class="mobile-detail-rows" id="mobileOrderDetailRows"></div>
+    <div class="mobile-detail-note" id="mobileOrderDetailNote"></div>
+  </div>
+</div>
+
 <div class="info-modal-bg" id="syncPanelPending" style="display:none;margin-top:16px">
   <div class="info-modal collapsible-panel collapsed" id="panelSyncOrdersPending">
     <div class="panel-chrome">
@@ -2295,7 +2508,7 @@ select.sync-input{font-family:inherit;cursor:pointer}
       </div>
       <div style="overflow-x:auto">
         <table>
-          <thead>
+          <thead id="mainTableHead">
             <tr>
               <th>Mã đơn</th>
               <th>Ngày đặt</th>
@@ -3476,13 +3689,245 @@ async function loadSummary() {
   }
 }
 
+function isCompactViewport() {
+  return window.matchMedia('(max-width: 1100px)').matches;
+}
+
+function getMainTableColspan() {
+  return isCompactViewport() ? 6 : 9;
+}
+
+function escapeTextHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function stripHtml(value) {
+  return String(value ?? '')
+    .replace(/<br\s*\/?>/gi, ', ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeLookupOrderCode(fullCode) {
+  const raw = String(fullCode || '').trim();
+  if (!raw) return '';
+  const parts = raw.split('_').filter(Boolean);
+  return (parts.length ? parts[parts.length - 1] : raw).trim();
+}
+
+function shortenProductForCompact(value) {
+  const text = stripHtml(value);
+  if (!text) return '—';
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= 4) return text;
+  return `${words.slice(0, 4).join(' ')}...`;
+}
+
+function shortenAddressForCompact(value) {
+  const text = stripHtml(value);
+  if (!text) return '—';
+
+  const matches = [...text.matchAll(/\(([^()]+)\)/g)];
+  const sources = matches.length ? [matches[matches.length - 1][1], text] : [text];
+
+  for (const source of sources) {
+    const normalized = String(source || '').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!normalized) continue;
+
+    const dashParts = normalized.split(/\s*-\s*/).map(part => part.trim()).filter(Boolean);
+    if (dashParts.length > 1) return dashParts[dashParts.length - 1];
+
+    const commaParts = normalized.split(',').map(part => part.trim()).filter(Boolean);
+    if (commaParts.length > 1) return commaParts[commaParts.length - 1];
+  }
+
+  return text.length > 24 ? `${text.slice(0, 21)}...` : text;
+}
+
+function formatOrderTotal(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number.toLocaleString('vi')}₫` : '—';
+}
+
+function buildMobileOrderDetailRows(order, detail) {
+  const mergedPhone = detail?.phone || 'Không lấy được SĐT';
+  const mergedStatus = detail?.status || order?.status || '—';
+  const mergedProduct = detail?.product || stripHtml(order?.product || '') || '—';
+  return {
+    subtitle: `Đơn ${normalizeLookupOrderCode(order?.order_code || '') || '—'}`,
+    status: mergedStatus,
+    rows: [
+      ['Mã đơn hàng', normalizeLookupOrderCode(order?.order_code || '') || '—'],
+      ['Ngày đặt', detail?.order_date || order?.order_date || '—'],
+      ['Gian hàng', detail?.shop_name || order?.shop_name || order?.shop_id || '—'],
+      ['Tên khách', detail?.customer_name || order?.customer_name || order?.buyer_name || '—'],
+      ['SĐT', mergedPhone],
+      ['Địa chỉ', detail?.address || stripHtml(order?.address || '') || '—'],
+      ['Sản phẩm', mergedProduct],
+      ['Số lượng', detail?.quantity ?? order?.quantity ?? '—'],
+      ['Giá trị đơn', detail?.prepaid_amount || formatOrderTotal(order?.total)],
+      ['Trạng thái', mergedStatus],
+    ],
+  };
+}
+
+function renderMobileOrderDetail(order, detail = null, note = '') {
+  const modal = document.getElementById('mobileOrderDetailModal');
+  const sub = document.getElementById('mobileOrderDetailSub');
+  const status = document.getElementById('mobileOrderDetailStatus');
+  const rows = document.getElementById('mobileOrderDetailRows');
+  const noteEl = document.getElementById('mobileOrderDetailNote');
+  if (!modal || !sub || !status || !rows || !noteEl) return;
+
+  const payload = buildMobileOrderDetailRows(order, detail);
+  sub.textContent = payload.subtitle;
+  status.textContent = payload.status || '—';
+  rows.innerHTML = payload.rows.map(([label, value]) => `
+    <div class="mobile-detail-row">
+      <div class="mobile-detail-label">${escapeTextHtml(label)}</div>
+      <div class="mobile-detail-value">${escapeTextHtml(value)}</div>
+    </div>
+  `).join('');
+
+  noteEl.textContent = note || '';
+  noteEl.classList.toggle('show', !!note);
+}
+
+function closeMobileOrderDetailModal() {
+  const modal = document.getElementById('mobileOrderDetailModal');
+  if (modal) modal.classList.remove('show');
+}
+
+async function openMobileOrderDetail(orderCode) {
+  const orderMap = window.orderRowMap || {};
+  const order = orderMap[orderCode];
+  if (!order || order.restricted) return;
+
+  const modal = document.getElementById('mobileOrderDetailModal');
+  if (!modal) return;
+  modal.classList.add('show');
+  renderMobileOrderDetail(order, null, 'Đang lấy SĐT từ tra cứu đơn hàng...');
+
+  const normalizedCode = normalizeLookupOrderCode(order.order_code);
+  if (!normalizedCode) {
+    renderMobileOrderDetail(order, null, 'Không tìm thấy mã đơn hợp lệ để tra cứu SĐT.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/order-info', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': localStorage.getItem('chiaki_id') || ''
+      },
+      body: JSON.stringify({ order_code: normalizedCode, key: 'HOANG5611' })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      renderMobileOrderDetail(order, null, data.error || 'Không lấy được SĐT từ API tra cứu.');
+      return;
+    }
+    renderMobileOrderDetail(order, data, '');
+  } catch (error) {
+    renderMobileOrderDetail(order, null, `Lỗi kết nối khi lấy SĐT: ${error.message}`);
+  }
+}
+
+function renderMainTableHeader() {
+  const head = document.getElementById('mainTableHead');
+  if (!head) return;
+
+  head.innerHTML = isCompactViewport()
+    ? `<tr>
+        <th>Mã đơn</th>
+        <th>Gian hàng</th>
+        <th>Tỉnh/TP</th>
+        <th>Sản phẩm</th>
+        <th>Tổng tiền</th>
+        <th>Chi tiết</th>
+      </tr>`
+    : `<tr>
+        <th>Mã đơn</th>
+        <th>Ngày đặt</th>
+        <th>Gian hàng</th>
+        <th>Tên khách hàng</th>
+        <th>Địa chỉ</th>
+        <th>Sản phẩm</th>
+        <th>Số lượng</th>
+        <th>Tổng tiền</th>
+        <th>Trạng thái</th>
+      </tr>`;
+}
+
+function renderMainOrdersRows(data) {
+  const tbody = document.getElementById('tableBody');
+  if (!tbody) return;
+
+  const compact = isCompactViewport();
+  window.orderRowMap = {};
+
+  if (!data.data || data.data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${getMainTableColspan()}" class="empty">
+      <div class="empty-icon">📭</div><div>Chưa có đơn hàng nào</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.data.map(o => {
+    const M = v => `<span class="restricted-mask">${v || '••••••••'}</span>`;
+    const R = o.restricted;
+    const rawOrderCode = o.order_code || '—';
+    const normalizedOrderCode = normalizeLookupOrderCode(rawOrderCode) || rawOrderCode;
+    const escapedOrderCode = String(rawOrderCode).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    window.orderRowMap[rawOrderCode] = o;
+
+    if (compact) {
+      return `
+        <tr>
+          <td>
+            <div class="compact-order-code">${R ? M('••••••••') : escapeTextHtml(normalizedOrderCode)}</div>
+            ${R ? '' : `<button class="btn-copy-order-main" type="button" onclick="copyOrderCode(this, '${escapedOrderCode}')">COPY</button>`}
+          </td>
+          <td><span class="shop-chip">${escapeTextHtml(o.shop_name || o.shop_id || '—')}</span></td>
+          <td class="compact-order-cell">${R ? M() : escapeTextHtml(shortenAddressForCompact(o.address))}</td>
+          <td class="compact-order-cell">${R ? M() : escapeTextHtml(shortenProductForCompact(o.product))}</td>
+          <td><b>${R ? M() : escapeTextHtml(formatOrderTotal(o.total))}</b></td>
+          <td>${R ? `<span class="restricted-mask">—</span>` : `<button class="compact-order-btn" type="button" onclick="openMobileOrderDetail('${escapedOrderCode}')">Chi tiết</button>`}</td>
+        </tr>`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <b style="font-family:monospace;font-size:11px">${R ? M('••••••••') : rawOrderCode}</b>
+          ${R ? '' : `<br><button class="btn-copy-order-main" type="button" onclick="copyOrderCode(this, '${escapedOrderCode}')">COPY</button>`}
+        </td>
+        <td style="font-size:11px;color:#9b8bb4">${R ? M() : escapeTextHtml(o.order_date || '—')}</td>
+        <td><span class="shop-chip">${escapeTextHtml(o.shop_name || o.shop_id || '—')}</span></td>
+        <td>${R ? M() : escapeTextHtml(o.customer_name || o.buyer_name || '—')}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : escapeTextHtml(stripHtml(o.address || '—'))}</td>
+        <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.product || '—')}</td>
+        <td style="text-align:center">${R ? M() : escapeTextHtml(o.quantity || '—')}</td>
+        <td><b>${R ? M() : escapeTextHtml(formatOrderTotal(o.total))}</b></td>
+        <td>${R ? `<span class="restricted-mask">••••••••</span>` : escapeTextHtml(o.status || '—')}</td>
+      </tr>`;
+  }).join('');
+}
+
 async function loadOrders() {
   showLoading(true);
   try {
     let url = `api/orders?page=${currentPage}&limit=${limit}`;
-if (currentShop) url += `&shop_id=${currentShop}`;
-if (currentSort !== 'default') url += `&sort=${currentSort}`;
-if (currentSyncStage) url += `&sync_stage=${encodeURIComponent(currentSyncStage)}`;
+    if (currentShop) url += `&shop_id=${currentShop}`;
+    if (currentSort !== 'default') url += `&sort=${currentSort}`;
+    if (currentSyncStage) url += `&sync_stage=${encodeURIComponent(currentSyncStage)}`;
 
     const response = await fetch(url, {
       headers: {
@@ -3490,69 +3935,42 @@ if (currentSyncStage) url += `&sync_stage=${encodeURIComponent(currentSyncStage)
       }
     });
     const data = await response.json();
+    window.latestMainOrdersPayload = data;
     showLoading(false);
+
     if (data.data) {
-  window.allOrders = (window.allOrders || []);
-  // Gộp thêm trang mới vào (tránh mất dữ liệu trang trước)
-  const existingCodes = new Set(window.allOrders.map(o => o.order_code));
-  data.data.forEach(o => {
-    if (!existingCodes.has(o.order_code)) window.allOrders.push(o);
-  });
-}
+      window.allOrders = (window.allOrders || []);
+      const existingCodes = new Set(window.allOrders.map(o => o.order_code));
+      data.data.forEach(o => {
+        if (!existingCodes.has(o.order_code)) window.allOrders.push(o);
+      });
+    }
+
+    renderMainTableHeader();
+
     if (data.error) {
-  document.getElementById('tableBody').innerHTML = `
-    <tr><td colspan="10" class="empty">
-      <div class="empty-icon">🔒</div><div>${data.error}</div>
-    </td></tr>`;
-  return;
-} else if (data.blocked) {
-  document.getElementById('tableBody').innerHTML = `
-    <tr><td colspan="10" class="empty">
-      <div class="empty-icon">⚠️</div>
-      <div>${data.message}</div>
-    </td></tr>`;
-  document.getElementById('tableCount').textContent = '0 đơn hàng';
-  document.getElementById('pagination').innerHTML = '';
-  return;
-}
+      document.getElementById('tableBody').innerHTML = `
+        <tr><td colspan="${getMainTableColspan()}" class="empty">
+          <div class="empty-icon">🔒</div><div>${escapeTextHtml(data.error)}</div>
+        </td></tr>`;
+      return;
+    }
 
-    document.getElementById('tableCount').textContent =
-      `${(data.total || 0).toLocaleString('vi')} đơn hàng`;
-
-    const tbody = document.getElementById('tableBody');
-    if (!data.data || data.data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" class="empty">
-        <div class="empty-icon">📭</div><div>Chưa có đơn hàng nào</div>
-      </td></tr>`;
+    if (data.blocked) {
+      document.getElementById('tableBody').innerHTML = `
+        <tr><td colspan="${getMainTableColspan()}" class="empty">
+          <div class="empty-icon">⚠️</div>
+          <div>${escapeTextHtml(data.message || 'Không thể tải dữ liệu')}</div>
+        </td></tr>`;
+      document.getElementById('tableCount').textContent = '0 đơn hàng';
       document.getElementById('pagination').innerHTML = '';
       return;
     }
 
-    tbody.innerHTML = data.data.map(o => {
-      const M = v => `<span class="restricted-mask">${v || '••••••••'}</span>`;
-      const R = o.restricted;
-      const orderCode = o.order_code || '—';
-      const escapedOrderCode = String(orderCode)
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'");
-      return `
-        <tr>
-          <td>
-            <b style="font-family:monospace;font-size:11px">${R ? M('••••••••') : orderCode}</b>
-            ${R ? '' : `<br><button class="btn-copy-order-main" type="button" onclick="copyOrderCode(this, '${escapedOrderCode}')">COPY</button>`}
-          </td>
-          <td style="font-size:11px;color:#9b8bb4">${R ? M() : (o.order_date || '—')}</td>
-          <td><span class="shop-chip">${o.shop_name || o.shop_id || '—'}</span></td>
-          <td>${R ? M() : (o.customer_name || o.buyer_name || '—')}</td>
-          <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.address || '—')}</td>
-          <td style="max-width:220px;white-space:normal;word-break:break-word">${R ? M() : (o.product || '—')}</td>
-          <td style="text-align:center">${R ? M() : (o.quantity || '—')}</td>
-          <td><b>${R ? M() : (o.total ? Number(o.total).toLocaleString('vi') + '₫' : '—')}</b></td>
-          <td>${R ? `<span class="restricted-mask">••••••••</span>` : (o.status || '—')}</td>
+    document.getElementById('tableCount').textContent =
+      `${(data.total || 0).toLocaleString('vi')} đơn hàng`;
 
-        </tr>`;
-    }).join('');
-
+    renderMainOrdersRows(data);
     renderPagination(data.total);
   } catch(e) {
     showLoading(false);
@@ -4174,13 +4592,56 @@ async function refreshUserCapabilities() {
   updateAdminOnlyPanels(id);
 }
 
+function syncDownloadPanelVisibility() {
+  const panel = document.querySelector('.download-panel');
+  const toggle = document.getElementById('mobileDownloadToggle');
+  const id = localStorage.getItem(ID_KEY);
+  const expiry = parseInt(localStorage.getItem(ID_EXP) || '0');
+  const authed = !!(id && expiry && Date.now() < expiry);
+  const compact = isCompactViewport();
+
+  if (!panel) return;
+
+  if (!authed) {
+    panel.style.display = 'none';
+    panel.classList.remove('mobile-open');
+    if (toggle) {
+      toggle.style.display = 'none';
+      toggle.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+    return;
+  }
+
+  if (toggle) {
+    toggle.style.display = compact ? 'inline-flex' : 'none';
+    toggle.classList.toggle('active', compact && panel.classList.contains('mobile-open'));
+    toggle.setAttribute('aria-expanded', compact && panel.classList.contains('mobile-open') ? 'true' : 'false');
+  }
+
+  if (!compact) {
+    panel.style.display = 'block';
+    panel.classList.remove('mobile-open');
+    return;
+  }
+
+  panel.style.display = panel.classList.contains('mobile-open') ? 'block' : 'none';
+}
+
+function toggleDownloadMenu() {
+  const panel = document.querySelector('.download-panel');
+  if (!panel || !isCompactViewport()) return;
+  panel.classList.toggle('mobile-open');
+  syncDownloadPanelVisibility();
+}
+
 function checkIdGate() {
   const id     = localStorage.getItem(ID_KEY);
   const expiry = localStorage.getItem(ID_EXP);
   if (id && expiry && Date.now() < parseInt(expiry)) {
     document.getElementById('idGate').style.display    = 'none';
     document.getElementById('idDisplay').style.display = 'block';
-    document.querySelector('.download-panel').style.display = 'block';
+    syncDownloadPanelVisibility();
     document.getElementById('maskedId').textContent    = maskId(id);
     updateAdminOnlyPanels(id);
     startExpireCountdown();
@@ -4190,7 +4651,7 @@ function checkIdGate() {
   localStorage.removeItem(ID_KEY);
   localStorage.removeItem(ID_EXP);
   document.getElementById('idGate').style.display = 'flex';
-  document.querySelector('.download-panel').style.display = 'none';
+  syncDownloadPanelVisibility();
   updateAdminOnlyPanels('');
   return false;
 }
@@ -5937,6 +6398,39 @@ function copyTransferCurlResult() {
     doSuccess();
   });
 }
+
+document.addEventListener('click', event => {
+  if (!isCompactViewport()) return;
+  const panel = document.querySelector('.download-panel');
+  const toggle = document.getElementById('mobileDownloadToggle');
+  if (!panel || !toggle) return;
+  if (!panel.classList.contains('mobile-open')) return;
+  if (panel.contains(event.target) || toggle.contains(event.target)) return;
+  panel.classList.remove('mobile-open');
+  syncDownloadPanelVisibility();
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  closeMobileOrderDetailModal();
+  const panel = document.querySelector('.download-panel');
+  if (panel && panel.classList.contains('mobile-open')) {
+    panel.classList.remove('mobile-open');
+    syncDownloadPanelVisibility();
+  }
+});
+
+window.addEventListener('resize', () => {
+  syncDownloadPanelVisibility();
+  clearTimeout(window._mainOrdersResizeTimer);
+  window._mainOrdersResizeTimer = setTimeout(() => {
+    renderMainTableHeader();
+    if (localStorage.getItem(ID_KEY) && localStorage.getItem(ID_EXP)) {
+      loadOrders();
+    }
+  }, 160);
+});
+
 loadSyncShops();
 loadSyncShopsPending();
 if (checkIdGate()) { init(); }
