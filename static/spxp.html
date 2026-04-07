@@ -158,13 +158,13 @@ h1{
 .hero-meta{
   margin-top:22px;
   display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
+  grid-template-columns:repeat(7,minmax(0,1fr));
   gap:12px;
 }
 
 .hero-stat{
-  padding:18px 16px;
-  border-radius:24px;
+  padding:16px 14px;
+  border-radius:22px;
   background:rgba(255,255,255,.10);
   border:1px solid rgba(255,255,255,.10);
   backdrop-filter:blur(12px);
@@ -180,14 +180,16 @@ h1{
 
 .hero-stat-value{
   margin-top:10px;
-  font-size:32px;
+  font-size:clamp(22px,2vw,28px);
   font-weight:800;
   letter-spacing:-.04em;
+  line-height:1.12;
+  overflow-wrap:anywhere;
 }
 
 .hero-stat-sub{
   margin-top:8px;
-  font-size:12px;
+  font-size:11px;
   color:rgba(255,248,241,.68);
   line-height:1.6;
 }
@@ -229,6 +231,69 @@ h1{
 }
 .card.config-card{
   background:linear-gradient(180deg, rgba(255,247,242,.96), rgba(255,252,249,.90));
+}
+.collapsible-panel{
+  transition:all .2s ease;
+}
+.panel-chrome{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 22px;
+}
+.panel-window-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.panel-dot{
+  width:12px;
+  height:12px;
+  border:none;
+  border-radius:50%;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 1px 2px rgba(0,0,0,.12);
+}
+.panel-dot-red{background:#ff5f57}
+.panel-dot-yellow{background:#febc2e;cursor:pointer}
+.panel-dot-green{background:#28c840}
+.panel-inline-title{
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  color:var(--ink);
+}
+.panel-inline-sub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.6;
+}
+.panel-body{
+  display:block;
+}
+.fee-panel-total{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:120px;
+  padding:10px 16px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid var(--line);
+  color:#8c541f;
+  font-size:13px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.collapsible-panel.collapsed .panel-body{
+  display:none;
+}
+.collapsible-panel.collapsed .panel-chrome{
+  padding-bottom:18px;
+}
+.collapsible-panel.collapsed .panel-dot-yellow{
+  box-shadow:0 0 0 2px rgba(254,188,46,.18);
 }
 
 .card-head{
@@ -520,7 +585,7 @@ tbody td{
 
 .mini-value{
   margin-top:8px;
-  font-size:24px;
+  font-size:20px;
   font-weight:800;
   letter-spacing:-.04em;
 }
@@ -905,6 +970,11 @@ tbody td{
           <div class="hero-stat-sub">Tổng doanh thu các đơn đã giao thành công.</div>
         </div>
         <div class="hero-stat">
+          <div class="hero-stat-label">Doanh thu hàng hoàn</div>
+          <div class="hero-stat-value" id="heroReturnedRevenue">0₫</div>
+          <div class="hero-stat-sub">Tổng doanh thu các đơn đang ở trạng thái hoàn hàng.</div>
+        </div>
+        <div class="hero-stat">
           <div class="hero-stat-label">Tổng phí</div>
           <div class="hero-stat-value" id="heroTotalFee">0₫</div>
           <div class="hero-stat-sub">Tổng toàn bộ khoản phí đang cấu hình.</div>
@@ -1035,16 +1105,23 @@ tbody td{
           </div>
         </section>
 
-        <section class="card fee-card">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Khoản phí</div>
-              <div class="card-sub">Nhìn nhanh các khoản khấu trừ.</div>
+        <section class="card fee-card collapsible-panel collapsed" id="feePanel">
+          <div class="panel-chrome">
+            <div class="panel-window-controls">
+              <button class="panel-dot panel-dot-red" type="button" aria-hidden="true"></button>
+              <button class="panel-dot panel-dot-yellow" type="button" onclick="toggleFeePanel()" title="Thu gọn / mở rộng"></button>
+              <button class="panel-dot panel-dot-green" type="button" aria-hidden="true"></button>
             </div>
-            <div class="pill" id="feeMeta">0 khoản</div>
+            <div style="flex:1;min-width:0">
+              <div class="panel-inline-title">Khoản phí</div>
+              <div class="panel-inline-sub" id="feeMeta">0 khoản phí đang cấu hình.</div>
+            </div>
+            <div class="fee-panel-total" id="feePanelTotal">0₫</div>
           </div>
-          <div class="side-pad">
-            <div class="list" id="feeList"></div>
+          <div class="panel-body">
+            <div class="side-pad" style="padding-top:0">
+              <div class="list" id="feeList"></div>
+            </div>
           </div>
         </section>
 
@@ -1221,6 +1298,7 @@ function renderHero(metrics, config) {
   document.getElementById('heroTotalOrders').textContent = state.items.length.toLocaleString('vi-VN');
   document.getElementById('heroTotalCod').textContent = formatMoney(metrics.totalCod);
   document.getElementById('heroDeliveredRevenue').textContent = formatMoney(metrics.deliveredRevenue);
+  document.getElementById('heroReturnedRevenue').textContent = formatMoney(metrics.returnedRevenue);
   document.getElementById('heroTotalFee').textContent = formatMoney(metrics.totalFee);
   document.getElementById('heroNetPayout').textContent = formatMoney(metrics.needTransfer);
   document.getElementById('heroPaidOut').textContent = formatMoney(metrics.paidOut);
@@ -1279,9 +1357,19 @@ function renderMoney(metrics) {
   document.getElementById('moneyPaymentHistory').textContent = formatMoney(metrics.paymentHistoryTotal);
 }
 
+function toggleFeePanel() {
+  const panel = document.getElementById('feePanel');
+  if (!panel) return;
+  panel.classList.toggle('collapsed');
+}
+
 function renderFeeList(config) {
   const items = normalizeConfig(config).fee_items;
-  document.getElementById('feeMeta').textContent = `${items.length.toLocaleString('vi-VN')} khoản`;
+  const totalFee = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const feeMetaEl = document.getElementById('feeMeta');
+  const feePanelTotalEl = document.getElementById('feePanelTotal');
+  if (feeMetaEl) feeMetaEl.textContent = `${items.length.toLocaleString('vi-VN')} khoản phí đang cấu hình.`;
+  if (feePanelTotalEl) feePanelTotalEl.textContent = formatMoney(totalFee);
   document.getElementById('feeList').innerHTML = items.length ? items.map(item => `
     <div class="list-item">
       <div class="list-row">
