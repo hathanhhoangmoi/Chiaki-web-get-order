@@ -17,6 +17,7 @@ class Order(Base):
     quantity    = Column(Integer, default=0)
     total       = Column(Float, default=0)
     status      = Column(String)
+    sync_stage  = Column(String, index=True)
     order_date  = Column(String)
     raw_data    = Column(Text)   # JSON toàn bộ row gốc
     fetched_at  = Column(DateTime, server_default=func.now())
