@@ -222,7 +222,7 @@ h1{
 .hero-meta{
   margin-top:22px;
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:12px;
 }
 
@@ -874,7 +874,12 @@ tbody td:last-child{
         <div class="hero-stat">
           <div class="hero-stat-label">Tổng COD hiệu lực</div>
           <div class="hero-stat-value" id="heroTotalCod">0₫</div>
-          <div class="hero-stat-sub">Không tính các đơn đang ở trạng thái hoàn hàng.</div>
+          <div class="hero-stat-sub">Không tính các đơn đang ở trạng thái hoàn tiền.</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Doanh thu hàng hoàn</div>
+          <div class="hero-stat-value" id="heroReturnedRevenue">0₫</div>
+          <div class="hero-stat-sub">Tổng COD của các đơn đang ở trạng thái hoàn tiền.</div>
         </div>
         <div class="hero-stat">
           <div class="hero-stat-label">Chưa thanh toán</div>
@@ -947,7 +952,7 @@ tbody td:last-child{
               <button class="btn filter-btn active" type="button" data-filter="all">Tất cả</button>
               <button class="btn filter-btn" type="button" data-filter="in_transit">Đang giao</button>
               <button class="btn filter-btn" type="button" data-filter="delivered">Đã giao</button>
-              <button class="btn filter-btn" type="button" data-filter="returned">Hoàn</button>
+              <button class="btn filter-btn" type="button" data-filter="returned">Hoàn tiền</button>
               <button class="btn filter-btn" type="button" data-filter="unknown">Chưa xử lý</button>
               <button class="btn filter-btn" type="button" data-filter="paid">Đã thanh toán</button>
               <button class="btn filter-btn" type="button" data-filter="unpaid">Chưa thanh toán</button>
@@ -1121,7 +1126,7 @@ function statusMeta(status) {
   const map = {
     in_transit: { label: 'Đang giao', className: 'status-in_transit' },
     delivered: { label: 'Đã giao thành công', className: 'status-delivered' },
-    returned: { label: 'Hoàn hàng', className: 'status-returned' },
+    returned: { label: 'Hoàn tiền', className: 'status-returned' },
     unknown: { label: 'Chưa xử lý', className: 'status-unknown' },
   };
   return map[status] || map.unknown;
@@ -1181,11 +1186,19 @@ function computeMetrics(items, config) {
 function renderHero(metrics, config) {
   document.getElementById('heroTotalOrders').textContent = state.items.length.toLocaleString('vi-VN');
   document.getElementById('heroTotalCod').textContent = formatMoney(metrics.totalCod);
+  document.getElementById('heroReturnedRevenue').textContent = formatMoney(metrics.returnedRevenue);
   document.getElementById('heroNetPayout').textContent = formatMoney(metrics.needTransfer);
   document.getElementById('heroPaidOut').textContent = formatMoney(metrics.paidOut);
   document.getElementById('heroLastUpdated').textContent = config.updated_at
     ? `Config cập nhật: ${formatDateTime(config.updated_at)}`
     : 'Chưa có mốc cập nhật config.';
+}
+
+function renderCodValue(item) {
+  if ((item.status || 'unknown') === 'returned') {
+    return '<strong>Chờ hàng hoàn về</strong>';
+  }
+  return `<strong>${formatMoney(item.cod || 0)}</strong>`;
 }
 
 function renderKpis(metrics) {
@@ -1287,7 +1300,7 @@ function statusOptions(selected = 'unknown') {
     ['unknown', 'Chưa xử lý'],
     ['in_transit', 'Đang giao'],
     ['delivered', 'Đã giao thành công'],
-    ['returned', 'Hoàn hàng'],
+    ['returned', 'Hoàn tiền'],
   ];
   return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
 }
@@ -1356,7 +1369,7 @@ function renderOrdersTable() {
           `}
         </td>
         <td class="orders-cell-cod">
-          <div><strong>${formatMoney(item.cod || 0)}</strong></div>
+          <div>${renderCodValue(item)}</div>
           <div style="margin-top:8px">
             <span class="paid-chip ${item.is_paid ? 'ok' : ''}">${item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>
           </div>
