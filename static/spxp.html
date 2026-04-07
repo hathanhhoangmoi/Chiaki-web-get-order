@@ -146,6 +146,14 @@ h1{
   background:linear-gradient(135deg,#f4d4df,#f5e0ff);
   color:#4b2c39;
 }
+.btn-config-close{
+  display:none;
+  padding:12px 18px;
+  background:rgba(255,255,255,.10);
+  color:#fff8f1;
+  border:1px solid rgba(255,255,255,.18);
+  font-weight:700;
+}
 
 .hero-meta{
   margin-top:22px;
@@ -625,6 +633,77 @@ tbody td{
   font-size:13px;
   font-weight:600;
 }
+.spx-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:70;
+  background:rgba(45,32,25,.24);
+  backdrop-filter:blur(10px);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.spx-modal.show{display:flex}
+.spx-modal-card{
+  width:min(1180px,100%);
+  height:min(820px,calc(100vh - 36px));
+  display:flex;
+  flex-direction:column;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(83,57,45,.10);
+  border-radius:28px;
+  box-shadow:0 24px 60px rgba(69,47,36,.16);
+  overflow:hidden;
+}
+.spx-modal-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 20px;
+  border-bottom:1px solid rgba(83,57,45,.08);
+  background:linear-gradient(180deg, rgba(255,249,239,.95), rgba(255,255,255,.96));
+}
+.spx-modal-title{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.03em;
+}
+.spx-modal-sub{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--muted);
+}
+.spx-modal-close{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:999px;
+  background:#fff3e5;
+  color:#8c541f;
+  font:inherit;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+}
+.spx-modal-frame-wrap{
+  flex:1;
+  overflow:auto;
+  background:#f7f3ee;
+}
+.spx-modal-zoom-stage{
+  width:133.3334%;
+  height:133.3334%;
+  transform:scale(.75);
+  transform-origin:top left;
+}
+.spx-modal-frame{
+  width:100%;
+  height:100%;
+  border:none;
+  background:#fff;
+}
 .config-label{
   margin:14px 0 8px;
   font-size:12px;
@@ -713,6 +792,11 @@ tbody td{
   gap:8px;
   min-width:150px;
 }
+.order-action-footer{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
 .order-update-btn{
   padding:10px 12px;
   border:none;
@@ -727,6 +811,17 @@ tbody td{
 .order-update-btn:disabled{
   opacity:.6;
   cursor:not-allowed;
+}
+.order-open-btn{
+  padding:10px 12px;
+  border:none;
+  border-radius:14px;
+  background:#fff3e5;
+  color:#8c541f;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
 }
 .view-only-hidden{display:none !important}
 
@@ -759,6 +854,22 @@ tbody td{
       <div class="config-gate-error" id="configGateError"></div>
     </div>
   </div>
+  <div class="spx-modal" id="spxModal" onclick="if(event.target===this) closeSpxModal()">
+    <div class="spx-modal-card">
+      <div class="spx-modal-head">
+        <div>
+          <div class="spx-modal-title" id="spxModalTitle">SPX Viewer</div>
+          <div class="spx-modal-sub" id="spxModalSub">Popup đang mở ở zoom 75%.</div>
+        </div>
+        <button class="spx-modal-close" type="button" onclick="closeSpxModal()">✕</button>
+      </div>
+      <div class="spx-modal-frame-wrap">
+        <div class="spx-modal-zoom-stage">
+          <iframe id="spxModalFrame" class="spx-modal-frame" src="about:blank" loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
   <main class="shell">
     <section class="hero">
       <div class="hero-top">
@@ -771,6 +882,7 @@ tbody td{
         </div>
         <div class="hero-actions">
           <button class="btn btn-config" id="configModeBtn" type="button" onclick="openConfigGate()">CONFIG</button>
+          <button class="btn btn-config-close" id="configCloseBtn" type="button" onclick="closeConfigMode()">Đóng config</button>
           <button class="btn btn-primary" type="button" onclick="refreshDashboard()">Làm mới dữ liệu</button>
           <a class="btn btn-secondary" href="/" style="text-decoration:none">Về dashboard chính</a>
         </div>
@@ -1230,12 +1342,14 @@ function safeCodeKey(code) {
 function updateConfigModeUi() {
   const configCard = document.getElementById('configCard');
   const button = document.getElementById('configModeBtn');
+  const closeButton = document.getElementById('configCloseBtn');
   const sub = document.getElementById('ordersCardSub');
   if (configCard) configCard.style.display = state.editMode ? 'block' : 'none';
   if (button) {
     button.classList.toggle('active', state.editMode);
     button.textContent = state.editMode ? 'CONFIG ĐANG MỞ' : 'CONFIG';
   }
+  if (closeButton) closeButton.style.display = state.editMode ? 'inline-flex' : 'none';
   if (sub) {
     sub.textContent = state.editMode
       ? 'Chế độ chỉnh sửa đang bật. Bạn có thể cập nhật trạng thái, thanh toán và cấu hình toàn bộ dữ liệu đơn ngoại sàn.'
@@ -1264,6 +1378,14 @@ function enableConfigMode() {
   hydrateConfigInputs();
 }
 
+function closeConfigMode() {
+  state.editMode = false;
+  sessionStorage.removeItem(CONFIG_ACCESS_KEY);
+  updateConfigModeUi();
+  closeSpxModal();
+  renderOrdersTable();
+}
+
 function submitConfigAccess() {
   const value = String(document.getElementById('configGateInput').value || '').trim();
   const error = document.getElementById('configGateError');
@@ -1273,6 +1395,20 @@ function submitConfigAccess() {
   }
   error.textContent = '';
   enableConfigMode();
+}
+
+function openSpxModal(codeKey) {
+  const code = decodeURIComponent(codeKey || '');
+  if (!state.editMode || !code) return;
+  document.getElementById('spxModalTitle').textContent = `SPX Viewer • ${code}`;
+  document.getElementById('spxModalSub').textContent = 'Popup đang mở ở zoom 75% cho đúng mã đơn này.';
+  document.getElementById('spxModalFrame').src = `https://spx.vn/track?${encodeURIComponent(code)}`;
+  document.getElementById('spxModal').classList.add('show');
+}
+
+function closeSpxModal() {
+  document.getElementById('spxModal').classList.remove('show');
+  document.getElementById('spxModalFrame').src = 'about:blank';
 }
 
 function renderOrdersTableHead() {
@@ -1345,7 +1481,10 @@ function renderOrdersTable() {
         <td>${escapeHtml(formatDateTime(item.updated_at))}</td>
         <td>
           <div class="order-action-cell">
-            <button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>
+            <div class="order-action-footer">
+              <button class="order-update-btn" type="button" onclick="updateOrderRow('${codeKey}', this)">Cập nhật</button>
+              <button class="order-open-btn" type="button" onclick="openSpxModal('${codeKey}')">Mở SPX</button>
+            </div>
           </div>
         </td>
       </tr>
@@ -1598,6 +1737,13 @@ document.getElementById('statusFilters').addEventListener('click', event => {
 
 document.getElementById('configGateInput').addEventListener('keydown', event => {
   if (event.key === 'Enter') submitConfigAccess();
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    closeConfigGate();
+    closeSpxModal();
+  }
 });
 
 if (sessionStorage.getItem(CONFIG_ACCESS_KEY) === '1') {
